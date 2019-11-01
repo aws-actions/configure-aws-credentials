@@ -1,5 +1,5 @@
 {
-  "name": "setup-aws",
+  "name": "configure-aws-credentials-for-github-actions",
   "version": "0.0.0",
   "description": "Setup AWS",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aws/setup-aws.git"
+    "url": "git+https://github.com/aws/configure-aws-credentials-for-github-actions.git"
   },
   "keywords": [
     "AWS",
@@ -21,9 +21,9 @@
   "author": "GitHub",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/aws/setup-aws/issues"
+    "url": "https://github.com/aws/configure-aws-credentials-for-github-actions/issues"
   },
-  "homepage": "https://github.com/aws/setup-aws#readme",
+  "homepage": "https://github.com/aws/configure-aws-credentials-for-github-actions#readme",
   "dependencies": {
     "@actions/core": "^1.2.0",
     "@actions/exec": "^1.0.1",
