@@ -1,0 +1,37 @@
+{
+  "name": "setup-aws",
+  "version": "0.0.0",
+  "description": "Setup AWS",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint **.js",
+    "package": "ncc build index.js -o dist",
+    "test": "eslint **.js && jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aws/setup-aws.git"
+  },
+  "keywords": [
+    "AWS",
+    "GitHub",
+    "Actions",
+    "JavaScript"
+  ],
+  "author": "GitHub",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aws/setup-aws/issues"
+  },
+  "homepage": "https://github.com/aws/setup-aws#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.0",
+    "@actions/exec": "^1.0.1",
+    "@actions/io": "^1.0.1"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.20.5",
+    "eslint": "^6.5.1",
+    "jest": "^24.9.0"
+  }
+}

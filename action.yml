@@ -1,0 +1,19 @@
+name: 'Setup AWS'
+description: 'Setup an AWS CLI compatible environment'
+inputs:
+  aws-access-key-id:
+    description: 'Your AWS access key id credential'
+    required: true
+  aws-secret-access-key:
+    description: 'Your AWS secret access key credential'
+    required: true
+  aws-default-region:
+    description: 'Default AWS region, e.g. us-east-2'
+    required: true
+  aws-default-output:
+    description: 'Default output format, e.g. json'
+    required: false
+    default: json
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
