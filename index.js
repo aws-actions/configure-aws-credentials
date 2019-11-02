@@ -8,6 +8,7 @@ async function run() {
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: true });
     const region = core.getInput('aws-region', { required: true });
     const sessionToken = core.getInput('aws-session-token', { required: false });
+    const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
 
     // Configure the AWS CLI and AWS SDKs using environment variables
 
@@ -35,6 +36,9 @@ async function run() {
     const identity = await sts.getCallerIdentity().promise();
     const accountId = identity.Account;
     core.setOutput('aws-account-id', accountId);
+    if (!maskAccountId || maskAccountId.toLowerCase() == 'true') {
+      core.setSecret(accountId);
+    }
   }
   catch (error) {
     core.setFailed(error.message);

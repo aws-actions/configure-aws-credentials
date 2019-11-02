@@ -23,7 +23,8 @@ describe('Configure AWS Credentials', () => {
             .mockReturnValueOnce('MY-AWS-ACCESS-KEY-ID')     // aws-access-key-id
             .mockReturnValueOnce('MY-AWS-SECRET-ACCESS-KEY') // aws-secret-access-key
             .mockReturnValueOnce('us-east-2')                // aws-default-region
-            .mockReturnValueOnce('MY-AWS-SESSION-TOKEN');    // aws-session-token
+            .mockReturnValueOnce('MY-AWS-SESSION-TOKEN')     // aws-session-token
+            .mockReturnValueOnce('TRUE');                    // mask-aws-account-id
 
         mockStsCallerIdentity.mockImplementation(() => {
             return {
@@ -43,6 +44,7 @@ describe('Configure AWS Credentials', () => {
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-2');
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-2');
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '123456789012');
+        expect(core.setSecret).toHaveBeenCalledWith('123456789012');
     });
 
     test('session token is optional', async () => {
@@ -59,6 +61,26 @@ describe('Configure AWS Credentials', () => {
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '123456789012');
+        expect(core.setSecret).toHaveBeenCalledWith('123456789012');
+    });
+
+    test('can opt out of masking account ID', async () => {
+        core.getInput = jest
+            .fn()
+            .mockReturnValueOnce('MY-AWS-ACCESS-KEY-ID')     // aws-access-key-id
+            .mockReturnValueOnce('MY-AWS-SECRET-ACCESS-KEY') // aws-secret-access-key
+            .mockReturnValueOnce('us-east-1')                // aws-default-region
+            .mockReturnValueOnce('')                         // aws-session-token
+            .mockReturnValueOnce('false');                   // mask-aws-account-id
+
+        await run();
+        expect(core.exportVariable).toHaveBeenCalledTimes(4);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'MY-AWS-ACCESS-KEY-ID');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'MY-AWS-SECRET-ACCESS-KEY');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
+        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '123456789012');
+        expect(core.setSecret).toHaveBeenCalledTimes(0);
     });
 
     test('error is caught by core.setFailed', async () => {

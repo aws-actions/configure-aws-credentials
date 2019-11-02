@@ -13,6 +13,9 @@ inputs:
   aws-region:
     description: 'AWS Region, e.g. us-east-2'
     required: true
+  mask-aws-account-id:
+    description: "Whether to set the AWS account ID for these credentials as a secret value, so that it is masked in logs. Valid values are 'true' and 'false'. Defaults to true"
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'
