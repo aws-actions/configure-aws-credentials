@@ -1,20 +1,15 @@
-const path = require('path');
 const core = require('@actions/core');
-const io = require('@actions/io');
+const aws = require('aws-sdk');
 
 async function run() {
   try {
     // Get inputs
     const accessKeyId = core.getInput('aws-access-key-id', { required: true });
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: true });
-    const defaultRegion = core.getInput('aws-default-region', { required: true });
-    const outputFormat = core.getInput('aws-default-output', { required: false });
-    const awsHome = path.join(process.env.RUNNER_TEMP, '.aws');
+    const region = core.getInput('aws-region', { required: true });
+    const sessionToken = core.getInput('aws-session-token', { required: false });
 
-    // Ensure awsHome is a directory that exists
-    await io.mkdirP(awsHome);
-
-    // Configure the AWS CLI using environment variables
+    // Configure the AWS CLI and AWS SDKs using environment variables
 
     // AWS_ACCESS_KEY_ID:
     // Specifies an AWS access key associated with an IAM user or role
@@ -24,21 +19,22 @@ async function run() {
     // Specifies the secret key associated with the access key. This is essentially the "password" for the access key.
     core.exportVariable('AWS_SECRET_ACCESS_KEY', secretAccessKey);
 
-    // AWS_DEFAULT_REGION:
+    // AWS_SESSION_TOKEN:
+    // Specifies the session token value that is required if you are using temporary security credentials.
+    if (sessionToken) {
+      core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
+    }
+
+    // AWS_DEFAULT_REGION and AWS_REGION:
     // Specifies the AWS Region to send requests to
-    core.exportVariable('AWS_DEFAULT_REGION', defaultRegion);
+    core.exportVariable('AWS_DEFAULT_REGION', region);
+    core.exportVariable('AWS_REGION', region);
 
-    // AWS_DEFAULT_OUTPUT:
-    // Specifies the output format to use
-    core.exportVariable('AWS_DEFAULT_OUTPUT', outputFormat);
-
-    // AWS_CONFIG_FILE:
-    // Specifies the location of the file that the AWS CLI uses to store configuration profiles.
-    core.exportVariable('AWS_CONFIG_FILE', path.join(awsHome, 'config'));
-
-    // AWS_SHARED_CREDENTIALS_FILE:
-    // Specifies the location of the file that the AWS CLI uses to store access keys.
-    core.exportVariable('AWS_SHARED_CREDENTIALS_FILE', path.join(awsHome, 'credentials'));
+    // Get the AWS account ID
+    const sts = new aws.STS();
+    const identity = await sts.getCallerIdentity().promise();
+    const accountId = identity.Account;
+    core.setOutput('aws-account-id', accountId);
   }
   catch (error) {
     core.setFailed(error.message);

@@ -1,19 +1,21 @@
-name: 'Setup AWS'
-description: 'Setup an AWS CLI compatible environment'
+name: '"Configure AWS Credentials" Action For GitHub Actions'
+description: 'Configure AWS credential and region environment variables for use with the AWS CLI and AWS SDKs'
 inputs:
   aws-access-key-id:
-    description: 'Your AWS access key id credential'
+    description: 'AWS Access Key ID'
     required: true
   aws-secret-access-key:
-    description: 'Your AWS secret access key credential'
+    description: 'AWS Secret Access Key'
     required: true
-  aws-default-region:
-    description: 'Default AWS region, e.g. us-east-2'
-    required: true
-  aws-default-output:
-    description: 'Default output format, e.g. json'
+  aws-session-token:
+    description: 'AWS Session Token'
     required: false
-    default: json
+  aws-region:
+    description: 'AWS Region, e.g. us-east-2'
+    required: true
+outputs:
+  aws-account-id:
+    description: 'The AWS account ID for the provided credentials'
 runs:
   using: 'node12'
   main: 'dist/index.js'
