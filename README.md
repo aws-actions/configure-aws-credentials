@@ -8,7 +8,7 @@ Add the following step to your workflow:
 
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws/configure-aws-credentials-for-github-actions
+      uses: aws/configure-aws-credentials-for-github-actions@master
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
