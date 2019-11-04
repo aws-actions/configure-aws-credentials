@@ -32,7 +32,9 @@ async function run() {
     core.exportVariable('AWS_REGION', region);
 
     // Get the AWS account ID
-    const sts = new aws.STS();
+    const sts = new aws.STS({
+      customUserAgent: 'configure-aws-credentials-for-github-actions'
+    });
     const identity = await sts.getCallerIdentity().promise();
     const accountId = identity.Account;
     core.setOutput('aws-account-id', accountId);
