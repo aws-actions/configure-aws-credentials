@@ -1,5 +1,8 @@
 name: '"Configure AWS Credentials" Action For GitHub Actions'
 description: 'Configure AWS credential and region environment variables for use with the AWS CLI and AWS SDKs'
+branding:
+  icon: 'cloud'
+  color: 'orange'
 inputs:
   aws-access-key-id:
     description: 'AWS Access Key ID'
