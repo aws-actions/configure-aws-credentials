@@ -1,5 +1,5 @@
 {
-  "name": "configure-aws-credentials-for-github-actions",
+  "name": "aws-actions-configure-aws-credentials",
   "version": "0.0.0",
   "description": "Configure AWS Credentials",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aws/configure-aws-credentials-for-github-actions.git"
+    "url": "git+https://github.com/aws-actions/configure-aws-credentials.git"
   },
   "keywords": [
     "AWS",
@@ -21,12 +21,12 @@
   "author": "AWS",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/aws/configure-aws-credentials-for-github-actions/issues"
+    "url": "https://github.com/aws-actions/configure-aws-credentials/issues"
   },
-  "homepage": "https://github.com/aws/configure-aws-credentials-for-github-actions#readme",
+  "homepage": "https://github.com/aws-actions/configure-aws-credentials#readme",
   "dependencies": {
     "@actions/core": "^1.2.0",
-    "aws-sdk": "^2.562.0"
+    "aws-sdk": "^2.567.0"
   },
   "devDependencies": {
     "@zeit/ncc": "^0.20.5",
