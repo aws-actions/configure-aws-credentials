@@ -1,0 +1,16 @@
+on:
+  [pull_request]
+
+name: Check
+
+jobs:
+  check:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1.0.0
+    - name: Run tests
+      run: |
+        npm ci
+        npm test
