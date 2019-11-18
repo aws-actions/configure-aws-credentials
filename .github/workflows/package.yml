@@ -1,0 +1,30 @@
+on:
+  push:
+    branches:
+      - master
+
+name: Package
+
+jobs:
+  check:
+    name: Package distribution file
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+      with:
+        ref: master
+    - name: Package
+      run: |
+        npm ci
+        npm test
+        npm run package
+    - name: Commit
+      run: |
+        git config --global user.name "GitHub Actions"
+        git remote set-url origin https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY
+        git add dist/
+        git commit -m "Update dist" || echo "No changes to commit"
+        git push origin HEAD:master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
