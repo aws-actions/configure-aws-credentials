@@ -15,6 +15,8 @@ Add the following step to your workflow:
         aws-region: us-east-2
 ```
 
+See [action.yml](action.yml) for the full documentation for this action's inputs and outputs.
+
 ## Credentials
 
 We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html) for the AWS credentials used in GitHub Actions workflows, including:
