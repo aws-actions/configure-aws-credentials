@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 10
+  build:
+    commands:
+      # Validate that the dist/ folder has the latest code packaged.
+      # If there are unpackaged changes, this build will fail.
+      # The GitHub Actions 'package' workflow will eventually run
+      # and will sync the dist folder, which will re-trigger this build.
+      - npm ci
+      - npm run package
+      - git diff --exit-code dist/index.js
+artifacts:
+  files:
+    - '**/*'
