@@ -23,5 +23,5 @@ jobs:
       run: |
         git config --global user.name "GitHub Actions"
         git add dist/
-        git commit -m "Update dist" || echo "No changes to commit"
+        git commit -m "chore: Update dist" || echo "No changes to commit"
         git push origin HEAD:master
