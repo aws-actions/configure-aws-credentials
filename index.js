@@ -1,40 +1,46 @@
 const core = require('@actions/core');
 const aws = require('aws-sdk');
+const assert = require('assert');
+
+const MAX_ACTION_RUNTIME = 6 * 3600;
 
 async function assumeRole(params) {
-  const sts = new aws.STS({
-    accessKeyId: params.accessKeyId,
-    secretAccessKey:params.secretAccessKey,
-    sessionToken: params.sessionToken,
-    region: params.region});
+  const {roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, sessionToken, region} = params;
+
+  const sts = new aws.STS({accessKeyId, secretAccessKey, sessionToken, region});
+  const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA} = process.env;
+
+  for (var required in [roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, region, GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA]) {
+    assert(required, 'Missing required value. Are you running in GitHub Actions?');
+  }
 
   sts.assumeRole({
-    RoleArn: params.roleToAssume,
-    RoleSessionName: 'GitHub Actions',
-    DurationSeconds: params.roleDurationSeconds,
+    RoleArn: roleToAssume,
+    RoleSessionName: 'GitHubActions',
+    DurationSeconds: roleDurationSeconds,
     Tags: [
       {Key: 'GitHub', Value: 'Actions'},
-      {Key: 'Repository', Value: process.env.GITHUB_REPOSITORY},
-      {Key: 'Workflow', Value: process.env.GITHUB_WORKFLOW},
-      {Key: 'Action', Value: process.env.GITHUB_ACTION},
-      {Key: 'Actor', Value: process.env.GITHUB_ACTOR},
-      {Key: 'Branch', Value: process.env.GITHUB_REF},
-      {Key: 'Commit', Value: process.env.GITHUB_SHA},
+      {Key: 'Repository', Value: GITHUB_REPOSITORY},
+      {Key: 'Workflow', Value: GITHUB_WORKFLOW},
+      {Key: 'Action', Value: GITHUB_ACTION},
+      {Key: 'Actor', Value: GITHUB_ACTOR},
+      {Key: 'Branch', Value: GITHUB_REF},
+      {Key: 'Commit', Value: GITHUB_SHA},
     ]
-  }, function f(err, data) {
-        if (err) console.log(err, err.stack);
-        else return {
-            accessKeyId: data.Credentials.AccessKeyId,
-            secretAccessKey: data.Credentials.SecretAccessKey,
-            sessionToken: data.Credentials.SessionToken,
-        };
-    });
+  })
+  .promise()
+  .then(function (data) {
+    return {
+      accessKeyId: data.Credentials.AccessKeyId,
+      secretAccessKey: data.Credentials.SecretAccessKey,
+      sessionToken: data.Credentials.SessionToken,
+    };
+  });
 }
 
 async function run() {
   try {
     // Get inputs
-    const MAX_ACTION_RUNTIME = 6 * 3600;
     const accessKeyId = core.getInput('aws-access-key-id', { required: true });
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: true });
     const region = core.getInput('aws-region', { required: true });
@@ -43,10 +49,9 @@ async function run() {
     const roleToAssume = core.getInput('role-to-assume', {required: false});
     const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
 
-
     // Get role credentials if configured to do so
     if (roleToAssume) {
-      const {accessKeyId, secretAccessKey, sessionToken} = assumeRole(
+      const {accessKeyId, secretAccessKey, sessionToken} = await assumeRole(
           {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleDurationSeconds}
       );
     }
