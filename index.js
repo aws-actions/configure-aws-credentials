@@ -2,19 +2,28 @@ const core = require('@actions/core');
 const aws = require('aws-sdk');
 const assert = require('assert');
 
+// The max time that a GitHub action is allowed to run is 6 hours.
+// That seems like a reasonable default to use if no role duration is defined.
 const MAX_ACTION_RUNTIME = 6 * 3600;
 
 async function assumeRole(params) {
+  // Assume a role to get short-lived credentials using longer-lived credentials.
+  const isDefined = i => !!i;
+
   const {roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, sessionToken, region} = params;
+  assert(
+      [roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, region].every(isDefined),
+      "Missing required input."
+  );
+
+  const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA} = process.env;
+  assert(
+      [GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA].every(isDefined),
+      'Missing required environment value. Are you running in GitHub Actions?'
+  );
 
   const sts = new aws.STS({accessKeyId, secretAccessKey, sessionToken, region});
-  const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA} = process.env;
-
-  for (const required in [roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, region, GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA]) {
-    assert(required, 'Missing required value. Are you running in GitHub Actions?');
-  }
-
-  sts.assumeRole({
+  return sts.assumeRole({
     RoleArn: roleToAssume,
     RoleSessionName: 'GitHubActions',
     DurationSeconds: roleDurationSeconds,
