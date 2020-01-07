@@ -10,7 +10,7 @@ async function assumeRole(params) {
   const sts = new aws.STS({accessKeyId, secretAccessKey, sessionToken, region});
   const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA} = process.env;
 
-  for (var required in [roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, region, GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA]) {
+  for (const required in [roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, region, GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA]) {
     assert(required, 'Missing required value. Are you running in GitHub Actions?');
   }
 
