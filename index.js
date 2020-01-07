@@ -1,14 +1,55 @@
 const core = require('@actions/core');
 const aws = require('aws-sdk');
 
+async function assumeRole(params) {
+  const sts = new aws.STS({
+    accessKeyId: params.accessKeyId,
+    secretAccessKey:params.secretAccessKey,
+    sessionToken: params.sessionToken,
+    region: params.region});
+
+  sts.assumeRole({
+    RoleArn: params.roleToAssume,
+    RoleSessionName: 'GitHub Actions',
+    DurationSeconds: params.roleDurationSeconds,
+    Tags: [
+      {Key: 'GitHub', Value: 'Actions'},
+      {Key: 'Repository', Value: process.env.GITHUB_REPOSITORY},
+      {Key: 'Workflow', Value: process.env.GITHUB_WORKFLOW},
+      {Key: 'Action', Value: process.env.GITHUB_ACTION},
+      {Key: 'Actor', Value: process.env.GITHUB_ACTOR},
+      {Key: 'Branch', Value: process.env.GITHUB_REF},
+      {Key: 'Commit', Value: process.env.GITHUB_SHA},
+    ]
+  }, function f(err, data) {
+        if (err) console.log(err, err.stack);
+        else return {
+            accessKeyId: data.Credentials.AccessKeyId,
+            secretAccessKey: data.Credentials.SecretAccessKey,
+            sessionToken: data.Credentials.SessionToken,
+        };
+    });
+}
+
 async function run() {
   try {
     // Get inputs
+    const MAX_ACTION_RUNTIME = 6 * 3600;
     const accessKeyId = core.getInput('aws-access-key-id', { required: true });
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: true });
     const region = core.getInput('aws-region', { required: true });
     const sessionToken = core.getInput('aws-session-token', { required: false });
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
+    const roleToAssume = core.getInput('role-to-assume', {required: false});
+    const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
+
+
+    // Get role credentials if configured to do so
+    if (roleToAssume) {
+      const {accessKeyId, secretAccessKey, sessionToken} = assumeRole(
+          {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleDurationSeconds}
+      );
+    }
 
     // Configure the AWS CLI and AWS SDKs using environment variables
 
