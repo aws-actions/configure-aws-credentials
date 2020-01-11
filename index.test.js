@@ -4,11 +4,39 @@ const run = require('.');
 
 jest.mock('@actions/core');
 
+const FAKE_ACCESS_KEY_ID = 'MY-AWS-ACCESS-KEY-ID';
+const FAKE_SECRET_ACCESS_KEY = 'MY-AWS-SECRET-ACCESS-KEY';
+const FAKE_SESSION_TOKEN = 'MY-AWS-SESSION-TOKEN';
+const FAKE_STS_ACCESS_KEY_ID = 'STS-AWS-ACCESS-KEY-ID';
+const FAKE_STS_SECRET_ACCESS_KEY = 'STS-AWS-SECRET-ACCESS-KEY';
+const FAKE_STS_SESSION_TOKEN = 'STS-AWS-SESSION-TOKEN';
+const FAKE_REGION = 'fake-region-1';
+const FAKE_ACCOUNT_ID = '123456789012';
+
+function mockGetInput(requestResponse) {
+    return function (name, options) { // eslint-disable-line no-unused-vars
+        return requestResponse[name]
+    }
+}
+const REQUIRED_INPUTS = {
+    'aws-access-key-id': FAKE_ACCESS_KEY_ID,
+    'aws-secret-access-key': FAKE_SECRET_ACCESS_KEY
+};
+const DEFAULT_INPUTS = {
+    ...REQUIRED_INPUTS,
+    'aws-session-token': FAKE_SESSION_TOKEN,
+    'aws-region': FAKE_REGION,
+    'mask-aws-account-id': 'TRUE'
+};
+
 const mockStsCallerIdentity = jest.fn();
+const mockStsAssumeRole = jest.fn();
+
 jest.mock('aws-sdk', () => {
     return {
         STS: jest.fn(() => ({
-            getCallerIdentity: mockStsCallerIdentity
+            getCallerIdentity: mockStsCallerIdentity,
+            assumeRole: mockStsAssumeRole,
         }))
     };
 });
@@ -20,66 +48,72 @@ describe('Configure AWS Credentials', () => {
 
         core.getInput = jest
             .fn()
-            .mockReturnValueOnce('MY-AWS-ACCESS-KEY-ID')     // aws-access-key-id
-            .mockReturnValueOnce('MY-AWS-SECRET-ACCESS-KEY') // aws-secret-access-key
-            .mockReturnValueOnce('us-east-2')                // aws-default-region
-            .mockReturnValueOnce('MY-AWS-SESSION-TOKEN')     // aws-session-token
-            .mockReturnValueOnce('TRUE');                    // mask-aws-account-id
+            .mockImplementation(mockGetInput(DEFAULT_INPUTS));
 
         mockStsCallerIdentity.mockImplementation(() => {
             return {
                 promise() {
-                   return Promise.resolve({ Account: '123456789012' });
+                   return Promise.resolve({ Account: FAKE_ACCOUNT_ID });
                 }
             };
+        });
+
+        mockStsAssumeRole.mockImplementation(() => {
+            return {
+                promise() {
+                    return Promise.resolve({
+                        Credentials: {
+                            AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
+                            SecretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
+                            SessionToken: FAKE_STS_SESSION_TOKEN
+                        }
+                    });
+                }
+            }
         });
     });
 
     test('exports env vars', async () => {
         await run();
         expect(core.exportVariable).toHaveBeenCalledTimes(5);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'MY-AWS-ACCESS-KEY-ID');
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'MY-AWS-SECRET-ACCESS-KEY');
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'MY-AWS-SESSION-TOKEN');
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-2');
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-2');
-        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '123456789012');
-        expect(core.setSecret).toHaveBeenCalledWith('123456789012');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', FAKE_SESSION_TOKEN);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
+        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+        expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
     });
 
     test('session token is optional', async () => {
+        const mockInputs = {...REQUIRED_INPUTS, 'aws-region': 'eu-west-1'};
         core.getInput = jest
             .fn()
-            .mockReturnValueOnce('MY-AWS-ACCESS-KEY-ID')     // aws-access-key-id
-            .mockReturnValueOnce('MY-AWS-SECRET-ACCESS-KEY') // aws-secret-access-key
-            .mockReturnValueOnce('eu-west-1');               // aws-default-region
+            .mockImplementation(mockGetInput(mockInputs));
 
         await run();
         expect(core.exportVariable).toHaveBeenCalledTimes(4);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'MY-AWS-ACCESS-KEY-ID');
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'MY-AWS-SECRET-ACCESS-KEY');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
-        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '123456789012');
-        expect(core.setSecret).toHaveBeenCalledWith('123456789012');
+        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+        expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
     });
 
     test('can opt out of masking account ID', async () => {
+        const mockInputs = {...REQUIRED_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'false'};
         core.getInput = jest
             .fn()
-            .mockReturnValueOnce('MY-AWS-ACCESS-KEY-ID')     // aws-access-key-id
-            .mockReturnValueOnce('MY-AWS-SECRET-ACCESS-KEY') // aws-secret-access-key
-            .mockReturnValueOnce('us-east-1')                // aws-default-region
-            .mockReturnValueOnce('')                         // aws-session-token
-            .mockReturnValueOnce('false');                   // mask-aws-account-id
+            .mockImplementation(mockGetInput(mockInputs));
 
         await run();
         expect(core.exportVariable).toHaveBeenCalledTimes(4);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'MY-AWS-ACCESS-KEY-ID');
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'MY-AWS-SECRET-ACCESS-KEY');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
-        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '123456789012');
+        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
         expect(core.setSecret).toHaveBeenCalledTimes(0);
     });
 
@@ -92,4 +126,5 @@ describe('Configure AWS Credentials', () => {
 
         expect(core.setFailed).toBeCalled();
     });
+
 });
