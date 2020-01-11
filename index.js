@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const aws = require('aws-sdk');
 const assert = require('assert');
+const util = require('util');
 
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
@@ -13,7 +14,7 @@ async function assumeRole(params) {
   const {roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, sessionToken, region} = params;
   assert(
       [roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, region].every(isDefined),
-      "Missing required input."
+      "Missing required input when assuming a Role."
   );
 
   const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA} = process.env;
@@ -22,7 +23,9 @@ async function assumeRole(params) {
       'Missing required environment value. Are you running in GitHub Actions?'
   );
 
-  const sts = new aws.STS({accessKeyId, secretAccessKey, sessionToken, region});
+  const endpoint = util.format('https://sts.%s.amazonaws.com', region);
+
+  const sts = new aws.STS({accessKeyId, secretAccessKey, sessionToken, region, endpoint});
   return sts.assumeRole({
     RoleArn: roleToAssume,
     RoleSessionName: 'GitHubActions',
