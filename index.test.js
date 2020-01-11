@@ -77,6 +77,7 @@ describe('Configure AWS Credentials', () => {
 
     test('exports env vars', async () => {
         await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
         expect(core.exportVariable).toHaveBeenCalledTimes(5);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -94,6 +95,7 @@ describe('Configure AWS Credentials', () => {
             .mockImplementation(mockGetInput(mockInputs));
 
         await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
         expect(core.exportVariable).toHaveBeenCalledTimes(4);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -110,6 +112,7 @@ describe('Configure AWS Credentials', () => {
             .mockImplementation(mockGetInput(mockInputs));
 
         await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
         expect(core.exportVariable).toHaveBeenCalledTimes(4);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -135,6 +138,7 @@ describe('Configure AWS Credentials', () => {
             .mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
 
         await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(1);
         expect(core.exportVariable).toHaveBeenCalledTimes(5);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);

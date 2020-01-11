@@ -101,7 +101,13 @@ async function run() {
     }
   }
   catch (error) {
-    core.setFailed(error.message);
+    const inGitHubAction = process.env.GITHUB_ACTIONS || false;
+
+    if(inGitHubAction) {
+      core.setFailed(error.message);
+    }else{
+      throw(error)
+    }
   }
 }
 
