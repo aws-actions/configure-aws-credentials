@@ -14,6 +14,15 @@ const FAKE_STS_SESSION_TOKEN = 'STS-AWS-SESSION-TOKEN';
 const FAKE_REGION = 'fake-region-1';
 const FAKE_ACCOUNT_ID = '123456789012';
 const ROLE_NAME = 'MY-ROLE';
+const ENVIRONMENT_VARIABLE_OVERRIDES = {
+    DO_NOT_SUPPRESS_STACK_TRACE: 'true',
+    GITHUB_REPOSITORY: 'MY-REPOSITORY-NAME',
+    GITHUB_WORKFLOW: 'MY-WORKFLOW-ID',
+    GITHUB_ACTION: 'MY-ACTION-NAME',
+    GITHUB_ACTOR: 'MY-USERNAME',
+    GITHUB_REF: 'MY-BRANCH',
+    GITHUB_SHA: 'MY-COMMIT-ID',
+};
 
 function mockGetInput(requestResponse) {
     return function (name, options) { // eslint-disable-line no-unused-vars
@@ -30,7 +39,7 @@ const DEFAULT_INPUTS = {
     'aws-region': FAKE_REGION,
     'mask-aws-account-id': 'TRUE'
 };
-const ASSUME_ROLE_INPUTS = {...REQUIRED_INPUTS, 'role-to-assume': ROLE_NAME};
+const ASSUME_ROLE_INPUTS = {...REQUIRED_INPUTS, 'role-to-assume': ROLE_NAME, 'aws-region': FAKE_REGION};
 
 const mockStsCallerIdentity = jest.fn();
 const mockStsAssumeRole = jest.fn();
@@ -45,11 +54,13 @@ jest.mock('aws-sdk', () => {
 });
 
 describe('Configure AWS Credentials', () => {
-    let originalSuppress;
+    let originalEnvironmentVariables = {};
 
     beforeEach(() => {
-        originalSuppress = process.env.DO_NOT_SUPPRESS_STACK_TRACE;
-        process.env.DO_NOT_SUPPRESS_STACK_TRACE = 'true';
+        for (const key of Object.keys(ENVIRONMENT_VARIABLE_OVERRIDES)){
+            originalEnvironmentVariables[key] = process.env[key];
+            process.env[key] = ENVIRONMENT_VARIABLE_OVERRIDES[key];
+        }
 
         jest.clearAllMocks();
 
@@ -81,7 +92,9 @@ describe('Configure AWS Credentials', () => {
     });
 
     afterEach(() => {
-        process.env.DO_NOT_SUPPRESS_STACK_TRACE = originalSuppress;
+        for (const key of Object.keys(originalEnvironmentVariables)){
+            process.env[key] = originalEnvironmentVariables[key];
+        }
     });
 
     test('exports env vars', async () => {
