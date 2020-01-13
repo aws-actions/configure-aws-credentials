@@ -1,4 +1,5 @@
 const core = require('@actions/core');
+const assert = require('assert');
 
 const run = require('.');
 
@@ -44,8 +45,12 @@ jest.mock('aws-sdk', () => {
 });
 
 describe('Configure AWS Credentials', () => {
+    let originalSuppress;
 
     beforeEach(() => {
+        originalSuppress = process.env.DO_NOT_SUPPRESS_STACK_TRACE;
+        process.env.DO_NOT_SUPPRESS_STACK_TRACE = 'true';
+
         jest.clearAllMocks();
 
         core.getInput = jest
@@ -73,6 +78,10 @@ describe('Configure AWS Credentials', () => {
                 }
             }
         });
+    });
+
+    afterEach(() => {
+        process.env.DO_NOT_SUPPRESS_STACK_TRACE = originalSuppress;
     });
 
     test('exports env vars', async () => {
@@ -122,12 +131,25 @@ describe('Configure AWS Credentials', () => {
         expect(core.setSecret).toHaveBeenCalledTimes(0);
     });
 
-    test('error is caught by core.setFailed', async () => {
+    test('error is caught by core.setFailed and caught', async () => {
+        process.env.DO_NOT_SUPPRESS_STACK_TRACE = 'false';
+
         mockStsCallerIdentity.mockImplementation(() => {
             throw new Error();
         });
 
         await run();
+
+        expect(core.setFailed).toBeCalled();
+    });
+
+    test('error is caught by core.setFailed and passed', async () => {
+
+        mockStsCallerIdentity.mockImplementation(() => {
+            throw new Error();
+        });
+
+        await assert.rejects(() => run());
 
         expect(core.setFailed).toBeCalled();
     });

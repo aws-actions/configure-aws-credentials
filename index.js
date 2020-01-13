@@ -101,13 +101,14 @@ async function run() {
     }
   }
   catch (error) {
-    const inGitHubAction = process.env.GITHUB_ACTIONS || false;
+    core.setFailed(error.message);
 
-    if(inGitHubAction) {
-      core.setFailed(error.message);
-    }else{
+    const suppressStackTrace = process.env.DO_NOT_SUPPRESS_STACK_TRACE;
+
+    if (suppressStackTrace === 'true') {
       throw(error)
     }
+
   }
 }
 
