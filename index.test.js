@@ -54,13 +54,11 @@ jest.mock('aws-sdk', () => {
 });
 
 describe('Configure AWS Credentials', () => {
-    let originalEnvironmentVariables = {};
+    const OLD_ENV = process.env;
 
     beforeEach(() => {
-        for (const key of Object.keys(ENVIRONMENT_VARIABLE_OVERRIDES)){
-            originalEnvironmentVariables[key] = process.env[key];
-            process.env[key] = ENVIRONMENT_VARIABLE_OVERRIDES[key];
-        }
+        jest.resetModules();
+        process.env = {...OLD_ENV, ...ENVIRONMENT_VARIABLE_OVERRIDES};
 
         jest.clearAllMocks();
 
@@ -92,9 +90,7 @@ describe('Configure AWS Credentials', () => {
     });
 
     afterEach(() => {
-        for (const key of Object.keys(originalEnvironmentVariables)){
-            process.env[key] = originalEnvironmentVariables[key];
-        }
+        process.env = OLD_ENV;
     });
 
     test('exports env vars', async () => {
@@ -167,7 +163,7 @@ describe('Configure AWS Credentials', () => {
         expect(core.setFailed).toBeCalled();
     });
 
-    test('basic role assumption', async () => {
+    test('basic role assumption exports', async () => {
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
@@ -182,6 +178,50 @@ describe('Configure AWS Credentials', () => {
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
         expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
+    });
+
+    test('role assumption tags', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_NAME,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 6 * 3600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTOR},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+            ]
+        })
+    });
+
+    test('role assumption duration provided', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-duration-seconds': 5}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_NAME,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 5,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTOR},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+            ]
+        })
     });
 
 });
