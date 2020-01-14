@@ -6,6 +6,7 @@ const util = require('util');
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
 const MAX_ACTION_RUNTIME = 6 * 3600;
+const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
@@ -25,7 +26,9 @@ async function assumeRole(params) {
 
   const endpoint = util.format('https://sts.%s.amazonaws.com', region);
 
-  const sts = new aws.STS({accessKeyId, secretAccessKey, sessionToken, region, endpoint});
+  const sts = new aws.STS({
+    accessKeyId, secretAccessKey, sessionToken, region, endpoint, customUserAgent: USER_AGENT
+  });
   return sts.assumeRole({
     RoleArn: roleToAssume,
     RoleSessionName: 'GitHubActions',
@@ -51,6 +54,7 @@ async function assumeRole(params) {
 }
 
 function exportCredentials(params){
+  // Configure the AWS CLI and AWS SDKs using environment variables
   const {accessKeyId, secretAccessKey, sessionToken} = params;
 
   // AWS_ACCESS_KEY_ID:
@@ -65,6 +69,24 @@ function exportCredentials(params){
   // Specifies the session token value that is required if you are using temporary security credentials.
   if (sessionToken) {
     core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
+  }
+}
+
+function exportRegion(region) {
+  // AWS_DEFAULT_REGION and AWS_REGION:
+  // Specifies the AWS Region to send requests to
+  core.exportVariable('AWS_DEFAULT_REGION', region);
+  core.exportVariable('AWS_REGION', region);
+}
+
+async function exportAccountId(maskAccountId) {
+  // Get the AWS account ID
+  const sts = new aws.STS({customUserAgent: USER_AGENT});
+  const identity = await sts.getCallerIdentity().promise();
+  const accountId = identity.Account;
+  core.setOutput('aws-account-id', accountId);
+  if (!maskAccountId || maskAccountId.toLowerCase() == 'true') {
+    core.setSecret(accountId);
   }
 }
 
@@ -86,26 +108,12 @@ async function run() {
       );
       exportCredentials(roleCredentials);
     } else {
-      exportCredentials({accessKeyId, secretAccessKey, sessionToken})
+      exportCredentials({accessKeyId, secretAccessKey, sessionToken});
     }
 
-    // Configure the AWS CLI and AWS SDKs using environment variables
+    exportRegion(region);
 
-    // AWS_DEFAULT_REGION and AWS_REGION:
-    // Specifies the AWS Region to send requests to
-    core.exportVariable('AWS_DEFAULT_REGION', region);
-    core.exportVariable('AWS_REGION', region);
-
-    // Get the AWS account ID
-    const sts = new aws.STS({
-      customUserAgent: 'configure-aws-credentials-for-github-actions'
-    });
-    const identity = await sts.getCallerIdentity().promise();
-    const accountId = identity.Account;
-    core.setOutput('aws-account-id', accountId);
-    if (!maskAccountId || maskAccountId.toLowerCase() == 'true') {
-      core.setSecret(accountId);
-    }
+    await exportAccountId(maskAccountId);
   }
   catch (error) {
     core.setFailed(error.message);
