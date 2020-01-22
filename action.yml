@@ -20,7 +20,7 @@ inputs:
     description: "Whether to set the AWS account ID for these credentials as a secret value, so that it is masked in logs. Valid values are 'true' and 'false'. Defaults to true"
     required: false
   role-to-assume:
-    description: "Use the provided credentials to assume a role rather than persisting the credentials directly"
+    description: "Use the provided credentials to assume a Role and output the assumed credentials for that Role rather than the provided credentials"
     required: false
   role-duration-seconds:
     description: "Role duration in seconds (default: 6 hours)"
