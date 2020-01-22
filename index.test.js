@@ -15,7 +15,7 @@ const FAKE_REGION = 'fake-region-1';
 const FAKE_ACCOUNT_ID = '123456789012';
 const ROLE_NAME = 'MY-ROLE';
 const ENVIRONMENT_VARIABLE_OVERRIDES = {
-    DO_NOT_SUPPRESS_STACK_TRACE: 'true',
+    SHOW_STACK_TRACE: 'true',
     GITHUB_REPOSITORY: 'MY-REPOSITORY-NAME',
     GITHUB_WORKFLOW: 'MY-WORKFLOW-ID',
     GITHUB_ACTION: 'MY-ACTION-NAME',
@@ -141,7 +141,7 @@ describe('Configure AWS Credentials', () => {
     });
 
     test('error is caught by core.setFailed and caught', async () => {
-        process.env.DO_NOT_SUPPRESS_STACK_TRACE = 'false';
+        process.env.SHOW_STACK_TRACE = 'false';
 
         mockStsCallerIdentity.mockImplementation(() => {
             throw new Error();

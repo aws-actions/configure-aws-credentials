@@ -118,9 +118,9 @@ async function run() {
   catch (error) {
     core.setFailed(error.message);
 
-    const suppressStackTrace = process.env.DO_NOT_SUPPRESS_STACK_TRACE;
+    const showStackTrace = process.env.SHOW_STACK_TRACE;
 
-    if (suppressStackTrace === 'true') {
+    if (showStackTrace === 'true') {
       throw(error)
     }
 
