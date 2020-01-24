@@ -171,9 +171,13 @@ describe('Configure AWS Credentials', () => {
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledTimes(1);
         expect(core.exportVariable).toHaveBeenCalledTimes(5);
+        expect(core.setSecret).toHaveBeenCalledTimes(4);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', FAKE_STS_SESSION_TOKEN);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_SESSION_TOKEN', FAKE_STS_SESSION_TOKEN);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);

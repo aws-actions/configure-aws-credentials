@@ -72,6 +72,22 @@ function exportCredentials(params){
   }
 }
 
+function exportRoleCredentials(params) {
+  // Unlike existing Github Actions secrets, role credentials will not automatically be masked in logs.
+  // Hence, this must be done explicitly.
+  exportCredentials(params);
+  maskCredentials(params);
+}
+
+function maskCredentials(params) {
+  const {accessKeyId, secretAccessKey, sessionToken} = params;
+
+  // Setting these AWS credentails as secrets masks them in Github Actions logs
+  core.setSecret('AWS_ACCESS_KEY_ID', accessKeyId);
+  core.setSecret('AWS_SECRET_ACCESS_KEY', secretAccessKey);
+  core.setSecret('AWS_SESSION_TOKEN', sessionToken);
+}
+
 function exportRegion(region) {
   // AWS_DEFAULT_REGION and AWS_REGION:
   // Specifies the AWS Region to send requests to
@@ -106,7 +122,7 @@ async function run() {
       const roleCredentials = await assumeRole(
           {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleDurationSeconds}
       );
-      exportCredentials(roleCredentials);
+      exportRoleCredentials(roleCredentials);
     } else {
       exportCredentials({accessKeyId, secretAccessKey, sessionToken});
     }
