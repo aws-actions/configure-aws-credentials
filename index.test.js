@@ -97,9 +97,13 @@ describe('Configure AWS Credentials', () => {
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
         expect(core.exportVariable).toHaveBeenCalledTimes(5);
+        expect(core.setSecret).toHaveBeenCalledTimes(4);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', FAKE_SESSION_TOKEN);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_SESSION_TOKEN', FAKE_SESSION_TOKEN);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
@@ -115,8 +119,11 @@ describe('Configure AWS Credentials', () => {
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
         expect(core.exportVariable).toHaveBeenCalledTimes(4);
+        expect(core.setSecret).toHaveBeenCalledTimes(3);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
@@ -133,11 +140,13 @@ describe('Configure AWS Credentials', () => {
         expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
         expect(core.exportVariable).toHaveBeenCalledTimes(4);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-        expect(core.setSecret).toHaveBeenCalledTimes(0);
+        expect(core.setSecret).toHaveBeenCalledTimes(2);
     });
 
     test('error is caught by core.setFailed and caught', async () => {
