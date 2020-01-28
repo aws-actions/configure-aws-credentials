@@ -54,8 +54,8 @@ async function assumeRole(params) {
 }
 
 function exportCredentials(params){
-  // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets
-  // Setting the credentails as secrets masks them in Github Actions logs
+  // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
+  // Setting the credentials as secrets masks them in Github Actions logs
   const {accessKeyId, secretAccessKey, sessionToken} = params;
 
   // AWS_ACCESS_KEY_ID:
