@@ -56,9 +56,7 @@ async function assumeRole(params) {
 function sanitizeGithubActor(actor) {
   // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
   // Square brackets are not allowed in AWS session tags
-  let sanitizedActor = actor.replace('[', '_')
-  sanitizedActor = sanitizedActor.replace(']', '_')
-  return sanitizedActor
+  return actor.replace(/\[|\]/g, '_')
 }
 
 function exportCredentials(params){

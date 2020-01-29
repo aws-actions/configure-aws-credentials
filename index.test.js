@@ -19,10 +19,11 @@ const ENVIRONMENT_VARIABLE_OVERRIDES = {
     GITHUB_REPOSITORY: 'MY-REPOSITORY-NAME',
     GITHUB_WORKFLOW: 'MY-WORKFLOW-ID',
     GITHUB_ACTION: 'MY-ACTION-NAME',
-    GITHUB_ACTOR: 'MY-USERNAME',
+    GITHUB_ACTOR: 'MY-USERNAME[bot]',
     GITHUB_REF: 'MY-BRANCH',
     GITHUB_SHA: 'MY-COMMIT-ID',
 };
+const GITHUB_ACTOR_SANITIZED = 'MY-USERNAME_bot_'
 
 function mockGetInput(requestResponse) {
     return function (name, options) { // eslint-disable-line no-unused-vars
@@ -208,7 +209,7 @@ describe('Configure AWS Credentials', () => {
                 {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
                 {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
                 {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
-                {Key: 'Actor', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTOR},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
                 {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
                 {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
             ]
@@ -230,7 +231,7 @@ describe('Configure AWS Credentials', () => {
                 {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
                 {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
                 {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
-                {Key: 'Actor', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTOR},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
                 {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
                 {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
             ]
