@@ -38,7 +38,7 @@ async function assumeRole(params) {
       {Key: 'Repository', Value: GITHUB_REPOSITORY},
       {Key: 'Workflow', Value: GITHUB_WORKFLOW},
       {Key: 'Action', Value: GITHUB_ACTION},
-      {Key: 'Actor', Value: GITHUB_ACTOR},
+      {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
       {Key: 'Branch', Value: GITHUB_REF},
       {Key: 'Commit', Value: GITHUB_SHA},
     ]
@@ -51,6 +51,14 @@ async function assumeRole(params) {
       sessionToken: data.Credentials.SessionToken,
     };
   });
+}
+
+function sanitizeGithubActor(actor) {
+  // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
+  // Square brackets are not allowed in AWS session tags
+  let sanitizedActor = actor.replace('[', '_')
+  sanitizedActor = sanitizedActor.replace(']', '_')
+  return sanitizedActor
 }
 
 function exportCredentials(params){
