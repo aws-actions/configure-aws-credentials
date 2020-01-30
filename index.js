@@ -8,6 +8,7 @@ const util = require('util');
 const MAX_ACTION_RUNTIME = 6 * 3600;
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 const MAX_TAG_VALUE_LENGTH = 256;
+const SANITIZATION_CHARACTER = '*'
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
@@ -57,14 +58,14 @@ async function assumeRole(params) {
 function sanitizeGithubActor(actor) {
   // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
   // Square brackets are not allowed in AWS session tags
-  return actor.replace(/\[|\]/g, '_')
+  return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER)
 }
 
 function sanitiseGithubWorkflowName(name) {
   // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
   // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
   // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
-  const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+-@]/gu, '_');
+  const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+-@]/gu, SANITIZATION_CHARACTER);
   const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH)
   return nameTruncated
 }
