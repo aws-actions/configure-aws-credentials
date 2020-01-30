@@ -27,9 +27,9 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
 
 ## Assuming a role
-If you would like to use some use the credentials you provide to this action to assume a role, you can do so by specifying the role ARN in `role-to-assume`.
-These crentials will then be output instead of the ones you have provided.  
-The default session duration is 6 hours, but if you would like to adjust this you can pass `role-duration-seconds`.
+If you would like to use the credentials you provide to this action to assume a role, you can do so by specifying the role ARN in `role-to-assume`.
+The role credentials will then be output instead of the ones you have provided.  
+The default session duration is 6 hours, but if you would like to adjust this you can pass a duration to `role-duration-seconds`.
 
 Example:
 ```yaml
@@ -44,7 +44,7 @@ Example:
 ```
 
 ### Session tagging
-The session will be tagged with the following tags:  
+The session will have the name "GitHubActions" and be tagged with the following tags:  
 (`GITHUB_` environement variable definitions can be [found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
 
 | Key | Value|
@@ -57,7 +57,7 @@ The session will be tagged with the following tags:
 | Branch | GITHUB_REF |
 | Commit | GITHUB_SHA |
 
-_Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly `GITHUB_ACTOR` or `GITHUB_WORKFLOW` will be truncated and if they contain invalid charcters, they will be replaced with an '*'._
+_Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid charcters, the characters will be replaced with an '*'._
 
 ## License Summary
 
