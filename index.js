@@ -7,6 +7,7 @@ const util = require('util');
 // That seems like a reasonable default to use if no role duration is defined.
 const MAX_ACTION_RUNTIME = 6 * 3600;
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
+const MAX_TAG_VALUE_LENGTH = 256;
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
@@ -36,7 +37,7 @@ async function assumeRole(params) {
     Tags: [
       {Key: 'GitHub', Value: 'Actions'},
       {Key: 'Repository', Value: GITHUB_REPOSITORY},
-      {Key: 'Workflow', Value: GITHUB_WORKFLOW},
+      {Key: 'Workflow', Value: sanitiseGithubWorkflowName(GITHUB_WORKFLOW)},
       {Key: 'Action', Value: GITHUB_ACTION},
       {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
       {Key: 'Branch', Value: GITHUB_REF},
@@ -57,6 +58,15 @@ function sanitizeGithubActor(actor) {
   // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
   // Square brackets are not allowed in AWS session tags
   return actor.replace(/\[|\]/g, '_')
+}
+
+function sanitiseGithubWorkflowName(name) {
+  // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
+  // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
+  // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
+  const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+-@]/gu, '_');
+  const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH)
+  return nameTruncated
 }
 
 function exportCredentials(params){
