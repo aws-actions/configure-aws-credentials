@@ -45,7 +45,7 @@ Example:
 
 ### Session tagging
 The session will have the name "GitHubActions" and be tagged with the following tags:  
-(`GITHUB_` environement variable definitions can be [found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
+(`GITHUB_` environment variable definitions can be [found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
 
 | Key | Value|
 | --- | --- |
