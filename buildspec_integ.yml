@@ -12,7 +12,7 @@ phases:
     commands:
       # Install hub CLI
       - wget https://github.com/github/hub/releases/download/v$GITHUB_HUB_CLI_VERSION/hub-linux-amd64-$GITHUB_HUB_CLI_VERSION.tgz
-      - tar -xzvf hub-linux-amd64-$GITHUB_HUB_CLI_VERSION.tgz && sudo mv hub-linux-amd64-$GITHUB_HUB_CLI_VERSION/bin/hub /usr/local/bin
+      - tar -xzvf hub-linux-amd64-$GITHUB_HUB_CLI_VERSION.tgz && mv hub-linux-amd64-$GITHUB_HUB_CLI_VERSION/bin/hub /usr/local/bin
 
       # Configure git client
       - git config user.name "CodeBuild Integration Test"
