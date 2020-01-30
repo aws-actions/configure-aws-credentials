@@ -38,7 +38,7 @@ async function assumeRole(params) {
     Tags: [
       {Key: 'GitHub', Value: 'Actions'},
       {Key: 'Repository', Value: GITHUB_REPOSITORY},
-      {Key: 'Workflow', Value: sanitiseGithubWorkflowName(GITHUB_WORKFLOW)},
+      {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
       {Key: 'Action', Value: GITHUB_ACTION},
       {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
       {Key: 'Branch', Value: GITHUB_REF},
@@ -61,7 +61,7 @@ function sanitizeGithubActor(actor) {
   return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER)
 }
 
-function sanitiseGithubWorkflowName(name) {
+function sanitizeGithubWorkflowName(name) {
   // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
   // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
   // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
