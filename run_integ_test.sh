@@ -8,6 +8,7 @@ ACTION_GIT_COMMIT_ID=`git rev-parse HEAD`
 # Update the integ test action workflow file with the latest action commit ID
 git checkout integ-tests
 sed -i 's|aws-actions/configure-aws-credentials@v1|aws-actions/configure-aws-credentials@$ACTION_GIT_COMMIT_ID|g' test-workflow.yml
+mkdir -p .github/workflows
 cp test-workflow.yml .github/workflows
 git add .github/workflows
 git commit -m "Test commit $ACTION_GIT_COMMIT_ID"
