@@ -22,3 +22,5 @@ phases:
 
       # Run integration tests
       - ./run_integ_test.sh
+    finally:
+      - rm .git/credentials
