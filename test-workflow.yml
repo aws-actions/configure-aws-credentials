@@ -14,6 +14,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Print current build ID
+      run: |
+        echo Integration test run: BUILD_ID
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
