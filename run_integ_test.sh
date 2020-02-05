@@ -12,7 +12,7 @@ git add .github/workflows
 git commit -m "Test commit $GIT_COMMIT_ID"
 
 # Trigger the action workflow
-git push origin integ-tests
+git push origin HEAD:integ-tests
 
 # Validate that the action workflow succeeds
 # Exit codes: success = 0; failure = 1; pending = 2; no status = 3
