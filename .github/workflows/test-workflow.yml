@@ -14,6 +14,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Print current build ID
+      run: |
+        echo Integration test run: githubactionsconfigureawscr-hAMhr2qzHnWH:9f88a86e-c782-4c29-b66d-71b79eccd522
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@1436a160af84c3a086a812f98daf457a042274cb
       with:
