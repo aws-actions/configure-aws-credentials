@@ -8,7 +8,7 @@ const util = require('util');
 const MAX_ACTION_RUNTIME = 6 * 3600;
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 const MAX_TAG_VALUE_LENGTH = 256;
-const SANITIZATION_CHARACTER = '*'
+const SANITIZATION_CHARACTER = '_'
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
