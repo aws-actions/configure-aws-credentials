@@ -1,6 +1,6 @@
 {
   "name": "aws-actions-configure-aws-credentials",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Configure AWS Credentials",
   "main": "index.js",
   "scripts": {
