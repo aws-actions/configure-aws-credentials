@@ -15,6 +15,30 @@ Add the following step to your workflow:
         aws-region: us-east-2
 ```
 
+For example, you can use this action with the AWS CLI available in [GitHub's hosted virtual environments](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners).
+
+```
+jobs:
+  deploy:
+    name: Upload to Amazon S3
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+
+    - name: Copy files to S3 with the AWS CLI
+      run: |
+        aws s3 sync . s3://my-s3-website-bucket
+```
+
 See [action.yml](action.yml) for the full documentation for this action's inputs and outputs.
 
 ## Credentials
@@ -28,7 +52,7 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 
 ## Assuming a role
 If you would like to use the credentials you provide to this action to assume a role, you can do so by specifying the role ARN in `role-to-assume`.
-The role credentials will then be output instead of the ones you have provided.  
+The role credentials will then be output instead of the ones you have provided.
 The default session duration is 6 hours, but if you would like to adjust this you can pass a duration to `role-duration-seconds`.
 
 Example:
@@ -44,7 +68,7 @@ Example:
 ```
 
 ### Session tagging
-The session will have the name "GitHubActions" and be tagged with the following tags:  
+The session will have the name "GitHubActions" and be tagged with the following tags:
 (`GITHUB_` environment variable definitions can be [found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
 
 | Key | Value|
