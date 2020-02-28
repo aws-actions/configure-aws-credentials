@@ -54,7 +54,7 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 If you would like to use the credentials you provide to this action to assume a role, you can do so by specifying the role ARN in `role-to-assume`.
 The role credentials will then be output instead of the ones you have provided.
 The default session duration is 6 hours, but if you would like to adjust this you can pass a duration to `role-duration-seconds`. 
-The default session name is **GitHubActions**, and you can modify it by specifying the desired name in `role-session-name`.
+The default session name is GitHubActions, and you can modify it by specifying the desired name in `role-session-name`.
 
 Example:
 ```yaml
