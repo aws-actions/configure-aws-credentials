@@ -15,7 +15,16 @@ async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
   const isDefined = i => !!i;
 
-  const {roleToAssume, roleDurationSeconds, roleSessionName, accessKeyId, secretAccessKey, sessionToken, region} = params;
+  const {
+    roleToAssume,
+    roleExternalId,
+    roleDurationSeconds,
+    roleSessionName,
+    accessKeyId,
+    secretAccessKey,
+    sessionToken,
+    region,
+  } = params;
   assert(
       [roleToAssume, roleDurationSeconds, roleSessionName, accessKeyId, secretAccessKey, region].every(isDefined),
       "Missing required input when assuming a Role."
@@ -32,7 +41,8 @@ async function assumeRole(params) {
   const sts = new aws.STS({
     accessKeyId, secretAccessKey, sessionToken, region, endpoint, customUserAgent: USER_AGENT
   });
-  return sts.assumeRole({
+
+  const assumeRoleRequest = {
     RoleArn: roleToAssume,
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
@@ -45,7 +55,13 @@ async function assumeRole(params) {
       {Key: 'Branch', Value: GITHUB_REF},
       {Key: 'Commit', Value: GITHUB_SHA},
     ]
-  })
+  };
+
+  if (roleExternalId) {
+    assumeRoleRequest.ExternalId = roleExternalId;
+  }
+
+  return sts.assumeRole(assumeRoleRequest)
   .promise()
   .then(function (data) {
     return {
@@ -121,13 +137,14 @@ async function run() {
     const sessionToken = core.getInput('aws-session-token', { required: false });
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
     const roleToAssume = core.getInput('role-to-assume', {required: false});
+    const roleExternalId = core.getInput('role-external-id', { required: false });
     const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
       const roleCredentials = await assumeRole(
-          {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleDurationSeconds, roleSessionName}
+          {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleExternalId, roleDurationSeconds, roleSessionName}
       );
       exportCredentials(roleCredentials);
     } else {
