@@ -8,15 +8,16 @@ const util = require('util');
 const MAX_ACTION_RUNTIME = 6 * 3600;
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 const MAX_TAG_VALUE_LENGTH = 256;
-const SANITIZATION_CHARACTER = '_'
+const SANITIZATION_CHARACTER = '_';
+const ROLE_SESSION_NAME = 'GitHubActions';
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
   const isDefined = i => !!i;
 
-  const {roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, sessionToken, region} = params;
+  const {roleToAssume, roleDurationSeconds, roleSessionName, accessKeyId, secretAccessKey, sessionToken, region} = params;
   assert(
-      [roleToAssume, roleDurationSeconds, accessKeyId, secretAccessKey, region].every(isDefined),
+      [roleToAssume, roleDurationSeconds, roleSessionName, accessKeyId, secretAccessKey, region].every(isDefined),
       "Missing required input when assuming a Role."
   );
 
@@ -33,7 +34,7 @@ async function assumeRole(params) {
   });
   return sts.assumeRole({
     RoleArn: roleToAssume,
-    RoleSessionName: 'GitHubActions',
+    RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
     Tags: [
       {Key: 'GitHub', Value: 'Actions'},
@@ -121,11 +122,12 @@ async function run() {
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
     const roleToAssume = core.getInput('role-to-assume', {required: false});
     const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
+    const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
       const roleCredentials = await assumeRole(
-          {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleDurationSeconds}
+          {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleDurationSeconds, roleSessionName}
       );
       exportCredentials(roleCredentials);
     } else {

@@ -238,6 +238,28 @@ describe('Configure AWS Credentials', () => {
         })
     });
 
+    test('role assumption session name provided', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-session-name': 'MySessionName'}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_NAME,
+            RoleSessionName: 'MySessionName',
+            DurationSeconds: 6 * 3600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+            ]
+        })
+    });
+
     test('workflow name sanitized in role assumption tags', async () => {
         core.getInput = jest
             .fn()
