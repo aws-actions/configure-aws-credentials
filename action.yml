@@ -26,7 +26,7 @@ inputs:
     description: "Role duration in seconds (default: 6 hours)"
     required: false
   role-session-name:
-    description: 'Role Session Name (default: GitHubActions)'
+    description: 'Role session name (default: GitHubActions)'
     required: false
 outputs:
   aws-account-id:
