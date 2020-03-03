@@ -42,8 +42,16 @@ async function assumeRole(params) {
     accessKeyId, secretAccessKey, sessionToken, region, endpoint, customUserAgent: USER_AGENT
   });
 
+  let roleArn = roleToAssume;
+  if (!roleArn.startsWith('arn:aws')) {
+    const identity = await sts.getCallerIdentity().promise();
+    const accountId = identity.Account;
+    // Supports only 'aws' partition. Customers in other partitions ('aws-cn') will need to provide full ARN
+    roleArn = `arn:aws:iam::${accountId}:role/${roleArn}`;
+  }
+
   const assumeRoleRequest = {
-    RoleArn: roleToAssume,
+    RoleArn: roleArn,
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
     Tags: [
