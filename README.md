@@ -51,9 +51,9 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
 
 ## Assuming a role
-If you would like to use the credentials you provide to this action to assume a role, you can do so by specifying the role ARN in `role-to-assume`.
-The role credentials will then be output instead of the ones you have provided.
-The default session duration is 6 hours, but if you would like to adjust this you can pass a duration to `role-duration-seconds`. 
+If you would like to use the static credentials you provide to this action to assume a role, you can do so by specifying the role ARN in `role-to-assume`.
+The role credentials will then be configured in the Actions environment instead of the static credentials you have provided.
+The default session duration is 6 hours, but if you would like to adjust this you can pass a duration to `role-duration-seconds`.
 The default session name is GitHubActions, and you can modify it by specifying the desired name in `role-session-name`.
 
 Example:
@@ -64,10 +64,12 @@ Example:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
-        role-to-assume: arn:aws:iam::123456789100:role/role-to-assume
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
         role-duration-seconds: 1200
         role-session-name: MySessionName
 ```
+In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws:iam::123456789100:role/role-to-assume`.
 
 ### Session tagging
 The session will have the name "GitHubActions" and be tagged with the following tags:
