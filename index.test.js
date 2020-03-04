@@ -14,6 +14,7 @@ const FAKE_STS_SESSION_TOKEN = 'STS-AWS-SESSION-TOKEN';
 const FAKE_REGION = 'fake-region-1';
 const FAKE_ACCOUNT_ID = '123456789012';
 const ROLE_NAME = 'MY-ROLE';
+const ROLE_ARN = 'arn:aws:iam::123456789012:role/MY-ROLE';
 const ENVIRONMENT_VARIABLE_OVERRIDES = {
     SHOW_STACK_TRACE: 'true',
     GITHUB_REPOSITORY: 'MY-REPOSITORY-NAME',
@@ -40,7 +41,7 @@ const DEFAULT_INPUTS = {
     'aws-region': FAKE_REGION,
     'mask-aws-account-id': 'TRUE'
 };
-const ASSUME_ROLE_INPUTS = {...REQUIRED_INPUTS, 'role-to-assume': ROLE_NAME, 'aws-region': FAKE_REGION};
+const ASSUME_ROLE_INPUTS = {...REQUIRED_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION};
 
 const mockStsCallerIdentity = jest.fn();
 const mockStsAssumeRole = jest.fn();
@@ -201,7 +202,7 @@ describe('Configure AWS Credentials', () => {
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
-            RoleArn: ROLE_NAME,
+            RoleArn: ROLE_ARN,
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
             Tags: [
@@ -223,7 +224,7 @@ describe('Configure AWS Credentials', () => {
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
-            RoleArn: ROLE_NAME,
+            RoleArn: ROLE_ARN,
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 5,
             Tags: [
@@ -245,8 +246,30 @@ describe('Configure AWS Credentials', () => {
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
-            RoleArn: ROLE_NAME,
+            RoleArn: ROLE_ARN,
             RoleSessionName: 'MySessionName',
+            DurationSeconds: 6 * 3600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+            ]
+        })
+    });
+
+    test('role name provided instead of ARN', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...REQUIRED_INPUTS, 'role-to-assume': ROLE_NAME, 'aws-region': FAKE_REGION}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_ARN,
+            RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
             Tags: [
                 {Key: 'GitHub', Value: 'Actions'},
@@ -267,7 +290,7 @@ describe('Configure AWS Credentials', () => {
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
-            RoleArn: ROLE_NAME,
+            RoleArn: ROLE_ARN,
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
             Tags: [
@@ -294,7 +317,7 @@ describe('Configure AWS Credentials', () => {
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
-            RoleArn: ROLE_NAME,
+            RoleArn: ROLE_ARN,
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
             Tags: [
