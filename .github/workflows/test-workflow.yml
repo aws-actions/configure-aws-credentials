@@ -16,10 +16,10 @@ jobs:
 
     - name: Print current build ID
       run: |
-        echo Integration test run: githubactionsconfigureawscr-hAMhr2qzHnWH:626fdd00-46a2-4f93-b3e5-311f3b368500
+        echo Integration test run: githubactionsconfigureawscr-hAMhr2qzHnWH:b765f3eb-8199-461e-9b77-b3cdb0e1d0fa
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@47312577c9b17cb9273286670899a0b4cc346937
+      uses: aws-actions/configure-aws-credentials@3c4f95f73f7c7b9f2e2bb071d8fbfb9aefa002e8
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
