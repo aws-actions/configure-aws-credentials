@@ -16,17 +16,15 @@ async function assumeRole(params) {
   const isDefined = i => !!i;
 
   const {
+    sourceAccountId,
     roleToAssume,
     roleExternalId,
     roleDurationSeconds,
     roleSessionName,
-    accessKeyId,
-    secretAccessKey,
-    sessionToken,
     region,
   } = params;
   assert(
-      [roleToAssume, roleDurationSeconds, roleSessionName, accessKeyId, secretAccessKey, region].every(isDefined),
+      [sourceAccountId, roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
       "Missing required input when assuming a Role."
   );
 
@@ -36,18 +34,12 @@ async function assumeRole(params) {
       'Missing required environment value. Are you running in GitHub Actions?'
   );
 
-  const endpoint = util.format('https://sts.%s.amazonaws.com', region);
-
-  const sts = new aws.STS({
-    accessKeyId, secretAccessKey, sessionToken, region, endpoint, customUserAgent: USER_AGENT
-  });
+  const sts = getStsClient(region);
 
   let roleArn = roleToAssume;
   if (!roleArn.startsWith('arn:aws')) {
-    const identity = await sts.getCallerIdentity().promise();
-    const accountId = identity.Account;
     // Supports only 'aws' partition. Customers in other partitions ('aws-cn') will need to provide full ARN
-    roleArn = `arn:aws:iam::${accountId}:role/${roleArn}`;
+    roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
 
   const assumeRoleRequest = {
@@ -125,15 +117,25 @@ function exportRegion(region) {
   core.exportVariable('AWS_REGION', region);
 }
 
-async function exportAccountId(maskAccountId) {
+async function exportAccountId(maskAccountId, region) {
   // Get the AWS account ID
-  const sts = new aws.STS({customUserAgent: USER_AGENT});
+  const sts = getStsClient(region);
   const identity = await sts.getCallerIdentity().promise();
   const accountId = identity.Account;
   core.setOutput('aws-account-id', accountId);
   if (!maskAccountId || maskAccountId.toLowerCase() == 'true') {
     core.setSecret(accountId);
   }
+  return accountId;
+}
+
+function getStsClient(region) {
+  const endpoint = util.format('https://sts.%s.amazonaws.com', region);
+  return new aws.STS({
+    region,
+    endpoint,
+    customUserAgent: USER_AGENT
+  });
 }
 
 async function run() {
@@ -149,19 +151,28 @@ async function run() {
     const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
 
+    // Always export the source credentials and account ID.
+    // The STS client for calling AssumeRole pulls creds from the environment.
+    // Plus, in the assume role case, if the AssumeRole call fails, we want
+    // the source credentials and accound ID to already be masked as secrets
+    // in any error messages.
+    exportRegion(region);
+    exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+    const sourceAccountId = await exportAccountId(maskAccountId, region);
+
     // Get role credentials if configured to do so
     if (roleToAssume) {
-      const roleCredentials = await assumeRole(
-          {accessKeyId, secretAccessKey, sessionToken, region, roleToAssume, roleExternalId, roleDurationSeconds, roleSessionName}
-      );
+      const roleCredentials = await assumeRole({
+        sourceAccountId,
+        region,
+        roleToAssume,
+        roleExternalId,
+        roleDurationSeconds,
+        roleSessionName
+      });
       exportCredentials(roleCredentials);
-    } else {
-      exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+      await exportAccountId(maskAccountId, region);
     }
-
-    exportRegion(region);
-
-    await exportAccountId(maskAccountId);
   }
   catch (error) {
     core.setFailed(error.message);

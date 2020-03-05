@@ -13,8 +13,9 @@ const FAKE_STS_SECRET_ACCESS_KEY = 'STS-AWS-SECRET-ACCESS-KEY';
 const FAKE_STS_SESSION_TOKEN = 'STS-AWS-SESSION-TOKEN';
 const FAKE_REGION = 'fake-region-1';
 const FAKE_ACCOUNT_ID = '123456789012';
+const FAKE_ROLE_ACCOUNT_ID = '111111111111';
 const ROLE_NAME = 'MY-ROLE';
-const ROLE_ARN = 'arn:aws:iam::123456789012:role/MY-ROLE';
+const ROLE_ARN = 'arn:aws:iam::111111111111:role/MY-ROLE';
 const ENVIRONMENT_VARIABLE_OVERRIDES = {
     SHOW_STACK_TRACE: 'true',
     GITHUB_REPOSITORY: 'MY-REPOSITORY-NAME',
@@ -68,13 +69,18 @@ describe('Configure AWS Credentials', () => {
             .fn()
             .mockImplementation(mockGetInput(DEFAULT_INPUTS));
 
-        mockStsCallerIdentity.mockImplementation(() => {
-            return {
+        mockStsCallerIdentity.mockReset();
+        mockStsCallerIdentity
+            .mockReturnValueOnce({
                 promise() {
                    return Promise.resolve({ Account: FAKE_ACCOUNT_ID });
                 }
-            };
-        });
+            })
+            .mockReturnValueOnce({
+                promise() {
+                   return Promise.resolve({ Account: FAKE_ROLE_ACCOUNT_ID });
+                }
+            });
 
         mockStsAssumeRole.mockImplementation(() => {
             return {
@@ -154,6 +160,7 @@ describe('Configure AWS Credentials', () => {
     test('error is caught by core.setFailed and caught', async () => {
         process.env.SHOW_STACK_TRACE = 'false';
 
+        mockStsCallerIdentity.mockReset();
         mockStsCallerIdentity.mockImplementation(() => {
             throw new Error();
         });
@@ -165,6 +172,7 @@ describe('Configure AWS Credentials', () => {
 
     test('error is caught by core.setFailed and passed', async () => {
 
+        mockStsCallerIdentity.mockReset();
         mockStsCallerIdentity.mockImplementation(() => {
             throw new Error();
         });
@@ -181,18 +189,33 @@ describe('Configure AWS Credentials', () => {
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledTimes(1);
-        expect(core.exportVariable).toHaveBeenCalledTimes(5);
-        expect(core.setSecret).toHaveBeenCalledTimes(4);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
-        expect(core.setSecret).toHaveBeenCalledWith(FAKE_STS_ACCESS_KEY_ID);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);
-        expect(core.setSecret).toHaveBeenCalledWith(FAKE_STS_SECRET_ACCESS_KEY);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', FAKE_STS_SESSION_TOKEN);
-        expect(core.setSecret).toHaveBeenCalledWith(FAKE_STS_SESSION_TOKEN);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
-        expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
-        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-        expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
+        expect(core.exportVariable).toHaveBeenCalledTimes(7);
+        expect(core.setSecret).toHaveBeenCalledTimes(7);
+        expect(core.setOutput).toHaveBeenCalledTimes(2);
+
+        // first the source credentials are exported and masked
+        expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_ACCOUNT_ID);
+
+        expect(core.exportVariable).toHaveBeenNthCalledWith(1, 'AWS_DEFAULT_REGION', FAKE_REGION);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(2, 'AWS_REGION', FAKE_REGION);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(3, 'AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(4, 'AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
+
+        expect(core.setOutput).toHaveBeenNthCalledWith(1, 'aws-account-id', FAKE_ACCOUNT_ID);
+
+        // then the role credentials are exported and masked
+        expect(core.setSecret).toHaveBeenNthCalledWith(4, FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(5, FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(6, FAKE_STS_SESSION_TOKEN);
+        expect(core.setSecret).toHaveBeenNthCalledWith(7, FAKE_ROLE_ACCOUNT_ID);
+
+        expect(core.exportVariable).toHaveBeenNthCalledWith(5, 'AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(6, 'AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(7, 'AWS_SESSION_TOKEN', FAKE_STS_SESSION_TOKEN);
+
+        expect(core.setOutput).toHaveBeenNthCalledWith(2, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
     });
 
     test('role assumption tags', async () => {
@@ -268,7 +291,7 @@ describe('Configure AWS Credentials', () => {
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
-            RoleArn: ROLE_ARN,
+            RoleArn: 'arn:aws:iam::123456789012:role/MY-ROLE',
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
             Tags: [
