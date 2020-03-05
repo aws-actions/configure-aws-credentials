@@ -1,0 +1,32 @@
+pull_request_rules:
+  - name: Automatically merge on CI success and review approval
+    conditions:
+      - base~=master|integ-tests
+      - "#approved-reviews-by>=1"
+      - approved-reviews-by=@aws-actions/aws-ecs-devx
+      - -approved-reviews-by~=author
+      - status-success=Run Unit Tests
+      - status-success=Semantic Pull Request
+      - label!=work-in-progress
+      - -title~=(WIP|wip)
+      - -merged
+      - -closed
+      - author!=dependabot[bot]
+      - author!=dependabot-preview[bot]
+    actions:
+      merge:
+        method: squash
+        strict: smart
+        strict_method: merge
+
+  - name: Automatically approve Dependabot PRs
+    conditions:
+      - base=master
+      - author~=^dependabot(|-preview)\[bot\]$
+      - -title~=(WIP|wip)
+      - -label~=(blocked|do-not-merge)
+      - -merged
+      - -closed
+    actions:
+      review:
+        type: APPROVE
