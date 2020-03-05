@@ -69,7 +69,50 @@ Example:
         role-duration-seconds: 1200
         role-session-name: MySessionName
 ```
-In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws:iam::123456789100:role/role-to-assume`.
+In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws:iam::123456789100:role/my-github-actions-role`.  To assume a role in the same account as the static credentials, you can simply specify the role name, like `role-to-assume: my-github-actions-role`.
+
+### Permissions
+
+In order to assume a role, the IAM user for the static credentials must have the following permissions:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "sts:AssumeRole",
+                "sts:TagSession"
+            ],
+            "Resource": "arn:aws:iam::123456789012:role/my-github-actions-role",
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
+The role's trust policy must allow the IAM user to assume the role:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowIamUserAssumeRole",
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Principal": {"AWS": "arn:aws:iam::123456789012:user/my-github-actions-user"},
+            "Condition": {
+                "StringEquals": {"sts:ExternalId": "Example987"}
+            }
+        },
+        {
+            "Sid": "AllowPassSessionTags",
+            "Effect": "Allow",
+            "Action": "sts:TagSession",
+            "Principal": {"AWS": "arn:aws:iam::123456789012:user/my-github-actions-user"}
+        }
+    ]
+}
+```
 
 ### Session tagging
 The session will have the name "GitHubActions" and be tagged with the following tags:
