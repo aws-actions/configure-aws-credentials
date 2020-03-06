@@ -130,6 +130,29 @@ The session will have the name "GitHubActions" and be tagged with the following 
 
 _Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid charcters, the characters will be replaced with an '*'._
 
+## Self-hosted runners
+
+If you run your GitHub Actions in a [self-hosted runner](https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) that already has access to AWS credentials, such as an EC2 instance, then you do not need to provide IAM user access key credentials to this action.
+
+If no access key credentials are given in the action inputs, this action will use credentials from the runner environment using the [default methods for the AWS SDK for Javascript](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html).
+
+You can use this action to simply configure the region and account ID in the environment, and then use the runner's credentials for all AWS API calls made by your Actions workflow:
+```yaml
+uses: aws-actions/configure-aws-credentials@v1
+with:
+  aws-region: us-east-2
+```
+In this case, your runner's credentials must have permissions to call any AWS APIs called by your Actions workflow.
+
+Or, you can use this action to assume a role, and then use the role credentials for all AWS API calls made by your Actions workflow:
+```yaml
+uses: aws-actions/configure-aws-credentials@v1
+with:
+  aws-region: us-east-2
+  role-to-assume: my-github-actions-role
+```
+In this case, your runner's credentials must have permissions to assume the role.
+
 ## License Summary
 
 This code is made available under the MIT license.
