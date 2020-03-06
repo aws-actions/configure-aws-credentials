@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.1.2...v1.2.0) (2020-03-06)
+
+
+### Features
+
+* Add option to provide external ID ([#32](https://github.com/aws-actions/configure-aws-credentials/issues/32)) ([1c435bb](https://github.com/aws-actions/configure-aws-credentials/commit/1c435bbd5e1f1d36cdd703da5c4d6ee1ad91efac)), closes [#28](https://github.com/aws-actions/configure-aws-credentials/issues/28)
+* Have an ability to configure session name ([#29](https://github.com/aws-actions/configure-aws-credentials/issues/29)) ([4d0082a](https://github.com/aws-actions/configure-aws-credentials/commit/4d0082acf8b4102597f2570a056a320194f13e63))
+* infer role ARN if given role name ([#35](https://github.com/aws-actions/configure-aws-credentials/issues/35)) ([96c6f7e](https://github.com/aws-actions/configure-aws-credentials/commit/96c6f7e07b5fabc5a907fce84745ea625eeb005d))
+
+
+### Bug Fixes
+
+* mask both source and role credentials ([#40](https://github.com/aws-actions/configure-aws-credentials/issues/40)) ([816f5cc](https://github.com/aws-actions/configure-aws-credentials/commit/816f5cc0cf79541b2a6d639e8f93ae43aadaf09c))
+
 ### [1.1.2](https://github.com/aws-actions/configure-aws-credentials/compare/v1.1.1...v1.1.2) (2020-02-12)
 
 
