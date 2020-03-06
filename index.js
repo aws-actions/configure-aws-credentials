@@ -141,8 +141,8 @@ function getStsClient(region) {
 async function run() {
   try {
     // Get inputs
-    const accessKeyId = core.getInput('aws-access-key-id', { required: true });
-    const secretAccessKey = core.getInput('aws-secret-access-key', { required: true });
+    const accessKeyId = core.getInput('aws-access-key-id', { required: false });
+    const secretAccessKey = core.getInput('aws-secret-access-key', { required: false });
     const region = core.getInput('aws-region', { required: true });
     const sessionToken = core.getInput('aws-session-token', { required: false });
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
@@ -151,13 +151,21 @@ async function run() {
     const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
 
+    exportRegion(region);
+
     // Always export the source credentials and account ID.
     // The STS client for calling AssumeRole pulls creds from the environment.
     // Plus, in the assume role case, if the AssumeRole call fails, we want
     // the source credentials and accound ID to already be masked as secrets
     // in any error messages.
-    exportRegion(region);
-    exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+    if (accessKeyId) {
+      if (!secretAccessKey) {
+        throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
+      }
+
+      exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+    }
+
     const sourceAccountId = await exportAccountId(maskAccountId, region);
 
     // Get role credentials if configured to do so

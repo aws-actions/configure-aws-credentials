@@ -32,17 +32,17 @@ function mockGetInput(requestResponse) {
         return requestResponse[name]
     }
 }
-const REQUIRED_INPUTS = {
+const CREDS_INPUTS = {
     'aws-access-key-id': FAKE_ACCESS_KEY_ID,
     'aws-secret-access-key': FAKE_SECRET_ACCESS_KEY
 };
 const DEFAULT_INPUTS = {
-    ...REQUIRED_INPUTS,
+    ...CREDS_INPUTS,
     'aws-session-token': FAKE_SESSION_TOKEN,
     'aws-region': FAKE_REGION,
     'mask-aws-account-id': 'TRUE'
 };
-const ASSUME_ROLE_INPUTS = {...REQUIRED_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION};
+const ASSUME_ROLE_INPUTS = {...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION};
 
 const mockStsCallerIdentity = jest.fn();
 const mockStsAssumeRole = jest.fn();
@@ -118,8 +118,24 @@ describe('Configure AWS Credentials', () => {
         expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
     });
 
+    test('hosted runners can pull creds from a self-hosted environment', async () => {
+        const mockInputs = {'aws-region': FAKE_REGION};
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(mockInputs));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
+        expect(core.exportVariable).toHaveBeenCalledTimes(2);
+        expect(core.setSecret).toHaveBeenCalledTimes(1);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
+        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+        expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
+    });
+
     test('session token is optional', async () => {
-        const mockInputs = {...REQUIRED_INPUTS, 'aws-region': 'eu-west-1'};
+        const mockInputs = {...CREDS_INPUTS, 'aws-region': 'eu-west-1'};
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput(mockInputs));
@@ -139,7 +155,7 @@ describe('Configure AWS Credentials', () => {
     });
 
     test('can opt out of masking account ID', async () => {
-        const mockInputs = {...REQUIRED_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'false'};
+        const mockInputs = {...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'false'};
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput(mockInputs));
@@ -218,6 +234,36 @@ describe('Configure AWS Credentials', () => {
         expect(core.setOutput).toHaveBeenNthCalledWith(2, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
     });
 
+    test('assume role can pull source credentials from self-hosted environment', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(1);
+        expect(core.exportVariable).toHaveBeenCalledTimes(5);
+        expect(core.setSecret).toHaveBeenCalledTimes(5);
+        expect(core.setOutput).toHaveBeenCalledTimes(2);
+
+        // first the source account is exported and masked
+        expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_ACCOUNT_ID);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(1, 'AWS_DEFAULT_REGION', FAKE_REGION);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(2, 'AWS_REGION', FAKE_REGION);
+        expect(core.setOutput).toHaveBeenNthCalledWith(1, 'aws-account-id', FAKE_ACCOUNT_ID);
+
+        // then the role credentials are exported and masked
+        expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(4, FAKE_STS_SESSION_TOKEN);
+        expect(core.setSecret).toHaveBeenNthCalledWith(5, FAKE_ROLE_ACCOUNT_ID);
+
+        expect(core.exportVariable).toHaveBeenNthCalledWith(3, 'AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(4, 'AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(5, 'AWS_SESSION_TOKEN', FAKE_STS_SESSION_TOKEN);
+
+        expect(core.setOutput).toHaveBeenNthCalledWith(2, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
+    });
+
     test('role assumption tags', async () => {
         core.getInput = jest
             .fn()
@@ -287,7 +333,7 @@ describe('Configure AWS Credentials', () => {
     test('role name provided instead of ARN', async () => {
         core.getInput = jest
             .fn()
-            .mockImplementation(mockGetInput({...REQUIRED_INPUTS, 'role-to-assume': ROLE_NAME, 'aws-region': FAKE_REGION}));
+            .mockImplementation(mockGetInput({...CREDS_INPUTS, 'role-to-assume': ROLE_NAME, 'aws-region': FAKE_REGION}));
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
