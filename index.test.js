@@ -154,6 +154,19 @@ describe('Configure AWS Credentials', () => {
         expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
     });
 
+    test('validates region name', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+
+        const mockInputs = {...CREDS_INPUTS, 'aws-region': '$AWS_REGION'};
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(mockInputs));
+
+        await run();
+
+        expect(core.setFailed).toHaveBeenCalledWith('Region is not valid: $AWS_REGION');
+    });
+
     test('can opt out of masking account ID', async () => {
         const mockInputs = {...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'false'};
         core.getInput = jest
