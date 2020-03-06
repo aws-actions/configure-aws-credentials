@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.0...v1.3.1) (2020-03-06)
+
+
+### Bug Fixes
+
+* validate region input string ([#44](https://github.com/aws-actions/configure-aws-credentials/issues/44)) ([3d568d2](https://github.com/aws-actions/configure-aws-credentials/commit/3d568d2c4359304d46d9bd1b4d9f69e088ccbf7b))
+
 ## [1.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.2.0...v1.3.0) (2020-03-06)
 
 
