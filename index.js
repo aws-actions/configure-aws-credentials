@@ -1,7 +1,6 @@
 const core = require('@actions/core');
 const aws = require('aws-sdk');
 const assert = require('assert');
-const util = require('util');
 
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
@@ -131,10 +130,9 @@ async function exportAccountId(maskAccountId, region) {
 }
 
 function getStsClient(region) {
-  const endpoint = util.format('https://sts.%s.amazonaws.com', region);
   return new aws.STS({
     region,
-    endpoint,
+    stsRegionalEndpoints: 'regional',
     customUserAgent: USER_AGENT
   });
 }
