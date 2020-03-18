@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.2](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.1...v1.3.2) (2020-03-18)
+
+
+### Bug Fixes
+
+* let the AWS SDK determine the STS regional endpoint ([#48](https://github.com/aws-actions/configure-aws-credentials/issues/48)) ([fc72bd3](https://github.com/aws-actions/configure-aws-credentials/commit/fc72bd38dbe25493f5113760c9c6e1ef2f6f9a0e))
+
 ### [1.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.0...v1.3.1) (2020-03-06)
 
 
