@@ -17,7 +17,7 @@ Add the following step to your workflow:
 
 For example, you can use this action with the AWS CLI available in [GitHub's hosted virtual environments](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners).
 
-```
+```yaml
 jobs:
   deploy:
     name: Upload to Amazon S3
@@ -74,7 +74,7 @@ In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws
 ### Permissions
 
 In order to assume a role, the IAM user for the static credentials must have the following permissions:
-```
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -91,7 +91,7 @@ In order to assume a role, the IAM user for the static credentials must have the
 ```
 
 The role's trust policy must allow the IAM user to assume the role:
-```
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
