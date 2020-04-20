@@ -2,6 +2,21 @@
 
 Configure AWS credential and region environment variables for use in other GitHub Actions.  The environment variables will be detected by both the AWS SDKs and the AWS CLI to determine the credentials and region to use for AWS API calls.
 
+**Table of Contents**
+
+<!-- toc -->
+
+- [Usage](#usage)
+- [Credentials](#credentials)
+- [Assuming a Role](#assuming-a-role)
+    + [Permissions for assuming a role](#permissions-for-assuming-a-role)
+    + [Session tagging](#session-tagging)
+- [Self-Hosted Runners](#self-hosted-runners)
+- [License Summary](#license-summary)
+- [Security Disclosures](#security-disclosures)
+
+<!-- tocstop -->
+
 ## Usage
 
 Add the following step to your workflow:
@@ -50,7 +65,7 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 * [Rotate the credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#rotate-credentials) used in GitHub Actions workflows regularly.
 * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
 
-## Assuming a role
+## Assuming a Role
 If you would like to use the static credentials you provide to this action to assume a role, you can do so by specifying the role ARN in `role-to-assume`.
 The role credentials will then be configured in the Actions environment instead of the static credentials you have provided.
 The default session duration is 6 hours, but if you would like to adjust this you can pass a duration to `role-duration-seconds`.
@@ -130,7 +145,7 @@ The session will have the name "GitHubActions" and be tagged with the following 
 
 _Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid charcters, the characters will be replaced with an '*'._
 
-## Self-hosted runners
+## Self-Hosted Runners
 
 If you run your GitHub Actions in a [self-hosted runner](https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) that already has access to AWS credentials, such as an EC2 instance, then you do not need to provide IAM user access key credentials to this action.
 
@@ -156,3 +171,7 @@ In this case, your runner's credentials must have permissions to assume the role
 ## License Summary
 
 This code is made available under the MIT license.
+
+## Security Disclosures
+
+If you would like to report a potential security issue in this project, please do not create a GitHub issue.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
