@@ -71,7 +71,7 @@ Example:
 ```
 In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws:iam::123456789100:role/my-github-actions-role`.  To assume a role in the same account as the static credentials, you can simply specify the role name, like `role-to-assume: my-github-actions-role`.
 
-### Permissions
+### Permissions for assuming a role
 
 In order to assume a role, the IAM user for the static credentials must have the following permissions:
 ```json
