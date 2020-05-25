@@ -154,6 +154,28 @@ describe('Configure AWS Credentials', () => {
         expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
     });
 
+    test('session token is cleared if necessary', async () => {
+        const mockInputs = {...CREDS_INPUTS, 'aws-region': 'eu-west-1'};
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(mockInputs));
+        process.env.AWS_SESSION_TOKEN = 'helloworld';
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(0);
+        expect(core.exportVariable).toHaveBeenCalledTimes(5);
+        expect(core.setSecret).toHaveBeenCalledTimes(3);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenCalledWith(FAKE_SECRET_ACCESS_KEY);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', '');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
+        expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+        expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
+    });
+
     test('validates region name', async () => {
         process.env.SHOW_STACK_TRACE = 'false';
 

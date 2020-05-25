@@ -31,6 +31,7 @@ Add the following step to your workflow:
 ```
 
 For example, you can use this action with the AWS CLI available in [GitHub's hosted virtual environments](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners).
+You can also run this action multiple times to use different AWS accounts, regions, or IAM roles in the same GitHub Actions workflow job.
 
 ```yaml
 jobs:
@@ -42,16 +43,27 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials from Test account
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-2
+        aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
 
-    - name: Copy files to S3 with the AWS CLI
+    - name: Copy files to the test website with the AWS CLI
       run: |
-        aws s3 sync . s3://my-s3-website-bucket
+        aws s3 sync . s3://my-s3-test-website-bucket
+
+    - name: Configure AWS credentials from Production account
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Copy files to the production website with the AWS CLI
+      run: |
+        aws s3 sync . s3://my-s3-prod-website-bucket
 ```
 
 See [action.yml](action.yml) for the full documentation for this action's inputs and outputs.
