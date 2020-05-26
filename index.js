@@ -107,6 +107,9 @@ function exportCredentials(params){
   if (sessionToken) {
     core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
     core.setSecret(sessionToken);
+  } else if (process.env.AWS_SESSION_TOKEN) {
+    // clear session token from previous credentials action
+    core.exportVariable('AWS_SESSION_TOKEN', '');
   }
 }
 
