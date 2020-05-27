@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.5](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.4...v1.3.5) (2020-05-27)
+
+
+### Bug Fixes
+
+* clear session token env var if present for non-session credentials ([#65](https://github.com/aws-actions/configure-aws-credentials/issues/65)) ([0c2c1f7](https://github.com/aws-actions/configure-aws-credentials/commit/0c2c1f7c129971b6f433551b1f4ba4a6a9cc8b70))
+
 ### [1.3.4](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.3...v1.3.4) (2020-05-18)
 
 ### [1.3.3](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.2...v1.3.3) (2020-04-02)
