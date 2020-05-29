@@ -132,6 +132,50 @@ async function exportAccountId(maskAccountId, region) {
   return accountId;
 }
 
+function loadCredentials() {
+  // Force the SDK to re-resolve credentials with the default provider chain.
+  //
+  // This action typically sets credentials in the environment via environment variables.
+  // The SDK never refreshes those env-var-based credentials after initial load.
+  // In case there were already env-var creds set in the actions environment when this action
+  // loaded, this action needs to refresh the SDK creds after overwriting those environment variables.
+  //
+  // The credentials object needs to be entirely recreated (instead of simply refreshed),
+  // because the credential object type could change when this action writes env var creds.
+  // For example, the first load could return EC2 instance metadata credentials
+  // in a self-hosted runner, and the second load could return environment credentials
+  // from an assume-role call in this action.
+  aws.config.credentials = null;
+
+  return new Promise((resolve, reject) => {
+    aws.config.getCredentials((err) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(aws.config.credentials);
+    })
+  });
+}
+
+async function validateCredentials(expectedAccessKeyId) {
+  let credentials;
+  try {
+    credentials = await loadCredentials();
+
+    if (!credentials.accessKeyId) {
+      throw new Error('Access key ID empty after loading credentials');
+    }
+  } catch (error) {
+    throw new Error(`Credentials could not be loaded, please check your action inputs: ${error.message}`);
+  }
+
+  const actualAccessKeyId = credentials.accessKeyId;
+
+  if (expectedAccessKeyId && expectedAccessKeyId != actualAccessKeyId) {
+    throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+  }
+}
+
 function getStsClient(region) {
   return new aws.STS({
     region,
@@ -172,6 +216,13 @@ async function run() {
       exportCredentials({accessKeyId, secretAccessKey, sessionToken});
     }
 
+    // Regardless of whether any source credentials were provided as inputs,
+    // validate that the SDK can actually pick up credentials.  This validates
+    // cases where this action is on a self-hosted runner that doesn't have credentials
+    // configured correctly, and cases where the user intended to provide input
+    // credentials but the secrets inputs resolved to empty strings.
+    await validateCredentials(accessKeyId);
+
     const sourceAccountId = await exportAccountId(maskAccountId, region);
 
     // Get role credentials if configured to do so
@@ -185,6 +236,7 @@ async function run() {
         roleSessionName
       });
       exportCredentials(roleCredentials);
+      await validateCredentials(roleCredentials.accessKeyId);
       await exportAccountId(maskAccountId, region);
     }
   }

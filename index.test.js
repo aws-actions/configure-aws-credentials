@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const assert = require('assert');
-
+const aws = require('aws-sdk');
 const run = require('.');
 
 jest.mock('@actions/core');
@@ -49,6 +49,9 @@ const mockStsAssumeRole = jest.fn();
 
 jest.mock('aws-sdk', () => {
     return {
+        config: {
+            getCredentials: jest.fn()
+        },
         STS: jest.fn(() => ({
             getCallerIdentity: mockStsCallerIdentity,
             assumeRole: mockStsAssumeRole,
@@ -80,6 +83,21 @@ describe('Configure AWS Credentials', () => {
                 promise() {
                    return Promise.resolve({ Account: FAKE_ROLE_ACCOUNT_ID });
                 }
+            });
+
+        aws.config.getCredentials.mockReset();
+        aws.config.getCredentials
+            .mockImplementationOnce(callback => {
+                aws.config.credentials = {
+                    accessKeyId: FAKE_ACCESS_KEY_ID
+                }
+                callback(null);
+            })
+            .mockImplementationOnce(callback => {
+                aws.config.credentials = {
+                    accessKeyId: FAKE_STS_ACCESS_KEY_ID
+                }
+                callback(null);
             });
 
         mockStsAssumeRole.mockImplementation(() => {
@@ -132,6 +150,59 @@ describe('Configure AWS Credentials', () => {
         expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
         expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
         expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
+    });
+
+    test('action with no accessible credentials fails', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+        const mockInputs = {'aws-region': FAKE_REGION};
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(mockInputs));
+        aws.config.getCredentials.mockReset();
+        aws.config.getCredentials.mockImplementation(callback => {
+            callback(new Error('No credentials to load'));
+        });
+
+        await run();
+
+        expect(core.setFailed).toHaveBeenCalledWith("Credentials could not be loaded, please check your action inputs: No credentials to load");
+    });
+
+    test('action with empty credentials fails', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+        const mockInputs = {'aws-region': FAKE_REGION};
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(mockInputs));
+        aws.config.getCredentials.mockReset();
+        aws.config.getCredentials.mockImplementation(callback => {
+            aws.config.credentials = {
+                accessKeyId: ''
+            }
+            callback(null);
+        });
+
+        await run();
+
+        expect(core.setFailed).toHaveBeenCalledWith("Credentials could not be loaded, please check your action inputs: Access key ID empty after loading credentials");
+    });
+
+    test('action fails when credentials are not set in the SDK correctly', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+        aws.config.getCredentials.mockReset();
+        aws.config.getCredentials.mockImplementation(callback => {
+            aws.config.credentials = {
+                accessKeyId: FAKE_ACCESS_KEY_ID
+            }
+            callback(null);
+        });
+
+        await run();
+
+        expect(core.setFailed).toHaveBeenCalledWith("Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action");
     });
 
     test('session token is optional', async () => {
