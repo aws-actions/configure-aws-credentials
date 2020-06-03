@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.5...v1.4.0) (2020-06-03)
+
+
+### Features
+
+* Refresh and validate credentials after setting env var creds ([#71](https://github.com/aws-actions/configure-aws-credentials/issues/71)) ([472e549](https://github.com/aws-actions/configure-aws-credentials/commit/472e549195ba1f153e9fb72e39dc2a094e5de13e))
+
 ### [1.3.5](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.4...v1.3.5) (2020-05-27)
 
 
