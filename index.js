@@ -82,7 +82,7 @@ function sanitizeGithubWorkflowName(name) {
   // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
   // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
   // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
-  const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+//-@]/gu, SANITIZATION_CHARACTER);
+  const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_:/=+.-@-]/gu, SANITIZATION_CHARACTER);
   const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH)
   return nameTruncated
 }
