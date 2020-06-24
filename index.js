@@ -28,9 +28,9 @@ async function assumeRole(params) {
       "Missing required input when assuming a Role."
   );
 
-  const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA} = process.env;
+  const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA} = process.env;
   assert(
-      [GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_REF, GITHUB_SHA].every(isDefined),
+      [GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA].every(isDefined),
       'Missing required environment value. Are you running in GitHub Actions?'
   );
 
@@ -52,10 +52,13 @@ async function assumeRole(params) {
       {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
       {Key: 'Action', Value: GITHUB_ACTION},
       {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
-      {Key: 'Branch', Value: GITHUB_REF},
       {Key: 'Commit', Value: GITHUB_SHA},
     ]
   };
+
+  if (isDefined(process.env.GITHUB_REF)) {
+    assumeRoleRequest.Tags.push({Key: 'Branch', Value: process.env.GITHUB_REF});
+  }
 
   if (roleExternalId) {
     assumeRoleRequest.ExternalId = roleExternalId;
