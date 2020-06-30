@@ -12,17 +12,18 @@ pull_request_rules:
       - -merged
       - -closed
       - author!=dependabot[bot]
-      - author!=dependabot-preview[bot]
     actions:
       merge:
         method: squash
         strict: smart
         strict_method: merge
 
-  - name: Automatically approve Dependabot PRs
+  - name: Automatically approve and merge Dependabot PRs
     conditions:
       - base=master
-      - author~=^dependabot(|-preview)\[bot\]$
+      - author=dependabot[bot]
+      - status-success=Run Unit Tests
+      - status-success=Semantic Pull Request
       - -title~=(WIP|wip)
       - -label~=(blocked|do-not-merge)
       - -merged
@@ -30,3 +31,7 @@ pull_request_rules:
     actions:
       review:
         type: APPROVE
+      merge:
+        method: squash
+        strict: smart+fasttrack
+        strict_method: merge
