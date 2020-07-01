@@ -43,6 +43,9 @@ inputs:
   role-external-id:
     description: 'The external ID of the role to assume'
     required: false
+  role-skip-session-tagging:
+    description: 'Skip session tagging during role assumption'
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'
