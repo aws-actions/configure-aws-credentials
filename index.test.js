@@ -276,6 +276,19 @@ describe('Configure AWS Credentials', () => {
         expect(core.setFailed).toHaveBeenCalledWith('Region is not valid: $AWS_REGION');
     });
 
+    test('throws error if access key id exists but missing secret access key', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+        const inputsWIthoutSecretKey = {...ASSUME_ROLE_INPUTS}
+        inputsWIthoutSecretKey["aws-secret-access-key"] = undefined
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(inputsWIthoutSecretKey));
+
+        await run();
+        expect(core.setFailed).toHaveBeenCalledWith("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
+
+    });
+
     test('can opt out of masking account ID', async () => {
         const mockInputs = {...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'false'};
         core.getInput = jest
