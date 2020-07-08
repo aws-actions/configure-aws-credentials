@@ -157,6 +157,14 @@ The session will have the name "GitHubActions" and be tagged with the following 
 
 _Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid charcters, the characters will be replaced with an '*'._
 
+The action will use session tagging by default during role assumption. You can skip this session tagging by providing `role-skip-session-tagging` as true in the action's inputs:
+
+```yaml
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-skip-session-tagging: true
+```
+
 ## Self-Hosted Runners
 
 If you run your GitHub Actions in a [self-hosted runner](https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) that already has access to AWS credentials, such as an EC2 instance, then you do not need to provide IAM user access key credentials to this action.

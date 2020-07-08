@@ -276,6 +276,19 @@ describe('Configure AWS Credentials', () => {
         expect(core.setFailed).toHaveBeenCalledWith('Region is not valid: $AWS_REGION');
     });
 
+    test('throws error if access key id exists but missing secret access key', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+        const inputsWIthoutSecretKey = {...ASSUME_ROLE_INPUTS}
+        inputsWIthoutSecretKey["aws-secret-access-key"] = undefined
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(inputsWIthoutSecretKey));
+
+        await run();
+        expect(core.setFailed).toHaveBeenCalledWith("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
+
+    });
+
     test('can opt out of masking account ID', async () => {
         const mockInputs = {...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'false'};
         core.getInput = jest
@@ -515,6 +528,64 @@ describe('Configure AWS Credentials', () => {
                 {Key: 'GitHub', Value: 'Actions'},
                 {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
                 {Key: 'Workflow', Value: sanitizedWorkflowName},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+            ]
+        })
+    });
+
+    test('skip tagging provided as true', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': true}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_ARN,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 21600,
+            Tags: undefined
+        })
+    });
+
+    test('skip tagging provided as false', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': false}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_ARN,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 21600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+            ]
+        })
+    });
+
+    test('skip tagging not provided', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_ARN,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 21600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
                 {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
                 {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
                 {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},

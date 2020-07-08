@@ -22,6 +22,7 @@ async function assumeRole(params) {
     roleDurationSeconds,
     roleSessionName,
     region,
+    roleSkipSessionTagging
   } = params;
   assert(
       [sourceAccountId, roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
@@ -41,20 +42,23 @@ async function assumeRole(params) {
     // Supports only 'aws' partition. Customers in other partitions ('aws-cn') will need to provide full ARN
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
+  const tagArray = [
+    {Key: 'GitHub', Value: 'Actions'},
+    {Key: 'Repository', Value: GITHUB_REPOSITORY},
+    {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
+    {Key: 'Action', Value: GITHUB_ACTION},
+    {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
+    {Key: 'Branch', Value: GITHUB_REF},
+    {Key: 'Commit', Value: GITHUB_SHA},
+  ];
+
+  const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
 
   const assumeRoleRequest = {
     RoleArn: roleArn,
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
-    Tags: [
-      {Key: 'GitHub', Value: 'Actions'},
-      {Key: 'Repository', Value: GITHUB_REPOSITORY},
-      {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
-      {Key: 'Action', Value: GITHUB_ACTION},
-      {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
-      {Key: 'Branch', Value: GITHUB_REF},
-      {Key: 'Commit', Value: GITHUB_SHA},
-    ]
+    Tags: roleSessionTags
   };
 
   if (roleExternalId) {
@@ -196,7 +200,8 @@ async function run() {
     const roleExternalId = core.getInput('role-external-id', { required: false });
     const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-
+    const roleSkipSessionTagging = core.getInput('role-skip-session-tagging', { required: false });
+  
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
@@ -233,7 +238,8 @@ async function run() {
         roleToAssume,
         roleExternalId,
         roleDurationSeconds,
-        roleSessionName
+        roleSessionName,
+        roleSkipSessionTagging
       });
       exportCredentials(roleCredentials);
       await validateCredentials(roleCredentials.accessKeyId);
