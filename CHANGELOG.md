@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.2](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.1...v1.4.2) (2020-06-30)
+
+
+### Bug Fixes
+
+* add comma to set of special characters ([#78](https://github.com/aws-actions/configure-aws-credentials/issues/78)) ([f04843b](https://github.com/aws-actions/configure-aws-credentials/commit/f04843b510a6c8adf77eed907a616cf00a99970d))
+
 ### [1.4.1](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.0...v1.4.1) (2020-06-09)
 
 ## [1.4.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.3.5...v1.4.0) (2020-06-03)
