@@ -48,9 +48,12 @@ async function assumeRole(params) {
     {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
     {Key: 'Action', Value: GITHUB_ACTION},
     {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
-    {Key: 'Branch', Value: GITHUB_REF},
     {Key: 'Commit', Value: GITHUB_SHA},
   ];
+
+  if (isDefined(process.env.GITHUB_REF)) {
+    tagArray.push({Key: 'Branch', Value: process.env.GITHUB_REF});
+  }
 
   const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
 
@@ -60,10 +63,6 @@ async function assumeRole(params) {
     DurationSeconds: roleDurationSeconds,
     Tags: roleSessionTags
   };
-
-  if (isDefined(process.env.GITHUB_REF)) {
-    assumeRoleRequest.Tags.push({Key: 'Branch', Value: process.env.GITHUB_REF});
-  }
 
   if (roleExternalId) {
     assumeRoleRequest.ExternalId = roleExternalId;
