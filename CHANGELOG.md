@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.3](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.2...v1.4.3) (2020-07-14)
+
+
+### Bug Fixes
+
+* Make tagging optional ([#92](https://github.com/aws-actions/configure-aws-credentials/issues/92)) ([baf85d8](https://github.com/aws-actions/configure-aws-credentials/commit/baf85d8be969f190df9bc9153f06958c32ef3828))
+
 ### [1.4.2](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.1...v1.4.2) (2020-06-30)
 
 
