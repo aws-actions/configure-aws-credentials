@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.4](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.3...v1.4.4) (2020-07-17)
+
 ### [1.4.3](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.2...v1.4.3) (2020-07-14)
 
 
