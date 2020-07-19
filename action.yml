@@ -1,3 +1,6 @@
+- name: "Configure AWS Credentials" Action For GitHub Actions
+  uses: aws-actions/configure-aws-credentials@v1
+
 name: '"Configure AWS Credentials" Action For GitHub Actions'
 description: 'Configure AWS credential and region environment variables for use with the AWS CLI and AWS SDKs'
 branding:
