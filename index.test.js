@@ -594,4 +594,26 @@ describe('Configure AWS Credentials', () => {
         })
     });
 
+    test('masks variables before exporting', async () => {
+        let maskedValues = [];
+        const publicFields = ['AWS_REGION', 'AWS_DEFAULT_REGION'];
+        core.setSecret.mockReset();
+        core.setSecret.mockImplementation((secret) => {
+            maskedValues.push(secret);
+        });
+
+        core.exportVariable.mockReset();
+        core.exportVariable.mockImplementation((name, value) => {
+            if (!maskedValues.includes(value) && !publicFields.includes(name)) {
+                throw new Error(value + " for variable " + name + " is not masked yet!");
+            }
+        });
+
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+
+        await run();
+    });
+
 });
