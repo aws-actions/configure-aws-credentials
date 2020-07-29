@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const assert = require('assert');
 const aws = require('aws-sdk');
-const run = require('.');
+const run = require('./index.js');
 
 jest.mock('@actions/core');
 
