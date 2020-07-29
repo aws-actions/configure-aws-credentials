@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint **.js",
-    "package": "ncc build index.js -o dist",
-    "test": "eslint **.js && jest --coverage"
+    "package": "ncc build index.js -o dist && ncc build cleanup.js -o dist/cleanup",
+    "test": "eslint **.js && jest --coverage --verbose"
   },
   "repository": {
     "type": "git",
