@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.4...v1.5.0) (2020-07-29)
+
+
+### Features
+
+* Add post-job action cleanup of credentials and region env vars ([#101](https://github.com/aws-actions/configure-aws-credentials/issues/101)) ([d19cafc](https://github.com/aws-actions/configure-aws-credentials/commit/d19cafcdd1be7e3358f84574a00df37af494036a))
+
+
+### Bug Fixes
+
+* Mask assume role response in debug output ([#102](https://github.com/aws-actions/configure-aws-credentials/issues/102)) ([df7d846](https://github.com/aws-actions/configure-aws-credentials/commit/df7d84616183de7ed37e53e1980284a07e56b216))
+
 ### [1.4.4](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.3...v1.4.4) (2020-07-17)
 
 ### [1.4.3](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.2...v1.4.3) (2020-07-14)
