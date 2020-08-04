@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const assert = require('assert');
 const aws = require('aws-sdk');
-const run = require('.');
+const run = require('./index.js');
 
 jest.mock('@actions/core');
 
@@ -612,6 +612,28 @@ describe('Configure AWS Credentials', () => {
                 {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
             ]
         })
+    });
+
+    test('masks variables before exporting', async () => {
+        let maskedValues = [];
+        const publicFields = ['AWS_REGION', 'AWS_DEFAULT_REGION'];
+        core.setSecret.mockReset();
+        core.setSecret.mockImplementation((secret) => {
+            maskedValues.push(secret);
+        });
+
+        core.exportVariable.mockReset();
+        core.exportVariable.mockImplementation((name, value) => {
+            if (!maskedValues.includes(value) && !publicFields.includes(name)) {
+                throw new Error(value + " for variable " + name + " is not masked yet!");
+            }
+        });
+
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+
+        await run();
     });
 
 });

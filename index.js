@@ -101,19 +101,19 @@ function exportCredentials(params){
 
   // AWS_ACCESS_KEY_ID:
   // Specifies an AWS access key associated with an IAM user or role
-  core.exportVariable('AWS_ACCESS_KEY_ID', accessKeyId);
   core.setSecret(accessKeyId);
+  core.exportVariable('AWS_ACCESS_KEY_ID', accessKeyId);
 
   // AWS_SECRET_ACCESS_KEY:
   // Specifies the secret key associated with the access key. This is essentially the "password" for the access key.
-  core.exportVariable('AWS_SECRET_ACCESS_KEY', secretAccessKey);
   core.setSecret(secretAccessKey);
+  core.exportVariable('AWS_SECRET_ACCESS_KEY', secretAccessKey);
 
   // AWS_SESSION_TOKEN:
   // Specifies the session token value that is required if you are using temporary security credentials.
   if (sessionToken) {
-    core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
     core.setSecret(sessionToken);
+    core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
   } else if (process.env.AWS_SESSION_TOKEN) {
     // clear session token from previous credentials action
     core.exportVariable('AWS_SESSION_TOKEN', '');
@@ -132,10 +132,10 @@ async function exportAccountId(maskAccountId, region) {
   const sts = getStsClient(region);
   const identity = await sts.getCallerIdentity().promise();
   const accountId = identity.Account;
-  core.setOutput('aws-account-id', accountId);
   if (!maskAccountId || maskAccountId.toLowerCase() == 'true') {
     core.setSecret(accountId);
   }
+  core.setOutput('aws-account-id', accountId);
   return accountId;
 }
 
