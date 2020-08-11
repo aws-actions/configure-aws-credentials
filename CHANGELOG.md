@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.5.1](https://github.com/aws-actions/configure-aws-credentials/compare/v1.5.0...v1.5.1) (2020-08-11)
+
+
+### Bug Fixes
+
+* make GITHUB_REF env var optional ([#82](https://github.com/aws-actions/configure-aws-credentials/issues/82)) ([ba5041f](https://github.com/aws-actions/configure-aws-credentials/commit/ba5041f7bb4990ac5d10d9009de69e639ebee3df)), closes [#92](https://github.com/aws-actions/configure-aws-credentials/issues/92)
+
 ## [1.5.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.4.4...v1.5.0) (2020-07-29)
 
 
