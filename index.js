@@ -214,7 +214,7 @@ async function run() {
     // Always export the source credentials and account ID.
     // The STS client for calling AssumeRole pulls creds from the environment.
     // Plus, in the assume role case, if the AssumeRole call fails, we want
-    // the source credentials and accound ID to already be masked as secrets
+    // the source credentials and account ID to already be masked as secrets
     // in any error messages.
     if (accessKeyId) {
       if (!secretAccessKey) {
