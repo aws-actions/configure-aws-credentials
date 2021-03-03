@@ -188,6 +188,11 @@ with:
 ```
 In this case, your runner's credentials must have permissions to assume the role.
 
+### Use with the AWS CLI
+
+This workflow does _not_ install the [AWS CLI](https://aws.amazon.com/cli/) into your environment. Self-hosted runners that intend to run this action prior to executing `aws` commands need to have the AWS CLI [installed](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) if it's not already present. 
+Most [GitHub hosted runner environments](https://github.com/actions/virtual-environments) should include the AWS CLI by default.
+ 
 ## License Summary
 
 This code is made available under the MIT license.

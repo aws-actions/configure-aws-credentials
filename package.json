@@ -1,6 +1,6 @@
 {
   "name": "aws-actions-configure-aws-credentials",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "description": "Configure AWS Credentials",
   "main": "index.js",
   "scripts": {
@@ -26,11 +26,11 @@
   "homepage": "https://github.com/aws-actions/configure-aws-credentials#readme",
   "dependencies": {
     "@actions/core": "^1.2.6",
-    "aws-sdk": "^2.849.0"
+    "aws-sdk": "^2.854.0"
   },
   "devDependencies": {
     "@zeit/ncc": "^0.22.3",
-    "eslint": "^7.20.0",
+    "eslint": "^7.21.0",
     "jest": "^26.6.3"
   }
 }
