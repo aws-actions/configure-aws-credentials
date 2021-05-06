@@ -57,6 +57,12 @@ async function assumeRole(params) {
 
   const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
 
+  if(roleSessionTags == undefined){
+    core.debug("Role session tagging has been skipped.")
+  } else {
+    core.debug(roleSessionTags.length + " role session tags are being used.")
+  }
+
   const assumeRoleRequest = {
     RoleArn: roleArn,
     RoleSessionName: roleSessionName,
@@ -203,7 +209,8 @@ async function run() {
     const roleExternalId = core.getInput('role-external-id', { required: false });
     const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-    const roleSkipSessionTagging = core.getInput('role-skip-session-tagging', { required: false });
+    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
+    const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
   
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
