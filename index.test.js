@@ -559,7 +559,7 @@ describe('Configure AWS Credentials', () => {
     test('skip tagging provided as true', async () => {
         core.getInput = jest
             .fn()
-            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': true}));
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': 'true'}));
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
@@ -573,7 +573,7 @@ describe('Configure AWS Credentials', () => {
     test('skip tagging provided as false', async () => {
         core.getInput = jest
             .fn()
-            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': false}));
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': 'false'}));
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
