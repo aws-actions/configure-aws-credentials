@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const aws = require('aws-sdk');
 const assert = require('assert');
+const fs = require('fs').promises;
 
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
@@ -22,7 +23,8 @@ async function assumeRole(params) {
     roleDurationSeconds,
     roleSessionName,
     region,
-    roleSkipSessionTagging
+    roleSkipSessionTagging,
+    webIdentityTokenFile
   } = params;
   assert(
       [sourceAccountId, roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
@@ -74,15 +76,22 @@ async function assumeRole(params) {
     assumeRoleRequest.ExternalId = roleExternalId;
   }
 
-  return sts.assumeRole(assumeRoleRequest)
-  .promise()
-  .then(function (data) {
-    return {
-      accessKeyId: data.Credentials.AccessKeyId,
-      secretAccessKey: data.Credentials.SecretAccessKey,
-      sessionToken: data.Credentials.SessionToken,
-    };
-  });
+  let assumeFunction = sts.assumeRole;
+
+  if(isDefined(webIdentityTokenFile)) {
+    assumeRoleRequest.WebIdentityToken = await fs.readFile(webIdentityTokenFile, 'utf8');
+    assumeFunction = sts.assumeRoleWithWebIdentity;
+  } 
+
+  return assumeFunction(assumeRoleRequest)
+    .promise()
+    .then(function (data) {
+      return {
+        accessKeyId: data.Credentials.AccessKeyId,
+        secretAccessKey: data.Credentials.SecretAccessKey,
+        sessionToken: data.Credentials.SessionToken,
+      };
+    });
 }
 
 function sanitizeGithubActor(actor) {
@@ -211,6 +220,7 @@ async function run() {
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
+    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false })
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -249,7 +259,8 @@ async function run() {
         roleExternalId,
         roleDurationSeconds,
         roleSessionName,
-        roleSkipSessionTagging
+        roleSkipSessionTagging,
+        webIdentityTokenFile
       });
       exportCredentials(roleCredentials);
       await validateCredentials(roleCredentials.accessKeyId);
