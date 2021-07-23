@@ -189,6 +189,17 @@ with:
 ```
 In this case, your runner's credentials must have permissions to assume the role.
 
+You can also assume a role using a web identity token file if using [EKS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html).  Pods running in EKS worker nodes that do not run as root can use this file to assume a role with a web identity.
+
+You can configure your workflow as follows in order to use this file:
+```yaml
+uses: aws-actions/configure-aws-credentials@v1
+with:
+  aws-region: us-east-2
+  role-to-assume: my-github-actions-role
+  web-identity-token-file: /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+```
+
 ### Use with the AWS CLI
 
 This workflow does _not_ install the [AWS CLI](https://aws.amazon.com/cli/) into your environment. Self-hosted runners that intend to run this action prior to executing `aws` commands need to have the AWS CLI [installed](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) if it's not already present. 

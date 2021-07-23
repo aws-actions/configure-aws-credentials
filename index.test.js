@@ -46,6 +46,7 @@ const ASSUME_ROLE_INPUTS = {...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-re
 
 const mockStsCallerIdentity = jest.fn();
 const mockStsAssumeRole = jest.fn();
+const mockStsAssumeRoleWithWebIdentity = jest.fn();
 
 jest.mock('aws-sdk', () => {
     return {
@@ -55,7 +56,16 @@ jest.mock('aws-sdk', () => {
         STS: jest.fn(() => ({
             getCallerIdentity: mockStsCallerIdentity,
             assumeRole: mockStsAssumeRole,
+            assumeRoleWithWebIdentity: mockStsAssumeRoleWithWebIdentity
         }))
+    };
+});
+
+jest.mock('fs', () => {
+    return {
+        promises: {
+            readFile: jest.fn(() => Promise.resolve('testpayload'))
+        }
     };
 });
 
@@ -107,6 +117,20 @@ describe('Configure AWS Credentials', () => {
             });
 
         mockStsAssumeRole.mockImplementation(() => {
+            return {
+                promise() {
+                    return Promise.resolve({
+                        Credentials: {
+                            AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
+                            SecretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
+                            SessionToken: FAKE_STS_SESSION_TOKEN
+                        }
+                    });
+                }
+            }
+        });
+
+        mockStsAssumeRoleWithWebIdentity.mockImplementation(() => {
             return {
                 promise() {
                     return Promise.resolve({
@@ -495,6 +519,29 @@ describe('Configure AWS Credentials', () => {
             RoleArn: 'arn:aws:iam::123456789012:role/MY-ROLE',
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+            ]
+        })
+    });
+
+    test('web identity token file provided', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'web-identity-token-file': '/fake/token/file'}));
+
+        await run();
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
+            RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 6 * 3600,
+            WebIdentityToken: 'testpayload',
             Tags: [
                 {Key: 'GitHub', Value: 'Actions'},
                 {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
