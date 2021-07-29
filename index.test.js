@@ -66,8 +66,8 @@ jest.mock('fs', () => {
     return {
         promises: {
             readFile: jest.fn(() => Promise.resolve('testpayload')),
-            exists: jest.fn(() => Promise.resolve(true))
-        }
+        },
+        existsSync: jest.fn(() => true)
     };
 });
 
