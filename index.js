@@ -2,6 +2,7 @@ const core = require('@actions/core');
 const aws = require('aws-sdk');
 const assert = require('assert');
 const fs = require('fs').promises;
+const path = require('path');
 
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
@@ -79,7 +80,15 @@ async function assumeRole(params) {
   let assumeFunction = sts.assumeRole;
 
   if(isDefined(webIdentityTokenFile)) {
-    assumeRoleRequest.WebIdentityToken = await fs.readFile(webIdentityTokenFile, 'utf8');
+    const webIdentityTokenFilePath = path.isAbsolute(webIdentityTokenFile) ?
+      webIdentityTokenFile :
+      path.join(process.env.GITHUB_WORKSPACE, webIdentityTokenFile);
+
+    if (!await fs.exists(webIdentityTokenFilePath)) {
+      throw new Error(`Web identity token file does not exist: ${webIdentityTokenFilePath}`);
+    }
+
+    assumeRoleRequest.WebIdentityToken = await fs.readFile(webIdentityTokenFilePath, 'utf8');
     assumeFunction = sts.assumeRoleWithWebIdentity;
   } 
 

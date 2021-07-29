@@ -6,12 +6,14 @@ Configure AWS credential and region environment variables for use in other GitHu
 
 <!-- toc -->
 
+- ["Configure AWS Credentials" Action For GitHub Actions](#configure-aws-credentials-action-for-github-actions)
 - [Usage](#usage)
 - [Credentials](#credentials)
 - [Assuming a Role](#assuming-a-role)
-    + [Permissions for assuming a role](#permissions-for-assuming-a-role)
-    + [Session tagging](#session-tagging)
+  - [Permissions for assuming a role](#permissions-for-assuming-a-role)
+  - [Session tagging](#session-tagging)
 - [Self-Hosted Runners](#self-hosted-runners)
+  - [Use with the AWS CLI](#use-with-the-aws-cli)
 - [License Summary](#license-summary)
 - [Security Disclosures](#security-disclosures)
 
@@ -189,7 +191,7 @@ with:
 ```
 In this case, your runner's credentials must have permissions to assume the role.
 
-You can also assume a role using a web identity token file if using [EKS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html).  Pods running in EKS worker nodes that do not run as root can use this file to assume a role with a web identity.
+You can also assume a role using a web identity token file, such as if using [Amazon EKS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html).  Pods running in EKS worker nodes that do not run as root can use this file to assume a role with a web identity.
 
 You can configure your workflow as follows in order to use this file:
 ```yaml

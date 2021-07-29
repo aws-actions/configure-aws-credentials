@@ -24,6 +24,7 @@ const ENVIRONMENT_VARIABLE_OVERRIDES = {
     GITHUB_ACTOR: 'MY-USERNAME[bot]',
     GITHUB_SHA: 'MY-COMMIT-ID',
     GITHUB_REF: 'MY-BRANCH',
+    GITHUB_WORKSPACE: '/home/github'
 };
 const GITHUB_ACTOR_SANITIZED = 'MY-USERNAME_bot_'
 
@@ -64,7 +65,8 @@ jest.mock('aws-sdk', () => {
 jest.mock('fs', () => {
     return {
         promises: {
-            readFile: jest.fn(() => Promise.resolve('testpayload'))
+            readFile: jest.fn(() => Promise.resolve('testpayload')),
+            exists: jest.fn(() => Promise.resolve(true))
         }
     };
 });
@@ -531,10 +533,33 @@ describe('Configure AWS Credentials', () => {
         })
     });
 
-    test('web identity token file provided', async () => {
+    test('web identity token file provided with absolute path', async () => {
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'web-identity-token-file': '/fake/token/file'}));
+
+        await run();
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
+            RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 6 * 3600,
+            WebIdentityToken: 'testpayload',
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+            ]
+        })
+    });
+
+    test('web identity token file provided with relative path', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'web-identity-token-file': 'fake/token/file'}));
 
         await run();
         expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
