@@ -543,16 +543,7 @@ describe('Configure AWS Credentials', () => {
             RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
-            WebIdentityToken: 'testpayload',
-            Tags: [
-                {Key: 'GitHub', Value: 'Actions'},
-                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
-                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
-                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
-                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
-                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
-                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
-            ]
+            WebIdentityToken: 'testpayload'
         })
     });
 
@@ -566,16 +557,7 @@ describe('Configure AWS Credentials', () => {
             RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
-            WebIdentityToken: 'testpayload',
-            Tags: [
-                {Key: 'GitHub', Value: 'Actions'},
-                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
-                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
-                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
-                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
-                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
-                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
-            ]
+            WebIdentityToken: 'testpayload'
         })
     });
 

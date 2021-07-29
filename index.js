@@ -45,6 +45,13 @@ async function assumeRole(params) {
     // Supports only 'aws' partition. Customers in other partitions ('aws-cn') will need to provide full ARN
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
+
+  const assumeRoleRequest = {
+    RoleArn: roleArn,
+    RoleSessionName: roleSessionName,
+    DurationSeconds: roleDurationSeconds
+  };
+
   const tagArray = [
     {Key: 'GitHub', Value: 'Actions'},
     {Key: 'Repository', Value: GITHUB_REPOSITORY},
@@ -58,20 +65,14 @@ async function assumeRole(params) {
     tagArray.push({Key: 'Branch', Value: process.env.GITHUB_REF});
   }
 
-  const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
+  const roleSessionTags = roleSkipSessionTagging || isDefined(webIdentityTokenFile) ? undefined : tagArray;
 
   if(roleSessionTags == undefined){
     core.debug("Role session tagging has been skipped.")
   } else {
     core.debug(roleSessionTags.length + " role session tags are being used.")
+    assumeRoleRequest.Tags = roleSessionTags;
   }
-
-  const assumeRoleRequest = {
-    RoleArn: roleArn,
-    RoleSessionName: roleSessionName,
-    DurationSeconds: roleDurationSeconds,
-    Tags: roleSessionTags
-  };
 
   if (roleExternalId) {
     assumeRoleRequest.ExternalId = roleExternalId;
