@@ -46,12 +46,6 @@ async function assumeRole(params) {
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
 
-  const assumeRoleRequest = {
-    RoleArn: roleArn,
-    RoleSessionName: roleSessionName,
-    DurationSeconds: roleDurationSeconds
-  };
-
   const tagArray = [
     {Key: 'GitHub', Value: 'Actions'},
     {Key: 'Repository', Value: GITHUB_REPOSITORY},
@@ -65,13 +59,19 @@ async function assumeRole(params) {
     tagArray.push({Key: 'Branch', Value: process.env.GITHUB_REF});
   }
 
-  const roleSessionTags = roleSkipSessionTagging || isDefined(webIdentityTokenFile) ? undefined : tagArray;
+  const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
+
+  const assumeRoleRequest = {
+    RoleArn: roleArn,
+    RoleSessionName: roleSessionName,
+    DurationSeconds: roleDurationSeconds,
+    Tags: roleSessionTags
+  };
 
   if(roleSessionTags == undefined){
     core.debug("Role session tagging has been skipped.")
   } else {
     core.debug(roleSessionTags.length + " role session tags are being used.")
-    assumeRoleRequest.Tags = roleSessionTags;
   }
 
   if (roleExternalId) {
@@ -81,6 +81,9 @@ async function assumeRole(params) {
   let assumeFunction = sts.assumeRole.bind(sts);
 
   if(isDefined(webIdentityTokenFile)) {
+    core.debug("webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.")
+    delete assumeRoleRequest.Tags;
+
     const webIdentityTokenFilePath = path.isAbsolute(webIdentityTokenFile) ?
       webIdentityTokenFile :
       path.join(process.env.GITHUB_WORKSPACE, webIdentityTokenFile);
@@ -89,8 +92,13 @@ async function assumeRole(params) {
       throw new Error(`Web identity token file does not exist: ${webIdentityTokenFilePath}`);
     }
 
-    assumeRoleRequest.WebIdentityToken = await fs.promises.readFile(webIdentityTokenFilePath, 'utf8');
-    assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
+    try {
+      assumeRoleRequest.WebIdentityToken = await fs.promises.readFile(webIdentityTokenFilePath, 'utf8');
+      assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
+    } catch(error) {
+      throw new Error(`Web identity token file could not be read: ${error.message}`);
+    }
+    
   } 
 
   return assumeFunction(assumeRoleRequest)

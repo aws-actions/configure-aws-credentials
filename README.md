@@ -6,14 +6,12 @@ Configure AWS credential and region environment variables for use in other GitHu
 
 <!-- toc -->
 
-- ["Configure AWS Credentials" Action For GitHub Actions](#configure-aws-credentials-action-for-github-actions)
 - [Usage](#usage)
 - [Credentials](#credentials)
 - [Assuming a Role](#assuming-a-role)
-  - [Permissions for assuming a role](#permissions-for-assuming-a-role)
-  - [Session tagging](#session-tagging)
+    + [Permissions for assuming a role](#permissions-for-assuming-a-role)
+    + [Session tagging](#session-tagging)
 - [Self-Hosted Runners](#self-hosted-runners)
-  - [Use with the AWS CLI](#use-with-the-aws-cli)
 - [License Summary](#license-summary)
 - [Security Disclosures](#security-disclosures)
 
