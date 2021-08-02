@@ -61,18 +61,18 @@ async function assumeRole(params) {
 
   const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
 
+  if(roleSessionTags == undefined){
+    core.debug("Role session tagging has been skipped.")
+  } else {
+    core.debug(roleSessionTags.length + " role session tags are being used.")
+  }
+
   const assumeRoleRequest = {
     RoleArn: roleArn,
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
     Tags: roleSessionTags
   };
-
-  if(roleSessionTags == undefined){
-    core.debug("Role session tagging has been skipped.")
-  } else {
-    core.debug(roleSessionTags.length + " role session tags are being used.")
-  }
 
   if (roleExternalId) {
     assumeRoleRequest.ExternalId = roleExternalId;
