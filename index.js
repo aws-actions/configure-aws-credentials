@@ -3,6 +3,7 @@ const aws = require('aws-sdk');
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const proxy = require('https-proxy-agent');
 
 // Use 1hr as role duration when using session token or OIDC
 // Otherwise, use the max duration of GitHub action (6hr)
@@ -260,6 +261,31 @@ const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 12, ba
   }
 }
 
+function configureProxy(inputIgnore, inputProxy) {
+  const proxyFromEnv = process.env.HTTP_PROXY;
+
+  if (inputIgnore) {
+    console.log(`Ignoring proxy configurations.`);
+    return;
+  }
+
+  if (proxyFromEnv || inputProxy) {
+    let proxyToSet = null;
+
+    if (inputProxy){
+      console.log(`Setting proxy from actions input: ${inputProxy}`);
+      proxyToSet = inputProxy;
+    } else {
+      console.log(`Setting proxy from environment: ${proxyFromEnv}`);
+      proxyToSet = proxyFromEnv;
+    }
+
+    aws.config.update({
+      httpOptions: { agent: proxy(proxyToSet) }
+    });
+  }
+}
+
 async function run() {
   try {
     // Get inputs
@@ -278,6 +304,8 @@ async function run() {
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
+    const proxyIgnore = core.getBooleanInput('http-proxy-ignore');
+    const proxyServer = core.getInput('http-proxy', { required: false });
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -307,6 +335,9 @@ async function run() {
 
       exportCredentials({accessKeyId, secretAccessKey, sessionToken});
     }
+    
+    // Configures proxy if found and not ignored
+    configureProxy(proxyIgnore, proxyServer);
 
     // Attempt to load credentials from the GitHub OIDC provider.
     // If a user provides an IAM Role Arn and DOESN'T provide an Access Key Id
