@@ -67,6 +67,10 @@ jobs:
         aws s3 sync . s3://my-s3-prod-website-bucket
 ```
 
+**NOTE:** The workflow configuration above will upload the `.git` directory to the S3 Bucket. To exclude the `.git` directory, use:
+
+`aws s3 sync . s3://my-s3-prod-website-bucket --exclude ".git/*`
+
 See [action.yml](action.yml) for the full documentation for this action's inputs and outputs.
 
 ## Credentials
