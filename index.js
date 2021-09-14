@@ -52,17 +52,18 @@ async function assumeRole(params) {
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
 
+  // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
   const tagArray = [
     {Key: 'GitHub', Value: 'Actions'},
     {Key: 'Repository', Value: GITHUB_REPOSITORY},
-    {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
+    {Key: 'Workflow', Value: sanitizeForTagValue(GITHUB_WORKFLOW)},
     {Key: 'Action', Value: GITHUB_ACTION},
     {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
     {Key: 'Commit', Value: GITHUB_SHA},
   ];
 
   if (isDefined(process.env.GITHUB_REF)) {
-    tagArray.push({Key: 'Branch', Value: process.env.GITHUB_REF});
+    tagArray.push({Key: 'Branch', Value: sanitizeForTagValue(process.env.GITHUB_REF)});
   }
 
   const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
@@ -130,8 +131,7 @@ function sanitizeGithubActor(actor) {
   return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER)
 }
 
-function sanitizeGithubWorkflowName(name) {
-  // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
+function sanitizeForTagValue(name) {
   // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
   // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
   const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_:/=+.-@-]/gu, SANITIZATION_CHARACTER);
