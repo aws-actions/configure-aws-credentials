@@ -183,7 +183,7 @@ The session will have the name "GitHubActions" and be tagged with the following 
 | Branch | GITHUB_REF |
 | Commit | GITHUB_SHA |
 
-_Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid characters, the characters will be replaced with an '*'._
+_Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` & `GITHUB_BRANCH` will be truncated if they are too long. If `GITHUB_ACTOR`, `GITHUB_BRANCH`, or `GITHUB_WORKFLOW` contain invalid characters, those characters will be replaced with '_'._
 
 The action will use session tagging by default during role assumption. 
 Note that for WebIdentity role assumption, the session tags have to be included in the encoded WebIdentity token.
