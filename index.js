@@ -3,6 +3,7 @@ const aws = require('aws-sdk');
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const fetch = require('node-fetch');
 
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
@@ -25,10 +26,11 @@ async function assumeRole(params) {
     roleSessionName,
     region,
     roleSkipSessionTagging,
-    webIdentityTokenFile
+    webIdentityTokenFile,
+    webIdentityToken
   } = params;
   assert(
-      [sourceAccountId, roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
+      [roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
       "Missing required input when assuming a Role."
   );
 
@@ -79,6 +81,11 @@ async function assumeRole(params) {
   }
 
   let assumeFunction = sts.assumeRole.bind(sts);
+  
+  if(isDefined(webIdentityToken)) {
+    assumeRoleRequest.WebIdentityToken = webIdentityToken;
+    assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
+  }
 
   if(isDefined(webIdentityTokenFile)) {
     core.debug("webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.")
@@ -172,6 +179,18 @@ async function exportAccountId(maskAccountId, region) {
   return accountId;
 }
 
+async function getWebIdentityToken() {
+
+  const {ACTIONS_ID_TOKEN_REQUEST_URL, ACTIONS_ID_TOKEN_REQUEST_TOKEN}  = process.env;
+  
+  const response = await fetch(`${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore`, {
+    method: "GET",
+    headers: {"Authorization": `bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}`}
+    }
+  );
+  return response.json().value;
+}
+
 function loadCredentials() {
   // Force the SDK to re-resolve credentials with the default provider chain.
   //
@@ -238,8 +257,9 @@ async function run() {
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
-    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false })
-
+    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
+    let sourceAccountId;
+    let webIdentityToken;
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
@@ -258,15 +278,22 @@ async function run() {
 
       exportCredentials({accessKeyId, secretAccessKey, sessionToken});
     }
+    
+    // Attempt to load credentials from the GitHub OIDC provider.
+    // If a user provides an IAM Role Arn and DOESN'T provide an Access Key Id
+    // The only way to assume the role is via GitHub's OIDC provider.
+    if(roleToAssume && !accessKeyId) {
+      webIdentityToken = await getWebIdentityToken(maskAccountId, region);
+    } else {
+      // Regardless of whether any source credentials were provided as inputs,
+      // validate that the SDK can actually pick up credentials.  This validates
+      // cases where this action is on a self-hosted runner that doesn't have credentials
+      // configured correctly, and cases where the user intended to provide input
+      // credentials but the secrets inputs resolved to empty strings.
+      await validateCredentials(accessKeyId);
 
-    // Regardless of whether any source credentials were provided as inputs,
-    // validate that the SDK can actually pick up credentials.  This validates
-    // cases where this action is on a self-hosted runner that doesn't have credentials
-    // configured correctly, and cases where the user intended to provide input
-    // credentials but the secrets inputs resolved to empty strings.
-    await validateCredentials(accessKeyId);
-
-    const sourceAccountId = await exportAccountId(maskAccountId, region);
+      sourceAccountId = await exportAccountId(maskAccountId, region);
+    }
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
@@ -278,7 +305,8 @@ async function run() {
         roleDurationSeconds,
         roleSessionName,
         roleSkipSessionTagging,
-        webIdentityTokenFile
+        webIdentityTokenFile,
+        webIdentityToken
       });
       exportCredentials(roleCredentials);
       await validateCredentials(roleCredentials.accessKeyId);
