@@ -26,7 +26,8 @@
   "homepage": "https://github.com/aws-actions/configure-aws-credentials#readme",
   "dependencies": {
     "@actions/core": "^1.5.0",
-    "aws-sdk": "^2.991.0"
+    "aws-sdk": "^2.988.0",
+    "axios": "^0.21.4"
   },
   "devDependencies": {
     "@zeit/ncc": "^0.22.3",

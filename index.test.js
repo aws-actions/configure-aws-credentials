@@ -2,8 +2,10 @@ const core = require('@actions/core');
 const assert = require('assert');
 const aws = require('aws-sdk');
 const run = require('./index.js');
+const axios = require('axios');
 
 jest.mock('@actions/core');
+jest.mock("axios");
 
 const FAKE_ACCESS_KEY_ID = 'MY-AWS-ACCESS-KEY-ID';
 const FAKE_SECRET_ACCESS_KEY = 'MY-AWS-SECRET-ACCESS-KEY';
@@ -70,6 +72,11 @@ jest.mock('fs', () => {
         existsSync: jest.fn(() => true)
     };
 });
+
+
+jest.mock('axios', () => ({
+  get: jest.fn(() => Promise.resolve({ data: { value: "testtoken" }})),
+}));
 
 describe('Configure AWS Credentials', () => {
     const OLD_ENV = process.env;
@@ -559,6 +566,47 @@ describe('Configure AWS Credentials', () => {
             DurationSeconds: 6 * 3600,
             WebIdentityToken: 'testpayload'
         })
+    });
+
+    test('only role arn and region provided to use GH OIDC Token', async () => {
+        process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+        process.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'https://www.example.com/token/endpoint';
+        axios.get.mockImplementation(() => Promise.resolve({ data: {value: "testtoken"} }));
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION}));
+
+        await run();
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
+            RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 3600,
+            WebIdentityToken: 'testtoken'
+        });
+        expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
+    });
+
+    test('GH OIDC With custom role duration', async () => {
+        const CUSTOM_ROLE_DURATION = 1234;
+        process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+        process.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'https://www.example.com/token/endpoint';
+        axios.get.mockImplementation(() => Promise.resolve({ data: {value: "testtoken"} }));
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'role-duration-seconds': CUSTOM_ROLE_DURATION}));
+
+        await run();
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
+            RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: CUSTOM_ROLE_DURATION,
+            WebIdentityToken: 'testtoken'
+        });
+        expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
     });
 
     test('role external ID provided', async () => {

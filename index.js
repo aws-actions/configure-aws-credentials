@@ -3,10 +3,12 @@ const aws = require('aws-sdk');
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
 const MAX_ACTION_RUNTIME = 6 * 3600;
+const DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES = 3600;
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
@@ -25,10 +27,11 @@ async function assumeRole(params) {
     roleSessionName,
     region,
     roleSkipSessionTagging,
-    webIdentityTokenFile
+    webIdentityTokenFile,
+    webIdentityToken
   } = params;
   assert(
-      [sourceAccountId, roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
+      [roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
       "Missing required input when assuming a Role."
   );
 
@@ -43,6 +46,10 @@ async function assumeRole(params) {
   let roleArn = roleToAssume;
   if (!roleArn.startsWith('arn:aws')) {
     // Supports only 'aws' partition. Customers in other partitions ('aws-cn') will need to provide full ARN
+  assert(
+      isDefined(sourceAccountId),
+      "Source Account ID is needed if the Role Name is provided and not the Role Arn."
+  );
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
 
@@ -79,9 +86,15 @@ async function assumeRole(params) {
   }
 
   let assumeFunction = sts.assumeRole.bind(sts);
+  
+  // These are customizations needed for the GH OIDC Provider
+  if(isDefined(webIdentityToken)) {
+    delete assumeRoleRequest.Tags;
 
-  if(isDefined(webIdentityTokenFile)) {
-    core.debug("webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.")
+    assumeRoleRequest.WebIdentityToken = webIdentityToken;
+    assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
+  } else if(isDefined(webIdentityTokenFile)) {
+    core.debug("webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.");
     delete assumeRoleRequest.Tags;
 
     const webIdentityTokenFilePath = path.isAbsolute(webIdentityTokenFile) ?
@@ -172,6 +185,21 @@ async function exportAccountId(maskAccountId, region) {
   return accountId;
 }
 
+async function getWebIdentityToken() {
+  const isDefined = i => !!i;
+  const {ACTIONS_ID_TOKEN_REQUEST_URL, ACTIONS_ID_TOKEN_REQUEST_TOKEN} = process.env;
+
+  assert(
+      [ACTIONS_ID_TOKEN_REQUEST_URL, ACTIONS_ID_TOKEN_REQUEST_TOKEN].every(isDefined),
+      'Missing required environment value. Are you running in GitHub Actions?'
+  );
+  const { data } = await axios.get(`${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore`, {
+    headers: {"Authorization": `bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}`}
+    }
+  );
+  return data.value;
+}
+
 function loadCredentials() {
   // Force the SDK to re-resolve credentials with the default provider chain.
   //
@@ -234,17 +262,27 @@ async function run() {
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
     const roleToAssume = core.getInput('role-to-assume', {required: false});
     const roleExternalId = core.getInput('role-external-id', { required: false });
-    const roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
+    let roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
-    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false })
+    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
 
     exportRegion(region);
+
+    // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
+    // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
+    const useGitHubOIDCProvider = () => {
+        // The assumption here is that self-hosted runners won't be populating the `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
+        // environment variable and they won't be providing a web idenity token file or access key either.
+        // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
+        // can provide as much info as they want and we will follow the established credential loading precedence.
+        return roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !accessKeyId && !webIdentityTokenFile
+    }
 
     // Always export the source credentials and account ID.
     // The STS client for calling AssumeRole pulls creds from the environment.
@@ -258,15 +296,26 @@ async function run() {
 
       exportCredentials({accessKeyId, secretAccessKey, sessionToken});
     }
+    
+    // Attempt to load credentials from the GitHub OIDC provider.
+    // If a user provides an IAM Role Arn and DOESN'T provide an Access Key Id
+    // The only way to assume the role is via GitHub's OIDC provider.
+    let sourceAccountId;
+    let webIdentityToken;
+    if(useGitHubOIDCProvider()) {
+      webIdentityToken = await getWebIdentityToken();
+      roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
+      // We don't validate the credentials here because we don't have them yet when using OIDC.
+    } else {
+      // Regardless of whether any source credentials were provided as inputs,
+      // validate that the SDK can actually pick up credentials.  This validates
+      // cases where this action is on a self-hosted runner that doesn't have credentials
+      // configured correctly, and cases where the user intended to provide input
+      // credentials but the secrets inputs resolved to empty strings.
+      await validateCredentials(accessKeyId);
 
-    // Regardless of whether any source credentials were provided as inputs,
-    // validate that the SDK can actually pick up credentials.  This validates
-    // cases where this action is on a self-hosted runner that doesn't have credentials
-    // configured correctly, and cases where the user intended to provide input
-    // credentials but the secrets inputs resolved to empty strings.
-    await validateCredentials(accessKeyId);
-
-    const sourceAccountId = await exportAccountId(maskAccountId, region);
+      sourceAccountId = await exportAccountId(maskAccountId, region);
+    }
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
@@ -278,10 +327,19 @@ async function run() {
         roleDurationSeconds,
         roleSessionName,
         roleSkipSessionTagging,
-        webIdentityTokenFile
+        webIdentityTokenFile,
+        webIdentityToken
       });
       exportCredentials(roleCredentials);
-      await validateCredentials(roleCredentials.accessKeyId);
+      // I don't know a good workaround for this. I'm not sure why we're validating the credentials
+      // so frequently inside the action. The approach I've taken here is that if the GH OIDC token
+      // isn't set, then we're in a self-hosted runner and we need to validate the credentials for
+      // some mysterious reason that wasn't explained by whoever wrote this aciton.
+      //
+      // It's gross but it works so ... ¯\_(ツ)_/¯
+      if (!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN) {
+        await validateCredentials(roleCredentials.accessKeyId);
+      }
       await exportAccountId(maskAccountId, region);
     }
   }
