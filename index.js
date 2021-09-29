@@ -3,7 +3,6 @@ const aws = require('aws-sdk');
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
 
 // The max time that a GitHub action is allowed to run is 6 hours.
 // That seems like a reasonable default to use if no role duration is defined.
@@ -185,21 +184,6 @@ async function exportAccountId(maskAccountId, region) {
   return accountId;
 }
 
-async function getWebIdentityToken() {
-  const isDefined = i => !!i;
-  const {ACTIONS_ID_TOKEN_REQUEST_URL, ACTIONS_ID_TOKEN_REQUEST_TOKEN} = process.env;
-
-  assert(
-      [ACTIONS_ID_TOKEN_REQUEST_URL, ACTIONS_ID_TOKEN_REQUEST_TOKEN].every(isDefined),
-      'Missing required environment value. Are you running in GitHub Actions?'
-  );
-  const { data } = await axios.get(`${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore`, {
-    headers: {"Authorization": `bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}`}
-    }
-  );
-  return data.value;
-}
-
 function loadCredentials() {
   // Force the SDK to re-resolve credentials with the default provider chain.
   //
@@ -303,7 +287,7 @@ async function run() {
     let sourceAccountId;
     let webIdentityToken;
     if(useGitHubOIDCProvider()) {
-      webIdentityToken = await getWebIdentityToken();
+      webIdentityToken = await core.getIDToken('sts.amazonaws.com');
       roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
     } else {
