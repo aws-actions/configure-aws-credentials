@@ -72,10 +72,6 @@ jest.mock('fs', () => {
 });
 
 
-jest.mock('axios', () => ({
-  get: jest.fn(() => Promise.resolve({ data: { value: "testtoken" }})),
-}));
-
 describe('Configure AWS Credentials', () => {
     const OLD_ENV = process.env;
 
