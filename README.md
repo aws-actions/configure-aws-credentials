@@ -37,7 +37,10 @@ jobs:
   deploy:
     name: Upload to Amazon S3
     runs-on: ubuntu-latest
-
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -136,24 +139,28 @@ Resources:
   Role:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ExampleGithubRole
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
             Action: sts:AssumeRoleWithWebIdentity
             Principal:
-              Federated: !Ref GithubOidc
+              Federated: !If 
+                - CreateOIDCProvider
+                - !Ref GithubOidc
+                - !Ref OIDCProviderArn
             Condition:
               StringLike:
-                vstoken.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
 
   GithubOidc:
     Type: AWS::IAM::OIDCProvider
     Condition: CreateOIDCProvider
     Properties:
-      Url: https://vstoken.actions.githubusercontent.com
-      ClientIdList: [sigstore]
-      ThumbprintList: [a031c46782e6e6c662c2c87c76da9aa62ccabd8e]
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: 
+        - sts.amazonaws.com
+      ThumbprintList:
+        - a031c46782e6e6c662c2c87c76da9aa62ccabd8e
 
 Outputs:
   Role:
