@@ -145,7 +145,7 @@ Resources:
               Federated: !Ref GithubOidc
             Condition:
               StringLike:
-                vstoken.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
 
   GithubOidc:
     Type: AWS::IAM::OIDCProvider
