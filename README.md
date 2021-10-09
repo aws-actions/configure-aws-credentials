@@ -98,6 +98,7 @@ The following table describes which identity is used based on which values are s
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
+        audience: sts.amazonaws.com
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
         role-session-name: MySessionName
@@ -108,6 +109,7 @@ In this example, the Action will load the OIDC token from the GitHub-provided en
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
+        audience: sts.amazonaws.com
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
