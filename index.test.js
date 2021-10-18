@@ -2,10 +2,8 @@ const core = require('@actions/core');
 const assert = require('assert');
 const aws = require('aws-sdk');
 const run = require('./index.js');
-const axios = require('axios');
 
 jest.mock('@actions/core');
-jest.mock("axios");
 
 const FAKE_ACCESS_KEY_ID = 'MY-AWS-ACCESS-KEY-ID';
 const FAKE_SECRET_ACCESS_KEY = 'MY-AWS-SECRET-ACCESS-KEY';
@@ -90,6 +88,12 @@ describe('Configure AWS Credentials', () => {
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput(DEFAULT_INPUTS));
+
+        core.getIDToken = jest
+            .fn()
+            .mockImplementation(() => {
+                return "testtoken"
+            });
 
         mockStsCallerIdentity.mockReset();
         mockStsCallerIdentity
@@ -569,9 +573,9 @@ describe('Configure AWS Credentials', () => {
     });
 
     test('only role arn and region provided to use GH OIDC Token', async () => {
+        process.env.GITHUB_ACTIONS = 'true';
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
-        process.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'https://www.example.com/token/endpoint';
-        axios.get.mockImplementation(() => Promise.resolve({ data: {value: "testtoken"} }));
+
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION}));
@@ -590,9 +594,8 @@ describe('Configure AWS Credentials', () => {
 
     test('GH OIDC With custom role duration', async () => {
         const CUSTOM_ROLE_DURATION = 1234;
+        process.env.GITHUB_ACTIONS = 'true';
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
-        process.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'https://www.example.com/token/endpoint';
-        axios.get.mockImplementation(() => Promise.resolve({ data: {value: "testtoken"} }));
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'role-duration-seconds': CUSTOM_ROLE_DURATION}));
