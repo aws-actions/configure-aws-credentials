@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.5.11...v1.6.0) (2021-11-23)
+
+
+### Features
+
+* Add the ability to use a web identity token file ([#240](https://github.com/aws-actions/configure-aws-credentials/issues/240)) ([8053174](https://github.com/aws-actions/configure-aws-credentials/commit/8053174404968575ac1dd102dcb1109d2fe6d9ea))
+* added OIDC ([#262](https://github.com/aws-actions/configure-aws-credentials/issues/262)) ([b8c74de](https://github.com/aws-actions/configure-aws-credentials/commit/b8c74de753fbcb4868bf2011fb2e15826ce973af)), closes [#267](https://github.com/aws-actions/configure-aws-credentials/issues/267)
+* upgraded to new GH OIDC API ([#284](https://github.com/aws-actions/configure-aws-credentials/issues/284)) ([036a4a1](https://github.com/aws-actions/configure-aws-credentials/commit/036a4a1ddf2c0e7a782dca6e083c6c53e5d90321))
+
+
+### Bug Fixes
+
+* reverting update to use new API ([#274](https://github.com/aws-actions/configure-aws-credentials/issues/274)) ([a78fcb0](https://github.com/aws-actions/configure-aws-credentials/commit/a78fcb01f76c8c5c3b05ab82718a6f7919fc0269)), closes [#270](https://github.com/aws-actions/configure-aws-credentials/issues/270)
+* typo "charcters" in README.md ([#241](https://github.com/aws-actions/configure-aws-credentials/issues/241)) ([c48e1b5](https://github.com/aws-actions/configure-aws-credentials/commit/c48e1b578416f3457ccf757c47385df5c054d23f))
+* Updated token retrieval to use new API ([#270](https://github.com/aws-actions/configure-aws-credentials/issues/270)) ([20ce4e5](https://github.com/aws-actions/configure-aws-credentials/commit/20ce4e5ba1de2e753d034b5415075a8767d64d4d))
+
 ### [1.5.11](https://github.com/aws-actions/configure-aws-credentials/compare/v1.5.10...v1.5.11) (2021-07-19)
 
 ### [1.5.10](https://github.com/aws-actions/configure-aws-credentials/compare/v1.5.9...v1.5.10) (2021-06-01)
