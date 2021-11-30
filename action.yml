@@ -41,7 +41,8 @@ inputs:
     required: false
   role-duration-seconds:
     description: >-
-      Role duration in seconds. The default duration is 1 hour when using the OIDC provider or 6 hours when using an IAM User.
+      Role duration in seconds. The default duration is 1 hour when using the OIDC provider or
+      6 hours when using an IAM User.
     required: false
   role-session-name:
     description: 'Role session name (default: GitHubActions)'
