@@ -116,7 +116,11 @@ async function assumeRole(params) {
   return assumeFunction(assumeRoleRequest)
     .promise()
     .then(function (data) {
+
+      core.debug(`Assumed role ARN ${data.AssumedRoleUser.Arn}`)
+
       return {
+        accountId: data.AssumedRoleUser.Arn.split(':')[4],
         accessKeyId: data.Credentials.AccessKeyId,
         secretAccessKey: data.Credentials.SecretAccessKey,
         sessionToken: data.Credentials.SessionToken,
