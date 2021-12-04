@@ -168,8 +168,10 @@ function exportCredentials(params){
 function outputCredentials(params) {
   // Output  AWS credentials
   // Setting the credentials as secrets masks them in Github Actions logs
-  const {accessKeyId, secretAccessKey, sessionToken} = params;
+  const {accessKeyId, secretAccessKey, sessionToken, region} = params;
 
+  core.setOutput('aws-default-region', region)
+  core.setOutput('aws-region', region)
   // AWS_ACCESS_KEY_ID:
   // Specifies an AWS access key associated with an IAM user or role
   core.setSecret(accessKeyId);
@@ -281,7 +283,9 @@ async function run() {
       throw new Error(`Region is not valid: ${region}`);
     }
 
-    exportRegion(region);
+    if (!roleOutputCredentials) {
+      exportRegion(region);
+    }
 
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
     // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
@@ -304,7 +308,7 @@ async function run() {
       }
 
       if (roleOutputCredentials) {
-        outputCredentials({accessKeyId, secretAccessKey, sessionToken});
+        outputCredentials({accessKeyId, secretAccessKey, sessionToken, region});
       } else {
         exportCredentials({accessKeyId, secretAccessKey, sessionToken});
       }
@@ -345,7 +349,7 @@ async function run() {
       });
 
       if (roleOutputCredentials) {
-        outputCredentials(roleCredentials);
+        outputCredentials({...roleCredentials, region});
       } else {
         exportCredentials(roleCredentials);
       }

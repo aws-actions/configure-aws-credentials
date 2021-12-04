@@ -57,12 +57,21 @@ inputs:
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'
-  aws-access-key:
-    description: 'The AWS assumed role access key, if `role-output-credentials` is set'
+  aws-default-region:
+    description: >-
+      The AWS default region name. This is output is available if `role-output-credentials` is set to true
+  aws-region:
+    description: >-
+      The AWS region name. This is output is available if `role-output-credentials` is set to true
+  aws-access-key-id:
+    description: >-
+      AWS Access Key ID of the assumed role. This is output is available if `role-output-credentials` is set to true
   aws-secret-access-key:
-    description: 'The AWS assumed role secret key, if `role-output-credentials` is set'
-  aws-session-name:
-    description: 'The AWS assumed role session name, if `role-output-credentials` is set'
+    description: >-
+      AWS Secret Access Key of the assumed role. This is output is available if `role-output-credentials` is set to true
+  aws-session-token:
+    description: >-
+      AWS Session Token. This is output is available if `role-output-credentials` is set to true
 runs:
   using: 'node12'
   main: 'dist/index.js'

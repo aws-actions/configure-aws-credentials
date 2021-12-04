@@ -118,6 +118,28 @@ In this example, the Action will load the OIDC token from the GitHub-provided en
 ```
 In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws:iam::123456789100:role/my-github-actions-role`.  To assume a role in the same account as the static credentials, you can simply specify the role name, like `role-to-assume: my-github-actions-role`.
 
+```yaml
+    - name: Configure AWS Credentials
+      id: aws-credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        role-session-name: MySessionName
+        role-output-credentials: true
+    
+    - name: Get Caller Identity
+      env:
+        AWS_REGION: '${{ steps.aws-credentials.outputs.aws-region }}'
+        AWS_DEFAULT_REGION: '${{ steps.aws-credentials.outputs.aws-default-region }}'
+        AWS_ACCESS_KEY_ID: '${{ steps.aws-credentials.outputs.aws-access-key-id }}'
+        AWS_SECRET_ACCESS_KEY: '${{ aws-credentials.aws.outputs.aws-secret-access-key }}'
+        AWS_SESSION_TOKEN: '${{ steps.aws-credentials.outputs.aws-session-token }}'
+      run: |
+        aws sts get-caller-identity
+```
+In this example, input `role-output-credentials` forces action to output assumed role's credentials without populating `GITHUB_ENV` environmental variable. Following steps can reference output of the action step to get credentials.
+
 ### Sample IAM Role CloudFormation Template
 ```yaml
 Parameters:
