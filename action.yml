@@ -24,7 +24,7 @@ inputs:
     required: true
   drop-current-credentials:
     description: >-
-      Wheather to drop currently set AWS credentials. Valid values are 'true' and 'false'.
+      Whether to drop currently set AWS credentials. Valid values are 'true' and 'false'.
       Defaults to false
     required: false
   mask-aws-account-id:
