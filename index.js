@@ -165,6 +165,29 @@ function exportCredentials(params){
   }
 }
 
+function outputCredentials(params) {
+  // Output  AWS credentials
+  // Setting the credentials as secrets masks them in Github Actions logs
+  const {accessKeyId, secretAccessKey, sessionToken} = params;
+
+  // AWS_ACCESS_KEY_ID:
+  // Specifies an AWS access key associated with an IAM user or role
+  core.setSecret(accessKeyId);
+  core.setOutput('aws-access-key-id', accessKeyId);
+
+  // AWS_SECRET_ACCESS_KEY:
+  // Specifies the secret key associated with the access key. This is essentially the "password" for the access key.
+  core.setSecret(secretAccessKey);
+  core.setOutput('aws-secret-access-key', secretAccessKey);
+
+  // AWS_SESSION_TOKEN:
+  // Specifies the session token value that is required if you are using temporary security credentials.
+  if (sessionToken) {
+    core.setSecret(sessionToken);
+    core.setOutput('aws-session-token', sessionToken);
+  }
+}
+
 function exportRegion(region) {
   // AWS_DEFAULT_REGION and AWS_REGION:
   // Specifies the AWS Region to send requests to
@@ -248,9 +271,11 @@ async function run() {
     const roleExternalId = core.getInput('role-external-id', { required: false });
     let roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
+    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
+    const roleOutputCredentialsInput = core.getInput('role-output-credentials', { required: false }) || 'false';
+    const roleOutputCredentials = roleOutputCredentialsInput.toLowerCase() === 'true';
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -278,7 +303,11 @@ async function run() {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
       }
 
-      exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+      if (roleOutputCredentials) {
+        outputCredentials({accessKeyId, secretAccessKey, sessionToken});
+      } else {
+        exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+      }
     }
     
     // Attempt to load credentials from the GitHub OIDC provider.
@@ -314,7 +343,13 @@ async function run() {
         webIdentityTokenFile,
         webIdentityToken
       });
-      exportCredentials(roleCredentials);
+
+      if (roleOutputCredentials) {
+        outputCredentials(roleCredentials);
+      } else {
+        exportCredentials(roleCredentials);
+      }
+
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.

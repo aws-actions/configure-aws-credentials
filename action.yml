@@ -51,9 +51,18 @@ inputs:
   role-skip-session-tagging:
     description: 'Skip session tagging during role assumption'
     required: false
+  role-output-credentials:
+    description: 'Output assumed credentials instead of exporting them to environment'
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'
+  aws-access-key:
+    description: 'The AWS assumed role access key, if `role-output-credentials` is set'
+  aws-secret-access-key:
+    description: 'The AWS assumed role secret key, if `role-output-credentials` is set'
+  aws-session-name:
+    description: 'The AWS assumed role session name, if `role-output-credentials` is set'
 runs:
   using: 'node12'
   main: 'dist/index.js'
