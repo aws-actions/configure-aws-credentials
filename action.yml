@@ -22,6 +22,11 @@ inputs:
   aws-region:
     description: 'AWS Region, e.g. us-east-2'
     required: true
+  drop-current-credentials:
+    description: >-
+      Wheather to drop currently set AWS credentials. Valid values are 'true' and 'false'.
+      Defaults to false
+    required: false
   mask-aws-account-id:
     description: >-
       Whether to set the AWS account ID for these credentials as a secret value,
@@ -52,7 +57,10 @@ inputs:
     description: 'Skip session tagging during role assumption'
     required: false
   role-output-credentials:
-    description: 'Output assumed credentials instead of exporting them to environment'
+    description: >-
+      Whether to output assumed credentials instead of exporting them to environment.
+      Valid values are 'true' and 'false'.
+      Defaults to false
     required: false
 outputs:
   aws-account-id:

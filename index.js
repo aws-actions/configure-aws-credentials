@@ -262,6 +262,24 @@ function getStsClient(region, credentials) {
   });
 }
 
+function dropCurrentCredentilas() {
+  core.debug('Dropping existing AWS credentials set in the environment')
+
+  const envs = [
+    'AWS_DEFAULT_REGION',
+    'AWS_REGION',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'AWS_SESSION_TOKEN',
+  ]
+
+  for (const e of envs) {
+    core.exportVariable(e, '');
+    delete process.env[e]
+  }
+
+}
+
 async function run() {
   try {
     // Get inputs
@@ -279,9 +297,16 @@ async function run() {
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const roleOutputCredentialsInput = core.getInput('role-output-credentials', { required: false }) || 'false';
     const roleOutputCredentials = roleOutputCredentialsInput.toLowerCase() === 'true';
+    const dropCurrentCredentialsInput = core.getInput('drop-current-credentials', { required: false }) || 'false';
+    const dropCurrentCredentials = dropCurrentCredentialsInput.toLowerCase() === 'true';
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
+    }
+
+    // This wraps the logic for deciding if we should drop currently set AWS credentials in the environment
+    if (dropCurrentCredentials) {
+      dropCurrentCredentilas()
     }
 
     if (!roleOutputCredentials) {
