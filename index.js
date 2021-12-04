@@ -262,7 +262,7 @@ function getStsClient(region, credentials) {
   });
 }
 
-function dropCurrentCredentilas() {
+function dropCredentials() {
   core.debug('Dropping existing AWS credentials set in the environment')
 
   const envs = [
@@ -306,7 +306,7 @@ async function run() {
 
     // This wraps the logic for deciding if we should drop currently set AWS credentials in the environment
     if (dropCurrentCredentials) {
-      dropCurrentCredentilas()
+      dropCredentials()
     }
 
     if (!roleOutputCredentials) {

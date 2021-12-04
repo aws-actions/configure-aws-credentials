@@ -778,4 +778,19 @@ describe('Configure AWS Credentials', () => {
         expect(core.setOutput).toHaveBeenNthCalledWith(11, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
     });
 
+    test('basic role assumption with drop credentials', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'drop-current-credentials': 'TRUE'}));
+        core.exportVariable.mockReset();
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(1);
+        expect(core.exportVariable).toHaveBeenNthCalledWith(1, 'AWS_DEFAULT_REGION', '');
+        expect(core.exportVariable).toHaveBeenNthCalledWith(2, 'AWS_REGION', '');
+        expect(core.exportVariable).toHaveBeenNthCalledWith(3, 'AWS_ACCESS_KEY_ID', '');
+        expect(core.exportVariable).toHaveBeenNthCalledWith(4, 'AWS_SECRET_ACCESS_KEY', '');
+        expect(core.exportVariable).toHaveBeenNthCalledWith(5, 'AWS_SESSION_TOKEN', '');
+    });
+
 });
