@@ -133,7 +133,7 @@ In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws
         AWS_REGION: '${{ steps.aws-credentials.outputs.aws-region }}'
         AWS_DEFAULT_REGION: '${{ steps.aws-credentials.outputs.aws-default-region }}'
         AWS_ACCESS_KEY_ID: '${{ steps.aws-credentials.outputs.aws-access-key-id }}'
-        AWS_SECRET_ACCESS_KEY: '${{ aws-credentials.aws.outputs.aws-secret-access-key }}'
+        AWS_SECRET_ACCESS_KEY: '${{ steps.aws-credentials.aws.outputs.aws-secret-access-key }}'
         AWS_SESSION_TOKEN: '${{ steps.aws-credentials.outputs.aws-session-token }}'
       run: |
         aws sts get-caller-identity
