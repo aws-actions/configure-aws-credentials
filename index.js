@@ -238,6 +238,10 @@ function getStsClient(region) {
   });
 }
 
+function isRetryableError(error) {
+  return error instanceof Error && error.code && (error.code === 'IDPCommunicationErrorException' || error.code === 'InvalidIdentityToken');
+}
+
 async function run() {
   try {
     // Get inputs
@@ -309,17 +313,29 @@ async function run() {
       let roleCredentials = await retry(
         async (bail) => {
           core.info('Assuming role')
-          const credentials = await assumeRole({
-            sourceAccountId,
-            region,
-            roleToAssume,
-            roleExternalId,
-            roleDurationSeconds,
-            roleSessionName,
-            roleSkipSessionTagging,
-            webIdentityTokenFile,
-            webIdentityToken
-          });
+          let credentials;
+          try {
+            credentials = await assumeRole({
+              sourceAccountId,
+              region,
+              roleToAssume,
+              roleExternalId,
+              roleDurationSeconds,
+              roleSessionName,
+              roleSkipSessionTagging,
+              webIdentityTokenFile,
+              webIdentityToken
+            });
+          } catch(e) {
+            core.debug(`code ${e.code}`)
+            core.debug(e)
+
+            if (!isRetryableError(e)) {
+              bail(new Error(e))
+            }
+
+            throw new Error(e)
+          }
 
           core.info('Successfully assumed role')
           return credentials
@@ -329,7 +345,7 @@ async function run() {
           randomize: true,
           factor: 2,
           onRetry: function (err) {
-            core.warning(err.message)
+            core.warning(`Retrying. ${err.message}`)
           }
         }
       );
