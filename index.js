@@ -239,7 +239,7 @@ function getStsClient(region) {
 }
 
 function isRetryableError(error) {
-  return error instanceof Error && error.code && (error.code === 'IDPCommunicationErrorException' || error.code === 'InvalidIdentityToken');
+  return error instanceof Error && error.code && (error.code === 'IDPCommunicationErrorException' || error.code === 'InvalidIdentityToken' || error.code === 'AccessDenied');
 }
 
 async function run() {
