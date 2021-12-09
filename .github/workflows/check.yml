@@ -3,8 +3,12 @@ on:
 
 name: Check
 
+permissions: read-all
+
 jobs:
   check:
+    permissions:
+      contents: read # for actions/checkout to fetch code
     name: Run Unit Tests
     runs-on: ubuntu-latest
     steps:
