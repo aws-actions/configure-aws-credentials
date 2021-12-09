@@ -239,7 +239,7 @@ function getStsClient(region) {
 }
 
 function isRetryableError(error) {
-  return error instanceof Error && error.code && (error.code === 'IDPCommunicationErrorException' || error.code === 'InvalidIdentityToken' || error.code === 'AccessDenied');
+  return error instanceof Error && error.code && (error.code === 'IDPCommunicationErrorException' || error.code === 'InvalidIdentityToken');
 }
 
 async function run() {
@@ -327,10 +327,6 @@ async function run() {
               webIdentityToken
             });
           } catch(e) {
-            core.debug(`code ${e.code}`)
-            core.debug(e)
-            core.debug(isRetryableError(e))
-
             if (!isRetryableError(e)) {
               bail(new Error(e));
               return
