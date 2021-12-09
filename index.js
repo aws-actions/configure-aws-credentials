@@ -329,29 +329,31 @@ async function run() {
           } catch(e) {
             core.debug(`code ${e.code}`)
             core.debug(e)
+            core.debug(isRetryableError(e))
 
             if (!isRetryableError(e)) {
-              bail(new Error(e))
+              bail(new Error(e));
+              return
             }
 
-            throw new Error(e)
+            throw new Error(e);
           }
 
-          core.info('Successfully assumed role')
-          return credentials
+          core.info('Successfully assumed role');
+          return credentials;
         },
         {
           retries: roleToAssumeRetries,
           randomize: true,
           factor: 2,
           onRetry: function (err) {
-            core.warning(`Retrying. ${err.message}`)
+            core.warning(`Retrying. ${err.message}`);
           }
         }
       );
 
       if (!roleCredentials) {
-        throw new Error('Unable to retrieve credentials')
+        throw new Error('Unable to retrieve credentials');
       }
 
       exportCredentials(roleCredentials);
