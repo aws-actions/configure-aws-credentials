@@ -54,6 +54,9 @@ inputs:
   role-to-assume-retries:
     description: 'Number of times assume role will be re-tried (default: 5)'
     required: false
+  role-to-assume-retries-factor:
+    description: 'The exponential factor to use for retries. (default: 5)'
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'

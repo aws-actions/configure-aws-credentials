@@ -15,6 +15,7 @@ const SANITIZATION_CHARACTER = '_';
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
 const ROLE_TO_ASSUME_RETRIES = 5
+const ROLE_TO_ASSUME_RETRIES_FACTOR = 2
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
@@ -252,6 +253,7 @@ async function run() {
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
     const roleToAssume = core.getInput('role-to-assume', {required: false});
     const roleToAssumeRetries = core.getInput('role-to-assume-retries', {required: false}) || ROLE_TO_ASSUME_RETRIES;
+    const roleToAssumeRetriesFactor = core.getInput('role-to-assume-retries-factor', {required: false}) || ROLE_TO_ASSUME_RETRIES_FACTOR;
     const roleExternalId = core.getInput('role-external-id', { required: false });
     let roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
@@ -340,8 +342,8 @@ async function run() {
         },
         {
           retries: roleToAssumeRetries,
+          factor: roleToAssumeRetriesFactor,
           randomize: true,
-          factor: 2,
           onRetry: function (err) {
             core.warning(`Retrying. ${err.message}`);
           }
