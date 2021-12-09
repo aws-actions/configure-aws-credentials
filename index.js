@@ -240,7 +240,7 @@ function getStsClient(region) {
 }
 
 function isRetryableError(error) {
-  return error instanceof Error && ['IDPCommunicationErrorException', 'InvalidIdentityToken'].includes(error?.code);
+  return error instanceof Error && ['IDPCommunicationErrorException', 'InvalidIdentityToken'].includes(error.code);
 }
 
 async function run() {
