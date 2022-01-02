@@ -50,12 +50,11 @@ const mockedSTS = mockClient(STSClient);
 function mockGetInput(requestResponse: { [key: string]: string }) {
   return (name: string, _options: unknown) => requestResponse[name];
 }
-jest.mock('fs', () => {
-  return {
-    existsSync: jest.fn(() => true),
-    readFileSync: jest.fn(() => 'testpayload'),
-  };
-});
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  existsSync: jest.fn(() => true),
+  readFileSync: jest.fn(() => 'testpayload'),
+}));
 
 describe('Configure AWS Credentials', () => {
   const OLD_ENV = process.env;
