@@ -1,3 +1,10 @@
+queue_rules:
+  - name: default
+    conditions:
+      # Conditions to get out of the queue (= merged)
+      - status-success=Run Unit Tests
+      - status-success=Semantic Pull Request
+
 pull_request_rules:
   - name: Automatically merge on CI success and review approval
     conditions:
@@ -13,10 +20,9 @@ pull_request_rules:
       - -closed
       - author!=dependabot[bot]
     actions:
-      merge:
+      queue:
         method: squash
-        strict: smart
-        strict_method: merge
+        name: default
 
   - name: Automatically approve and merge Dependabot PRs
     conditions:
@@ -31,7 +37,6 @@ pull_request_rules:
     actions:
       review:
         type: APPROVE
-      merge:
+      queue:
         method: squash
-        strict: smart+fasttrack
-        strict_method: merge
+        name: default
