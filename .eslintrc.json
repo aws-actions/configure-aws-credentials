@@ -1,18 +1,11 @@
 {
-    "env": {
-        "commonjs": true,
-        "es6": true,
-        "node": true,
-        "jest": true
-    },
-    "extends": "eslint:recommended",
-    "globals": {
-        "Atomics": "readonly",
-        "SharedArrayBuffer": "readonly"
-    },
-    "parserOptions": {
-        "ecmaVersion": 2018
-    },
-    "rules": {
-    }
+  "plugins": ["jest"],
+  "extends": ["./node_modules/gts/", "plugin:jest/recommended", "plugin:jest/style"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+  },
+  "parserOptions": {
+    "warnOnUnsupportedTypeScriptVersion": false
+  }
 }
