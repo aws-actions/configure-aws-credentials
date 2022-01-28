@@ -76,7 +76,8 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
 
 ## Assuming a Role
-We recommend using GitHub's OIDC provider to get short-lived credentials needed for your actions. 
+We recommend using GitHub's OIDC provider to get short-lived credentials needed for your actions. See [Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) for a in depth explanation on how to configure GitHub's OIDC provider.
+
 Specifying `role-to-assume` without providing an `aws-access-key-id` or a `web-identity-token-file` will signal to the action that you wish to use the OIDC provider.
 The default session duration is 1 hour when using the OIDC provider to directly assume an IAM Role.
 The default session duration is 6 hours when using an IAM User to assume an IAM Role (by providing an `aws-access-key-id`, `aws-secret-access-key`, and a `role-to-assume`) .
