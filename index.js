@@ -52,12 +52,14 @@ async function assumeRole(params) {
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
 
+  const githubActor = sanitizeGithubActor(GITHUB_ACTOR);
+
   const tagArray = [
     {Key: 'GitHub', Value: 'Actions'},
     {Key: 'Repository', Value: GITHUB_REPOSITORY},
     {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
     {Key: 'Action', Value: GITHUB_ACTION},
-    {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
+    {Key: 'Actor', Value: githubActor},
     {Key: 'Commit', Value: GITHUB_SHA},
   ];
 
@@ -77,6 +79,7 @@ async function assumeRole(params) {
     RoleArn: roleArn,
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
+    SourceIdentity: githubActor,
     Tags: roleSessionTags
   };
 
