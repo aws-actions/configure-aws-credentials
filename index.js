@@ -384,17 +384,18 @@ async function run() {
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
-      const roleCredentials = await assumeRole({
-        sourceAccountId,
-        region,
-        roleToAssume,
-        roleExternalId,
-        roleDurationSeconds,
-        roleSessionName,
-        roleSkipSessionTagging,
-        webIdentityTokenFile,
-        webIdentityToken
-      });
+      const roleCredentials = await retryAndBackoff(
+          async () => { return await assumeRole({
+            sourceAccountId,
+            region,
+            roleToAssume,
+            roleExternalId,
+            roleDurationSeconds,
+            roleSessionName,
+            roleSkipSessionTagging,
+            webIdentityTokenFile,
+            webIdentityToken
+          }) }, true);
 
       if (roleOutputCredentials) {
         outputCredentials({...roleCredentials, region});
