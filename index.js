@@ -177,7 +177,7 @@ async function exportAccountId(maskAccountId, region) {
   const sts = getStsClient(region);
   const identity = await sts.getCallerIdentity().promise();
   const accountId = identity.Account;
-  if (!maskAccountId || maskAccountId.toLowerCase() == 'true') {
+  if (maskAccountId.toLowerCase() == 'true') {
     core.setSecret(accountId);
   }
   core.setOutput('aws-account-id', accountId);
@@ -266,7 +266,7 @@ async function run() {
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: false });
     const region = core.getInput('aws-region', { required: true });
     const sessionToken = core.getInput('aws-session-token', { required: false });
-    const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
+    const maskAccountId = core.getInput('mask-aws-account-id', { required: false }) || 'false';
     const roleToAssume = core.getInput('role-to-assume', {required: false});
     const roleExternalId = core.getInput('role-external-id', { required: false });
     let roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || MAX_ACTION_RUNTIME;

@@ -26,7 +26,7 @@ inputs:
     description: >-
       Whether to set the AWS account ID for these credentials as a secret value,
       so that it is masked in logs. Valid values are 'true' and 'false'.
-      Defaults to true
+      Defaults to false
     required: false
   role-to-assume:
     description: >-
