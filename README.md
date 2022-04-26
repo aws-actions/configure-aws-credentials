@@ -186,8 +186,9 @@ The session will have the name "GitHubActions" and be tagged with the following 
 _Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid characters, the characters will be replaced with an '*'._
 
 The action will use session tagging by default during role assumption. 
-Note that for WebIdentity role assumption, the session tags have to be included in the encoded WebIdentity token.
+Note that for WebIdentity role assumption, the session tags have to be included in the encoded WebIdentity token. 
 This means that Tags can only be supplied by the OIDC provider and not set during the AssumeRoleWithWebIdentity API call within the Action.
+GitHub does not currently support specifying session tags in tokens issued to GitHub actions.
 You can skip this session tagging by providing `role-skip-session-tagging` as true in the action's inputs:
 
 ```yaml
