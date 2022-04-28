@@ -13,6 +13,7 @@ const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
+const AWS_CURRENT_REGION = process.env.AWS_REGION
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
@@ -264,7 +265,7 @@ async function run() {
     // Get inputs
     const accessKeyId = core.getInput('aws-access-key-id', { required: false });
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: false });
-    const region = core.getInput('aws-region', { required: true });
+    const region = core.getInput('aws-region', { required: false }) || AWS_CURRENT_REGION;
     const sessionToken = core.getInput('aws-session-token', { required: false });
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
     const roleToAssume = core.getInput('role-to-assume', {required: false});
