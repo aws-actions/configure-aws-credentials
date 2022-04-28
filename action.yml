@@ -21,7 +21,7 @@ inputs:
     required: false
   aws-region:
     description: 'AWS Region, e.g. us-east-2'
-    required: true
+    required: false
   mask-aws-account-id:
     description: >-
       Whether to set the AWS account ID for these credentials as a secret value,
