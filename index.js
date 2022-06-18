@@ -310,7 +310,15 @@ async function run() {
     let sourceAccountId;
     let webIdentityToken;
     if(useGitHubOIDCProvider()) {
-      webIdentityToken = await core.getIDToken('sts.amazonaws.com');
+      if(region === "cn-north-1"){
+        webIdentityToken = await core.getIDToken('sts.cn-north-1.amazonaws.com.cn');
+      }
+      else if (region === "cn-northwest-1"){
+        webIdentityToken = await core.getIDToken('sts.cn-northwest-1.amazonaws.com.cn');
+
+      }else {
+        webIdentityToken = await core.getIDToken('sts.amazonaws.com');
+      }
       roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
     } else {
