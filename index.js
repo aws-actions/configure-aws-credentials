@@ -19,7 +19,6 @@ async function assumeRole(params) {
   const isDefined = i => !!i;
 
   const {
-    audience,
     sourceAccountId,
     roleToAssume,
     roleExternalId,
