@@ -263,6 +263,7 @@ async function run() {
   try {
     // Get inputs
     const accessKeyId = core.getInput('aws-access-key-id', { required: false });
+    const audience = core.getInput('audience', { required: false });
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: false });
     const region = core.getInput('aws-region', { required: true });
     const sessionToken = core.getInput('aws-session-token', { required: false });
@@ -310,7 +311,7 @@ async function run() {
     let sourceAccountId;
     let webIdentityToken;
     if(useGitHubOIDCProvider()) {
-      webIdentityToken = await core.getIDToken('sts.amazonaws.com');
+      webIdentityToken = await core.getIDToken(audience);
       roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
     } else {
