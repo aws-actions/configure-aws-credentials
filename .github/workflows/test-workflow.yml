@@ -16,7 +16,7 @@ jobs:
 
     - name: Print current build ID
       run: |
-        echo Integration test run: ConfigureAWSCredentialsDepl-DaaDYhTJsCVq:e95ec652-de3c-4e9c-aa94-c2b741572daf
+        echo Integration test run: ConfigureAWSCredentialsDepl-DaaDYhTJsCVq:57c3e149-0b5f-4edd-a975-48ee17192617
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@58bb84115423d4d62a0290c218639a795576fe45
