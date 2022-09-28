@@ -55,10 +55,6 @@ inputs:
   role-skip-session-tagging:
     description: 'Skip session tagging during role assumption'
     required: false
-  http-proxy-ignore:
-    description: 'Force ignore proxy configurations'
-    required: false
-    default: 'false'
   http-proxy:
     description: 'Proxy to use for the AWS SDK agent'
     required: false

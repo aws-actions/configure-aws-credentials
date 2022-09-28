@@ -35,20 +35,6 @@ function mockGetInput(requestResponse) {
     }
 }
 
-function mockGetBooleanInput(requestResponse) {
-    return function (name, options) { // eslint-disable-line no-unused-vars
-        if (!requestResponse[name]) {
-            return undefined;
-        }
-
-        const parsed = JSON.parse(requestResponse[name])
-        if (typeof parsed !== 'boolean') {
-            throw new Error(`Bool parsing failed: ${typeof parsed} - ${requestResponse[name]}`);
-        }
-        return parsed;
-    }
-}
-
 const CREDS_INPUTS = {
     'aws-access-key-id': FAKE_ACCESS_KEY_ID,
     'aws-secret-access-key': FAKE_SECRET_ACCESS_KEY
@@ -103,10 +89,6 @@ describe('Configure AWS Credentials', () => {
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput(DEFAULT_INPUTS));
-
-        core.getBooleanInput = jest
-            .fn()
-            .mockImplementation(mockGetBooleanInput(DEFAULT_INPUTS));
 
         core.getIDToken = jest
             .fn()
@@ -885,20 +867,6 @@ describe('Configure AWS Credentials', () => {
                 .fn()
                 .mockImplementation(
                     mockGetInput({ ...DEFAULT_INPUTS})
-                );
-
-            await run();
-
-            expect(aws.config.update).toHaveBeenCalledTimes(0);
-        });
-
-        test('ignoring proxy - with action input set', async () => {
-            const MOCK_INPUT = { ...DEFAULT_INPUTS, 'http-proxy': 'http://test.me', 'http-proxy-ignore': 'true'};
-            core.getBooleanInput = jest.fn().mockImplementation(mockGetBooleanInput(MOCK_INPUT));
-            core.getInput = jest
-                .fn()
-                .mockImplementation(
-                    mockGetInput(MOCK_INPUT)
                 );
 
             await run();
