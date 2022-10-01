@@ -9,7 +9,6 @@ pull_request_rules:
     conditions:
       - base~=master|integ-tests
       - "#approved-reviews-by>=1"
-      - approved-reviews-by=@aws-actions/aws-ecs-devx
       - -approved-reviews-by~=author
       - status-success=Run Unit Tests
       - label!=work-in-progress
