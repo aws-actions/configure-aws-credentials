@@ -4,6 +4,10 @@ branding:
   icon: 'cloud'
   color: 'orange'
 inputs:
+  audience:
+    default: 'sts.amazonaws.com'
+    description: 'The audience to use for the OIDC provider'
+    required: false
   aws-access-key-id:
     description: >-
       AWS Access Key ID. This input is required if running in the GitHub hosted environment.

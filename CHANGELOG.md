@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.6.1...v1.7.0) (2022-08-03)
+
+
+### Features
+
+* Allow audience to be explicitly specified ([2f8dfd0](https://github.com/aws-actions/configure-aws-credentials/commit/2f8dfd0ed43d880f85b57f0c8727b497af2037de))
+
+### [1.6.1](https://github.com/aws-actions/configure-aws-credentials/compare/v1.6.0...v1.6.1) (2022-01-18)
+
+
+### Bug Fixes
+
+* OIDC Parallel Requests error ([133757e](https://github.com/aws-actions/configure-aws-credentials/commit/133757e9b829f4ef44c8e99e3f272879b45fc9c5))
+* Strict Mode Deprecation ([4c5e1c6](https://github.com/aws-actions/configure-aws-credentials/commit/4c5e1c60ccfc95d0e48bf1bc95fc707a94aa2c60))
+
 ## [1.6.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.5.11...v1.6.0) (2021-11-23)
 
 

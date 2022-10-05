@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const assert = require('assert');
 const aws = require('aws-sdk');
-const run = require('./index.js');
+const { run, withSleep, reset }  = require('./index.js');
 
 jest.mock('@actions/core');
 
@@ -156,10 +156,15 @@ describe('Configure AWS Credentials', () => {
                 }
             }
         });
+
+        withSleep(() => {
+            return Promise.resolve();
+        });
     });
 
     afterEach(() => {
         process.env = OLD_ENV;
+        reset();
     });
 
     test('exports env vars', async () => {
@@ -610,6 +615,23 @@ describe('Configure AWS Credentials', () => {
         expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_STS_ACCESS_KEY_ID);
         expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_SECRET_ACCESS_KEY);
         expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
+    });
+
+    test('role assumption fails after maximun trials using OIDC Provider', async () => {
+        process.env.GITHUB_ACTIONS = 'true';
+        process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION}));
+
+        mockStsAssumeRoleWithWebIdentity.mockReset();
+        mockStsAssumeRoleWithWebIdentity.mockImplementation(() => {
+            throw new Error();
+        });
+
+        await assert.rejects(() => run());
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledTimes(12)
     });
 
     test('role external ID provided', async () => {
