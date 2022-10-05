@@ -236,10 +236,34 @@ function getStsClient(region) {
   });
 }
 
+let defaultSleep = function (ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+let sleep = defaultSleep;
+
+// retryAndBackoff retries with exponential backoff the promise if the error isRetryable upto maxRetries time.
+const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 12, base = 50) => {
+  try {
+    return await fn();
+  } catch (err) {
+    if (!isRetryable) {
+      throw err;
+    }
+    // It's retryable, so sleep and retry.
+    await sleep(Math.random() * (Math.pow(2, retries) * base) );
+    retries += 1;
+    if (retries === maxRetries) {
+      throw err;
+    }
+    return await retryAndBackoff(fn, isRetryable, retries, maxRetries, base);
+  }
+}
+
 async function run() {
   try {
     // Get inputs
     const accessKeyId = core.getInput('aws-access-key-id', { required: false });
+    const audience = core.getInput('audience', { required: false });
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: false });
     const region = core.getInput('aws-region', { required: true });
     const sessionToken = core.getInput('aws-session-token', { required: false });
@@ -287,7 +311,7 @@ async function run() {
     let sourceAccountId;
     let webIdentityToken;
     if(useGitHubOIDCProvider()) {
-      webIdentityToken = await core.getIDToken('sts.amazonaws.com');
+      webIdentityToken = await core.getIDToken(audience);
       roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
     } else {
@@ -303,17 +327,18 @@ async function run() {
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
-      const roleCredentials = await assumeRole({
-        sourceAccountId,
-        region,
-        roleToAssume,
-        roleExternalId,
-        roleDurationSeconds,
-        roleSessionName,
-        roleSkipSessionTagging,
-        webIdentityTokenFile,
-        webIdentityToken
-      });
+      const roleCredentials = await retryAndBackoff(
+          async () => { return await assumeRole({
+            sourceAccountId,
+            region,
+            roleToAssume,
+            roleExternalId,
+            roleDurationSeconds,
+            roleSessionName,
+            roleSkipSessionTagging,
+            webIdentityTokenFile,
+            webIdentityToken
+          }) }, true);
       exportCredentials(roleCredentials);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
@@ -337,7 +362,14 @@ async function run() {
   }
 }
 
-module.exports = run;
+exports.withSleep = function (s) {
+  sleep = s;
+};
+exports.reset = function () {
+  sleep = defaultSleep;
+};
+
+exports.run = run
 
 /* istanbul ignore next */
 if (require.main === module) {
