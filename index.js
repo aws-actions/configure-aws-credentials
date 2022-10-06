@@ -283,13 +283,24 @@ async function run() {
     exportRegion(region);
 
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
-    // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
+    // the decision in a few different places. Consolidating it here makes the logic clearer elsewhere.
+    // This is broken into two parts because if `process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN` is not set
+    // but everything else is, then it is likely that the `permissions` section of the GHA is not set.
+    // The assumption here is that by configuring a `roleToAssume`
+    // the customer is intending any credentials to be associated with this role.
+    // It is possible, say in a self hosted runner,
+    // for credentials to be derived in some other way.
+    // However this is now an ambiguous situation.
+    // Given that the role was actively set we chose to not override that intention with fallback behavior.
+    const maybeUseGitHubOIDCProvider = () => {
+      return roleToAssume && !accessKeyId && !webIdentityTokenFile
+    }
     const useGitHubOIDCProvider = () => {
         // The assumption here is that self-hosted runners won't be populating the `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
-        // environment variable and they won't be providing a web idenity token file or access key either.
+        // environment variable and they won't be providing a web identity token file or access key either.
         // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
         // can provide as much info as they want and we will follow the established credential loading precedence.
-        return roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !accessKeyId && !webIdentityTokenFile
+        return maybeUseGitHubOIDCProvider() && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN
     }
 
     // Always export the source credentials and account ID.
@@ -310,7 +321,14 @@ async function run() {
     // The only way to assume the role is via GitHub's OIDC provider.
     let sourceAccountId;
     let webIdentityToken;
-    if(useGitHubOIDCProvider()) {
+    if(maybeUseGitHubOIDCProvider()) {
+      if (!useGitHubOIDCProvider()) {
+        throw new Error(`Are you trying to use GitHub OIDC? You need to add permissions to your GHA:
+  permissions:
+    id-token: write
+    contents: read
+`)
+      }
       webIdentityToken = await core.getIDToken(audience);
       roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
