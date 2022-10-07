@@ -560,7 +560,7 @@ describe('Configure AWS Credentials', () => {
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
             WebIdentityToken: 'testpayload'
-        })
+        });
     });
 
     test('web identity token file provided with relative path', async () => {
@@ -574,7 +574,7 @@ describe('Configure AWS Credentials', () => {
             RoleSessionName: 'GitHubActions',
             DurationSeconds: 6 * 3600,
             WebIdentityToken: 'testpayload'
-        })
+        });
     });
 
     test('only role arn and region provided to use GH OIDC Token', async () => {
