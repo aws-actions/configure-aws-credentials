@@ -314,7 +314,7 @@ async function run() {
       webIdentityToken = await core.getIDToken(audience);
       roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
-    } else {
+    } else if (!webIdentityTokenFile) {
       // Regardless of whether any source credentials were provided as inputs,
       // validate that the SDK can actually pick up credentials.  This validates
       // cases where this action is on a self-hosted runner that doesn't have credentials
@@ -344,7 +344,7 @@ async function run() {
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
       // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
-      if (!process.env.GITHUB_ACTIONS || accessKeyId) {
+      if ((!process.env.GITHUB_ACTIONS || accessKeyId) && !webIdentityTokenFile) {
         await validateCredentials(roleCredentials.accessKeyId);
       }
       await exportAccountId(maskAccountId, region);
