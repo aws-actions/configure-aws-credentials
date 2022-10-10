@@ -44,7 +44,7 @@ inputs:
       assume an IAM role using a web identity. E.g., from within an Amazon EKS worker node
     required: false
   role-duration-seconds:
-    description: "Role duration in seconds (default: 6 hours)"
+    description: "Role duration in seconds (default: 6 hours, 1 hour for OIDC/specified aws-session-token)"
     required: false
   role-session-name:
     description: 'Role session name (default: GitHubActions)'
