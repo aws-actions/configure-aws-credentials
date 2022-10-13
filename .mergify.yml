@@ -23,7 +23,7 @@ pull_request_rules:
 
   - name: Automatically approve and merge Dependabot PRs
     conditions:
-      - base=master|v1-node16
+      - base~=master|v1-node16
       - author=dependabot[bot]
       - status-success=Run Unit Tests
       - -title~=(WIP|wip)
