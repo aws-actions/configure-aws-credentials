@@ -2,6 +2,9 @@
 
 Configure AWS credential and region environment variables for use in other GitHub Actions.  The environment variables will be detected by both the AWS SDKs and the AWS CLI to determine the credentials and region to use for AWS API calls.
 
+## NOTICE: node12 deprecation warning
+Github actions has recently started throwing warning messages regarding the deprecation of Node 12. If you would like to stop seeing this warning, configure your action to use `aws-actions/configure-aws-credentials@v1-node16`. Both the `v1` branch and the `v1-node16` branch will receive the same updates moving forward. See [this issue](https://github.com/aws-actions/configure-aws-credentials/issues/489) for more information on this topic.
+
 **Table of Contents**
 
 <!-- toc -->

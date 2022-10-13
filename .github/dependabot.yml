@@ -6,3 +6,11 @@ updates:
     interval: weekly
     day: tuesday
   open-pull-requests-limit: 10
+  target-branch: 'master'
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: tuesday
+  open-pull-requests-limit: 10
+  target-branch: 'v1-node16'
