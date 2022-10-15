@@ -1,4 +1,6 @@
-const core = require('@actions/core');
+import * as url from 'node:url';
+import * as core from '@actions/core';
+import { errorMessage } from '../helpers.js';
 
 /**
  * When the GitHub Actions job is done, clean up any environment variables that
@@ -11,7 +13,7 @@ const core = require('@actions/core');
  * with any other jobs.
  */
 
-async function cleanup() {
+export async function cleanup() {
   try {
     // The GitHub Actions toolkit does not have an option to completely unset
     // environment variables, so we overwrite the current value with an empty
@@ -22,15 +24,12 @@ async function cleanup() {
     core.exportVariable('AWS_SESSION_TOKEN', '');
     core.exportVariable('AWS_DEFAULT_REGION', '');
     core.exportVariable('AWS_REGION', '');
-  }
-  catch (error) {
-    core.setFailed(error.message);
+  } catch (error) {
+    core.setFailed(errorMessage(error));
   }
 }
 
-module.exports = cleanup;
-
-/* istanbul ignore next */
-if (require.main === module) {
-  cleanup();
+const modulePath = url.fileURLToPath(import.meta.url);
+if (process.argv[1] === modulePath) {
+  await cleanup();
 }
