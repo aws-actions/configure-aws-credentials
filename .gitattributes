@@ -10,7 +10,6 @@
 /.github/workflows/upgrade-main.yml linguist-generated
 /.gitignore linguist-generated
 /.mergify.yml linguist-generated
-/.npmignore linguist-generated
 /.prettierrc.json linguist-generated
 /.projen/** linguist-generated
 /.projen/deps.json linguist-generated

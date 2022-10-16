@@ -115,6 +115,7 @@ const project = new GitHubActionTypeScriptProject({
   codeCov: false,
   libdir: 'build',
   entrypoint: 'build/index.js',
+  npmignoreEnabled: false,
   tsconfig: {
     compilerOptions: {
       declaration: true,
@@ -218,6 +219,8 @@ if (packageJson) {
   packageJson.addOverride('jest.globals', undefined);
   // The entrypoint property is supposed to manage this but it doesn't work
   packageJson.addOverride('main', 'build/index.js');
+  // We don't want to publish this to NPM.
+  packageJson.addOverride('private', true);
 }
 
 project.synth();
