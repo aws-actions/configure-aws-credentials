@@ -125,9 +125,7 @@ const project = new GitHubActionTypeScriptProject({
       strict: true,
       // Node 16 is ES2022
       target: 'ES2022',
-      module: 'Node16',
-      outDir: 'dist',
-      moduleResolution: 'Node16',
+      outDir: 'build',
     },
   },
   prettier: true,
@@ -183,6 +181,7 @@ const project = new GitHubActionTypeScriptProject({
     },
   },
 });
+// We use different mergify defaults than projen
 const mergifyyml = project.tryFindObjectFile('.mergify.yml');
 if (mergifyyml) {
   const mergifyQueues = mergifyyml.obj.queue_rules.pop();
@@ -190,22 +189,20 @@ if (mergifyyml) {
   mergifyyml.addOverride('queue_rules', mergifyQueues);
   mergifyyml.addOverride('pull_request_rules', mergifyRules);
 }
+// Misc tsconfig overrides
 const tsconfig = project.tryFindObjectFile('tsconfig.json');
 if (tsconfig) {
   tsconfig.addOverride('compilerOptions.allowUnreachableCode', false);
   tsconfig.addOverride('compilerOptions.allowUnusedLabels', false);
   tsconfig.addOverride('compilerOptions.pretty', true);
 }
+// The default jest config does not have the correct path
 project.jest?.addTestMatch('<rootDir>/test/**/*.(test|spec).(js|jsx|ts|tsx)');
+// Future-proofing in case we decide to move to ESM
 project.setScript('projen', 'node .projenrc.cjs');
-project.setScript('test', 'node --no-warnings --experimental-vm-modules node_modules/.bin/jest.js');
-project.setScript('test:watch', undefined);
+// Most jest overrides. Specifically, work around the deprecation of the jest globals config
 const packageJson = project.tryFindFile('package.json');
 if (packageJson) {
-  packageJson.addOverride('jest.extensionsToTreatAsEsm', ['.ts']);
-  packageJson.addOverride('jest.moduleNameMapper', {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-  });
   packageJson.addOverride('jest.transform', {
     '^.+\\.[tj]sx?$': [
       'ts-jest',
@@ -215,8 +212,7 @@ if (packageJson) {
       },
     ],
   });
-  packageJson.addOverride('jest.preset', 'ts-jest/presets/default-esm-legacy');
   packageJson.addOverride('jest.globals', undefined);
-  packageJson.addOverride('type', 'module');
 }
+
 project.synth();

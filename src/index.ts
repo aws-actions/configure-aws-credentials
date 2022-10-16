@@ -1,8 +1,7 @@
-import * as url from 'node:url';
 import * as core from '@actions/core';
 import { Credentials, GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { assumeRole } from './assumeRole.js';
-import { errorMessage, getStsClient, retryAndBackoff } from './helpers.js';
+import { assumeRole } from './assumeRole';
+import { errorMessage, getStsClient, retryAndBackoff } from './helpers';
 
 // Use 1hr as role duration when using session token or OIDC
 // Otherwise, use the max duration of GitHub action (6hr)
@@ -204,7 +203,10 @@ export async function run() {
   }
 }
 
-const modulePath = url.fileURLToPath(import.meta.url);
-if (process.argv[1] === modulePath) {
-  await run();
+if (require.main === module) {
+  (async () => {
+    await run();
+  })().catch((error) => {
+    core.setFailed(error.message);
+  });
 }

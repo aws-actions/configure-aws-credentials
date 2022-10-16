@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import * as core from '@actions/core';
 import { AssumeRoleCommandInput, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
-import { errorMessage, getStsClient, isDefined } from './helpers.js';
+import { errorMessage, getStsClient, isDefined } from './helpers';
 
 const SANITIZATION_CHARACTER = '_';
 const MAX_TAG_VALUE_LENGTH = 256;

@@ -1,6 +1,5 @@
-import * as url from 'node:url';
 import * as core from '@actions/core';
-import { errorMessage } from '../helpers.js';
+import { errorMessage } from '../helpers';
 
 /**
  * When the GitHub Actions job is done, clean up any environment variables that
@@ -28,8 +27,10 @@ export async function cleanup() {
     core.setFailed(errorMessage(error));
   }
 }
-
-const modulePath = url.fileURLToPath(import.meta.url);
-if (process.argv[1] === modulePath) {
-  await cleanup();
+if (require.main === module) {
+  (async () => {
+    await cleanup();
+  })().catch((error) => {
+    core.setFailed(errorMessage(error));
+  });
 }
