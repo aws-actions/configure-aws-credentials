@@ -17,7 +17,7 @@
     "test:watch": "npx projen test:watch",
     "unbump": "npx projen unbump",
     "watch": "npx projen watch",
-    "projen": "node .projenrc.cjs"
+    "projen": "npx projen"
   },
   "author": {
     "name": "Amazon.com, Inc. or its affiliates",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@aws-sdk/credential-provider-env": "^3.186.0",
+    "@aws-sdk/credential-providers": "^3.188.0",
     "@jest/globals": "^29.1.2",
     "@types/jest": "^29.1.2",
     "@types/node": "^14",
@@ -70,6 +71,14 @@
     "url": "https://github.com/aws-actions/configure-aws-credentials/issues"
   },
   "jest": {
+    "transform": {
+      "^.+\\.m?[tj]sx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.dev.json"
+        }
+      ]
+    },
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.ts?(x)",
       "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)",
@@ -103,16 +112,7 @@
         }
       ]
     ],
-    "preset": "ts-jest",
-    "transform": {
-      "^.+\\.[tj]sx?$": [
-        "ts-jest",
-        {
-          "useESM": true,
-          "tsconfig": "tsconfig.dev.json"
-        }
-      ]
-    }
+    "preset": "ts-jest/presets/default-legacy"
   },
   "types": "build/index.d.ts",
   "overrides": {

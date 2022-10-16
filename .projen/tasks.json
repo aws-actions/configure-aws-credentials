@@ -87,7 +87,7 @@
       "description": "Synthesize project files",
       "steps": [
         {
-          "exec": "node .projenrc.cjs"
+          "exec": "node .projenrc.js"
         }
       ]
     },

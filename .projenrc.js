@@ -5,7 +5,12 @@ const { NodePackageManager, NpmAccess } = require('projen/lib/javascript');
 
 const project = new GitHubActionTypeScriptProject({
   defaultReleaseBranch: 'main',
-  devDeps: ['projen-github-action-typescript', '@aws-sdk/credential-provider-env', 'aws-sdk-client-mock', '@jest/globals'],
+  devDeps: [
+    'projen-github-action-typescript',
+    '@aws-sdk/credential-provider-env',
+    'aws-sdk-client-mock',
+    '@jest/globals',
+  ],
   deps: ['@aws-sdk/client-sts@^3'],
   name: 'configure-aws-credentials',
   description: 'A GitHub Action to configure AWS credentials',
@@ -15,9 +20,6 @@ const project = new GitHubActionTypeScriptProject({
   authorOrganization: true,
   authorUrl: 'https://aws.amazon.com',
   packageManager: NodePackageManager.NPM,
-  projenrcJsOptions: {
-    filename: '.projenrc.cjs',
-  },
   sampleCode: false,
   actionMetadata: {
     name: '"Configure AWS Credentials" Action for GitHub Actions',
@@ -130,7 +132,8 @@ const project = new GitHubActionTypeScriptProject({
       inlineSourceMap: true,
       strict: true,
       // Node 16 is ES2022
-      target: 'ES2022',
+      target: 'es2022',
+      module: 'commonjs',
       outDir: 'build',
     },
   },
@@ -145,10 +148,14 @@ const project = new GitHubActionTypeScriptProject({
       bracketSpacing: true,
     },
   },
+  jestOptions: {
+    jestConfig: {
+      transform: { '^.+\\.m?[tj]sx?$': ['ts-jest', { tsconfig: 'tsconfig.dev.json' }] },
+    },
+  },
   dependabot: true,
   dependabotOptions: {
     scheduleInterval: DependabotScheduleInterval.WEEKLY,
-
   },
   githubOptions: {
     mergify: true,
@@ -212,21 +219,12 @@ if (tsconfig) {
 }
 // The default jest config does not have the correct path
 project.jest?.addTestMatch('<rootDir>/test/**/*.(test|spec).(js|jsx|ts|tsx)');
-// Future-proofing in case we decide to move to ESM
-project.setScript('projen', 'node .projenrc.cjs');
-// Most jest overrides. Specifically, work around the deprecation of the jest globals config
 const packageJson = project.tryFindFile('package.json');
 if (packageJson) {
-  packageJson.addOverride('jest.transform', {
-    '^.+\\.[tj]sx?$': [
-      'ts-jest',
-      {
-        useESM: true,
-        tsconfig: 'tsconfig.dev.json',
-      },
-    ],
-  });
+  // The default jest config makes use of the deprecated globals.ts-jest option
   packageJson.addOverride('jest.globals', undefined);
+  // This is supposed to be controlled by jestConfig.preset, but it doesn't work
+  packageJson.addOverride('jest.preset', 'ts-jest/presets/default-legacy');
   // The entrypoint property is supposed to manage this but it doesn't work
   packageJson.addOverride('main', 'build/index.js');
   // We don't want to publish this to NPM.
@@ -243,7 +241,7 @@ if (dependabotConfig) {
     directory: '/',
     'open-pull-requests-limit': 10,
     'target-branch': 'v1-node16',
-    ignore: [ { 'dependency-name': 'projen' } ],
+    ignore: [{ 'dependency-name': 'projen' }],
     'versioning-strategy': 'lockfile-only',
     schedule: { interval: 'weekly', day: 'tuesday' },
   });

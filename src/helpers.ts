@@ -38,8 +38,16 @@ export function isDefined<T>(i: T | undefined | null): i is T {
   return i !== undefined && i !== null;
 }
 
-function sleep(ms: number) {
+function defaultSleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+let sleep = defaultSleep;
+
+export function withsleep(s: typeof sleep) {
+  sleep = s;
+}
+export function reset() {
+  sleep = defaultSleep;
 }
 
 // retryAndBackoff retries with exponential backoff the promise if the error isRetryable upto maxRetries time.
