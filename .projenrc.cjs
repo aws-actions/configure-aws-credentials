@@ -1,5 +1,5 @@
 const { GitHubActionTypeScriptProject, RunsUsing } = require('projen-github-action-typescript');
-const { NodePackageManager } = require('projen/lib/javascript');
+const { NodePackageManager, NpmAccess } = require('projen/lib/javascript');
 
 const project = new GitHubActionTypeScriptProject({
   defaultReleaseBranch: 'main',
@@ -17,7 +17,6 @@ const project = new GitHubActionTypeScriptProject({
     filename: '.projenrc.cjs',
   },
   sampleCode: false,
-  gitignore: ['build'],
   actionMetadata: {
     name: '"Configure AWS Credentials" Action for GitHub Actions',
     description: 'Configures AWS credentials for use in subsequent steps in a GitHub Action workflow',
@@ -111,9 +110,11 @@ const project = new GitHubActionTypeScriptProject({
     yaml: true,
     prettier: true,
   },
-
   releaseFailureIssue: true,
   releaseTagPrefix: 'v',
+  codeCov: false,
+  libdir: 'build',
+  entrypoint: 'build/index.js',
   tsconfig: {
     compilerOptions: {
       declaration: true,
@@ -215,6 +216,8 @@ if (packageJson) {
     ],
   });
   packageJson.addOverride('jest.globals', undefined);
+  // The entrypoint property is supposed to manage this but it doesn't work
+  packageJson.addOverride('main', 'build/index.js');
 }
 
 project.synth();

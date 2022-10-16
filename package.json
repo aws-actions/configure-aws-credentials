@@ -65,7 +65,7 @@
   "engines": {
     "node": ">= 14.0.0"
   },
-  "main": "lib/index.js",
+  "main": "build/index.js",
   "license": "MIT",
   "homepage": "https://github.com/aws-actions/configure-aws-credentials",
   "version": "0.0.0",
@@ -117,7 +117,7 @@
       ]
     }
   },
-  "types": "lib/index.d.ts",
+  "types": "build/index.d.ts",
   "overrides": {
     "@types/responselike": "1.0.0",
     "got": "12.3.1"
