@@ -9,7 +9,7 @@
     "lib": [
       "es2019"
     ],
-    "module": "Node16",
+    "module": "CommonJS",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -24,8 +24,7 @@
     "stripInternal": true,
     "target": "ES2022",
     "forceConsistentCasingInFileNames": true,
-    "outDir": "dist",
-    "moduleResolution": "Node16"
+    "outDir": "build"
   },
   "include": [
     ".projenrc.js",

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "build",
     "alwaysStrict": true,
     "declaration": true,
     "esModuleInterop": true,
@@ -11,7 +11,7 @@
     "lib": [
       "es2019"
     ],
-    "module": "Node16",
+    "module": "CommonJS",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -26,7 +26,6 @@
     "stripInternal": true,
     "target": "ES2022",
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "Node16",
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "pretty": true

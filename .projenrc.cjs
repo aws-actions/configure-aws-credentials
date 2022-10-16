@@ -16,6 +16,8 @@ const project = new GitHubActionTypeScriptProject({
   projenrcJsOptions: {
     filename: '.projenrc.cjs',
   },
+  sampleCode: false,
+  gitignore: ['build'],
   actionMetadata: {
     name: '"Configure AWS Credentials" Action for GitHub Actions',
     description: 'Configures AWS credentials for use in subsequent steps in a GitHub Action workflow',
