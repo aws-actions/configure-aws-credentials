@@ -1,4 +1,6 @@
+const { JsonPatch } = require('projen');
 const { GitHubActionTypeScriptProject, RunsUsing } = require('projen-github-action-typescript');
+const { DependabotScheduleInterval } = require('projen/lib/github');
 const { NodePackageManager, NpmAccess } = require('projen/lib/javascript');
 
 const project = new GitHubActionTypeScriptProject({
@@ -143,6 +145,11 @@ const project = new GitHubActionTypeScriptProject({
       bracketSpacing: true,
     },
   },
+  dependabot: true,
+  dependabotOptions: {
+    scheduleInterval: DependabotScheduleInterval.WEEKLY,
+
+  },
   githubOptions: {
     mergify: true,
     mergifyOptions: {
@@ -185,6 +192,9 @@ const project = new GitHubActionTypeScriptProject({
     },
   },
 });
+/*-------------------------------------------------------------------
+   Overrides and escape hatches
+-------------------------------------------------------------------*/
 // We use different mergify defaults than projen
 const mergifyyml = project.tryFindObjectFile('.mergify.yml');
 if (mergifyyml) {
@@ -221,6 +231,22 @@ if (packageJson) {
   packageJson.addOverride('main', 'build/index.js');
   // We don't want to publish this to NPM.
   packageJson.addOverride('private', true);
+}
+// Projen doesn't know about our extra branches
+const dependabotConfig = project.tryFindObjectFile('.github/dependabot.yml');
+if (dependabotConfig) {
+  dependabotConfig.patch(JsonPatch.add('/updates/0/open-pull-requests-limit', 10));
+  dependabotConfig.patch(JsonPatch.add('/updates/0/target-branch', 'main'));
+  dependabotConfig.patch(JsonPatch.add('/updates/0/schedule/day', 'tuesday'));
+  dependabotConfig.addToArray('updates', {
+    'package-ecosystem': 'npm',
+    directory: '/',
+    'open-pull-requests-limit': 10,
+    'target-branch': 'v1-node16',
+    ignore: [ { 'dependency-name': 'projen' } ],
+    'versioning-strategy': 'lockfile-only',
+    schedule: { interval: 'weekly', day: 'tuesday' },
+  });
 }
 
 project.synth();
