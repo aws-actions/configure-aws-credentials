@@ -29,7 +29,7 @@ export function sanitizeGithubWorkflowName(name: string) {
   const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH);
   return nameTruncated;
 }
-
+/* c8 ignore start */
 export function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
@@ -37,8 +37,9 @@ export function errorMessage(error: unknown) {
 export function isDefined<T>(i: T | undefined | null): i is T {
   return i !== undefined && i !== null;
 }
+/* c8 ignore stop */
 
-function defaultSleep(ms: number) {
+export function defaultSleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 let sleep = defaultSleep;
