@@ -27,7 +27,7 @@ export async function cleanup() {
     core.setFailed(errorMessage(error));
   }
 }
-/* istanbul ignore next */
+/* c8 ignore start */
 if (require.main === module) {
   (async () => {
     await cleanup();

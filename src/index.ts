@@ -197,7 +197,7 @@ export async function run() {
   }
 }
 
-/* istanbul ignore next */
+/* c8 ignore start */
 if (require.main === module) {
   (async () => {
     await run();
