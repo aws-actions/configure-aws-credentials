@@ -14,4 +14,3 @@ updates:
     day: tuesday
   open-pull-requests-limit: 10
   target-branch: 'v1-node16'
-  
