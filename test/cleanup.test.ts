@@ -18,10 +18,10 @@ describe('Configure AWS Credentials', () => {
 
   beforeEach(() => {
     jest.resetModules();
-    jest.spyOn(core, 'exportVariable');
-    jest.spyOn(core, 'setSecret');
-    jest.spyOn(core, 'setOutput');
-    jest.spyOn(core, 'setFailed');
+    jest.spyOn(core, 'exportVariable').mockImplementation();
+    jest.spyOn(core, 'setSecret').mockImplementation();
+    jest.spyOn(core, 'setOutput').mockImplementation();
+    jest.spyOn(core, 'setFailed').mockImplementation();
     process.env = { ...OLD_ENV, ...ACTION_ENVIRONMENT_VARIABLES };
   });
 

@@ -10,6 +10,7 @@ const project = new GitHubActionTypeScriptProject({
     '@aws-sdk/credential-provider-env',
     'aws-sdk-client-mock',
     '@jest/globals',
+    '@aws-sdk/property-provider',
   ],
   deps: ['@aws-sdk/client-sts@^3'],
   name: 'configure-aws-credentials',
@@ -21,6 +22,7 @@ const project = new GitHubActionTypeScriptProject({
   authorUrl: 'https://aws.amazon.com',
   packageManager: NodePackageManager.NPM,
   sampleCode: false,
+  gitignore: ['.vscode', '.env'],
   actionMetadata: {
     name: '"Configure AWS Credentials" Action for GitHub Actions',
     description: 'Configures AWS credentials for use in subsequent steps in a GitHub Action workflow',
@@ -135,6 +137,7 @@ const project = new GitHubActionTypeScriptProject({
       target: 'es2022',
       module: 'commonjs',
       outDir: 'build',
+      noUnusedLocals: false,
     },
   },
   prettier: true,

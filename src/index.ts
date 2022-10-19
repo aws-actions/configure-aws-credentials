@@ -51,19 +51,19 @@ function exportRegion(region: string) {
 async function exportAccountId(region: string, maskAccountId?: boolean) {
   // Get the AWS account ID
   const client = getStsClient(region, USER_AGENT);
-  const identity = (await client.send(new GetCallerIdentityCommand({}))).Account;
-  if (!identity) {
+  const identity = await client.send(new GetCallerIdentityCommand({}));
+  const accountId = identity.Account;
+  if (!accountId) {
     throw new Error('Could not get Account ID from STS. Did you set credentials?');
   }
   if (maskAccountId) {
-    core.setSecret(identity);
-  } else {
-    core.setOutput('aws-account-id', identity);
+    core.setSecret(accountId);
   }
-  return identity;
+  core.setOutput('aws-account-id', accountId);
+  return accountId;
 }
 
-function loadCredentials() {
+async function loadCredentials() {
   // Previously, this function forced the SDK to re-resolve credentials with the default provider chain.
   //
   // This action typically sets credentials in the environment via environment variables. The SDK never refreshed those
@@ -109,25 +109,19 @@ export async function run() {
       (core.getInput('mask-aws-account-id', { required: false }) || 'true').toLowerCase() === 'true';
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const roleExternalId = core.getInput('role-external-id', { required: false });
-    const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
-    const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
-
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
     // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
-    const useGitHubOIDCProvider = () => {
-      // The assumption here is that self-hosted runners won't be populating the `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
-      // environment variable and they won't be providing a web idenity token file or access key either.
-      // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
-      // can provide as much info as they want and we will follow the established credential loading precedence.
-      return !!(roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !AccessKeyId && !webIdentityTokenFile);
-    };
+    const useGitHubOIDCProvider =
+      !!roleToAssume && !!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !AccessKeyId && !webIdentityTokenFile;
     const roleDurationSeconds =
       parseInt(core.getInput('role-duration-seconds', { required: false })) ||
       (SessionToken && SESSION_ROLE_DURATION) ||
-      (useGitHubOIDCProvider() && DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES) ||
+      (useGitHubOIDCProvider && DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES) ||
       MAX_ACTION_RUNTIME;
+    const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
+    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
+    const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -153,7 +147,7 @@ export async function run() {
     // The only way to assume the role is via GitHub's OIDC provider.
     let sourceAccountId: string;
     let webIdentityToken: string;
-    if (useGitHubOIDCProvider()) {
+    if (useGitHubOIDCProvider) {
       webIdentityToken = await core.getIDToken(audience);
       // We don't validate the credentials here because we don't have them yet when using OIDC.
     } else {
@@ -203,6 +197,7 @@ export async function run() {
   }
 }
 
+/* istanbul ignore next */
 if (require.main === module) {
   (async () => {
     await run();

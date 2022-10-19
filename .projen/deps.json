@@ -5,6 +5,10 @@
       "type": "build"
     },
     {
+      "name": "@aws-sdk/property-provider",
+      "type": "build"
+    },
+    {
       "name": "@jest/globals",
       "type": "build"
     },

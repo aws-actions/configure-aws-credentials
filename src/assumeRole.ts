@@ -2,7 +2,7 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import * as core from '@actions/core';
-import { AssumeRoleCommandInput, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
+import { AssumeRoleCommand, AssumeRoleCommandInput, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
 import { errorMessage, getStsClient, isDefined } from './helpers';
 
 const SANITIZATION_CHARACTER = '_';
@@ -94,15 +94,16 @@ export async function assumeRole(params: assumeRoleParams) {
   const keys = Object.keys(commonAssumeRoleParams) as Array<keyof typeof commonAssumeRoleParams>;
   keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
 
-  let assumeRoleCommand: AssumeRoleWithWebIdentityCommand;
+  const sts = getStsClient(region);
   switch (true) {
     case !!webIdentityToken: {
       delete commonAssumeRoleParams.Tags;
-      assumeRoleCommand = new AssumeRoleWithWebIdentityCommand({
-        ...commonAssumeRoleParams,
-        WebIdentityToken: webIdentityToken,
-      });
-      break;
+      return sts.send(
+        new AssumeRoleWithWebIdentityCommand({
+          ...commonAssumeRoleParams,
+          WebIdentityToken: webIdentityToken,
+        })
+      );
     }
     case !!webIdentityTokenFile: {
       core.debug(
@@ -117,21 +118,20 @@ export async function assumeRole(params: assumeRoleParams) {
       }
 
       try {
-        const widt = await fs.promises.readFile(webIdentityTokenFilePath, 'utf8');
+        const widt = fs.readFileSync(webIdentityTokenFilePath, 'utf8');
         delete commonAssumeRoleParams.Tags;
-        assumeRoleCommand = new AssumeRoleWithWebIdentityCommand({
-          ...commonAssumeRoleParams,
-          WebIdentityToken: widt,
-        });
+        return await sts.send(
+          new AssumeRoleWithWebIdentityCommand({
+            ...commonAssumeRoleParams,
+            WebIdentityToken: widt,
+          })
+        );
       } catch (error) {
         throw new Error(`Web identity token file could not be read: ${errorMessage(error)}`);
       }
-      break;
     }
-    default:
-      throw new Error('No web identity token or web identity token file provided.');
+    default: {
+      return sts.send(new AssumeRoleCommand({ ...commonAssumeRoleParams }));
+    }
   }
-
-  const sts = getStsClient(region);
-  return sts.send(assumeRoleCommand);
 }
