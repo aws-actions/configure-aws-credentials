@@ -1,27 +1,49 @@
+name: Update dist files on 
+
 on:
   push:
     branches:
       - master
-
-name: Package
+      - v1-node16
+    paths-ignore:
+      - 'dist/**'
 
 jobs:
-  check:
-    name: Package distribution file
+  package:
+    name: Package dist files
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        ref: master
-    - name: Package
-      run: |
-        npm ci
-        npm test
-        npm run package
-    - name: Commit
-      run: |
-        git config --global user.name "GitHub Actions"
-        git add dist/
-        git commit -m "chore: Update dist" || echo "No changes to commit"
-        git push origin HEAD:master
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: SecretsManagerFetch
+      - name: Get bot user token
+        uses: aws-actions/aws-secretsmanager-get-secrets@v1
+        with:
+          parse-json-secrets: true
+          secret-ids: |
+            OSDS,arn:aws:secretsmanager:us-west-2:294535624312:secret:github-aws-sdk-osds-automation-ZHNalp
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+          token: ${{ env.OSDS_ACCESS_TOKEN }}
+      - name: Package
+        run: |
+          npm ci
+          npm test
+          npm run package
+      - name: Commit
+        run: |
+          echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}}"
+          git config --global user.name "GitHub Actions"
+          git add dist/
+          git commit -m "chore: Update dist" || echo "No changes to commit"
+          git push https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
