@@ -1,4 +1,4 @@
-name: Update dist files on 
+name: Update dist files on push branches
 
 on:
   push:
