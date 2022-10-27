@@ -1,0 +1,39 @@
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'dist/**'
+
+name: Update v1-node16 branch with changes from main
+
+jobs:
+  v1-node16-update:
+    name: Update v1-node16
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: SecretsManagerFetch
+      - name: Get bot user token
+        uses: aws-actions/aws-secretsmanager-get-secrets@v1
+        with:
+          parse-json-secrets: true
+          secret-ids: |
+            OSDS,arn:aws:secretsmanager:us-west-2:294535624312:secret:github-aws-sdk-osds-automation-ZHNalp
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+          token: ${{ env.OSDS_ACCESS_TOKEN }}
+      - name: Merge commit and push
+        run: |
+          echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}}"
+          git config --global user.name "GitHub Actions"
+          git merge --no-ff -m "Merge branch main into v1-node16"
+          git push https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
