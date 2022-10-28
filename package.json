@@ -2,9 +2,9 @@
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "lint": "eslint .",
-    "package": "ncc build --license ../THIRD-PARTY -o dist",
+    "package": "npm run build && ncc build --license ../THIRD-PARTY -o dist",
     "test": "npm run lint && jest --verbose"
   },
   "author": {

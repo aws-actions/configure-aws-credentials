@@ -13,9 +13,9 @@ describe('helpers', () => {
     expect(helpers.sanitizeGithubWorkflowName('sdf234@#$%$^&*()_+{}|:"<>?')).toEqual('sdf234@__________+___:_<>?');
   });
 
-  test('can sleep', async () => {
+  test('can sleep', () => {
     const sleep = helpers.defaultSleep(10);
-    await expect(Promise.race([sleep, new Promise((_res, rej) => setTimeout(rej, 20))])).resolves;
+    expect(Promise.race([sleep, new Promise((_res, rej) => setTimeout(rej, 20))])).resolves;
   });
 
   test("backoff function doesn't retry non-retryable errors", async () => {

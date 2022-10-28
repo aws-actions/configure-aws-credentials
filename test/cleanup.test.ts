@@ -29,8 +29,8 @@ describe('Configure AWS Credentials', () => {
     process.env = OLD_ENV;
   });
 
-  test('replaces AWS credential and region env vars with empty strings', async () => {
-    await cleanup();
+  test('replaces AWS credential and region env vars with empty strings', () => {
+    cleanup();
     expect(core.setFailed).toHaveBeenCalledTimes(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(5);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', '');
@@ -40,12 +40,12 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', '');
   });
 
-  test('error is caught and fails the action', async () => {
+  test('error is caught and fails the action', () => {
     jest.spyOn(core, 'exportVariable').mockImplementation(() => {
       throw new Error();
     });
 
-    await cleanup();
+    cleanup();
 
     expect(core.setFailed).toHaveBeenCalled();
   });

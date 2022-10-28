@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
-import { Credentials, GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import type { Credentials } from '@aws-sdk/client-sts';
+import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import { assumeRole } from './assumeRole';
 import { errorMessage, getStsClient, retryAndBackoff } from './helpers';
 
@@ -35,7 +36,7 @@ function exportCredentials(creds?: Partial<Credentials>) {
   if (creds?.SessionToken) {
     core.setSecret(creds.SessionToken);
     core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
-  } else if (process.env.AWS_SESSION_TOKEN) {
+  } else if (process.env['AWS_SESSION_TOKEN']) {
     // clear session token from previous credentials action
     core.exportVariable('AWS_SESSION_TOKEN', '');
   }
@@ -104,7 +105,8 @@ export async function run() {
     const audience = core.getInput('audience', { required: false });
     const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
     const region = core.getInput('aws-region', { required: true });
-    const SessionToken = core.getInput('aws-session-token', { required: false });
+    const sessionTokenInput = core.getInput('aws-session-token', { required: false });
+    const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
     const maskAccountId =
       (core.getInput('mask-aws-account-id', { required: false }) || 'true').toLowerCase() === 'true';
     const roleToAssume = core.getInput('role-to-assume', { required: false });
@@ -113,11 +115,11 @@ export async function run() {
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
     // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
     const useGitHubOIDCProvider =
-      !!roleToAssume && !!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !AccessKeyId && !webIdentityTokenFile;
+      !!roleToAssume && !!process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] && !AccessKeyId && !webIdentityTokenFile;
     const roleDurationSeconds =
-      parseInt(core.getInput('role-duration-seconds', { required: false })) ||
-      (SessionToken && SESSION_ROLE_DURATION) ||
-      (useGitHubOIDCProvider && DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES) ||
+      (parseInt(core.getInput('role-duration-seconds', { required: false })) ||
+        ((SessionToken ? SESSION_ROLE_DURATION : undefined) ??
+          (useGitHubOIDCProvider ? DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES : undefined))) ??
       MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
@@ -181,7 +183,7 @@ export async function run() {
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
       // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
-      if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
+      if (!process.env['GITHUB_ACTIONS'] || AccessKeyId) {
         await validateCredentials(roleCredentials.Credentials?.AccessKeyId);
       }
       await exportAccountId(region, maskAccountId);
@@ -189,7 +191,7 @@ export async function run() {
   } catch (error) {
     core.setFailed(errorMessage(error));
 
-    const showStackTrace = process.env.SHOW_STACK_TRACE;
+    const showStackTrace = process.env['SHOW_STACK_TRACE'];
 
     if (showStackTrace === 'true') {
       throw error;
@@ -202,6 +204,6 @@ if (require.main === module) {
   (async () => {
     await run();
   })().catch((error) => {
-    core.setFailed(error.message);
+    core.setFailed(errorMessage(error));
   });
 }

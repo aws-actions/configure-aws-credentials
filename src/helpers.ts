@@ -5,11 +5,11 @@ const SANITIZATION_CHARACTER = '_';
 
 let stsclient: STSClient | undefined;
 
-export function getStsClient(region: string, agent?: string) {
+export function getStsClient(region: string, customUserAgent?: string) {
   if (!stsclient) {
     stsclient = new STSClient({
       region,
-      customUserAgent: agent,
+      ...(customUserAgent ? { customUserAgent } : {}),
     });
   }
   return stsclient;
@@ -39,7 +39,7 @@ export function isDefined<T>(i: T | undefined | null): i is T {
 }
 /* c8 ignore stop */
 
-export function defaultSleep(ms: number) {
+export async function defaultSleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 let sleep = defaultSleep;

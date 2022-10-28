@@ -2,7 +2,8 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import * as core from '@actions/core';
-import { AssumeRoleCommand, AssumeRoleCommandInput, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
+import type { AssumeRoleCommandInput, Tag } from '@aws-sdk/client-sts';
+import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
 import { errorMessage, getStsClient, isDefined } from './helpers';
 
 const SANITIZATION_CHARACTER = '_';
@@ -64,7 +65,7 @@ export async function assumeRole(params: assumeRoleParams) {
     RoleArn = `arn:aws:iam::${sourceAccountId}:role/${RoleArn}`;
   }
 
-  const tagArray = [
+  const tagArray: Tag[] = [
     { Key: 'GitHub', Value: 'Actions' },
     { Key: 'Repository', Value: GITHUB_REPOSITORY },
     { Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW) },
@@ -73,23 +74,25 @@ export async function assumeRole(params: assumeRoleParams) {
     { Key: 'Commit', Value: GITHUB_SHA },
   ];
 
-  if (process.env.GITHUB_REF) {
-    tagArray.push({ Key: 'Branch', Value: process.env.GITHUB_REF });
+  if (process.env['GITHUB_REF']) {
+    tagArray.push({ Key: 'Branch', Value: process.env['GITHUB_REF'] });
   }
 
   const Tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!Tags) {
     core.debug('Role session tagging has been skipped.');
   } else {
-    core.debug(Tags.length + ' role session tags are being used.');
+    core.debug(`${Tags.length} role session tags are being used.`);
   }
+
+  const ExternalId = roleExternalId;
 
   const commonAssumeRoleParams: AssumeRoleCommandInput = {
     RoleArn,
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
-    Tags,
-    ExternalId: roleExternalId,
+    ...(Tags ? { Tags } : {}),
+    ...(ExternalId ? { ExternalId } : {}),
   };
   const keys = Object.keys(commonAssumeRoleParams) as Array<keyof typeof commonAssumeRoleParams>;
   keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);

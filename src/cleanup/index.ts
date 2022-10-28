@@ -12,7 +12,7 @@ import { errorMessage } from '../helpers';
  * with any other jobs.
  */
 
-export async function cleanup() {
+export function cleanup() {
   try {
     // The GitHub Actions toolkit does not have an option to completely unset
     // environment variables, so we overwrite the current value with an empty
@@ -29,9 +29,9 @@ export async function cleanup() {
 }
 /* c8 ignore start */
 if (require.main === module) {
-  (async () => {
-    await cleanup();
-  })().catch((error) => {
+  try {
+    cleanup();
+  } catch (error) {
     core.setFailed(errorMessage(error));
-  });
+  }
 }

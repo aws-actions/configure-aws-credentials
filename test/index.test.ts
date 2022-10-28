@@ -49,11 +49,12 @@ const ASSUME_ROLE_INPUTS = { ...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-r
 
 const mockedSTS = mockClient(STSClient);
 function mockGetInput(requestResponse: Record<string, string>) {
-  return function (name: string, _options: unknown) {
-    return requestResponse[name];
+  return function (name: string, _options: unknown): string {
+    return requestResponse[name]!;
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   existsSync: jest.fn(() => true),
@@ -61,11 +62,11 @@ jest.mock('fs', () => ({
 }));
 jest.mock('@aws-sdk/credential-provider-env', () => ({
   // This is the actual implementation in the SDK ^_^
-  fromEnv: jest.fn().mockImplementation(() => async () => {
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-    const sessionToken = process.env.AWS_SESSION_TOKEN;
-    const expiration = process.env.AWS_CREDENTIAL_EXPIRATION;
+  fromEnv: jest.fn().mockImplementation(() => () => {
+    const accessKeyId = process.env['AWS_ACCESS_KEY_ID'];
+    const secretAccessKey = process.env['AWS_SECRET_ACCESS_KEY'];
+    const sessionToken = process.env['AWS_SESSION_TOKEN'];
+    const expiration = process.env['AWS_CREDENTIAL_EXPIRATION'];
     return {
       accessKeyId,
       secretAccessKey,
@@ -84,18 +85,18 @@ describe('Configure AWS Credentials', () => {
     jest.clearAllMocks();
     mockedSTS.reset();
     (fromEnv as jest.Mock).mockReset();
-    jest.spyOn(core, 'getIDToken').mockImplementation(() => Promise.resolve('testtoken'));
+    jest.spyOn(core, 'getIDToken').mockImplementation(async () => Promise.resolve('testtoken'));
     jest.spyOn(core, 'exportVariable').mockImplementation();
     jest.spyOn(core, 'setSecret').mockImplementation();
     jest.spyOn(core, 'setOutput').mockImplementation();
     jest.spyOn(core, 'setFailed').mockImplementation();
     jest.spyOn(core, 'debug').mockImplementation();
     (fromEnv as jest.Mock)
-      .mockImplementationOnce(() => async () => ({
+      .mockImplementationOnce(() => () => ({
         accessKeyId: FAKE_ACCESS_KEY_ID,
         secretAccessKey: FAKE_SECRET_ACCESS_KEY,
       }))
-      .mockImplementationOnce(() => async () => ({
+      .mockImplementationOnce(() => () => ({
         accessKeyId: FAKE_STS_ACCESS_KEY_ID,
         secretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
       }));
@@ -119,7 +120,7 @@ describe('Configure AWS Credentials', () => {
         Expiration: new Date(8640000000000000),
       },
     });
-    withsleep(() => {
+    withsleep(async () => {
       return Promise.resolve();
     });
   });
@@ -151,7 +152,7 @@ describe('Configure AWS Credentials', () => {
 
   test('action fails when github env vars are not set', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
-    delete process.env.GITHUB_SHA;
+    delete process.env['GITHUB_SHA'];
 
     await run();
 
@@ -162,7 +163,7 @@ describe('Configure AWS Credentials', () => {
 
   test('action does not require GITHUB_REF env var', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-    delete process.env.GITHUB_REF;
+    delete process.env['GITHUB_REF'];
 
     await run();
 
@@ -188,7 +189,7 @@ describe('Configure AWS Credentials', () => {
     const mockInputs = { 'aws-region': FAKE_REGION };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
     (fromEnv as jest.Mock).mockReset();
-    (fromEnv as jest.Mock).mockImplementation(() => async () => {
+    (fromEnv as jest.Mock).mockImplementation(() => () => {
       throw new CredentialsProviderError('test');
     });
 
@@ -248,9 +249,9 @@ describe('Configure AWS Credentials', () => {
   test('existing env var creds are cleared', async () => {
     const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'eu-west-1' };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    process.env.AWS_ACCESS_KEY_ID = 'foo';
-    process.env.AWS_SECRET_ACCESS_KEY = 'bar';
-    process.env.AWS_SESSION_TOKEN = 'helloworld';
+    process.env['AWS_ACCESS_KEY_ID'] = 'foo';
+    process.env['AWS_SECRET_ACCESS_KEY'] = 'bar';
+    process.env['AWS_SESSION_TOKEN'] = 'helloworld';
 
     await run();
 
@@ -389,7 +390,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 6 * 3600,
@@ -411,7 +412,7 @@ describe('Configure AWS Credentials', () => {
       .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'role-duration-seconds': '5' }));
 
     await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 5,
@@ -433,7 +434,7 @@ describe('Configure AWS Credentials', () => {
       .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'role-session-name': 'MySessionName' }));
 
     await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'MySessionName',
       DurationSeconds: 6 * 3600,
@@ -455,7 +456,7 @@ describe('Configure AWS Credentials', () => {
       .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'aws-session-token': FAKE_SESSION_TOKEN }));
 
     await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 3600,
@@ -475,7 +476,7 @@ describe('Configure AWS Credentials', () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS }));
 
     await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 6 * 3600,
@@ -497,7 +498,7 @@ describe('Configure AWS Credentials', () => {
       .mockImplementation(mockGetInput({ ...CREDS_INPUTS, 'role-to-assume': ROLE_NAME, 'aws-region': FAKE_REGION }));
 
     await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::123456789012:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 6 * 3600,
@@ -524,7 +525,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 6 * 3600,
@@ -543,7 +544,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 6 * 3600,
@@ -552,8 +553,8 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('only role arn and region provided to use GH OIDC Token', async () => {
-    process.env.GITHUB_ACTIONS = 'true';
-    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
 
     jest
       .spyOn(core, 'getInput')
@@ -561,7 +562,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 3600,
@@ -574,8 +575,8 @@ describe('Configure AWS Credentials', () => {
 
   test('GH OIDC With custom role duration', async () => {
     const CUSTOM_ROLE_DURATION = '1234';
-    process.env.GITHUB_ACTIONS = 'true';
-    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
     jest.spyOn(core, 'getInput').mockImplementation(
       mockGetInput({
         'role-to-assume': ROLE_ARN,
@@ -586,7 +587,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
       DurationSeconds: parseInt(CUSTOM_ROLE_DURATION),
@@ -598,8 +599,8 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('role assumption fails after maximum trials using OIDC provider', async () => {
-    process.env.GITHUB_ACTIONS = 'true';
-    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
     jest
       .spyOn(core, 'getInput')
       .mockImplementation(mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION }));
@@ -618,7 +619,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 6 * 3600,
@@ -649,7 +650,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 6 * 3600,
@@ -672,7 +673,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 21600,
@@ -687,7 +688,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 21600,
@@ -708,7 +709,7 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
       DurationSeconds: 21600,
@@ -733,10 +734,11 @@ describe('Configure AWS Credentials', () => {
       maskedValues.push(secret);
     });
     jest.spyOn(core, 'exportVariable').mockImplementation((name, value) => {
-      if (!maskedValues.includes(value) && !publicFields.includes(name)) {
-        throw new Error(value + ' for variable ' + name + ' is not masked yet!');
+      const val = String(value);
+      if (!maskedValues.includes(val) && !publicFields.includes(name)) {
+        throw new Error(`{value} for variable ${name} is not masked yet!`);
       }
-      process.env[name] = value;
+      process.env[name] = val;
     });
 
     await run();
