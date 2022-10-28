@@ -1,4 +1,3 @@
-import assert from 'assert';
 import * as core from '@actions/core';
 import {
   AssumeRoleCommand,

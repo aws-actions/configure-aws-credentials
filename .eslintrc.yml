@@ -60,6 +60,15 @@ overrides:
     extends:
       - plugin:@typescript-eslint/recommended
     rules:
+      no-unused-vars:
+        - off
+      '@typescript-eslint/no-unused-vars':
+        - error
+        - varsIgnorePattern: '^_'
+          argsIgnorePattern: '^_'
+          caughtErrorsIgnorePattern: '^_'
+      '@typescript-eslint/no-non-null-assertion':
+        - off
       '@typescript-eslint/no-require-imports':
         - error
       "@typescript-eslint/return-await":
