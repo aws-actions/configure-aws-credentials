@@ -6,7 +6,7 @@ jobs:
   sast-guard:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: grolston/guard-action@main
       with:
         data_directory: './cloudformation/' ## change to your template directory
