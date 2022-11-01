@@ -4,25 +4,7 @@ import path from 'path';
 import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, Tag } from '@aws-sdk/client-sts';
 import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
-import { errorMessage, getStsClient, isDefined } from './helpers';
-
-const SANITIZATION_CHARACTER = '_';
-const MAX_TAG_VALUE_LENGTH = 256;
-
-function sanitizeGithubActor(actor: string) {
-  // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
-  // Square brackets are not allowed in AWS session tags
-  return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER);
-}
-
-function sanitizeGithubWorkflowName(name: string) {
-  // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
-  // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
-  // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
-  const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_:/=+.-@-]/gu, SANITIZATION_CHARACTER);
-  const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH);
-  return nameTruncated;
-}
+import { errorMessage, getStsClient, isDefined, sanitizeGithubActor, sanitizeGithubWorkflowName } from './helpers';
 
 export interface assumeRoleParams {
   region: string;

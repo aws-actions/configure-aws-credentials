@@ -3,3 +3,4 @@ coverage
 .DS_Store
 Thumbs.db
 build
+test-reports
