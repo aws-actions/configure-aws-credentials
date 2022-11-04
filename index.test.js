@@ -77,11 +77,9 @@ jest.mock('axios', () => ({
 }));
 
 describe('Configure AWS Credentials', () => {
-    const OLD_ENV = process.env;
-
     beforeEach(() => {
         jest.resetModules();
-        process.env = {...OLD_ENV, ...ENVIRONMENT_VARIABLE_OVERRIDES};
+        process.env = { ...ENVIRONMENT_VARIABLE_OVERRIDES };
 
         jest.clearAllMocks();
 
@@ -163,7 +161,6 @@ describe('Configure AWS Credentials', () => {
     });
 
     afterEach(() => {
-        process.env = OLD_ENV;
         reset();
     });
 
