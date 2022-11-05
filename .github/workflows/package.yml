@@ -42,7 +42,9 @@ jobs:
       - name: Commit
         run: |
           echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}}"
-          git config --global user.name "GitHub Actions"
-          git add dist/
+          git config user.name "GitHub Actions"
+          git config user.email "github-aws-sdk-osds-automation@amazon.com"
+          git remote set-url origin https://x-access-token:${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
+          git add dist
           git commit -m "chore: Update dist" || echo "No changes to commit"
-          git push https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
+          git push origin
