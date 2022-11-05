@@ -664,6 +664,27 @@ describe('Configure AWS Credentials', () => {
         expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
     });
 
+    test('GH OIDC With custom session policy', async () => {
+        const CUSTOM_SESSION_POLICY = "{ super_secure_policy }";
+        process.env.GITHUB_ACTIONS = 'true';
+        process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'inline-session-policy': CUSTOM_SESSION_POLICY}));
+
+        await run();
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
+            RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 3600,
+            Policy: CUSTOM_SESSION_POLICY,
+            WebIdentityToken: 'testtoken'
+        });
+        expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
+    });
+
     test('role assumption fails after maximun trials using OIDC Provider', async () => {
         process.env.GITHUB_ACTIONS = 'true';
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
