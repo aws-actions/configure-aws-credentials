@@ -1,0 +1,15 @@
+name: 'compliance'
+## run ci testing on all push events
+on: [push]
+jobs:
+  ## Guard rule set
+  sast-guard:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: grolston/guard-action@main
+      with:
+        data_directory: './cloudformation/' ## change to your template directory
+        rule_set: 'FedRAMP-Moderate'
+        show_summary: 'all'
+        output_format: 'single-line-summary'
