@@ -42,7 +42,7 @@ jobs:
             OSDS,arn:aws:secretsmanager:us-west-2:294535624312:secret:github-aws-sdk-osds-automation-ZHNalp
       - name: Commit
         run: |
-          echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}}"
+          echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}"
           git config user.name "GitHub Actions"
           git config user.email "github-aws-sdk-osds-automation@amazon.com"
           git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
