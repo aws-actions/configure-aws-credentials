@@ -79,6 +79,17 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 * [Grant least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege) to the credentials used in GitHub Actions workflows.  Grant only the permissions required to perform the actions in your GitHub Actions workflows.
 * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
 
+To prevent accidental deploys to the incorrect environment, you may define a comma-separated list of allowed account IDs to configure credentials for:
+
+```yaml
+- name: Configure AWS Credentials
+  uses: aws-actions/configure-aws-credentials@v1
+  with:
+    role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+    aws-region: us-east-2
+    allowed-account-ids: 123456789100
+```
+
 ## Assuming a Role
 We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) to get short-lived credentials needed for your actions. 
 Specifying `role-to-assume` **without** providing an `aws-access-key-id` or a `web-identity-token-file` will signal to the action that you wish to use the OIDC provider.

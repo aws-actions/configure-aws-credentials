@@ -809,6 +809,37 @@ describe('Configure AWS Credentials', () => {
 
         await run();
     });
+    
+    test('denies accounts not defined in allow-account-ids', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+
+        core.getInput = jest
+        .fn()
+        .mockImplementation(mockGetInput({ ...DEFAULT_INPUTS, 'allowed-account-ids': '000000000000' }));
+
+        await run();
+        expect(core.setFailed).toHaveBeenCalledWith(`Account ID of the provided credentials is not in 'allowed-account-ids'`);
+    });
+
+    test('allows accounts defined in allow-account-ids', async () => {
+        core.getInput = jest
+        .fn()
+        .mockImplementation(mockGetInput({ ...DEFAULT_INPUTS, 'allowed-account-ids': `${FAKE_ACCOUNT_ID}, 000000000000` }));
+
+        await run();
+    });
+
+    test('throws if account id list is invalid', async () => {
+        process.env.SHOW_STACK_TRACE = 'false';
+
+        // account id is too short
+        core.getInput = jest
+        .fn()
+        .mockImplementation(mockGetInput({ ...DEFAULT_INPUTS, 'allowed-account-ids': '0' }));
+
+        await run();
+        expect(core.setFailed).toHaveBeenCalledWith('Allowed account ID list is not valid, must be comma-separated list of 12-digit IDs');
+    })
 
     describe('proxy settings', () => {
 

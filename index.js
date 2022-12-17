@@ -15,6 +15,7 @@ const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
+const ACCOUNT_ID_LIST_REGEX = /^\d{12}(,\s?\d{12})*$/
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
@@ -300,12 +301,21 @@ async function run() {
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false });
+    const allowedAccountIds = core.getInput('allowed-account-ids', { required: false });
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
 
     exportRegion(region);
+
+    if (allowedAccountIds && !allowedAccountIds.match(ACCOUNT_ID_LIST_REGEX)) {
+      let errorMessage = "Allowed account ID list is not valid, must be comma-separated list of 12-digit IDs";
+      if (maskAccountId.toLowerCase() == "false") {
+        errorMessage += `: ${allowedAccountIds}`;
+      }
+      throw new Error(errorMessage);
+    }
 
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
     // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
@@ -375,7 +385,20 @@ async function run() {
       if (!process.env.GITHUB_ACTIONS || accessKeyId) {
         await validateCredentials(roleCredentials.accessKeyId);
       }
-      await exportAccountId(maskAccountId, region);
+      sourceAccountId = await exportAccountId(maskAccountId, region);
+    }
+
+    // Check if configured account ID is in the provided allow-list
+    if (allowedAccountIds) {
+      // Convert string to a list and trim whitespace.
+      const accountIdList = allowedAccountIds.split(",").map((id) => id.trim());
+      if (!accountIdList.includes(sourceAccountId)) {
+        let errorMessage = "Account ID of the provided credentials is not in 'allowed-account-ids'";
+        if (maskAccountId.toLowerCase() == "false") {
+          errorMessage += `: ${sourceAccountId}`;
+        }
+        throw new Error(errorMessage);
+      }
     }
   }
   catch (error) {
