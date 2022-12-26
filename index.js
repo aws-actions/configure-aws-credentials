@@ -8,6 +8,7 @@ const proxy = require('https-proxy-agent');
 // Use 1hr as role duration when using session token or OIDC
 // Otherwise, use the max duration of GitHub action (6hr)
 const MAX_ACTION_RUNTIME = 6 * 3600;
+const MAX_BACKOFF_SLEEP_MS = 60000
 const SESSION_ROLE_DURATION = 3600;
 const DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES = 3600;
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
@@ -15,6 +16,7 @@ const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
+const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
@@ -29,7 +31,8 @@ async function assumeRole(params) {
     region,
     roleSkipSessionTagging,
     webIdentityTokenFile,
-    webIdentityToken
+    webIdentityToken,
+    noSpecialCharsInAccessKeys
   } = params;
   assert(
       [roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
@@ -118,6 +121,12 @@ async function assumeRole(params) {
   return assumeFunction(assumeRoleRequest)
     .promise()
     .then(function (data) {
+      if (isDefined(noSpecialCharsInAccessKeys) && 
+          noSpecialCharsInAccessKeys && 
+          (SPECIAL_CHARS_REGEX.test(data.Credentials.AccessKeyId) || SPECIAL_CHARS_REGEX.test(data.Credentials.SecretAccessKey))) {
+            console.warn('Special characters detected in resulting temporary access keys');
+            throw new Error('Special characters are not allowed in access keys');
+          }
       return {
         accessKeyId: data.Credentials.AccessKeyId,
         secretAccessKey: data.Credentials.SecretAccessKey,
@@ -244,7 +253,7 @@ let defaultSleep = function (ms) {
 let sleep = defaultSleep;
 
 // retryAndBackoff retries with exponential backoff the promise if the error isRetryable upto maxRetries time.
-const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 12, base = 50) => {
+const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 25, base = 50) => {
   try {
     return await fn();
   } catch (err) {
@@ -252,7 +261,7 @@ const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 12, ba
       throw err;
     }
     // It's retryable, so sleep and retry.
-    await sleep(Math.random() * (Math.pow(2, retries) * base) );
+    await sleep(Math.min(Math.random() * (Math.pow(2, retries) * base), MAX_BACKOFF_SLEEP_MS));
     retries += 1;
     if (retries === maxRetries) {
       throw err;
@@ -299,7 +308,7 @@ async function run() {
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
-    const proxyServer = core.getInput('http-proxy', { required: false });
+    const noSpecialCharsInAccessKeys = core.getBooleanInput('no-special-chars-in-access-keys', { required: false });
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -365,7 +374,8 @@ async function run() {
             roleSessionName,
             roleSkipSessionTagging,
             webIdentityTokenFile,
-            webIdentityToken
+            webIdentityToken,
+            noSpecialCharsInAccessKeys
           }) }, true);
       exportCredentials(roleCredentials);
       // We need to validate the credentials in 2 of our use-cases
