@@ -83,6 +83,8 @@ We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/I
 We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) to get short-lived credentials needed for your actions. 
 Specifying `role-to-assume` **without** providing an `aws-access-key-id` or a `web-identity-token-file` will signal to the action that you wish to use the OIDC provider.
 
+If `role-chaining` is `true`, existing credentials in the environment will be used to assume `role-to-assume`.
+
 The default session duration is **1 hour** when using the OIDC provider to directly assume an IAM Role or when an `aws-session-token` is directly provided.
 
 The default session duration is **6 hours** when using an IAM User to assume an IAM Role (by providing an `aws-access-key-id`, `aws-secret-access-key`, and a `role-to-assume`) .
@@ -93,12 +95,13 @@ The default audience is `sts.amazonaws.com` which you can replace by specifying 
 
 The following table describes which identity is used based on which values are supplied to the Action:
 
-| **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` |
-| --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- |
-| [✅ Recommended] Assume Role directly using GitHub OIDC provider |                     | ✔                |                           |
-| IAM User                                                        | ✔                   |                  |                           |
-| Assume Role using IAM User credentials                          | ✔                   | ✔                |                           |
-| Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         |
+| **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` | `role-chaining` |
+| --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- | - |
+| [✅ Recommended] Assume Role directly using GitHub OIDC provider |                     | ✔                |                           | |
+| IAM User                                                        | ✔                   |                  |                           | |
+| Assume Role using IAM User credentials                          | ✔                   | ✔                |                           | |
+| Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | |
+| Assume Role using existing credentials | | ✔ | | ✔ |
 
 ### Examples
 
@@ -111,6 +114,17 @@ The following table describes which identity is used based on which values are s
         role-session-name: MySessionName
 ```
 In this example, the Action will load the OIDC token from the GitHub-provided environment variable and use it to assume the role `arn:aws:iam::123456789100:role/my-github-actions-role` with the session name `MySessionName`.
+
+```yaml
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        role-session-name: MySessionName
+        role-chaining: true
+```
+In this example, the Action will use existing credentials in environment variables to assume the role `arn:aws:iam::123456789100:role/my-github-actions-role` with the session name `MySessionName`.
 
 ```yaml
     - name: Configure AWS Credentials
