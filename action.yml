@@ -1,12 +1,12 @@
 name: '"Configure AWS Credentials" Action For GitHub Actions'
-description: 'Configure AWS credential and region environment variables for use with the AWS CLI and AWS SDKs'
+description: "Configure AWS credential and region environment variables for use with the AWS CLI and AWS SDKs"
 branding:
-  icon: 'cloud'
-  color: 'orange'
+  icon: "cloud"
+  color: "orange"
 inputs:
   audience:
-    default: 'sts.amazonaws.com'
-    description: 'The audience to use for the OIDC provider'
+    default: "sts.amazonaws.com"
+    description: "The audience to use for the OIDC provider"
     required: false
   aws-access-key-id:
     description: >-
@@ -20,11 +20,14 @@ inputs:
       It is optional if running in a self-hosted environment that already has AWS credentials,
       for example on an EC2 instance.
     required: false
+  aws-profile:
+    description: "AWS Profile"
+    required: false
   aws-session-token:
-    description: 'AWS Session Token'
+    description: "AWS Session Token"
     required: false
   aws-region:
-    description: 'AWS Region, e.g. us-east-2'
+    description: "AWS Region, e.g. us-east-2"
     required: true
   mask-aws-account-id:
     description: >-
@@ -47,20 +50,20 @@ inputs:
     description: "Role duration in seconds (default: 6 hours, 1 hour for OIDC/specified aws-session-token)"
     required: false
   role-session-name:
-    description: 'Role session name (default: GitHubActions)'
+    description: "Role session name (default: GitHubActions)"
     required: false
   role-external-id:
-    description: 'The external ID of the role to assume'
+    description: "The external ID of the role to assume"
     required: false
   role-skip-session-tagging:
-    description: 'Skip session tagging during role assumption'
+    description: "Skip session tagging during role assumption"
     required: false
   http-proxy:
-    description: 'Proxy to use for the AWS SDK agent'
+    description: "Proxy to use for the AWS SDK agent"
     required: false
 outputs:
   aws-account-id:
-    description: 'The AWS account ID for the provided credentials'
+    description: "The AWS account ID for the provided credentials"
 runs:
   using: 'node12'
   main: 'dist/index.js'

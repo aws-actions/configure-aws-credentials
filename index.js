@@ -1,24 +1,25 @@
-const core = require('@actions/core');
-const aws = require('aws-sdk');
-const assert = require('assert');
-const fs = require('fs');
-const path = require('path');
-const proxy = require('https-proxy-agent');
+const core = require("@actions/core");
+const aws = require("aws-sdk");
+const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
+const proxy = require("https-proxy-agent");
+const ini = require("ini");
 
 // Use 1hr as role duration when using session token or OIDC
 // Otherwise, use the max duration of GitHub action (6hr)
 const MAX_ACTION_RUNTIME = 6 * 3600;
 const SESSION_ROLE_DURATION = 3600;
 const DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES = 3600;
-const USER_AGENT = 'configure-aws-credentials-for-github-actions';
+const USER_AGENT = "configure-aws-credentials-for-github-actions";
 const MAX_TAG_VALUE_LENGTH = 256;
-const SANITIZATION_CHARACTER = '_';
-const ROLE_SESSION_NAME = 'GitHubActions';
+const SANITIZATION_CHARACTER = "_";
+const ROLE_SESSION_NAME = "GitHubActions";
 const REGION_REGEX = /^[a-z0-9-]+$/g;
 
 async function assumeRole(params) {
   // Assume a role to get short-lived credentials using longer-lived credentials.
-  const isDefined = i => !!i;
+  const isDefined = (i) => !!i;
 
   const {
     sourceAccountId,
@@ -29,57 +30,57 @@ async function assumeRole(params) {
     region,
     roleSkipSessionTagging,
     webIdentityTokenFile,
-    webIdentityToken
+    webIdentityToken,
   } = params;
   assert(
-      [roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
-      "Missing required input when assuming a Role."
+    [roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
+    "Missing required input when assuming a Role.",
   );
 
-  const {GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA} = process.env;
+  const { GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA } = process.env;
   assert(
-      [GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA].every(isDefined),
-      'Missing required environment value. Are you running in GitHub Actions?'
+    [GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA].every(isDefined),
+    "Missing required environment value. Are you running in GitHub Actions?",
   );
 
   const sts = getStsClient(region);
 
   let roleArn = roleToAssume;
-  if (!roleArn.startsWith('arn:aws')) {
+  if (!roleArn.startsWith("arn:aws")) {
     // Supports only 'aws' partition. Customers in other partitions ('aws-cn') will need to provide full ARN
-  assert(
+    assert(
       isDefined(sourceAccountId),
-      "Source Account ID is needed if the Role Name is provided and not the Role Arn."
-  );
+      "Source Account ID is needed if the Role Name is provided and not the Role Arn.",
+    );
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
 
   const tagArray = [
-    {Key: 'GitHub', Value: 'Actions'},
-    {Key: 'Repository', Value: GITHUB_REPOSITORY},
-    {Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW)},
-    {Key: 'Action', Value: GITHUB_ACTION},
-    {Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR)},
-    {Key: 'Commit', Value: GITHUB_SHA},
+    { Key: "GitHub", Value: "Actions" },
+    { Key: "Repository", Value: GITHUB_REPOSITORY },
+    { Key: "Workflow", Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW) },
+    { Key: "Action", Value: GITHUB_ACTION },
+    { Key: "Actor", Value: sanitizeGithubActor(GITHUB_ACTOR) },
+    { Key: "Commit", Value: GITHUB_SHA },
   ];
 
   if (isDefined(process.env.GITHUB_REF)) {
-    tagArray.push({Key: 'Branch', Value: process.env.GITHUB_REF});
+    tagArray.push({ Key: "Branch", Value: process.env.GITHUB_REF });
   }
 
   const roleSessionTags = roleSkipSessionTagging ? undefined : tagArray;
 
-  if(roleSessionTags == undefined){
-    core.debug("Role session tagging has been skipped.")
+  if (roleSessionTags == undefined) {
+    core.debug("Role session tagging has been skipped.");
   } else {
-    core.debug(roleSessionTags.length + " role session tags are being used.")
+    core.debug(roleSessionTags.length + " role session tags are being used.");
   }
 
   const assumeRoleRequest = {
     RoleArn: roleArn,
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDurationSeconds,
-    Tags: roleSessionTags
+    Tags: roleSessionTags,
   };
 
   if (roleExternalId) {
@@ -89,30 +90,31 @@ async function assumeRole(params) {
   let assumeFunction = sts.assumeRole.bind(sts);
 
   // These are customizations needed for the GH OIDC Provider
-  if(isDefined(webIdentityToken)) {
+  if (isDefined(webIdentityToken)) {
     delete assumeRoleRequest.Tags;
 
     assumeRoleRequest.WebIdentityToken = webIdentityToken;
     assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
-  } else if(isDefined(webIdentityTokenFile)) {
-    core.debug("webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.");
+  } else if (isDefined(webIdentityTokenFile)) {
+    core.debug(
+      "webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.",
+    );
     delete assumeRoleRequest.Tags;
 
-    const webIdentityTokenFilePath = path.isAbsolute(webIdentityTokenFile) ?
-      webIdentityTokenFile :
-      path.join(process.env.GITHUB_WORKSPACE, webIdentityTokenFile);
+    const webIdentityTokenFilePath = path.isAbsolute(webIdentityTokenFile)
+      ? webIdentityTokenFile
+      : path.join(process.env.GITHUB_WORKSPACE, webIdentityTokenFile);
 
     if (!fs.existsSync(webIdentityTokenFilePath)) {
       throw new Error(`Web identity token file does not exist: ${webIdentityTokenFilePath}`);
     }
 
     try {
-      assumeRoleRequest.WebIdentityToken = await fs.promises.readFile(webIdentityTokenFilePath, 'utf8');
+      assumeRoleRequest.WebIdentityToken = await fs.promises.readFile(webIdentityTokenFilePath, "utf8");
       assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
-    } catch(error) {
+    } catch (error) {
       throw new Error(`Web identity token file could not be read: ${error.message}`);
     }
-
   }
 
   return assumeFunction(assumeRoleRequest)
@@ -129,7 +131,7 @@ async function assumeRole(params) {
 function sanitizeGithubActor(actor) {
   // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
   // Square brackets are not allowed in AWS session tags
-  return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER)
+  return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER);
 }
 
 function sanitizeGithubWorkflowName(name) {
@@ -137,41 +139,118 @@ function sanitizeGithubWorkflowName(name) {
   // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
   // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
   const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_:/=+.-@-]/gu, SANITIZATION_CHARACTER);
-  const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH)
-  return nameTruncated
+  const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH);
+  return nameTruncated;
 }
 
-function exportCredentials(params){
+function exportCredentials(params) {
   // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
   // Setting the credentials as secrets masks them in Github Actions logs
-  const {accessKeyId, secretAccessKey, sessionToken} = params;
+  const { accessKeyId, secretAccessKey, sessionToken } = params;
 
   // AWS_ACCESS_KEY_ID:
   // Specifies an AWS access key associated with an IAM user or role
   core.setSecret(accessKeyId);
-  core.exportVariable('AWS_ACCESS_KEY_ID', accessKeyId);
+  core.exportVariable("AWS_ACCESS_KEY_ID", accessKeyId);
 
   // AWS_SECRET_ACCESS_KEY:
   // Specifies the secret key associated with the access key. This is essentially the "password" for the access key.
   core.setSecret(secretAccessKey);
-  core.exportVariable('AWS_SECRET_ACCESS_KEY', secretAccessKey);
+  core.exportVariable("AWS_SECRET_ACCESS_KEY", secretAccessKey);
 
   // AWS_SESSION_TOKEN:
   // Specifies the session token value that is required if you are using temporary security credentials.
   if (sessionToken) {
     core.setSecret(sessionToken);
-    core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
+    core.exportVariable("AWS_SESSION_TOKEN", sessionToken);
   } else if (process.env.AWS_SESSION_TOKEN) {
     // clear session token from previous credentials action
-    core.exportVariable('AWS_SESSION_TOKEN', '');
+    core.exportVariable("AWS_SESSION_TOKEN", "");
   }
+}
+
+async function exportCredentialsToConfig(profile, params) {
+  const awsConfigFolder = `${process.env.HOME}/.aws`;
+  const awsCredentialsFile = `${awsConfigFolder}/credentials`;
+  const awsConfigFile = `${awsConfigFolder}/config`;
+  let config = {};
+  let credentials = {};
+
+  if (!fs.existsSync(awsConfigFolder)) {
+    fs.mkdirSync(awsConfigFolder, { recursive: true });
+  }
+
+  if (fs.existsSync(awsConfigFile)) {
+    config = ini.parse(await fs.promises.readFile(awsConfigFile, "utf-8"));
+  }
+
+  if (fs.existsSync(awsCredentialsFile)) {
+    credentials = ini.parse(await fs.promises.readFile(awsCredentialsFile, "utf-8"));
+  }
+
+  // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
+  // Setting the credentials as secrets masks them in Github Actions logs
+  const {
+    webIdentityTokenFile,
+    accessKeyId,
+    secretAccessKey,
+    sessionToken,
+    region,
+    roleToAssume,
+    roleSessionName,
+    roleExternalId,
+  } = params;
+
+  // Initialize the configuration objects
+  const profileName = profile;
+  const configProfileName = `profile ${profileName}`;
+  config[configProfileName] = {};
+  config[configProfileName].region = region;
+  config[configProfileName].web_identity_token_file = webIdentityTokenFile;
+  config[configProfileName].role_arn = roleToAssume;
+  config[configProfileName].role_session_name = roleSessionName;
+  config[configProfileName].external_id = roleExternalId;
+
+  credentials[profileName] = {};
+  credentials[profileName].aws_access_key_id = accessKeyId;
+  credentials[profileName].aws_secret_access_key = secretAccessKey;
+  credentials[profileName].aws_session_token = sessionToken;
+
+  // Clean up empty values
+  Object.values(credentials).forEach((profile) => {
+    Object.keys(profile).forEach((key) => {
+      if (profile[key] === undefined || profile[key] === "") {
+        delete profile[key];
+      }
+    });
+  });
+  // Clean up empty values
+  Object.values(config).forEach((profile) => {
+    Object.keys(profile).forEach((key) => {
+      if (profile[key] === undefined || profile[key] === "") {
+        delete profile[key];
+      }
+    });
+  });
+
+  await fs.promises.writeFile(awsConfigFile, ini.stringify(config));
+  await fs.promises.writeFile(awsCredentialsFile, ini.stringify(credentials));
+
+  // Set the AWS_PROFILE environment variable
+  core.exportVariable("AWS_PROFILE", profileName);
+  // Set the AWS_SHARED_CREDENTIALS_FILE environment variable
+  core.exportVariable("AWS_SHARED_CREDENTIALS_FILE", awsCredentialsFile);
+  // Set the AWS_CONFIG_FILE environment variable
+  core.exportVariable("AWS_CONFIG_FILE", awsConfigFile);
+
+  // await validateCredentials(credentials[profileName].aws_access_key_id);
 }
 
 function exportRegion(region) {
   // AWS_DEFAULT_REGION and AWS_REGION:
   // Specifies the AWS Region to send requests to
-  core.exportVariable('AWS_DEFAULT_REGION', region);
-  core.exportVariable('AWS_REGION', region);
+  core.exportVariable("AWS_DEFAULT_REGION", region);
+  core.exportVariable("AWS_REGION", region);
 }
 
 async function exportAccountId(maskAccountId, region) {
@@ -179,10 +258,10 @@ async function exportAccountId(maskAccountId, region) {
   const sts = getStsClient(region);
   const identity = await sts.getCallerIdentity().promise();
   const accountId = identity.Account;
-  if (!maskAccountId || maskAccountId.toLowerCase() == 'true') {
+  if (!maskAccountId || maskAccountId.toLowerCase() == "true") {
     core.setSecret(accountId);
   }
-  core.setOutput('aws-account-id', accountId);
+  core.setOutput("aws-account-id", accountId);
   return accountId;
 }
 
@@ -207,7 +286,7 @@ function loadCredentials() {
         reject(err);
       }
       resolve(aws.config.credentials);
-    })
+    });
   });
 }
 
@@ -217,7 +296,7 @@ async function validateCredentials(expectedAccessKeyId) {
     credentials = await loadCredentials();
 
     if (!credentials.accessKeyId) {
-      throw new Error('Access key ID empty after loading credentials');
+      throw new Error("Access key ID empty after loading credentials");
     }
   } catch (error) {
     throw new Error(`Credentials could not be loaded, please check your action inputs: ${error.message}`);
@@ -226,15 +305,17 @@ async function validateCredentials(expectedAccessKeyId) {
   const actualAccessKeyId = credentials.accessKeyId;
 
   if (expectedAccessKeyId && expectedAccessKeyId != actualAccessKeyId) {
-    throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+    throw new Error(
+      "Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action",
+    );
   }
 }
 
 function getStsClient(region) {
   return new aws.STS({
     region,
-    stsRegionalEndpoints: 'regional',
-    customUserAgent: USER_AGENT
+    stsRegionalEndpoints: "regional",
+    customUserAgent: USER_AGENT,
   });
 }
 
@@ -252,14 +333,14 @@ const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 12, ba
       throw err;
     }
     // It's retryable, so sleep and retry.
-    await sleep(Math.random() * (Math.pow(2, retries) * base) );
+    await sleep(Math.random() * (Math.pow(2, retries) * base));
     retries += 1;
     if (retries === maxRetries) {
       throw err;
     }
     return await retryAndBackoff(fn, isRetryable, retries, maxRetries, base);
   }
-}
+};
 
 function configureProxy(proxyServer) {
   const proxyFromEnv = process.env.HTTP_PROXY || process.env.http_proxy;
@@ -267,7 +348,7 @@ function configureProxy(proxyServer) {
   if (proxyFromEnv || proxyServer) {
     let proxyToSet = null;
 
-    if (proxyServer){
+    if (proxyServer) {
       console.log(`Setting proxy from actions input: ${proxyServer}`);
       proxyToSet = proxyServer;
     } else {
@@ -276,7 +357,7 @@ function configureProxy(proxyServer) {
     }
 
     aws.config.update({
-      httpOptions: { agent: proxy(proxyToSet) }
+      httpOptions: { agent: proxy(proxyToSet) },
     });
   }
 }
@@ -284,22 +365,24 @@ function configureProxy(proxyServer) {
 async function run() {
   try {
     // Get inputs
-    const accessKeyId = core.getInput('aws-access-key-id', { required: false });
-    const audience = core.getInput('audience', { required: false });
-    const secretAccessKey = core.getInput('aws-secret-access-key', { required: false });
-    const region = core.getInput('aws-region', { required: true });
-    const sessionToken = core.getInput('aws-session-token', { required: false });
-    const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
-    const roleToAssume = core.getInput('role-to-assume', {required: false});
-    const roleExternalId = core.getInput('role-external-id', { required: false });
-    let roleDurationSeconds = core.getInput('role-duration-seconds', {required: false})
-    || (sessionToken && SESSION_ROLE_DURATION)
-    || MAX_ACTION_RUNTIME;
-    const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
-    const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
-    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
-    const proxyServer = core.getInput('http-proxy', { required: false });
+    const accessKeyId = core.getInput("aws-access-key-id", { required: false });
+    const audience = core.getInput("audience", { required: false });
+    const secretAccessKey = core.getInput("aws-secret-access-key", { required: false });
+    const profile = core.getInput("aws-profile", { required: false });
+    const region = core.getInput("aws-region", { required: true });
+    const sessionToken = core.getInput("aws-session-token", { required: false });
+    const maskAccountId = core.getInput("mask-aws-account-id", { required: false });
+    const roleToAssume = core.getInput("role-to-assume", { required: false });
+    const roleExternalId = core.getInput("role-external-id", { required: false });
+    let roleDurationSeconds =
+      core.getInput("role-duration-seconds", { required: false }) ||
+      (sessionToken && SESSION_ROLE_DURATION) ||
+      MAX_ACTION_RUNTIME;
+    const roleSessionName = core.getInput("role-session-name", { required: false }) || ROLE_SESSION_NAME;
+    const roleSkipSessionTaggingInput = core.getInput("role-skip-session-tagging", { required: false }) || "false";
+    const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === "true";
+    const webIdentityTokenFile = core.getInput("web-identity-token-file", { required: false });
+    const proxyServer = core.getInput("http-proxy", { required: false });
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -310,12 +393,12 @@ async function run() {
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
     // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
     const useGitHubOIDCProvider = () => {
-        // The assumption here is that self-hosted runners won't be populating the `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
-        // environment variable and they won't be providing a web idenity token file or access key either.
-        // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
-        // can provide as much info as they want and we will follow the established credential loading precedence.
-        return roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !accessKeyId && !webIdentityTokenFile
-    }
+      // The assumption here is that self-hosted runners won't be populating the `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
+      // environment variable and they won't be providing a web idenity token file or access key either.
+      // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
+      // can provide as much info as they want and we will follow the established credential loading precedence.
+      return roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !accessKeyId && !webIdentityTokenFile;
+    };
 
     // Always export the source credentials and account ID.
     // The STS client for calling AssumeRole pulls creds from the environment.
@@ -327,9 +410,22 @@ async function run() {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
       }
 
-      exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+      if (profile) {
+        await exportCredentialsToConfig(profile, {
+          accessKeyId,
+          secretAccessKey,
+          sessionToken,
+          webIdentityTokenFile,
+          region,
+          roleToAssume,
+          roleSessionName,
+          roleExternalId,
+        });
+      } else {
+        exportCredentials({ accessKeyId, secretAccessKey, sessionToken });
+      }
     }
-    
+
     // Configures proxy
     configureProxy(proxyServer);
 
@@ -338,9 +434,10 @@ async function run() {
     // The only way to assume the role is via GitHub's OIDC provider.
     let sourceAccountId;
     let webIdentityToken;
-    if(useGitHubOIDCProvider()) {
+    if (useGitHubOIDCProvider()) {
       webIdentityToken = await core.getIDToken(audience);
-      roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
+      roleDurationSeconds =
+        core.getInput("role-duration-seconds", { required: false }) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
     } else {
       // Regardless of whether any source credentials were provided as inputs,
@@ -355,19 +452,32 @@ async function run() {
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
-      const roleCredentials = await retryAndBackoff(
-          async () => { return await assumeRole({
-            sourceAccountId,
-            region,
-            roleToAssume,
-            roleExternalId,
-            roleDurationSeconds,
-            roleSessionName,
-            roleSkipSessionTagging,
-            webIdentityTokenFile,
-            webIdentityToken
-          }) }, true);
-      exportCredentials(roleCredentials);
+      const roleCredentials = await retryAndBackoff(async () => {
+        return await assumeRole({
+          sourceAccountId,
+          region,
+          roleToAssume,
+          roleExternalId,
+          roleDurationSeconds,
+          roleSessionName,
+          roleSkipSessionTagging,
+          webIdentityTokenFile,
+          webIdentityToken,
+        });
+      }, true);
+
+      if (profile) {
+        await exportCredentialsToConfig(profile, {
+          ...roleCredentials,
+          roleToAssume,
+          webIdentityTokenFile,
+          region,
+          roleSessionName,
+          roleExternalId,
+        });
+      } else {
+        exportCredentials(roleCredentials);
+      }
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
@@ -375,18 +485,19 @@ async function run() {
       if (!process.env.GITHUB_ACTIONS || accessKeyId) {
         await validateCredentials(roleCredentials.accessKeyId);
       }
+
       await exportAccountId(maskAccountId, region);
+
+      return;
     }
-  }
-  catch (error) {
+  } catch (error) {
     core.setFailed(error.message);
 
     const showStackTrace = process.env.SHOW_STACK_TRACE;
 
-    if (showStackTrace === 'true') {
-      throw(error)
+    if (showStackTrace === "true") {
+      throw error;
     }
-
   }
 }
 
@@ -397,9 +508,9 @@ exports.reset = function () {
   sleep = defaultSleep;
 };
 
-exports.run = run
+exports.run = run;
 
 /* istanbul ignore next */
 if (require.main === module) {
-    run();
+  run();
 }

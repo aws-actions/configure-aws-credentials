@@ -1,0 +1,74 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Configure AWS Credentials Profile Support add new profile if credentials file already exists 1`] = `
+"[profile default]
+region=fake-region-1
+
+[profile test-profile]
+region=fake-region-1
+role_arn=arn:aws:iam::111111111111:role/MY-ROLE
+role_session_name=GitHubActions
+"
+`;
+
+exports[`Configure AWS Credentials Profile Support add new profile if credentials file already exists 2`] = `
+"[default]
+aws_access_key=STS-AWS-ACCESS-KEY-ID
+aws_secret_access_key=STS-AWS-SECRET-ACCESS-KEY
+aws_session_token=STS-AWS-SESSION-TOKEN
+
+[test-profile]
+aws_access_key_id=STS-AWS-ACCESS-KEY-ID
+aws_secret_access_key=STS-AWS-SECRET-ACCESS-KEY
+aws_session_token=STS-AWS-SESSION-TOKEN
+"
+`;
+
+exports[`Configure AWS Credentials Profile Support only role arn and region provided to use GH OIDC Token 1`] = `
+"[profile test-profile]
+region=fake-region-1
+role_arn=arn:aws:iam::111111111111:role/MY-ROLE
+role_session_name=GitHubActions
+"
+`;
+
+exports[`Configure AWS Credentials Profile Support only role arn and region provided to use GH OIDC Token 2`] = `
+"[test-profile]
+aws_access_key_id=STS-AWS-ACCESS-KEY-ID
+aws_secret_access_key=STS-AWS-SECRET-ACCESS-KEY
+aws_session_token=STS-AWS-SESSION-TOKEN
+"
+`;
+
+exports[`Configure AWS Credentials Profile Support use profile and save credentials file 1`] = `
+"[profile test-profile]
+region=fake-region-1
+role_arn=arn:aws:iam::111111111111:role/MY-ROLE
+role_session_name=GitHubActions
+"
+`;
+
+exports[`Configure AWS Credentials Profile Support use profile and save credentials file 2`] = `
+"[test-profile]
+aws_access_key_id=STS-AWS-ACCESS-KEY-ID
+aws_secret_access_key=STS-AWS-SECRET-ACCESS-KEY
+aws_session_token=STS-AWS-SESSION-TOKEN
+"
+`;
+
+exports[`Configure AWS Credentials Profile Support web identity token file provided with relative path 1`] = `
+"[profile test-profile]
+region=fake-region-1
+web_identity_token_file=fake/token/file
+role_arn=arn:aws:iam::111111111111:role/MY-ROLE
+role_session_name=GitHubActions
+"
+`;
+
+exports[`Configure AWS Credentials Profile Support web identity token file provided with relative path 2`] = `
+"[test-profile]
+aws_access_key_id=STS-AWS-ACCESS-KEY-ID
+aws_secret_access_key=STS-AWS-SECRET-ACCESS-KEY
+aws_session_token=STS-AWS-SESSION-TOKEN
+"
+`;

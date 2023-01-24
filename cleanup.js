@@ -1,4 +1,5 @@
-const core = require('@actions/core');
+const core = require("@actions/core");
+const fs = require("fs");
 
 /**
  * When the GitHub Actions job is done, clean up any environment variables that
@@ -17,13 +18,14 @@ async function cleanup() {
     // environment variables, so we overwrite the current value with an empty
     // string. The AWS CLI and AWS SDKs will behave correctly: they treat an
     // empty string value as if the environment variable does not exist.
-    core.exportVariable('AWS_ACCESS_KEY_ID', '');
-    core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
-    core.exportVariable('AWS_SESSION_TOKEN', '');
-    core.exportVariable('AWS_DEFAULT_REGION', '');
-    core.exportVariable('AWS_REGION', '');
-  }
-  catch (error) {
+    core.exportVariable("AWS_ACCESS_KEY_ID", "");
+    core.exportVariable("AWS_SECRET_ACCESS_KEY", "");
+    core.exportVariable("AWS_SESSION_TOKEN", "");
+    core.exportVariable("AWS_DEFAULT_REGION", "");
+    core.exportVariable("AWS_REGION", "");
+
+    fs.rmSync(`${process.env.HOME}/.aws`, { force: true, recursive: true });
+  } catch (error) {
     core.setFailed(error.message);
   }
 }
