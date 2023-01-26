@@ -2,6 +2,7 @@ const core = require('@actions/core');
 const assert = require('assert');
 const aws = require('aws-sdk');
 const { run, withSleep, reset }  = require('./index.js');
+const proxy = require('https-proxy-agent');
 
 jest.mock('@actions/core');
 
@@ -33,6 +34,7 @@ function mockGetInput(requestResponse) {
         return requestResponse[name]
     }
 }
+
 const CREDS_INPUTS = {
     'aws-access-key-id': FAKE_ACCESS_KEY_ID,
     'aws-secret-access-key': FAKE_SECRET_ACCESS_KEY
@@ -52,7 +54,8 @@ const mockStsAssumeRoleWithWebIdentity = jest.fn();
 jest.mock('aws-sdk', () => {
     return {
         config: {
-            getCredentials: jest.fn()
+            getCredentials: jest.fn(),
+            update: jest.fn(),
         },
         STS: jest.fn(() => ({
             getCallerIdentity: mockStsCallerIdentity,
@@ -126,6 +129,9 @@ describe('Configure AWS Credentials', () => {
                 }
                 callback(null);
             });
+
+            aws.config.update.mockReset();
+            aws.config.update.mockImplementationOnce();
 
         mockStsAssumeRole.mockImplementation(() => {
             return {
@@ -804,4 +810,68 @@ describe('Configure AWS Credentials', () => {
         await run();
     });
 
+    describe('proxy settings', () => {
+
+        test('setting proxy with actions input', async () => {
+            const EXPECTED_PROXY = 'http://test.me'
+            core.getInput = jest
+                .fn()
+                .mockImplementation(
+                    mockGetInput({ ...DEFAULT_INPUTS, 'http-proxy': EXPECTED_PROXY })
+                );
+
+            await run();
+
+            expect(aws.config.update).toHaveBeenCalledTimes(1);
+            expect(aws.config.update).toHaveBeenCalledWith({
+                httpOptions: { agent: proxy(EXPECTED_PROXY) }
+              });
+        });
+        test('setting proxy from environment vars', async () => {
+            const EXPECTED_PROXY = 'http://test.me'
+            process.env.HTTP_PROXY = EXPECTED_PROXY;
+            core.getInput = jest
+                .fn()
+                .mockImplementation(
+                    mockGetInput({ ...DEFAULT_INPUTS })
+                );
+
+            await run();
+
+            expect(aws.config.update).toHaveBeenCalledTimes(1);
+            expect(aws.config.update).toHaveBeenCalledWith({
+                httpOptions: { agent: proxy(EXPECTED_PROXY) }
+              });
+        });
+
+        test('setting proxy - prefer action input', async () => {
+            const EXPECTED_PROXY = 'http://test.me'
+            const FALSE_PROXY = 'http://env.me'
+            process.env.HTTP_PROXY = FALSE_PROXY;
+            core.getInput = jest
+                .fn()
+                .mockImplementation(
+                    mockGetInput({ ...DEFAULT_INPUTS, 'http-proxy': EXPECTED_PROXY })
+                );
+
+            await run();
+
+            expect(aws.config.update).toHaveBeenCalledTimes(1);
+            expect(aws.config.update).toHaveBeenCalledWith({
+                httpOptions: { agent: proxy(EXPECTED_PROXY) }
+              });
+        });
+
+        test('ignoring proxy - without anything set', async () => {
+            core.getInput = jest
+                .fn()
+                .mockImplementation(
+                    mockGetInput({ ...DEFAULT_INPUTS})
+                );
+
+            await run();
+
+            expect(aws.config.update).toHaveBeenCalledTimes(0);
+        });
+    });
 });
