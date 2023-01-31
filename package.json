@@ -27,7 +27,7 @@
   "dependencies": {
     "@actions/core": "^1.10.0",
     "aws-sdk": "^2.1300.0",
-    "axios": "^1.2.3"
+    "axios": "^1.2.6"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.36.0",
