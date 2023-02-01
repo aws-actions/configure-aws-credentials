@@ -1,0 +1,38 @@
+---
+name: deploy
+on:
+  push:
+    branches:
+      - main
+env:
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_DEFAULT_OUTPUT: json
+
+jobs:
+  deploy-cfn:
+    name: deploy
+    runs-on: ubuntu-latest
+    # These permissions are needed to interact with GitHub’s OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        aws-region: us-east-1
+        ## the following creates an ARN based on the values entered into github secrets
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_DEPLOY_ROLE }}
+        role-session-name: myGitHubActions
+    - name: Deploy EC2 Bastion
+      uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
+      with:
+        name: myEC2bastion
+        ## change to path to template in your github repo
+        template: cloudformation/ec2-bastion.yml
+        capabilities: CAPABILITY_IAM, CAPABILITY_NAMED_IAM
+        no-fail-on-empty-changeset: "1"
+        ## parameter set in github secrets
+        parameter-overrides: "pVpc=${{ secrets.VPC_ID }},pSubnet=${{ secrets.SUBNET_ID }}"

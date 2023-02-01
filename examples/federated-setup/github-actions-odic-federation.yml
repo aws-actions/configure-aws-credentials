@@ -1,0 +1,43 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Github Actions configuration - OIDC IAM IdP Federation
+
+Parameters:
+
+  GitHubOrganization:
+    Type: String
+    Description: This is the root organization or personal account where repos are stored (Case Sensitive)
+    Default: ""
+
+  RepositoryName:
+    Type: String
+    Description: The repo(s) these roles will have access to. (Use * for all org or personal repos)
+    Default: "*"
+
+  RoleName:
+    Type: String
+    Description: Name the Role
+    Default: ""
+
+
+Resources:
+
+  IdpGitHubOidc:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+        - !Sub https://github.com/${GitHubOrganization}/${RepositoryName}
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+      Tags:
+        - Key: Name
+          Value: !Sub ${RoleName}-OIDC-Provider
+
+
+Outputs:
+
+  IdpGitHubOidc:
+    Description: "ARN of Github OIDC Provider"
+    Value: !GetAtt IdpGitHubOidc.Arn

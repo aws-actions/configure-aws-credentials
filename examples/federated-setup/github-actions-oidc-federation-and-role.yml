@@ -1,0 +1,82 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Github Actions configuration - OIDC IAM IdP and associated role CI/CD
+
+Parameters:
+
+  GitHubOrganization:
+    Type: String
+    Description: This is the root organization or personal account where repos are stored (Case Sensitive)
+
+  RepositoryName:
+    Type: String
+    Description: The repo(s) these roles will have access to. (Use * for all org or personal repos)
+    Default: "*"
+
+  BranchName:
+    Type: String
+    Description: Name of the git branch to to trust. (Use * for all branches)
+    Default: "*"
+
+  RoleName:
+    Type: String
+    Description: Name the Role
+
+  UseExistingProvider:
+    Type: String
+    Description: "Only one GitHub Provider can exists. Choose yes if one is already present in account"
+    Default: "no"
+    AllowedValues:
+      - "yes"
+      - "no"
+
+Conditions:
+
+  CreateProvider: !Equals ["no", !Ref UseExistingProvider]
+
+Resources:
+
+  IdpGitHubOidc:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+        - !Sub https://github.com/${GitHubOrganization}/${RepositoryName}
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+      Tags:
+        - Key: Name
+          Value: !Sub ${RoleName}-OIDC-Provider
+
+  RoleGithubActions:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRoleWithWebIdentity
+            Principal:
+              Federated: !If
+                - CreateProvider
+                - !Ref IdpGitHubOidc
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrganization}/${RepositoryName}:ref:refs/heads/${BranchName}
+      ManagedPolicyArns:
+        ## edit the managed policy to give least privileges
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AdministratorAccess
+
+Outputs:
+
+  IdpGitHubOidc:
+    Condition: CreateProvider
+    Description: "ARN of Github OIDC Provider"
+    Value: !GetAtt IdpGitHubOidc.Arn
+
+  RoleGithubActionsARN:
+    Description: "CICD Role for GitHub Actions"
+    Value: !GetAtt RoleGithubActions.Arn

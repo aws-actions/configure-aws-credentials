@@ -77,11 +77,9 @@ jest.mock('axios', () => ({
 }));
 
 describe('Configure AWS Credentials', () => {
-    const OLD_ENV = process.env;
-
     beforeEach(() => {
         jest.resetModules();
-        process.env = {...OLD_ENV, ...ENVIRONMENT_VARIABLE_OVERRIDES};
+        process.env = { ...ENVIRONMENT_VARIABLE_OVERRIDES };
 
         jest.clearAllMocks();
 
@@ -163,7 +161,6 @@ describe('Configure AWS Credentials', () => {
     });
 
     afterEach(() => {
-        process.env = OLD_ENV;
         reset();
     });
 
@@ -518,6 +515,50 @@ describe('Configure AWS Credentials', () => {
             RoleSessionName: 'MySessionName',
             DurationSeconds: 6 * 3600,
             SourceIdentity: GITHUB_ACTOR_SANITIZED,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+            ]
+        })
+    });
+
+    test('sets durationSeconds to one hour when session token provided and no duration is provided', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'aws-session-token': FAKE_SESSION_TOKEN}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_ARN,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 3600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+            ]
+        })
+    });
+
+    test('sets durationSeconds to one 6 hours no session token or duration is provided', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_ARN,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 6 * 3600,
             Tags: [
                 {Key: 'GitHub', Value: 'Actions'},
                 {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
