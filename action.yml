@@ -61,9 +61,6 @@ inputs:
       Valid values are 'true' and 'false'.
       Defaults to false
     required: false
-  http-proxy:
-    description: 'Proxy to use for the AWS SDK agent'
-    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'
