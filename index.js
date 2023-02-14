@@ -379,7 +379,7 @@ async function run() {
     }
   }
   catch (error) {
-    core.setFailed(error.message);
+    core.setFailed(error);
 
     const showStackTrace = process.env.SHOW_STACK_TRACE;
 
