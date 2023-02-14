@@ -138,6 +138,28 @@ In this example, the audience has been changed from the default to use a differe
 
 Changing the default audience may be necessary when using non-default [AWS partitions](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 
+```yaml
+    - name: Configure AWS Credentials
+      id: aws-credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        role-session-name: MySessionName
+        role-output-credentials: true
+
+    - name: Get Caller Identity
+      env:
+        AWS_REGION: '${{ steps.aws-credentials.outputs.aws-region }}'
+        AWS_DEFAULT_REGION: '${{ steps.aws-credentials.outputs.aws-default-region }}'
+        AWS_ACCESS_KEY_ID: '${{ steps.aws-credentials.outputs.aws-access-key-id }}'
+        AWS_SECRET_ACCESS_KEY: '${{ steps.aws-credentials.aws.outputs.aws-secret-access-key }}'
+        AWS_SESSION_TOKEN: '${{ steps.aws-credentials.outputs.aws-session-token }}'
+      run: |
+        aws sts get-caller-identity
+```
+In this example, input `role-output-credentials` forces action to output assumed role's credentials without populating `GITHUB_ENV` environmental variable. Following steps can reference output of the action step to get credentials.
+
 ### Sample IAM Role CloudFormation Template
 ```yaml
 Parameters:

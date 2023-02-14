@@ -55,9 +55,33 @@ inputs:
   role-skip-session-tagging:
     description: 'Skip session tagging during role assumption'
     required: false
+  role-output-credentials:
+    description: >-
+      Whether to output assumed credentials instead of exporting them to environment.
+      Valid values are 'true' and 'false'.
+      Defaults to false
+    required: false
+  http-proxy:
+    description: 'Proxy to use for the AWS SDK agent'
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'
+  aws-default-region:
+    description: >-
+      The AWS default region name. This is output is available if `role-output-credentials` is set to true
+  aws-region:
+    description: >-
+      The AWS region name. This is output is available if `role-output-credentials` is set to true
+  aws-access-key-id:
+    description: >-
+      AWS Access Key ID of the assumed role. This is output is available if `role-output-credentials` is set to true
+  aws-secret-access-key:
+    description: >-
+      AWS Secret Access Key of the assumed role. This is output is available if `role-output-credentials` is set to true
+  aws-session-token:
+    description: >-
+      AWS Session Token. This is output is available if `role-output-credentials` is set to true
 runs:
   using: 'node16'
   main: 'dist/index.js'

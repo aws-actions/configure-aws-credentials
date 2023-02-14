@@ -428,6 +428,42 @@ describe('Configure AWS Credentials', () => {
         expect(core.setOutput).toHaveBeenNthCalledWith(2, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
     });
 
+    test('basic role assumption with output credentials', async () => {
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'role-output-credentials': 'TRUE'}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledTimes(1);
+        expect(core.exportVariable).toHaveBeenCalledTimes(0);
+        expect(core.setSecret).toHaveBeenCalledTimes(7);
+        expect(core.setOutput).toHaveBeenCalledTimes(9);
+
+        // first the source credentials are exported and masked
+        expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_ACCOUNT_ID);
+
+        expect(core.setOutput).toHaveBeenNthCalledWith(1, 'aws-default-region', FAKE_REGION);
+        expect(core.setOutput).toHaveBeenNthCalledWith(2, 'aws-region', FAKE_REGION);
+        expect(core.setOutput).toHaveBeenNthCalledWith(3, 'aws-access-key-id', FAKE_ACCESS_KEY_ID);
+        expect(core.setOutput).toHaveBeenNthCalledWith(4, 'aws-secret-access-key', FAKE_SECRET_ACCESS_KEY);
+
+        expect(core.setOutput).toHaveBeenNthCalledWith(5, 'aws-account-id', FAKE_ACCOUNT_ID);
+
+        // then the role credentials are exported and masked
+        expect(core.setSecret).toHaveBeenNthCalledWith(4, FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(5, FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(6, FAKE_STS_SESSION_TOKEN);
+        expect(core.setSecret).toHaveBeenNthCalledWith(7, FAKE_ROLE_ACCOUNT_ID);
+
+        expect(core.setOutput).toHaveBeenNthCalledWith(6, 'aws-access-key-id', FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setOutput).toHaveBeenNthCalledWith(7, 'aws-secret-access-key', FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setOutput).toHaveBeenNthCalledWith(8, 'aws-session-token', FAKE_STS_SESSION_TOKEN);
+        expect(core.setOutput).toHaveBeenNthCalledWith(9, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
+
+    });
+
     test('assume role can pull source credentials from self-hosted environment', async () => {
         core.getInput = jest
             .fn()

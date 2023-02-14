@@ -140,7 +140,7 @@ function sanitizeGithubWorkflowName(name) {
   return nameTruncated
 }
 
-function exportCredentials(params){
+function exportCredentials(params, output){
   // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
   // Setting the credentials as secrets masks them in Github Actions logs
   const {accessKeyId, secretAccessKey, sessionToken} = params;
@@ -148,29 +148,46 @@ function exportCredentials(params){
   // AWS_ACCESS_KEY_ID:
   // Specifies an AWS access key associated with an IAM user or role
   core.setSecret(accessKeyId);
-  core.exportVariable('AWS_ACCESS_KEY_ID', accessKeyId);
+  if (output) {
+    core.setOutput('aws-access-key-id', accessKeyId);
+  } else {
+    core.exportVariable('AWS_ACCESS_KEY_ID', accessKeyId);
+  }
 
   // AWS_SECRET_ACCESS_KEY:
   // Specifies the secret key associated with the access key. This is essentially the "password" for the access key.
   core.setSecret(secretAccessKey);
-  core.exportVariable('AWS_SECRET_ACCESS_KEY', secretAccessKey);
+  if (output) {
+    core.setOutput('aws-secret-access-key', secretAccessKey);
+  } else {
+    core.exportVariable('AWS_SECRET_ACCESS_KEY', secretAccessKey);
+  }
 
   // AWS_SESSION_TOKEN:
   // Specifies the session token value that is required if you are using temporary security credentials.
   if (sessionToken) {
     core.setSecret(sessionToken);
-    core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
+    if (output) {
+      core.setOutput('aws-session-token', sessionToken);
+    } else {
+      core.exportVariable('AWS_SESSION_TOKEN', sessionToken);
+    }
   } else if (process.env.AWS_SESSION_TOKEN) {
     // clear session token from previous credentials action
     core.exportVariable('AWS_SESSION_TOKEN', '');
   }
 }
 
-function exportRegion(region) {
+function exportRegion(region, output) {
   // AWS_DEFAULT_REGION and AWS_REGION:
   // Specifies the AWS Region to send requests to
-  core.exportVariable('AWS_DEFAULT_REGION', region);
-  core.exportVariable('AWS_REGION', region);
+  if (output) {
+    core.setOutput('aws-default-region', region);
+    core.setOutput('aws-region', region);
+  } else {
+    core.exportVariable('AWS_DEFAULT_REGION', region);
+    core.exportVariable('AWS_REGION', region);
+  }
 }
 
 async function exportAccountId(maskAccountId, region) {
@@ -275,6 +292,7 @@ async function run() {
     || (sessionToken && SESSION_ROLE_DURATION)
     || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
+    const roleOutputCredentials = core.getInput('role-output-credentials', { required: false }) || false;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
@@ -283,7 +301,7 @@ async function run() {
       throw new Error(`Region is not valid: ${region}`);
     }
 
-    exportRegion(region);
+    exportRegion(region, roleOutputCredentials);
 
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
     // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
@@ -305,7 +323,7 @@ async function run() {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
       }
 
-      exportCredentials({accessKeyId, secretAccessKey, sessionToken});
+      exportCredentials({accessKeyId, secretAccessKey, sessionToken}, roleOutputCredentials);
     }
 
     // Attempt to load credentials from the GitHub OIDC provider.
@@ -342,7 +360,7 @@ async function run() {
             webIdentityTokenFile,
             webIdentityToken
           }) }, true);
-      exportCredentials(roleCredentials);
+      exportCredentials(roleCredentials, roleOutputCredentials);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
