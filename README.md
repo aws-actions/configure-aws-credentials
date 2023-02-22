@@ -139,6 +139,17 @@ In this example, the audience has been changed from the default to use a differe
 
 Changing the default audience may be necessary when using non-default [AWS partitions](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 
+```yaml
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        role-session-name: MySessionName
+        mask-aws-account-id: false
+```
+In this example, account ID masking has been disabled. By default, the AWS account ID will be obscured in the action's output. This may be helpful when debugging action failures.
+
 ### Sample IAM Role CloudFormation Template
 ```yaml
 Parameters:
