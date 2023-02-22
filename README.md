@@ -161,6 +161,10 @@ Parameters:
     Description: Arn for the GitHub OIDC Provider.
     Default: ""
     Type: String
+  OIDCAudience:
+    Description: Audience supplied to configure-aws-credentials.
+    Default: "sts.amazonaws.com"
+    Type: String
 
 Conditions:
   CreateOIDCProvider: !Equals 
@@ -181,6 +185,8 @@ Resources:
                 - !Ref GithubOidc
                 - !Ref OIDCProviderArn
             Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: !Ref OIDCAudience
               StringLike:
                 token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
 
