@@ -55,6 +55,9 @@ inputs:
   role-skip-session-tagging:
     description: 'Skip session tagging during role assumption'
     required: false
+  http-proxy:
+    description: 'Proxy to use for the AWS SDK agent'
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'
