@@ -15,7 +15,6 @@ GitHub actions has recently started throwing warning messages regarding the depr
     + [Session tagging](#session-tagging)
     + [Sample IAM Role Permissions](#sample-iam-role-cloudformation-template)
 - [Self-Hosted Runners](#self-hosted-runners)
-    + [Proxy Configuration](#proxy-configuration)
 - [License Summary](#license-summary)
 - [Security Disclosures](#security-disclosures)
 
@@ -93,12 +92,12 @@ The default audience is `sts.amazonaws.com` which you can replace by specifying 
 
 The following table describes which identity is used based on which values are supplied to the Action:
 
-| **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` |
-| --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- |
+| **Identity Used**                                                | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` |
+|------------------------------------------------------------------|---------------------|------------------|---------------------------|
 | [✅ Recommended] Assume Role directly using GitHub OIDC provider |                     | ✔                |                           |
-| IAM User                                                        | ✔                   |                  |                           |
-| Assume Role using IAM User credentials                          | ✔                   | ✔                |                           |
-| Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         |
+| IAM User                                                         | ✔                   |                  |                           |
+| Assume Role using IAM User credentials                           | ✔                   | ✔                |                           |
+| Assume Role using WebIdentity Token File credentials             |                     | ✔                | ✔                         |
 
 ### Examples
 
@@ -204,15 +203,15 @@ For further information on OIDC and GitHub Actions, please see:
 The session will have the name "GitHubActions" and be tagged with the following tags:
 (`GITHUB_` environment variable definitions can be [found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
 
-| Key        | Value             |
-| ---------- | ----------------- |
-| GitHub     | "Actions"         |
+| Key | Value|
+| --- | --- |
+| GitHub | "Actions" |
 | Repository | GITHUB_REPOSITORY |
-| Workflow   | GITHUB_WORKFLOW   |
-| Action     | GITHUB_ACTION     |
-| Actor      | GITHUB_ACTOR      |
-| Branch     | GITHUB_REF        |
-| Commit     | GITHUB_SHA        |
+| Workflow | GITHUB_WORKFLOW |
+| Action | GITHUB_ACTION |
+| Actor | GITHUB_ACTOR |
+| Branch | GITHUB_REF |
+| Commit | GITHUB_SHA |
 
 _Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid characters, the characters will be replaced with an '*'._
 
@@ -261,30 +260,6 @@ with:
   role-to-assume: my-github-actions-role
   web-identity-token-file: /var/run/secrets/eks.amazonaws.com/serviceaccount/token
 ```
-
-### Proxy Configuration
-
-If you run in self-hosted environments and in secured environment where you need use a specific proxy you can set it in the action manually.
-
-Additionally this action will always consider already configured proxy in the environment.
-
-Manually configured proxy:
-```yaml
-uses: aws-actions/configure-aws-credentials@v1
-with:
-  aws-region: us-east-2
-  role-to-assume: my-github-actions-role
-  http-proxy: "http://companydomain.com:3128"
-```
-
-Proxy configured in the environment variable:
-
-```bash
-# Your environment configuration
-HTTP_PROXY="http://companydomain.com:3128"
-```
-
-The action will read the underlying proxy configuration from the environment and you don't need to configure it in the action.
 
 ### Use with the AWS CLI
 
