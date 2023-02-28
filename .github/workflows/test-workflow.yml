@@ -16,10 +16,10 @@ jobs:
 
     - name: Print current build ID
       run: |
-        echo Integration test run: ConfigureAWSCredentialsDepl-DaaDYhTJsCVq:412419a6-a692-483d-b78f-050db4e3e48a
+        echo Integration test run: ConfigureAWSCredentialsDepl-DaaDYhTJsCVq:0f4f75c1-8283-405d-b2e1-eb092d7d3e98
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@567d4149d67f15f52b09796bea6573fc32952783
+      uses: aws-actions/configure-aws-credentials@7e0ecf0346f0dff6db9c0bfc56f459e938888730
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -30,7 +30,7 @@ jobs:
         aws sts get-caller-identity --query Arn | grep "user/github-actions-configure-aws-credentials-integ-tests" > /dev/null
 
     - name: Configure AWS credentials from role
-      uses: aws-actions/configure-aws-credentials@567d4149d67f15f52b09796bea6573fc32952783
+      uses: aws-actions/configure-aws-credentials@7e0ecf0346f0dff6db9c0bfc56f459e938888730
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -45,7 +45,7 @@ jobs:
         aws sts get-caller-identity --query Arn | grep "role/github-actions-configure-aws-credentials-integ-tests"  > /dev/null
 
     - name: Configure AWS credentials from role again
-      uses: aws-actions/configure-aws-credentials@567d4149d67f15f52b09796bea6573fc32952783
+      uses: aws-actions/configure-aws-credentials@7e0ecf0346f0dff6db9c0bfc56f459e938888730
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
