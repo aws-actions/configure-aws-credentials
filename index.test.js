@@ -341,6 +341,23 @@ describe('Configure AWS Credentials', () => {
         expect(core.setFailed).toHaveBeenCalledWith('Region is not valid: $AWS_REGION');
     });
 
+    test('aws-region should be optional and use AWS_REGION instead', async () => {
+        const mockInputs = { ...CREDS_INPUTS }
+        core.getInput = jest.fn().mockImplementation(mockGetInput(mockInputs))
+        process.env.AWS_REGION = "fake-region"
+        await run()
+        expect(core.exportVariable).toHaveBeenCalledWith("AWS_REGION", "fake-region")
+        expect(core.exportVariable).toHaveBeenCalledWith("AWS_DEFAULT_REGION", "fake-region")
+    })
+    test('aws-region should be optional and use AWS_DEFAULT_REGION if AWS_REGION is not available', async () => {
+        const mockInputs = { ...CREDS_INPUTS }
+        core.getInput = jest.fn().mockImplementation(mockGetInput(mockInputs))
+        process.env.AWS_DEFAULT_REGION = "fake-default-region"
+        await run()
+        expect(core.exportVariable).toHaveBeenCalledWith("AWS_REGION", "fake-default-region")
+        expect(core.exportVariable).toHaveBeenCalledWith("AWS_DEFAULT_REGION", "fake-default-region")
+    })
+
     test('throws error if access key id exists but missing secret access key', async () => {
         process.env.SHOW_STACK_TRACE = 'false';
         const inputsWIthoutSecretKey = {...ASSUME_ROLE_INPUTS}

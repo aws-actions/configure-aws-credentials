@@ -287,7 +287,7 @@ async function run() {
     const accessKeyId = core.getInput('aws-access-key-id', { required: false });
     const audience = core.getInput('audience', { required: false });
     const secretAccessKey = core.getInput('aws-secret-access-key', { required: false });
-    const region = core.getInput('aws-region', { required: true });
+    const region = core.getInput('aws-region', { required: true }) || process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION;
     const sessionToken = core.getInput('aws-session-token', { required: false });
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
     const roleToAssume = core.getInput('role-to-assume', {required: false});
