@@ -1,4 +1,4 @@
-name: '"Configure AWS Credentials" Action For GitHub Actions'
+name: 'Configure AWS Credentials For GitHub Actions'
 description: 'Configure AWS credential and region environment variables for use with the AWS CLI and AWS SDKs'
 branding:
   icon: 'cloud'
