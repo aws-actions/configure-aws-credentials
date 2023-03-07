@@ -211,7 +211,7 @@ function loadCredentials() {
   });
 }
 
-async function validateCredentials(expectedAccessKeyId) {
+async function validateCredentials(expectedAccessKeyId, roleChaining) {
   let credentials;
   try {
     credentials = await loadCredentials();
@@ -223,10 +223,12 @@ async function validateCredentials(expectedAccessKeyId) {
     throw new Error(`Credentials could not be loaded, please check your action inputs: ${error.message}`);
   }
 
-  const actualAccessKeyId = credentials.accessKeyId;
+  if (!roleChaining) {
+    const actualAccessKeyId = credentials.accessKeyId;
 
-  if (expectedAccessKeyId && expectedAccessKeyId != actualAccessKeyId) {
-    throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+    if (expectedAccessKeyId && expectedAccessKeyId != actualAccessKeyId) {
+      throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+    }
   }
 }
 
@@ -292,11 +294,14 @@ async function run() {
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
     const roleToAssume = core.getInput('role-to-assume', {required: false});
     const roleExternalId = core.getInput('role-external-id', { required: false });
+    const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
+    const roleChaining = roleChainingInput.toLowerCase() === 'true';
     let roleDurationSeconds = core.getInput('role-duration-seconds', {required: false})
     || (sessionToken && SESSION_ROLE_DURATION)
+    || (roleChaining && SESSION_ROLE_DURATION)
     || MAX_ACTION_RUNTIME;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false })|| 'false';
+    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false });
@@ -314,7 +319,8 @@ async function run() {
         // environment variable and they won't be providing a web idenity token file or access key either.
         // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
         // can provide as much info as they want and we will follow the established credential loading precedence.
-        return roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !accessKeyId && !webIdentityTokenFile
+
+        return roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !accessKeyId && !webIdentityTokenFile && !roleChaining
     }
 
     // Always export the source credentials and account ID.
@@ -348,7 +354,7 @@ async function run() {
       // cases where this action is on a self-hosted runner that doesn't have credentials
       // configured correctly, and cases where the user intended to provide input
       // credentials but the secrets inputs resolved to empty strings.
-      await validateCredentials(accessKeyId);
+      await validateCredentials(accessKeyId, roleChaining);
 
       sourceAccountId = await exportAccountId(maskAccountId, region);
     }
