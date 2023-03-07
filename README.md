@@ -101,7 +101,7 @@ for the AWS credentials used in GitHub Actions workflows, including:
   * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
 
 ## Assuming a Role
-There are four different supported ways to retrieve credentiasl. We recommend
+There are four different supported ways to retrieve credentials. We recommend
 using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 to get short-lived credentials needed for your actions. Specifying
 `role-to-assume` **without** providing an `aws-access-key-id` or a
