@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - v1-node16
     paths-ignore:
       - 'dist/**'
 
@@ -28,7 +27,7 @@ jobs:
           npm test
           npm run package
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}

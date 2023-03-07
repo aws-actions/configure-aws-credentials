@@ -1,14 +1,25 @@
-## "Configure AWS Credentials" Action For GitHub Actions
+## Configure AWS Credentials for GitHub Actions
+Configure your AWS credentials and region environment variables for use in other
+GitHub Actions. This action implements the AWS SDK credential resolution chain
+and exports environment variables for your other Actions to use. Environment
+variable exports are detected by both the AWS SDKs and the AWS CLI for AWS API
+calls.
 
-Configure AWS credential and region environment variables for use in other GitHub Actions.  The environment variables will be detected by both the AWS SDKs and the AWS CLI to determine the credentials and region to use for AWS API calls.
+### Recent updates
+We've recently released a `v2` of this action that uses the Node 16 runtime by
+default. You should update your action references to `v2`. We intend `v2` to be
+the new default for this action and will no longer be providing updates to the
+`v1` tag.
 
-## NOTICE: node12 deprecation warning
-GitHub actions has recently started throwing warning messages regarding the deprecation of Node 12. If you would like to stop seeing this warning, configure your action to use `aws-actions/configure-aws-credentials@v1-node16`. Both the `v1` branch and the `v1-node16` branch will receive the same updates moving forward. See [this issue](https://github.com/aws-actions/configure-aws-credentials/issues/489) for more information on this topic.
+As is usual for GitHub Actions, we provide release tags for you to reference in
+your repository's workflow files. The `v2` tag is a moving tag that will always
+apply to the lastest version 2 train release. We will also provide minor version
+tags on every release, and create a `v3` tag when we are ready for a new major
+release. If you had been following the development of this action so far, this
+is a change to previous states release policy.
 
-**Table of Contents**
-
+### Table of Contents
 <!-- toc -->
-
 - [Usage](#usage)
 - [Credentials](#credentials)
 - [Assuming a Role](#assuming-a-role)
@@ -18,23 +29,32 @@ GitHub actions has recently started throwing warning messages regarding the depr
     + [Proxy Configuration](#proxy-configuration)
 - [License Summary](#license-summary)
 - [Security Disclosures](#security-disclosures)
-
 <!-- tocstop -->
 
 ## Usage
+We support four methods for fetching credentials from AWS, but we recommend that
+you use GitHub's OIDC provider in conjunction with a configured AWS IAM
+Identity Provider endpoint.
 
-Add the following step to your workflow:
+To to that, you would add the following step to your workflow:
 
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
         aws-region: us-east-2
 ```
+This will cause the action to perform an `AssumeRoleWithWebIdentity` call and
+return temporary security credentials for use by other actions. In order for
+this to work, you'll need to preconfigure the IAM IdP in your AWS account
+(see [Assuming a Role](#assuming-a-role) for details).
 
-For example, you can use this action with the AWS CLI available in [GitHub's hosted virtual environments](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners).
-You can also run this action multiple times to use different AWS accounts, regions, or IAM roles in the same GitHub Actions workflow job.
+You can use this action with the AWS CLI available in
+[GitHub's hosted virtual environments](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners) or run this action multiple times
+to use different AWS accounts, regions, or IAM roles in the same GitHub Actions
+workflow. As an example, here is a complete workflow file that uploads artifacts
+to Amazon S3.
 
 ```yaml
 jobs:
@@ -47,49 +67,46 @@ jobs:
       contents: read
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-
+      uses: actions/checkout@v3
     - name: Configure AWS credentials from Test account
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: arn:aws:iam::111111111111:role/my-github-actions-role-test
         aws-region: us-east-1
-
     - name: Copy files to the test website with the AWS CLI
       run: |
         aws s3 sync . s3://my-s3-test-website-bucket
-
     - name: Configure AWS credentials from Production account
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: arn:aws:iam::222222222222:role/my-github-actions-role-prod
         aws-region: us-west-2
-
     - name: Copy files to the production website with the AWS CLI
       run: |
         aws s3 sync . s3://my-s3-prod-website-bucket
 ```
 
-See [action.yml](action.yml) for the full documentation for this action's inputs and outputs.
+See [action.yml](action.yml) for the full documentation for this action's inputs
+and outputs.
 
 ## Credentials
 
-We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html) for the AWS credentials used in GitHub Actions workflows, including:
-* Do not store credentials in your repository's code.
-* [Grant least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege) to the credentials used in GitHub Actions workflows.  Grant only the permissions required to perform the actions in your GitHub Actions workflows.
-* [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
+We recommend following
+[Amazon IAM best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+for the AWS credentials used in GitHub Actions workflows, including:
+  * Do not store credentials in your repository's code.
+  * [Grant least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege) to the credentials used in GitHub Actions
+  workflows. Grant only the permissions required to perform the actions in your
+  GitHub Actions workflows.
+  * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
 
 ## Assuming a Role
-We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) to get short-lived credentials needed for your actions. 
-Specifying `role-to-assume` **without** providing an `aws-access-key-id` or a `web-identity-token-file` will signal to the action that you wish to use the OIDC provider.
-
-The default session duration is **1 hour** when using the OIDC provider to directly assume an IAM Role or when an `aws-session-token` is directly provided.
-
-The default session duration is **6 hours** when using an IAM User to assume an IAM Role (by providing an `aws-access-key-id`, `aws-secret-access-key`, and a `role-to-assume`) .
-
-If you would like to adjust this you can pass a duration to `role-duration-seconds`, but the duration cannot exceed the maximum that was defined when the IAM Role was created.
-The default session name is GitHubActions, and you can modify it by specifying the desired name in `role-session-name`.
-The default audience is `sts.amazonaws.com` which you can replace by specifying the desired audience name in `audience`.
+There are four different supported ways to retrieve credentials. We recommend
+using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
+to get short-lived credentials needed for your actions. Specifying
+`role-to-assume` **without** providing an `aws-access-key-id` or a
+`web-identity-token-file` will signal to the action that you wish to use the
+OIDC provider.
 
 The following table describes which identity is used based on which values are supplied to the Action:
 
@@ -100,11 +117,23 @@ The following table describes which identity is used based on which values are s
 | Assume Role using IAM User credentials                          | ✔                   | ✔                |                           |
 | Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         |
 
+### Credential Lifetime
+The default session duration is **1 hour** when using the OIDC provider to
+directly assume an IAM Role or when an `aws-session-token` is directly provided.
+The default session duration is **6 hours** when using an IAM User to assume an
+IAM Role (by providing an `aws-access-key-id`, `aws-secret-access-key`, and a
+`role-to-assume`) .
+
+If you would like to adjust this you can pass a duration to `role-duration-seconds`, but the duration cannot exceed the maximum that was defined when the IAM Role was created.
+The default session name is GitHubActions, and you can modify it by specifying the desired name in `role-session-name`.
+The default audience is `sts.amazonaws.com` which you can replace by specifying the desired audience name in `audience`.
+
 ### Examples
 
+#### AssumeRoleWithWebIdentity (recommended)
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -112,9 +141,10 @@ The following table describes which identity is used based on which values are s
 ```
 In this example, the Action will load the OIDC token from the GitHub-provided environment variable and use it to assume the role `arn:aws:iam::123456789100:role/my-github-actions-role` with the session name `MySessionName`.
 
+#### AssumeRole with static IAM credentials in repository secrets
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -126,6 +156,7 @@ In this example, the Action will load the OIDC token from the GitHub-provided en
 ```
 In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws:iam::123456789100:role/my-github-actions-role`.  To assume a role in the same account as the static credentials, you can simply specify the role name, like `role-to-assume: my-github-actions-role`.
 
+#### AssumeRoleWithWebIdentity using a custom audience
 ```yaml
     - name: Configure AWS Credentials for Beta Customers
       uses: aws-actions/configure-aws-credentials@v1
@@ -139,6 +170,7 @@ In this example, the audience has been changed from the default to use a differe
 
 Changing the default audience may be necessary when using non-default [AWS partitions](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 
+#### AssumeRoleWithWebIdentity and disable secure Action outputs
 ```yaml
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -148,9 +180,17 @@ Changing the default audience may be necessary when using non-default [AWS parti
         role-session-name: MySessionName
         mask-aws-account-id: false
 ```
-In this example, account ID masking has been disabled. By default, the AWS account ID will be obscured in the action's output. This may be helpful when debugging action failures.
+In this example, account ID masking has been disabled. By default, the AWS
+account ID will be obscured in the action's output. This may be helpful when
+debugging action failures.
 
-### Sample IAM Role CloudFormation Template
+## Sample IAM OIDC CloudFormation Template
+If you choose to use GitHub's OIDC provider, you must first set up federation
+with the provider in as an IAM IdP. The GitHub OIDC provider only needs to be
+created once per account (i.e. multiple IAM Roles that can be assumed by the
+GitHub's OIDC can share a single OIDC Provider).
+
+This CloudFormation template will configure the IdP for you.
 ```yaml
 Parameters:
   GitHubOrg:
@@ -205,9 +245,16 @@ Outputs:
     Value: !GetAtt Role.Arn 
 ```
 
-The GitHub OIDC Provider only needs to be created once per account (i.e. multiple IAM Roles that can be assumed by the GitHub's OIDC can share a single OIDC Provider).
-
-To align with the Amazon IAM best practice of [granting least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege), the assume role policy document should contain a [`Condition`](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html) that specifies a subject allowed to assume the role. Without a subject condition, any GitHub user or repository could potentially assume the role. The subject can be scoped to a GitHub organization and repository as shown in the CloudFormation template. Additional claim conditions can be added for higher specificity as explained in the [GitHub docs](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect).
+To align with the Amazon IAM best practice of
+[granting least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege), the assume role policy document should contain a
+[`Condition`](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html) that specifies a subject allowed to assume the role. Without a subject
+condition, any GitHub user or repository could potentially assume the role. The
+subject can be scoped to a GitHub organization and repository as shown in the
+CloudFormation template. Additional claim conditions can be added for higher
+specificity as explained in the
+[GitHub documentation](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect).
+Due to implementation details, not every OIDC claim is presently supported by
+IAM.
 
 For further information on OIDC and GitHub Actions, please see:
 
@@ -218,8 +265,9 @@ For further information on OIDC and GitHub Actions, please see:
 * [GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
 
 ### Session tagging
-The session will have the name "GitHubActions" and be tagged with the following tags:
-(`GITHUB_` environment variable definitions can be [found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
+The session will have the name "GitHubActions" and be tagged with the following
+tags: (`GITHUB_` environment variable definitions can be
+[found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
 
 | Key        | Value             |
 | ---------- | ----------------- |
@@ -231,13 +279,18 @@ The session will have the name "GitHubActions" and be tagged with the following 
 | Branch     | GITHUB_REF        |
 | Commit     | GITHUB_SHA        |
 
-_Note: all tag values must conform to [the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html). Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid characters, the characters will be replaced with an '*'._
+_Note: all tag values must conform to
+[the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html).
+Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If
+`GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid characters, the characters
+will be replaced with an '*'._
 
 The action will use session tagging by default during role assumption. 
-Note that for WebIdentity role assumption, the session tags have to be included in the encoded WebIdentity token.
-This means that Tags can only be supplied by the OIDC provider and not set during the AssumeRoleWithWebIdentity API call within the Action.
-You can skip this session tagging by providing `role-skip-session-tagging` as true in the action's inputs:
-
+Note that for WebIdentity role assumption, the session tags have to be included
+in the encoded WebIdentity token. This means that Tags can only be supplied by
+the OIDC provider and not set during the AssumeRoleWithWebIdentity API call
+within the Action. You can skip this session tagging by providing
+`role-skip-session-tagging` as true in the action's inputs:
 ```yaml
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -246,44 +299,51 @@ You can skip this session tagging by providing `role-skip-session-tagging` as tr
 
 ## Self-Hosted Runners
 
-If you run your GitHub Actions in a [self-hosted runner](https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) that already has access to AWS credentials, such as an EC2 instance, then you do not need to provide IAM user access key credentials to this action.
+If you run your GitHub Actions in a
+[self-hosted runner](https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) that already has access to AWS credentials, such as
+an EC2 instance, then you do not need to provide IAM user access key credentials
+to this action. We will use the standard AWS JavaScript SDK credential
+resolution methods to find your credentials, so if the AWS JS SDK can
+authenticate on your runner, this Action will as well.
 
-If no access key credentials are given in the action inputs, this action will use credentials from the runner environment using the [default methods for the AWS SDK for Javascript](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html).
+If no access key credentials are given in the action inputs, this action will
+use credentials from the runner environment using the
+[default methods for the AWS SDK for Javascript](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html).
 
-You can use this action to simply configure the region and account ID in the environment, and then use the runner's credentials for all AWS API calls made by your Actions workflow:
+You can use this action to simply configure the region and account ID in the
+environment, and then use the runner's credentials for all AWS API calls made by
+your Actions workflow:
 ```yaml
 uses: aws-actions/configure-aws-credentials@v1
 with:
   aws-region: us-east-2
 ```
-In this case, your runner's credentials must have permissions to call any AWS APIs called by your Actions workflow.
+In this case, your runner's credentials must have permissions to call any AWS
+APIs called by your Actions workflow.
 
-Or, you can use this action to assume a role, and then use the role credentials for all AWS API calls made by your Actions workflow:
+Or, you can use this action to assume a role, and then use the role credentials
+for all AWS API calls made by your Actions workflow:
 ```yaml
-uses: aws-actions/configure-aws-credentials@v1
+uses: aws-actions/configure-aws-credentials@v2
 with:
   aws-region: us-east-2
   role-to-assume: my-github-actions-role
 ```
-In this case, your runner's credentials must have permissions to assume the role.
+In this case, your runner's credentials must have permissions to assume the
+role.
 
-You can also assume a role using a web identity token file, such as if using [Amazon EKS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html).
-Pods running in EKS worker nodes that do not run as root can use this file to assume a role with a web identity.
-
-You can configure your workflow as follows in order to use this file:
-```yaml
-uses: aws-actions/configure-aws-credentials@v1
-with:
-  aws-region: us-east-2
-  role-to-assume: my-github-actions-role
-  web-identity-token-file: /var/run/secrets/eks.amazonaws.com/serviceaccount/token
-```
+You can also assume a role using a web identity token file, such as if using
+[Amazon EKS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html). Pods running in EKS
+worker nodes that do not run as root can use this file to assume a role with a
+web identity.
 
 ### Proxy Configuration
 
-If you run in self-hosted environments and in secured environment where you need use a specific proxy you can set it in the action manually.
+If you run in self-hosted environments and in secured environment where you need
+use a specific proxy you can set it in the action manually.
 
-Additionally this action will always consider already configured proxy in the environment.
+Additionally this action will always consider already configured proxy in the
+environment.
 
 Manually configured proxy:
 ```yaml
@@ -295,23 +355,25 @@ with:
 ```
 
 Proxy configured in the environment variable:
-
 ```bash
 # Your environment configuration
 HTTP_PROXY="http://companydomain.com:3128"
 ```
 
-The action will read the underlying proxy configuration from the environment and you don't need to configure it in the action.
+The action will read the underlying proxy configuration from the environment and
+you don't need to configure it in the action.
 
 ### Use with the AWS CLI
-
-This workflow does _not_ install the [AWS CLI](https://aws.amazon.com/cli/) into your environment. Self-hosted runners that intend to run this action prior to executing `aws` commands need to have the AWS CLI [installed](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) if it's not already present. 
-Most [GitHub hosted runner environments](https://github.com/actions/virtual-environments) should include the AWS CLI by default.
+This workflow does _not_ install the [AWS CLI](https://aws.amazon.com/cli/)
+into your environment. Self-hosted runners that intend to run this action prior
+to executing `aws` commands need to have the AWS CLI
+[installed](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+if it's not already present. 
+Most [GitHub hosted runner environments](https://github.com/actions/virtual-environments)
+should include the AWS CLI by default.
  
 ## License Summary
-
 This code is made available under the MIT license.
 
 ## Security Disclosures
-
 If you would like to report a potential security issue in this project, please do not create a GitHub issue.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
