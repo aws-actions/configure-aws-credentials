@@ -77,7 +77,7 @@ jobs:
       run: |
         aws s3 sync . s3://my-s3-test-website-bucket
     - name: Configure AWS credentials from Production account
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: arn:aws:iam::222222222222:role/my-github-actions-role-prod
         aws-region: us-west-2
@@ -159,7 +159,7 @@ In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws
 #### AssumeRoleWithWebIdentity using a custom audience
 ```yaml
     - name: Configure AWS Credentials for Beta Customers
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         audience: beta-customers
         aws-region: us-east-3
@@ -173,7 +173,7 @@ Changing the default audience may be necessary when using non-default [AWS parti
 #### AssumeRoleWithWebIdentity and disable secure Action outputs
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -292,7 +292,7 @@ the OIDC provider and not set during the AssumeRoleWithWebIdentity API call
 within the Action. You can skip this session tagging by providing
 `role-skip-session-tagging` as true in the action's inputs:
 ```yaml
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         role-skip-session-tagging: true
 ```
@@ -314,7 +314,7 @@ You can use this action to simply configure the region and account ID in the
 environment, and then use the runner's credentials for all AWS API calls made by
 your Actions workflow:
 ```yaml
-uses: aws-actions/configure-aws-credentials@v1
+uses: aws-actions/configure-aws-credentials@v2
 with:
   aws-region: us-east-2
 ```
@@ -347,7 +347,7 @@ environment.
 
 Manually configured proxy:
 ```yaml
-uses: aws-actions/configure-aws-credentials@v1
+uses: aws-actions/configure-aws-credentials@v2
 with:
   aws-region: us-east-2
   role-to-assume: my-github-actions-role
