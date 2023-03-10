@@ -109,7 +109,6 @@ overrides:
       '@typescript-eslint/dot-notation': [error]
       '@typescript-eslint/consistent-type-exports': [warn]
       '@typescript-eslint/consistent-type-imports': [warn]
-      '@typescript-eslint/explicit-member-accessibility': [warn]
       '@typescript-eslint/no-base-to-string': [error]
       '@typescript-eslint/no-confusing-non-null-assertion': [warn]
       '@typescript-eslint/no-invalid-void-type': [error]

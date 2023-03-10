@@ -41,7 +41,9 @@
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@aws-sdk/client-sts": "^3"
+    "@aws-sdk/client-sts": "^3",
+    "@aws-sdk/node-http-handler": "^3",
+    "https-proxy-agent": "^5.0.0"
   },
   "keywords": [
     "aws",

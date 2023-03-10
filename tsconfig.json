@@ -3,7 +3,7 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "strict": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,

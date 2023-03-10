@@ -16,35 +16,41 @@ inputs:
   aws-access-key-id:
     description: AWS Access Key ID. This input is required if running in the GitHub hosted environment. It is optional if running in a self-hosted environment that already has AWS credentials, for example on an EC2 instance.
     required: false
+  aws-region:
+    description: AWS Region, e.g. us-east-2
+    required: true
   aws-secret-access-key:
     description: AWS Access Key ID. This input is required if running in the GitHub hosted environment. It is optional if running in a self-hosted environment that already has AWS credentials, for example on an EC2 instance.
     required: false
   aws-session-token:
     description: AWS Session Token
     required: false
-  aws-region:
-    description: AWS Region, e.g. us-east-2
-    required: true
+  disable-oidc:
+    description: Strictly disable action from attempting to fetch credentials with OIDC
+    required: false
+  http-proxy:
+    description: 'Proxy to use for the AWS SDK agent'
+    required: false
   mask-aws-account-id:
     description: Whether to mask the AWS account ID for these credentials as a secret value, so that it is masked in logs. Valid values are "true" or "false". Defaults to "true".
+    required: false
+  role-duration-seconds:
+    description: "Role duration in seconds (default: 6 hours, 1 hour for OIDC/specified aws-session-token)"
+    required: false
+  role-external-id:
+    description: The external ID of the role to assume
+    required: false
+  role-session-name:
+    description: "Role session name (default: GitHubActions)"
+    required: false
+  role-skip-session-tagging:
+    description: Skip session tagging during role assumption
     required: false
   role-to-assume:
     description: The Amazon Resource Name (ARN) of the role to assume. Use the provided credentials to assume an IAM role and configure the Actions environment with the assumed role credentials rather than with the provided credentials.
     required: false
   web-identity-token-file:
     description: Use the web identity token file from the provided file system path in order to assume an IAM role using a web identity, e.g. from within an Amazon EKS worker node.
-    required: false
-  role-duration-seconds:
-    description: "Role duration in seconds (default: 6 hours, 1 hour for OIDC/specified aws-session-token)"
-    required: false
-  role-session-name:
-    description: "Role session name (default: GitHubActions)"
-    required: false
-  role-external-id:
-    description: The external ID of the role to assume
-    required: false
-  role-skip-session-tagging:
-    description: Skip session tagging during role assumption
     required: false
 outputs:
   aws-account-id:
