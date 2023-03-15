@@ -11,6 +11,9 @@ default. You should update your action references to `v2`. We intend `v2` to be
 the new default for this action and will no longer be providing updates to the
 `v1` tag.
 
+When migrating to `v2`, you don't have to consider any changes other than the node version.
+There are no breaking changes between versions; As of release of v2, the node version is the only change.
+
 As is usual for GitHub Actions, we provide release tags for you to reference in
 your repository's workflow files. The `v2` tag is a moving tag that will always
 apply to the lastest version 2 train release. We will also provide minor version
