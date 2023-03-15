@@ -193,6 +193,10 @@ with the provider in as an IAM IdP. The GitHub OIDC provider only needs to be
 created once per account (i.e. multiple IAM Roles that can be assumed by the
 GitHub's OIDC can share a single OIDC Provider).
 
+> **Note**  
+> Please note, that `${GitHubOrg}` and `${RepositoryName}` are **case sensitive**.  
+> Example: `myrepo` != `MyRepo`.
+
 This CloudFormation template will configure the IdP for you.
 ```yaml
 Parameters:
