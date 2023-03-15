@@ -6,17 +6,19 @@ import { errorMessage } from './helpers';
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 
 export interface CredentialsClientProps {
-  region: string;
+  region?: string;
   proxyServer?: string;
 }
 
 export class CredentialsClient {
-  public region: string;
+  public region?: string;
   private stsClient?: STSClient;
   private readonly requestHandler?: NodeHttpHandler;
 
   constructor(props: CredentialsClientProps) {
-    this.region = props.region;
+    if (props.region) {
+      this.region = props.region;
+    }
     if (props.proxyServer) {
       const handler = proxy(props.proxyServer);
       this.requestHandler = new NodeHttpHandler({
@@ -29,9 +31,10 @@ export class CredentialsClient {
   public getStsClient(): STSClient {
     if (!this.stsClient) {
       this.stsClient = new STSClient({
-        region: this.region,
+        region: this.region ? this.region : undefined,
         customUserAgent: USER_AGENT,
         requestHandler: this.requestHandler ? this.requestHandler : undefined,
+        useGlobalEndpoint: this.region ? false : true,
       });
     }
     return this.stsClient;

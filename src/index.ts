@@ -14,7 +14,10 @@ export async function run() {
     const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
     const sessionTokenInput = core.getInput('aws-session-token', { required: false });
     const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
-    const region = core.getInput('aws-region', { required: true });
+    const region =
+      core.getInput('aws-region', { required: false }) ||
+      process.env['AWS_REGION'] ||
+      process.env['AWS_DEFAULT_REGION'];
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
@@ -54,10 +57,13 @@ export async function run() {
     };
 
     // Validate and export region
-    if (!region.match(REGION_REGEX)) {
-      throw new Error(`Region is not valid: ${region}`);
+    if (region) {
+      core.info('Using global STS endpoint');
+      if (!region.match(REGION_REGEX)) {
+        throw new Error(`Region is not valid: ${region}`);
+      }
+      exportRegion(region);
     }
-    exportRegion(region);
 
     // Instantiate credentials client
     const credentialsClient = new CredentialsClient({ region, proxyServer });
