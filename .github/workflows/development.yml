@@ -1,0 +1,75 @@
+## WIP
+
+name: Devel_workflow
+on:
+  workflow_dispatch
+  #pull_request:
+  #  types:
+  #    - opened
+  #    - edited
+  #    - synchronize
+  #    - reopened
+  #workflow_call:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        node: [14, 16, 18]
+    name: Run unit tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v3
+      - name: "Setup node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - name: "Install dependencies"
+        uses: bahmutov/npm-install@v1
+      - name: "Run tests"
+        run: npm run test --if-present
+  integ:
+    strategy:
+      matrix:
+        os: [[self-hosted, linux-fargate], [self-hosted, windows-fargate], windows-latest, ubuntu-latest, macos-latest]
+        node: [14, 16, 18]
+      name: Run integ tests
+      runs-on: ${{ matrix.os }}
+      timeout-minutes: 30
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v3
+      - name: Integ test for OIDC
+        uses: ./
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 60
+          role-session-name: Testassumerole
+      - name: Integ test for IAM creds
+        uses: ./
+        with:
+          aws-region: us-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      # TODO: Integ tests for IAM user
+      # TODO: Integ tests for WebIdentityToken 
+  lint:
+    name: Ensure code standards
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: "Checkout repostiory"
+        uses: actions/checkout@v3
+      - name: "Setup node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: "Install dependencies"
+        uses: bahmutov/npm-install@v1
+      - name: "Lint code"
+        run: npm run lint --if-present
+      
