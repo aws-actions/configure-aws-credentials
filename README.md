@@ -215,8 +215,10 @@ This CloudFormation template will configure the IdP for you.
 ```yaml
 Parameters:
   GitHubOrg:
+    Description: Name of GitHub organization/user (case sensitive)
     Type: String
   RepositoryName:
+    Description: Name of GitHub repository (case sensitive)
     Type: String
   OIDCProviderArn:
     Description: Arn for the GitHub OIDC Provider.
