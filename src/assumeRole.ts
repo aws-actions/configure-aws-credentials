@@ -5,7 +5,7 @@ import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, STSClient, Tag } from '@aws-sdk/client-sts';
 import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
-import { errorMessage, isDefined, sanitizeGithubActor, sanitizeGithubWorkflowName } from './helpers';
+import { errorMessage, isDefined, sanitizeGitHubVariables } from './helpers';
 
 async function assumeRoleWithOIDC(params: AssumeRoleCommandInput, client: STSClient, webIdentityToken: string) {
   delete params.Tags;
@@ -96,13 +96,13 @@ export async function assumeRole(params: assumeRoleParams) {
   const tagArray: Tag[] = [
     { Key: 'GitHub', Value: 'Actions' },
     { Key: 'Repository', Value: GITHUB_REPOSITORY },
-    { Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW) },
+    { Key: 'Workflow', Value: sanitizeGitHubVariables(GITHUB_WORKFLOW) },
     { Key: 'Action', Value: GITHUB_ACTION },
-    { Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR) },
+    { Key: 'Actor', Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
     { Key: 'Commit', Value: GITHUB_SHA },
   ];
   if (process.env['GITHUB_REF']) {
-    tagArray.push({ Key: 'Branch', Value: process.env['GITHUB_REF'] });
+    tagArray.push({ Key: 'Branch', Value: sanitizeGitHubVariables(process.env['GITHUB_REF']) });
   }
   const tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!tags) {

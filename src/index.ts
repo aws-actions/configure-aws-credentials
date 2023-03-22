@@ -3,7 +3,7 @@ import { assumeRole } from './assumeRole';
 import { CredentialsClient } from './CredentialsClient';
 import { errorMessage, retryAndBackoff, exportRegion, exportCredentials, exportAccountId } from './helpers';
 
-const DEFAULT_ROLE_DURATION = 3600; // One hour
+const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
 
@@ -32,7 +32,7 @@ export async function run() {
 
     // Logic to decide whether to attempt to use OIDC or not
     const useGitHubOIDCProvider = () => {
-      // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted,
+      // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted.
       // This is necessary to authenticate with OIDC, but not strictly set just for OIDC. If it is not set and all other
       // checks pass, it is likely but not guaranteed that the user needs but lacks this permission in their workflow.
       // So, we will log a warning when it is the only piece absent, as well as add an opportunity to manually disable the entire check.
@@ -80,14 +80,13 @@ export async function run() {
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
     }
 
-    // Attempt to load credentials from the GitHub OIDC provider.
-    // If a user provides an IAM Role Arn and DOESN'T provide an Access Key Id
-    // The only way to assume the role is via GitHub's OIDC provider.
+    // If OIDC is being used, generate token
+    // Else, validate that the SDK can pick up credentials
     let sourceAccountId: string;
     let webIdentityToken: string;
     if (useGitHubOIDCProvider()) {
       webIdentityToken = await core.getIDToken(audience);
-      // We don't validate the credentials here because we don't have them yet when using OIDC.
+      // Implement #359
     } else {
       // Regardless of whether any source credentials were provided as inputs,
       // validate that the SDK can actually pick up credentials.  This validates
@@ -124,7 +123,9 @@ export async function run() {
         await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
       }
       await exportAccountId(credentialsClient, maskAccountId);
+      // implement #432
     } else {
+      // implement #370
       core.info('Proceeding with IAM user credentials');
     }
   } catch (error) {
