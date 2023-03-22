@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "lint": "eslint .",
-    "package": "npm run build && ncc build --license THIRD-PARTY -o dist && tsc src/cleanup/index.ts --skipLibCheck --esModuleInterop --outdir dist/cleanup && copyup -E dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
+    "package": "npm run build && ncc build --license THIRD-PARTY -o dist && tsc src/cleanup/index.ts --skipLibCheck --outdir dist/cleanup && copyup -E dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
     "test": "npm run lint && jest --verbose"
   },
   "author": {

@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
+import { info } from '@actions/core';
 import { STSClient } from '@aws-sdk/client-sts';
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
-import proxy from 'https-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { errorMessage } from './helpers';
 
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
@@ -20,11 +20,11 @@ export class CredentialsClient {
     if (props.region) {
       this.region = props.region;
     } else {
-      core.info('No region provided, using global STS endpoint');
+      info('No region provided, using global STS endpoint');
     }
     if (props.proxyServer) {
-      core.info('Configurint proxy handler for STS client');
-      const handler = proxy(props.proxyServer);
+      info('Configurint proxy handler for STS client');
+      const handler = new HttpsProxyAgent(props.proxyServer);
       this.requestHandler = new NodeHttpHandler({
         httpAgent: handler,
         httpsAgent: handler,
