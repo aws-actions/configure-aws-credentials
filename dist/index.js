@@ -1,6 +1,73 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 3301:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CredentialsClient = void 0;
+const client_sts_1 = __nccwpck_require__(2209);
+const node_http_handler_1 = __nccwpck_require__(8805);
+const https_proxy_agent_1 = __importDefault(__nccwpck_require__(7219));
+const helpers_1 = __nccwpck_require__(9787);
+const USER_AGENT = 'configure-aws-credentials-for-github-actions';
+class CredentialsClient {
+    constructor(props) {
+        if (props.region) {
+            this.region = props.region;
+        }
+        if (props.proxyServer) {
+            const handler = (0, https_proxy_agent_1.default)(props.proxyServer);
+            this.requestHandler = new node_http_handler_1.NodeHttpHandler({
+                httpAgent: handler,
+                httpsAgent: handler,
+            });
+        }
+    }
+    getStsClient() {
+        if (!this.stsClient) {
+            this.stsClient = new client_sts_1.STSClient({
+                region: this.region ? this.region : undefined,
+                customUserAgent: USER_AGENT,
+                requestHandler: this.requestHandler ? this.requestHandler : undefined,
+                useGlobalEndpoint: this.region ? false : true,
+            });
+        }
+        return this.stsClient;
+    }
+    async validateCredentials(expectedAccessKeyId) {
+        let credentials;
+        try {
+            credentials = await this.loadCredentials();
+            if (!credentials.accessKeyId) {
+                throw new Error('Access key ID empty after loading credentials');
+            }
+        }
+        catch (error) {
+            throw new Error(`Credentials could not be loaded, please check your action inputs: ${(0, helpers_1.errorMessage)(error)}`);
+        }
+        const actualAccessKeyId = credentials.accessKeyId;
+        if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
+            throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+        }
+    }
+    async loadCredentials() {
+        const client = new client_sts_1.STSClient({
+            requestHandler: this.requestHandler ? this.requestHandler : undefined,
+        });
+        return client.config.credentials();
+    }
+}
+exports.CredentialsClient = CredentialsClient;
+//# sourceMappingURL=CredentialsClient.js.map
+
+/***/ }),
+
 /***/ 1209:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -40,93 +107,103 @@ const path_1 = __importDefault(__nccwpck_require__(1017));
 const core = __importStar(__nccwpck_require__(2186));
 const client_sts_1 = __nccwpck_require__(2209);
 const helpers_1 = __nccwpck_require__(9787);
-const SANITIZATION_CHARACTER = '_';
-const MAX_TAG_VALUE_LENGTH = 256;
-function sanitizeGithubActor(actor) {
-    // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
-    // Square brackets are not allowed in AWS session tags
-    return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER);
+async function assumeRoleWithOIDC(params, client, webIdentityToken) {
+    delete params.Tags;
+    core.info('Assuming role with OIDC');
+    try {
+        return await client.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
+            ...params,
+            WebIdentityToken: webIdentityToken,
+        }));
+    }
+    catch (error) {
+        throw new Error(`Could not assume role with OIDC: ${(0, helpers_1.errorMessage)(error)}`);
+    }
 }
-function sanitizeGithubWorkflowName(name) {
-    // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
-    // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
-    // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
-    const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_:/=+.-@-]/gu, SANITIZATION_CHARACTER);
-    const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH);
-    return nameTruncated;
+async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTokenFile, workspace) {
+    core.debug('webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.');
+    const webIdentityTokenFilePath = path_1.default.isAbsolute(webIdentityTokenFile)
+        ? webIdentityTokenFile
+        : path_1.default.join(workspace, webIdentityTokenFile);
+    if (!fs_1.default.existsSync(webIdentityTokenFilePath)) {
+        throw new Error(`Web identity token file does not exist: ${webIdentityTokenFilePath}`);
+    }
+    core.info('Assuming role with web identity token file');
+    try {
+        const webIdentityToken = fs_1.default.readFileSync(webIdentityTokenFilePath, 'utf8');
+        delete params.Tags;
+        return await client.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
+            ...params,
+            WebIdentityToken: webIdentityToken,
+        }));
+    }
+    catch (error) {
+        throw new Error(`Could not assume role with web identity token file: ${(0, helpers_1.errorMessage)(error)}`);
+    }
+}
+async function assumeRoleWithCredentials(params, client) {
+    core.info('Assuming role with user credentials');
+    try {
+        return await client.send(new client_sts_1.AssumeRoleCommand({ ...params }));
+    }
+    catch (error) {
+        throw new Error(`Could not assume role with user credentials: ${(0, helpers_1.errorMessage)(error)}`);
+    }
 }
 async function assumeRole(params) {
-    // Assume a role to get short-lived credentials using longer-lived credentials.
-    const { sourceAccountId, roleToAssume, roleExternalId, roleDurationSeconds, roleSessionName, region, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, } = { ...params };
+    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, } = { ...params };
+    // Load GitHub environment variables
     const { GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA, GITHUB_WORKSPACE } = process.env;
     if (!GITHUB_REPOSITORY || !GITHUB_WORKFLOW || !GITHUB_ACTION || !GITHUB_ACTOR || !GITHUB_SHA || !GITHUB_WORKSPACE) {
         throw new Error('Missing required environment variables. Are you running in GitHub Actions?');
     }
-    let RoleArn = roleToAssume;
-    if (!RoleArn.startsWith('arn:aws')) {
-        // Supports only 'aws' partition. Customers in other partitions ('aws-cn') will need to provide full ARN
-        (0, assert_1.default)((0, helpers_1.isDefined)(sourceAccountId), 'Source Account ID is needed if the Role Name is provided and not the Role Arn.');
-        RoleArn = `arn:aws:iam::${sourceAccountId}:role/${RoleArn}`;
-    }
+    // Load role session tags
     const tagArray = [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: sanitizeGithubWorkflowName(GITHUB_WORKFLOW) },
+        { Key: 'Workflow', Value: (0, helpers_1.sanitizeGitHubVariables)(GITHUB_WORKFLOW) },
         { Key: 'Action', Value: GITHUB_ACTION },
-        { Key: 'Actor', Value: sanitizeGithubActor(GITHUB_ACTOR) },
+        { Key: 'Actor', Value: (0, helpers_1.sanitizeGitHubVariables)(GITHUB_ACTOR) },
         { Key: 'Commit', Value: GITHUB_SHA },
     ];
     if (process.env['GITHUB_REF']) {
-        tagArray.push({ Key: 'Branch', Value: process.env['GITHUB_REF'] });
+        tagArray.push({ Key: 'Branch', Value: (0, helpers_1.sanitizeGitHubVariables)(process.env['GITHUB_REF']) });
     }
-    const Tags = roleSkipSessionTagging ? undefined : tagArray;
-    if (!Tags) {
+    const tags = roleSkipSessionTagging ? undefined : tagArray;
+    if (!tags) {
         core.debug('Role session tagging has been skipped.');
     }
     else {
-        core.debug(`${Tags.length} role session tags are being used.`);
+        core.debug(`${tags.length} role session tags are being used.`);
     }
-    const ExternalId = roleExternalId;
+    // Calculate role ARN from name and account ID (currently only supports `aws` partition)
+    let roleArn = roleToAssume;
+    if (!roleArn.startsWith('arn:aws')) {
+        (0, assert_1.default)((0, helpers_1.isDefined)(sourceAccountId), 'Source Account ID is needed if the Role Name is provided and not the Role Arn.');
+        roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
+    }
+    // Ready common parameters to assume role
     const commonAssumeRoleParams = {
-        RoleArn,
+        RoleArn: roleArn,
         RoleSessionName: roleSessionName,
-        DurationSeconds: roleDurationSeconds,
-        ...(Tags ? { Tags } : {}),
-        ...(ExternalId ? { ExternalId } : {}),
+        DurationSeconds: roleDuration,
+        Tags: tags ? tags : undefined,
+        ExternalId: roleExternalId ? roleExternalId : undefined,
     };
     const keys = Object.keys(commonAssumeRoleParams);
     keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
-    const sts = (0, helpers_1.getStsClient)(region);
+    // Instantiate STS client
+    const stsClient = credentialsClient.getStsClient();
+    // Assume role using one of three methods
     switch (true) {
         case !!webIdentityToken: {
-            delete commonAssumeRoleParams.Tags;
-            return sts.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
-                ...commonAssumeRoleParams,
-                WebIdentityToken: webIdentityToken,
-            }));
+            return assumeRoleWithOIDC(commonAssumeRoleParams, stsClient, webIdentityToken);
         }
         case !!webIdentityTokenFile: {
-            core.debug('webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.');
-            const webIdentityTokenFilePath = path_1.default.isAbsolute(webIdentityTokenFile)
-                ? webIdentityTokenFile
-                : path_1.default.join(GITHUB_WORKSPACE, webIdentityTokenFile);
-            if (!fs_1.default.existsSync(webIdentityTokenFilePath)) {
-                throw new Error(`Web identity token file does not exist: ${webIdentityTokenFilePath}`);
-            }
-            try {
-                const widt = fs_1.default.readFileSync(webIdentityTokenFilePath, 'utf8');
-                delete commonAssumeRoleParams.Tags;
-                return await sts.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
-                    ...commonAssumeRoleParams,
-                    WebIdentityToken: widt,
-                }));
-            }
-            catch (error) {
-                throw new Error(`Web identity token file could not be read: ${(0, helpers_1.errorMessage)(error)}`);
-            }
+            return assumeRoleWithWebIdentityTokenFile(commonAssumeRoleParams, stsClient, webIdentityTokenFile, GITHUB_WORKSPACE);
         }
         default: {
-            return sts.send(new client_sts_1.AssumeRoleCommand({ ...commonAssumeRoleParams }));
+            return assumeRoleWithCredentials(commonAssumeRoleParams, stsClient);
         }
     }
 }
@@ -136,51 +213,89 @@ exports.assumeRole = assumeRole;
 /***/ }),
 
 /***/ 9787:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.isDefined = exports.errorMessage = exports.sanitizeGithubWorkflowName = exports.sanitizeGithubActor = exports.getStsClient = void 0;
+exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.exportCredentials = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 const client_sts_1 = __nccwpck_require__(2209);
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
-let stsclient;
-function getStsClient(region, customUserAgent) {
-    if (!stsclient) {
-        stsclient = new client_sts_1.STSClient({
-            region,
-            ...(customUserAgent ? { customUserAgent } : {}),
-        });
+// Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
+// Setting the credentials as secrets masks them in Github Actions logs
+function exportCredentials(creds) {
+    if (creds?.AccessKeyId) {
+        core.setSecret(creds.AccessKeyId);
+        core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
     }
-    return stsclient;
+    if (creds?.SecretAccessKey) {
+        core.setSecret(creds.SecretAccessKey);
+        core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
+    }
+    if (creds?.SessionToken) {
+        core.setSecret(creds.SessionToken);
+        core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
+    }
+    else if (process.env['AWS_SESSION_TOKEN']) {
+        // clear session token from previous credentials action
+        core.exportVariable('AWS_SESSION_TOKEN', '');
+    }
 }
-exports.getStsClient = getStsClient;
-function sanitizeGithubActor(actor) {
-    // In some circumstances the actor may contain square brackets. For example, if they're a bot ('[bot]')
-    // Square brackets are not allowed in AWS session tags
-    return actor.replace(/\[|\]/g, SANITIZATION_CHARACTER);
+exports.exportCredentials = exportCredentials;
+function exportRegion(region) {
+    core.exportVariable('AWS_DEFAULT_REGION', region);
+    core.exportVariable('AWS_REGION', region);
 }
-exports.sanitizeGithubActor = sanitizeGithubActor;
-function sanitizeGithubWorkflowName(name) {
-    // Workflow names can be almost any valid UTF-8 string, but tags are more restrictive.
-    // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
-    // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
-    const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_:/=+.-@-]/gu, SANITIZATION_CHARACTER);
+exports.exportRegion = exportRegion;
+// Obtains account ID from STS Client and sets it as output
+async function exportAccountId(credentialsClient, maskAccountId) {
+    const client = credentialsClient.getStsClient();
+    const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
+    const accountId = identity.Account;
+    if (!accountId) {
+        throw new Error('Could not get Account ID from STS. Did you set credentials?');
+    }
+    if (maskAccountId) {
+        core.setSecret(accountId);
+    }
+    core.setOutput('aws-account-id', accountId);
+    return accountId;
+}
+exports.exportAccountId = exportAccountId;
+// Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
+// This replaces anything not conforming to the tag restrictions by inverting the regular expression.
+// See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
+function sanitizeGitHubVariables(name) {
+    const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+\-@]/gu, SANITIZATION_CHARACTER);
     const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH);
     return nameTruncated;
 }
-exports.sanitizeGithubWorkflowName = sanitizeGithubWorkflowName;
-/* c8 ignore start */
-function errorMessage(error) {
-    return error instanceof Error ? error.message : String(error);
-}
-exports.errorMessage = errorMessage;
-function isDefined(i) {
-    return i !== undefined && i !== null;
-}
-exports.isDefined = isDefined;
-/* c8 ignore stop */
+exports.sanitizeGitHubVariables = sanitizeGitHubVariables;
 async function defaultSleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -194,7 +309,7 @@ function reset() {
     sleep = defaultSleep;
 }
 exports.reset = reset;
-// retryAndBackoff retries with exponential backoff the promise if the error isRetryable upto maxRetries time.
+// Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
 async function retryAndBackoff(fn, isRetryable, retries = 0, maxRetries = 12, base = 50) {
     try {
         return await fn();
@@ -213,6 +328,16 @@ async function retryAndBackoff(fn, isRetryable, retries = 0, maxRetries = 12, ba
     }
 }
 exports.retryAndBackoff = retryAndBackoff;
+/* c8 ignore start */
+function errorMessage(error) {
+    return error instanceof Error ? error.message : String(error);
+}
+exports.errorMessage = errorMessage;
+function isDefined(i) {
+    return i !== undefined && i !== null;
+}
+exports.isDefined = isDefined;
+/* c8 ignore stop */
 //# sourceMappingURL=helpers.js.map
 
 /***/ }),
@@ -248,119 +373,62 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const client_sts_1 = __nccwpck_require__(2209);
 const assumeRole_1 = __nccwpck_require__(1209);
+const CredentialsClient_1 = __nccwpck_require__(3301);
 const helpers_1 = __nccwpck_require__(9787);
-// Use 1hr as role duration when using session token or OIDC
-// Otherwise, use the max duration of GitHub action (6hr)
-const MAX_ACTION_RUNTIME = 6 * 3600;
-const SESSION_ROLE_DURATION = 3600;
-const DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES = 3600;
-const USER_AGENT = 'configure-aws-credentials-for-github-actions';
+const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
-function exportCredentials(creds) {
-    // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
-    // Setting the credentials as secrets masks them in Github Actions logs
-    // AWS_ACCESS_KEY_ID:
-    // Specifies an AWS access key associated with an IAM user or role
-    if (creds?.AccessKeyId) {
-        core.setSecret(creds.AccessKeyId);
-        core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
-    }
-    // AWS_SECRET_ACCESS_KEY:
-    // Specifies the secret key associated with the access key. This is essentially the "password" for the access key.
-    if (creds?.SecretAccessKey) {
-        core.setSecret(creds.SecretAccessKey);
-        core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
-    }
-    // AWS_SESSION_TOKEN:
-    // Specifies the session token value that is required if you are using temporary security credentials.
-    if (creds?.SessionToken) {
-        core.setSecret(creds.SessionToken);
-        core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
-    }
-    else if (process.env['AWS_SESSION_TOKEN']) {
-        // clear session token from previous credentials action
-        core.exportVariable('AWS_SESSION_TOKEN', '');
-    }
-}
-function exportRegion(region) {
-    // AWS_DEFAULT_REGION and AWS_REGION:
-    // Specifies the AWS Region to send requests to
-    core.exportVariable('AWS_DEFAULT_REGION', region);
-    core.exportVariable('AWS_REGION', region);
-}
-async function exportAccountId(region, maskAccountId) {
-    // Get the AWS account ID
-    const client = (0, helpers_1.getStsClient)(region, USER_AGENT);
-    const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
-    const accountId = identity.Account;
-    if (!accountId) {
-        throw new Error('Could not get Account ID from STS. Did you set credentials?');
-    }
-    if (maskAccountId) {
-        core.setSecret(accountId);
-    }
-    core.setOutput('aws-account-id', accountId);
-    return accountId;
-}
-async function loadCredentials() {
-    // Previously, this function forced the SDK to re-resolve credentials with the default provider chain.
-    //
-    // This action typically sets credentials in the environment via environment variables. The SDK never refreshed those
-    // env-var-based credentials after initial load. In case there were already env-var creds set in the actions
-    // environment when this action loaded, this action needed to refresh the SDK creds after overwriting those
-    // environment variables.
-    //
-    // However, in V3 of the JavaScript SDK, there is no longer a global configuration object: all configuration,
-    // including credentials, are instantiated per client and not merged back into global state.
-    const client = new client_sts_1.STSClient({});
-    return client.config.credentials();
-}
-async function validateCredentials(expectedAccessKeyId) {
-    let credentials;
-    try {
-        credentials = await loadCredentials();
-        if (!credentials.accessKeyId) {
-            throw new Error('Access key ID empty after loading credentials');
-        }
-    }
-    catch (error) {
-        throw new Error(`Credentials could not be loaded, please check your action inputs: ${(0, helpers_1.errorMessage)(error)}`);
-    }
-    const actualAccessKeyId = credentials.accessKeyId;
-    if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
-        throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
-    }
-}
 async function run() {
     try {
         // Get inputs
         const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
-        const audience = core.getInput('audience', { required: false });
         const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
-        const region = core.getInput('aws-region', { required: true });
         const sessionTokenInput = core.getInput('aws-session-token', { required: false });
         const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
-        const maskAccountId = (core.getInput('mask-aws-account-id', { required: false }) || 'true').toLowerCase() === 'true';
+        const region = core.getInput('aws-region', { required: false }) ||
+            process.env['AWS_REGION'] ||
+            process.env['AWS_DEFAULT_REGION'];
         const roleToAssume = core.getInput('role-to-assume', { required: false });
+        const audience = core.getInput('audience', { required: false });
+        const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
         const roleExternalId = core.getInput('role-external-id', { required: false });
         const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
-        // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
-        // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
-        const useGitHubOIDCProvider = !!roleToAssume && !!process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] && !AccessKeyId && !webIdentityTokenFile;
-        const roleDurationSeconds = (parseInt(core.getInput('role-duration-seconds', { required: false })) ||
-            ((SessionToken ? SESSION_ROLE_DURATION : undefined) ??
-                (useGitHubOIDCProvider ? DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES : undefined))) ??
-            MAX_ACTION_RUNTIME;
+        const roleDuration = parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
         const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
         const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
         const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
-        if (!region.match(REGION_REGEX)) {
-            throw new Error(`Region is not valid: ${region}`);
+        const proxyServer = core.getInput('http-proxy', { required: false });
+        const disableOIDC = core.getInput('disable-oidc', { required: false });
+        // Logic to decide whether to attempt to use OIDC or not
+        const useGitHubOIDCProvider = () => {
+            // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted.
+            // This is necessary to authenticate with OIDC, but not strictly set just for OIDC. If it is not set and all other
+            // checks pass, it is likely but not guaranteed that the user needs but lacks this permission in their workflow.
+            // So, we will log a warning when it is the only piece absent, as well as add an opportunity to manually disable the entire check.
+            if (!!roleToAssume &&
+                !webIdentityTokenFile &&
+                !AccessKeyId &&
+                !disableOIDC &&
+                !process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN']) {
+                core.info('It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?');
+            }
+            return (!!roleToAssume &&
+                !!process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
+                !AccessKeyId &&
+                !webIdentityTokenFile &&
+                !disableOIDC);
+        };
+        // Validate and export region
+        if (region) {
+            core.info('Using global STS endpoint');
+            if (!region.match(REGION_REGEX)) {
+                throw new Error(`Region is not valid: ${region}`);
+            }
+            (0, helpers_1.exportRegion)(region);
         }
-        exportRegion(region);
+        // Instantiate credentials client
+        const credentialsClient = new CredentialsClient_1.CredentialsClient({ region, proxyServer });
         // Always export the source credentials and account ID.
         // The STS client for calling AssumeRole pulls creds from the environment.
         // Plus, in the assume role case, if the AssumeRole call fails, we want
@@ -370,16 +438,15 @@ async function run() {
             if (!SecretAccessKey) {
                 throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
             }
-            exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
+            (0, helpers_1.exportCredentials)({ AccessKeyId, SecretAccessKey, SessionToken });
         }
-        // Attempt to load credentials from the GitHub OIDC provider.
-        // If a user provides an IAM Role Arn and DOESN'T provide an Access Key Id
-        // The only way to assume the role is via GitHub's OIDC provider.
+        // If OIDC is being used, generate token
+        // Else, validate that the SDK can pick up credentials
         let sourceAccountId;
         let webIdentityToken;
-        if (useGitHubOIDCProvider) {
+        if (useGitHubOIDCProvider()) {
             webIdentityToken = await core.getIDToken(audience);
-            // We don't validate the credentials here because we don't have them yet when using OIDC.
+            // Implement #359
         }
         else {
             // Regardless of whether any source credentials were provided as inputs,
@@ -387,33 +454,39 @@ async function run() {
             // cases where this action is on a self-hosted runner that doesn't have credentials
             // configured correctly, and cases where the user intended to provide input
             // credentials but the secrets inputs resolved to empty strings.
-            await validateCredentials(AccessKeyId);
-            sourceAccountId = await exportAccountId(region, maskAccountId);
+            await credentialsClient.validateCredentials(AccessKeyId);
+            sourceAccountId = await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
         }
         // Get role credentials if configured to do so
         if (roleToAssume) {
             const roleCredentials = await (0, helpers_1.retryAndBackoff)(async () => {
                 return (0, assumeRole_1.assumeRole)({
+                    credentialsClient,
                     sourceAccountId,
-                    region,
                     roleToAssume,
                     roleExternalId,
-                    roleDurationSeconds,
+                    roleDuration,
                     roleSessionName,
                     roleSkipSessionTagging,
                     webIdentityTokenFile,
                     webIdentityToken,
                 });
             }, true);
-            exportCredentials(roleCredentials.Credentials);
+            core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser.AssumedRoleId}`);
+            (0, helpers_1.exportCredentials)(roleCredentials.Credentials);
             // We need to validate the credentials in 2 of our use-cases
             // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
             //  is set to `true` then we are NOT in a self-hosted runner.
             // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
             if (!process.env['GITHUB_ACTIONS'] || AccessKeyId) {
-                await validateCredentials(roleCredentials.Credentials?.AccessKeyId);
+                await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
             }
-            await exportAccountId(region, maskAccountId);
+            await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
+            // implement #432
+        }
+        else {
+            // implement #370
+            core.info('Proceeding with IAM user credentials');
         }
     }
     catch (error) {
@@ -14684,6 +14757,1085 @@ exports.toUtf8 = toUtf8;
 
 /***/ }),
 
+/***/ 9690:
+/***/ (function(module, __unused_webpack_exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+const events_1 = __nccwpck_require__(2361);
+const debug_1 = __importDefault(__nccwpck_require__(8237));
+const promisify_1 = __importDefault(__nccwpck_require__(6570));
+const debug = debug_1.default('agent-base');
+function isAgent(v) {
+    return Boolean(v) && typeof v.addRequest === 'function';
+}
+function isSecureEndpoint() {
+    const { stack } = new Error();
+    if (typeof stack !== 'string')
+        return false;
+    return stack.split('\n').some(l => l.indexOf('(https.js:') !== -1 || l.indexOf('node:https:') !== -1);
+}
+function createAgent(callback, opts) {
+    return new createAgent.Agent(callback, opts);
+}
+(function (createAgent) {
+    /**
+     * Base `http.Agent` implementation.
+     * No pooling/keep-alive is implemented by default.
+     *
+     * @param {Function} callback
+     * @api public
+     */
+    class Agent extends events_1.EventEmitter {
+        constructor(callback, _opts) {
+            super();
+            let opts = _opts;
+            if (typeof callback === 'function') {
+                this.callback = callback;
+            }
+            else if (callback) {
+                opts = callback;
+            }
+            // Timeout for the socket to be returned from the callback
+            this.timeout = null;
+            if (opts && typeof opts.timeout === 'number') {
+                this.timeout = opts.timeout;
+            }
+            // These aren't actually used by `agent-base`, but are required
+            // for the TypeScript definition files in `@types/node` :/
+            this.maxFreeSockets = 1;
+            this.maxSockets = 1;
+            this.maxTotalSockets = Infinity;
+            this.sockets = {};
+            this.freeSockets = {};
+            this.requests = {};
+            this.options = {};
+        }
+        get defaultPort() {
+            if (typeof this.explicitDefaultPort === 'number') {
+                return this.explicitDefaultPort;
+            }
+            return isSecureEndpoint() ? 443 : 80;
+        }
+        set defaultPort(v) {
+            this.explicitDefaultPort = v;
+        }
+        get protocol() {
+            if (typeof this.explicitProtocol === 'string') {
+                return this.explicitProtocol;
+            }
+            return isSecureEndpoint() ? 'https:' : 'http:';
+        }
+        set protocol(v) {
+            this.explicitProtocol = v;
+        }
+        callback(req, opts, fn) {
+            throw new Error('"agent-base" has no default implementation, you must subclass and override `callback()`');
+        }
+        /**
+         * Called by node-core's "_http_client.js" module when creating
+         * a new HTTP request with this Agent instance.
+         *
+         * @api public
+         */
+        addRequest(req, _opts) {
+            const opts = Object.assign({}, _opts);
+            if (typeof opts.secureEndpoint !== 'boolean') {
+                opts.secureEndpoint = isSecureEndpoint();
+            }
+            if (opts.host == null) {
+                opts.host = 'localhost';
+            }
+            if (opts.port == null) {
+                opts.port = opts.secureEndpoint ? 443 : 80;
+            }
+            if (opts.protocol == null) {
+                opts.protocol = opts.secureEndpoint ? 'https:' : 'http:';
+            }
+            if (opts.host && opts.path) {
+                // If both a `host` and `path` are specified then it's most
+                // likely the result of a `url.parse()` call... we need to
+                // remove the `path` portion so that `net.connect()` doesn't
+                // attempt to open that as a unix socket file.
+                delete opts.path;
+            }
+            delete opts.agent;
+            delete opts.hostname;
+            delete opts._defaultAgent;
+            delete opts.defaultPort;
+            delete opts.createConnection;
+            // Hint to use "Connection: close"
+            // XXX: non-documented `http` module API :(
+            req._last = true;
+            req.shouldKeepAlive = false;
+            let timedOut = false;
+            let timeoutId = null;
+            const timeoutMs = opts.timeout || this.timeout;
+            const onerror = (err) => {
+                if (req._hadError)
+                    return;
+                req.emit('error', err);
+                // For Safety. Some additional errors might fire later on
+                // and we need to make sure we don't double-fire the error event.
+                req._hadError = true;
+            };
+            const ontimeout = () => {
+                timeoutId = null;
+                timedOut = true;
+                const err = new Error(`A "socket" was not created for HTTP request before ${timeoutMs}ms`);
+                err.code = 'ETIMEOUT';
+                onerror(err);
+            };
+            const callbackError = (err) => {
+                if (timedOut)
+                    return;
+                if (timeoutId !== null) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                onerror(err);
+            };
+            const onsocket = (socket) => {
+                if (timedOut)
+                    return;
+                if (timeoutId != null) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                if (isAgent(socket)) {
+                    // `socket` is actually an `http.Agent` instance, so
+                    // relinquish responsibility for this `req` to the Agent
+                    // from here on
+                    debug('Callback returned another Agent instance %o', socket.constructor.name);
+                    socket.addRequest(req, opts);
+                    return;
+                }
+                if (socket) {
+                    socket.once('free', () => {
+                        this.freeSocket(socket, opts);
+                    });
+                    req.onSocket(socket);
+                    return;
+                }
+                const err = new Error(`no Duplex stream was returned to agent-base for \`${req.method} ${req.path}\``);
+                onerror(err);
+            };
+            if (typeof this.callback !== 'function') {
+                onerror(new Error('`callback` is not defined'));
+                return;
+            }
+            if (!this.promisifiedCallback) {
+                if (this.callback.length >= 3) {
+                    debug('Converting legacy callback function to promise');
+                    this.promisifiedCallback = promisify_1.default(this.callback);
+                }
+                else {
+                    this.promisifiedCallback = this.callback;
+                }
+            }
+            if (typeof timeoutMs === 'number' && timeoutMs > 0) {
+                timeoutId = setTimeout(ontimeout, timeoutMs);
+            }
+            if ('port' in opts && typeof opts.port !== 'number') {
+                opts.port = Number(opts.port);
+            }
+            try {
+                debug('Resolving socket for %o request: %o', opts.protocol, `${req.method} ${req.path}`);
+                Promise.resolve(this.promisifiedCallback(req, opts)).then(onsocket, callbackError);
+            }
+            catch (err) {
+                Promise.reject(err).catch(callbackError);
+            }
+        }
+        freeSocket(socket, opts) {
+            debug('Freeing socket %o %o', socket.constructor.name, opts);
+            socket.destroy();
+        }
+        destroy() {
+            debug('Destroying agent %o', this.constructor.name);
+        }
+    }
+    createAgent.Agent = Agent;
+    // So that `instanceof` works correctly
+    createAgent.prototype = createAgent.Agent.prototype;
+})(createAgent || (createAgent = {}));
+module.exports = createAgent;
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 6570:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+function promisify(fn) {
+    return function (req, opts) {
+        return new Promise((resolve, reject) => {
+            fn.call(this, req, opts, (err, rtn) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(rtn);
+                }
+            });
+        });
+    };
+}
+exports["default"] = promisify;
+//# sourceMappingURL=promisify.js.map
+
+/***/ }),
+
+/***/ 8222:
+/***/ ((module, exports, __nccwpck_require__) => {
+
+/* eslint-env browser */
+
+/**
+ * This is the web browser implementation of `debug()`.
+ */
+
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = localstorage();
+exports.destroy = (() => {
+	let warned = false;
+
+	return () => {
+		if (!warned) {
+			warned = true;
+			console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+		}
+	};
+})();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+	'#0000CC',
+	'#0000FF',
+	'#0033CC',
+	'#0033FF',
+	'#0066CC',
+	'#0066FF',
+	'#0099CC',
+	'#0099FF',
+	'#00CC00',
+	'#00CC33',
+	'#00CC66',
+	'#00CC99',
+	'#00CCCC',
+	'#00CCFF',
+	'#3300CC',
+	'#3300FF',
+	'#3333CC',
+	'#3333FF',
+	'#3366CC',
+	'#3366FF',
+	'#3399CC',
+	'#3399FF',
+	'#33CC00',
+	'#33CC33',
+	'#33CC66',
+	'#33CC99',
+	'#33CCCC',
+	'#33CCFF',
+	'#6600CC',
+	'#6600FF',
+	'#6633CC',
+	'#6633FF',
+	'#66CC00',
+	'#66CC33',
+	'#9900CC',
+	'#9900FF',
+	'#9933CC',
+	'#9933FF',
+	'#99CC00',
+	'#99CC33',
+	'#CC0000',
+	'#CC0033',
+	'#CC0066',
+	'#CC0099',
+	'#CC00CC',
+	'#CC00FF',
+	'#CC3300',
+	'#CC3333',
+	'#CC3366',
+	'#CC3399',
+	'#CC33CC',
+	'#CC33FF',
+	'#CC6600',
+	'#CC6633',
+	'#CC9900',
+	'#CC9933',
+	'#CCCC00',
+	'#CCCC33',
+	'#FF0000',
+	'#FF0033',
+	'#FF0066',
+	'#FF0099',
+	'#FF00CC',
+	'#FF00FF',
+	'#FF3300',
+	'#FF3333',
+	'#FF3366',
+	'#FF3399',
+	'#FF33CC',
+	'#FF33FF',
+	'#FF6600',
+	'#FF6633',
+	'#FF9900',
+	'#FF9933',
+	'#FFCC00',
+	'#FFCC33'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+// eslint-disable-next-line complexity
+function useColors() {
+	// NB: In an Electron preload script, document will be defined but not fully
+	// initialized. Since we know we're in Chrome, we'll just detect this case
+	// explicitly
+	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
+		return true;
+	}
+
+	// Internet Explorer and Edge do not support colors.
+	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+		return false;
+	}
+
+	// Is webkit? http://stackoverflow.com/a/16459606/376773
+	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
+		// Is firebug? http://stackoverflow.com/a/398120/376773
+		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
+		// Is firefox >= v31?
+		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+		// Double check webkit in userAgent just in case we are in a worker
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+}
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+	args[0] = (this.useColors ? '%c' : '') +
+		this.namespace +
+		(this.useColors ? ' %c' : ' ') +
+		args[0] +
+		(this.useColors ? '%c ' : ' ') +
+		'+' + module.exports.humanize(this.diff);
+
+	if (!this.useColors) {
+		return;
+	}
+
+	const c = 'color: ' + this.color;
+	args.splice(1, 0, c, 'color: inherit');
+
+	// The final "%c" is somewhat tricky, because there could be other
+	// arguments passed either before or after the %c, so we need to
+	// figure out the correct index to insert the CSS into
+	let index = 0;
+	let lastC = 0;
+	args[0].replace(/%[a-zA-Z%]/g, match => {
+		if (match === '%%') {
+			return;
+		}
+		index++;
+		if (match === '%c') {
+			// We only are interested in the *last* %c
+			// (the user may have provided their own)
+			lastC = index;
+		}
+	});
+
+	args.splice(lastC, 0, c);
+}
+
+/**
+ * Invokes `console.debug()` when available.
+ * No-op when `console.debug` is not a "function".
+ * If `console.debug` is not available, falls back
+ * to `console.log`.
+ *
+ * @api public
+ */
+exports.log = console.debug || console.log || (() => {});
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+function save(namespaces) {
+	try {
+		if (namespaces) {
+			exports.storage.setItem('debug', namespaces);
+		} else {
+			exports.storage.removeItem('debug');
+		}
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+function load() {
+	let r;
+	try {
+		r = exports.storage.getItem('debug');
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+
+	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+	if (!r && typeof process !== 'undefined' && 'env' in process) {
+		r = process.env.DEBUG;
+	}
+
+	return r;
+}
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage() {
+	try {
+		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+		// The Browser also has localStorage in the global context.
+		return localStorage;
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+module.exports = __nccwpck_require__(6243)(exports);
+
+const {formatters} = module.exports;
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+	try {
+		return JSON.stringify(v);
+	} catch (error) {
+		return '[UnexpectedJSONParseError]: ' + error.message;
+	}
+};
+
+
+/***/ }),
+
+/***/ 6243:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ */
+
+function setup(env) {
+	createDebug.debug = createDebug;
+	createDebug.default = createDebug;
+	createDebug.coerce = coerce;
+	createDebug.disable = disable;
+	createDebug.enable = enable;
+	createDebug.enabled = enabled;
+	createDebug.humanize = __nccwpck_require__(900);
+	createDebug.destroy = destroy;
+
+	Object.keys(env).forEach(key => {
+		createDebug[key] = env[key];
+	});
+
+	/**
+	* The currently active debug mode names, and names to skip.
+	*/
+
+	createDebug.names = [];
+	createDebug.skips = [];
+
+	/**
+	* Map of special "%n" handling functions, for the debug "format" argument.
+	*
+	* Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+	*/
+	createDebug.formatters = {};
+
+	/**
+	* Selects a color for a debug namespace
+	* @param {String} namespace The namespace string for the debug instance to be colored
+	* @return {Number|String} An ANSI color code for the given namespace
+	* @api private
+	*/
+	function selectColor(namespace) {
+		let hash = 0;
+
+		for (let i = 0; i < namespace.length; i++) {
+			hash = ((hash << 5) - hash) + namespace.charCodeAt(i);
+			hash |= 0; // Convert to 32bit integer
+		}
+
+		return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+	}
+	createDebug.selectColor = selectColor;
+
+	/**
+	* Create a debugger with the given `namespace`.
+	*
+	* @param {String} namespace
+	* @return {Function}
+	* @api public
+	*/
+	function createDebug(namespace) {
+		let prevTime;
+		let enableOverride = null;
+		let namespacesCache;
+		let enabledCache;
+
+		function debug(...args) {
+			// Disabled?
+			if (!debug.enabled) {
+				return;
+			}
+
+			const self = debug;
+
+			// Set `diff` timestamp
+			const curr = Number(new Date());
+			const ms = curr - (prevTime || curr);
+			self.diff = ms;
+			self.prev = prevTime;
+			self.curr = curr;
+			prevTime = curr;
+
+			args[0] = createDebug.coerce(args[0]);
+
+			if (typeof args[0] !== 'string') {
+				// Anything else let's inspect with %O
+				args.unshift('%O');
+			}
+
+			// Apply any `formatters` transformations
+			let index = 0;
+			args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
+				// If we encounter an escaped % then don't increase the array index
+				if (match === '%%') {
+					return '%';
+				}
+				index++;
+				const formatter = createDebug.formatters[format];
+				if (typeof formatter === 'function') {
+					const val = args[index];
+					match = formatter.call(self, val);
+
+					// Now we need to remove `args[index]` since it's inlined in the `format`
+					args.splice(index, 1);
+					index--;
+				}
+				return match;
+			});
+
+			// Apply env-specific formatting (colors, etc.)
+			createDebug.formatArgs.call(self, args);
+
+			const logFn = self.log || createDebug.log;
+			logFn.apply(self, args);
+		}
+
+		debug.namespace = namespace;
+		debug.useColors = createDebug.useColors();
+		debug.color = createDebug.selectColor(namespace);
+		debug.extend = extend;
+		debug.destroy = createDebug.destroy; // XXX Temporary. Will be removed in the next major release.
+
+		Object.defineProperty(debug, 'enabled', {
+			enumerable: true,
+			configurable: false,
+			get: () => {
+				if (enableOverride !== null) {
+					return enableOverride;
+				}
+				if (namespacesCache !== createDebug.namespaces) {
+					namespacesCache = createDebug.namespaces;
+					enabledCache = createDebug.enabled(namespace);
+				}
+
+				return enabledCache;
+			},
+			set: v => {
+				enableOverride = v;
+			}
+		});
+
+		// Env-specific initialization logic for debug instances
+		if (typeof createDebug.init === 'function') {
+			createDebug.init(debug);
+		}
+
+		return debug;
+	}
+
+	function extend(namespace, delimiter) {
+		const newDebug = createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+		newDebug.log = this.log;
+		return newDebug;
+	}
+
+	/**
+	* Enables a debug mode by namespaces. This can include modes
+	* separated by a colon and wildcards.
+	*
+	* @param {String} namespaces
+	* @api public
+	*/
+	function enable(namespaces) {
+		createDebug.save(namespaces);
+		createDebug.namespaces = namespaces;
+
+		createDebug.names = [];
+		createDebug.skips = [];
+
+		let i;
+		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+		const len = split.length;
+
+		for (i = 0; i < len; i++) {
+			if (!split[i]) {
+				// ignore empty strings
+				continue;
+			}
+
+			namespaces = split[i].replace(/\*/g, '.*?');
+
+			if (namespaces[0] === '-') {
+				createDebug.skips.push(new RegExp('^' + namespaces.slice(1) + '$'));
+			} else {
+				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+			}
+		}
+	}
+
+	/**
+	* Disable debug output.
+	*
+	* @return {String} namespaces
+	* @api public
+	*/
+	function disable() {
+		const namespaces = [
+			...createDebug.names.map(toNamespace),
+			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
+		].join(',');
+		createDebug.enable('');
+		return namespaces;
+	}
+
+	/**
+	* Returns true if the given mode name is enabled, false otherwise.
+	*
+	* @param {String} name
+	* @return {Boolean}
+	* @api public
+	*/
+	function enabled(name) {
+		if (name[name.length - 1] === '*') {
+			return true;
+		}
+
+		let i;
+		let len;
+
+		for (i = 0, len = createDebug.skips.length; i < len; i++) {
+			if (createDebug.skips[i].test(name)) {
+				return false;
+			}
+		}
+
+		for (i = 0, len = createDebug.names.length; i < len; i++) {
+			if (createDebug.names[i].test(name)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	* Convert regexp to namespace
+	*
+	* @param {RegExp} regxep
+	* @return {String} namespace
+	* @api private
+	*/
+	function toNamespace(regexp) {
+		return regexp.toString()
+			.substring(2, regexp.toString().length - 2)
+			.replace(/\.\*\?$/, '*');
+	}
+
+	/**
+	* Coerce `val`.
+	*
+	* @param {Mixed} val
+	* @return {Mixed}
+	* @api private
+	*/
+	function coerce(val) {
+		if (val instanceof Error) {
+			return val.stack || val.message;
+		}
+		return val;
+	}
+
+	/**
+	* XXX DO NOT USE. This is a temporary stub function.
+	* XXX It WILL be removed in the next major release.
+	*/
+	function destroy() {
+		console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+	}
+
+	createDebug.enable(createDebug.load());
+
+	return createDebug;
+}
+
+module.exports = setup;
+
+
+/***/ }),
+
+/***/ 8237:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/**
+ * Detect Electron renderer / nwjs process, which is node, but we should
+ * treat as a browser.
+ */
+
+if (typeof process === 'undefined' || process.type === 'renderer' || process.browser === true || process.__nwjs) {
+	module.exports = __nccwpck_require__(8222);
+} else {
+	module.exports = __nccwpck_require__(4874);
+}
+
+
+/***/ }),
+
+/***/ 4874:
+/***/ ((module, exports, __nccwpck_require__) => {
+
+/**
+ * Module dependencies.
+ */
+
+const tty = __nccwpck_require__(6224);
+const util = __nccwpck_require__(3837);
+
+/**
+ * This is the Node.js implementation of `debug()`.
+ */
+
+exports.init = init;
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.destroy = util.deprecate(
+	() => {},
+	'Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.'
+);
+
+/**
+ * Colors.
+ */
+
+exports.colors = [6, 2, 3, 4, 5, 1];
+
+try {
+	// Optional dependency (as in, doesn't need to be installed, NOT like optionalDependencies in package.json)
+	// eslint-disable-next-line import/no-extraneous-dependencies
+	const supportsColor = __nccwpck_require__(9318);
+
+	if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) {
+		exports.colors = [
+			20,
+			21,
+			26,
+			27,
+			32,
+			33,
+			38,
+			39,
+			40,
+			41,
+			42,
+			43,
+			44,
+			45,
+			56,
+			57,
+			62,
+			63,
+			68,
+			69,
+			74,
+			75,
+			76,
+			77,
+			78,
+			79,
+			80,
+			81,
+			92,
+			93,
+			98,
+			99,
+			112,
+			113,
+			128,
+			129,
+			134,
+			135,
+			148,
+			149,
+			160,
+			161,
+			162,
+			163,
+			164,
+			165,
+			166,
+			167,
+			168,
+			169,
+			170,
+			171,
+			172,
+			173,
+			178,
+			179,
+			184,
+			185,
+			196,
+			197,
+			198,
+			199,
+			200,
+			201,
+			202,
+			203,
+			204,
+			205,
+			206,
+			207,
+			208,
+			209,
+			214,
+			215,
+			220,
+			221
+		];
+	}
+} catch (error) {
+	// Swallow - we only care if `supports-color` is available; it doesn't have to be.
+}
+
+/**
+ * Build up the default `inspectOpts` object from the environment variables.
+ *
+ *   $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
+ */
+
+exports.inspectOpts = Object.keys(process.env).filter(key => {
+	return /^debug_/i.test(key);
+}).reduce((obj, key) => {
+	// Camel-case
+	const prop = key
+		.substring(6)
+		.toLowerCase()
+		.replace(/_([a-z])/g, (_, k) => {
+			return k.toUpperCase();
+		});
+
+	// Coerce string value into JS value
+	let val = process.env[key];
+	if (/^(yes|on|true|enabled)$/i.test(val)) {
+		val = true;
+	} else if (/^(no|off|false|disabled)$/i.test(val)) {
+		val = false;
+	} else if (val === 'null') {
+		val = null;
+	} else {
+		val = Number(val);
+	}
+
+	obj[prop] = val;
+	return obj;
+}, {});
+
+/**
+ * Is stdout a TTY? Colored output is enabled when `true`.
+ */
+
+function useColors() {
+	return 'colors' in exports.inspectOpts ?
+		Boolean(exports.inspectOpts.colors) :
+		tty.isatty(process.stderr.fd);
+}
+
+/**
+ * Adds ANSI color escape codes if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+	const {namespace: name, useColors} = this;
+
+	if (useColors) {
+		const c = this.color;
+		const colorCode = '\u001B[3' + (c < 8 ? c : '8;5;' + c);
+		const prefix = `  ${colorCode};1m${name} \u001B[0m`;
+
+		args[0] = prefix + args[0].split('\n').join('\n' + prefix);
+		args.push(colorCode + 'm+' + module.exports.humanize(this.diff) + '\u001B[0m');
+	} else {
+		args[0] = getDate() + name + ' ' + args[0];
+	}
+}
+
+function getDate() {
+	if (exports.inspectOpts.hideDate) {
+		return '';
+	}
+	return new Date().toISOString() + ' ';
+}
+
+/**
+ * Invokes `util.format()` with the specified arguments and writes to stderr.
+ */
+
+function log(...args) {
+	return process.stderr.write(util.format(...args) + '\n');
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+function save(namespaces) {
+	if (namespaces) {
+		process.env.DEBUG = namespaces;
+	} else {
+		// If you set a process.env field to null or undefined, it gets cast to the
+		// string 'null' or 'undefined'. Just delete instead.
+		delete process.env.DEBUG;
+	}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+	return process.env.DEBUG;
+}
+
+/**
+ * Init logic for `debug` instances.
+ *
+ * Create a new `inspectOpts` object in case `useColors` is set
+ * differently for a particular `debug` instance.
+ */
+
+function init(debug) {
+	debug.inspectOpts = {};
+
+	const keys = Object.keys(exports.inspectOpts);
+	for (let i = 0; i < keys.length; i++) {
+		debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
+	}
+}
+
+module.exports = __nccwpck_require__(6243)(exports);
+
+const {formatters} = module.exports;
+
+/**
+ * Map %o to `util.inspect()`, all on a single line.
+ */
+
+formatters.o = function (v) {
+	this.inspectOpts.colors = this.useColors;
+	return util.inspect(v, this.inspectOpts)
+		.split('\n')
+		.map(str => str.trim())
+		.join(' ');
+};
+
+/**
+ * Map %O to `util.inspect()`, allowing multiple lines if needed.
+ */
+
+formatters.O = function (v) {
+	this.inspectOpts.colors = this.useColors;
+	return util.inspect(v, this.inspectOpts);
+};
+
+
+/***/ }),
+
 /***/ 2603:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -16537,6 +17689,469 @@ module.exports = XmlNode;
 
 /***/ }),
 
+/***/ 1621:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = (flag, argv = process.argv) => {
+	const prefix = flag.startsWith('-') ? '' : (flag.length === 1 ? '-' : '--');
+	const position = argv.indexOf(prefix + flag);
+	const terminatorPosition = argv.indexOf('--');
+	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
+};
+
+
+/***/ }),
+
+/***/ 5098:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const net_1 = __importDefault(__nccwpck_require__(1808));
+const tls_1 = __importDefault(__nccwpck_require__(4404));
+const url_1 = __importDefault(__nccwpck_require__(7310));
+const assert_1 = __importDefault(__nccwpck_require__(9491));
+const debug_1 = __importDefault(__nccwpck_require__(8237));
+const agent_base_1 = __nccwpck_require__(9690);
+const parse_proxy_response_1 = __importDefault(__nccwpck_require__(595));
+const debug = debug_1.default('https-proxy-agent:agent');
+/**
+ * The `HttpsProxyAgent` implements an HTTP Agent subclass that connects to
+ * the specified "HTTP(s) proxy server" in order to proxy HTTPS requests.
+ *
+ * Outgoing HTTP requests are first tunneled through the proxy server using the
+ * `CONNECT` HTTP request method to establish a connection to the proxy server,
+ * and then the proxy server connects to the destination target and issues the
+ * HTTP request from the proxy server.
+ *
+ * `https:` requests have their socket connection upgraded to TLS once
+ * the connection to the proxy server has been established.
+ *
+ * @api public
+ */
+class HttpsProxyAgent extends agent_base_1.Agent {
+    constructor(_opts) {
+        let opts;
+        if (typeof _opts === 'string') {
+            opts = url_1.default.parse(_opts);
+        }
+        else {
+            opts = _opts;
+        }
+        if (!opts) {
+            throw new Error('an HTTP(S) proxy server `host` and `port` must be specified!');
+        }
+        debug('creating new HttpsProxyAgent instance: %o', opts);
+        super(opts);
+        const proxy = Object.assign({}, opts);
+        // If `true`, then connect to the proxy server over TLS.
+        // Defaults to `false`.
+        this.secureProxy = opts.secureProxy || isHTTPS(proxy.protocol);
+        // Prefer `hostname` over `host`, and set the `port` if needed.
+        proxy.host = proxy.hostname || proxy.host;
+        if (typeof proxy.port === 'string') {
+            proxy.port = parseInt(proxy.port, 10);
+        }
+        if (!proxy.port && proxy.host) {
+            proxy.port = this.secureProxy ? 443 : 80;
+        }
+        // ALPN is supported by Node.js >= v5.
+        // attempt to negotiate http/1.1 for proxy servers that support http/2
+        if (this.secureProxy && !('ALPNProtocols' in proxy)) {
+            proxy.ALPNProtocols = ['http 1.1'];
+        }
+        if (proxy.host && proxy.path) {
+            // If both a `host` and `path` are specified then it's most likely
+            // the result of a `url.parse()` call... we need to remove the
+            // `path` portion so that `net.connect()` doesn't attempt to open
+            // that as a Unix socket file.
+            delete proxy.path;
+            delete proxy.pathname;
+        }
+        this.proxy = proxy;
+    }
+    /**
+     * Called when the node-core HTTP client library is creating a
+     * new HTTP request.
+     *
+     * @api protected
+     */
+    callback(req, opts) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { proxy, secureProxy } = this;
+            // Create a socket connection to the proxy server.
+            let socket;
+            if (secureProxy) {
+                debug('Creating `tls.Socket`: %o', proxy);
+                socket = tls_1.default.connect(proxy);
+            }
+            else {
+                debug('Creating `net.Socket`: %o', proxy);
+                socket = net_1.default.connect(proxy);
+            }
+            const headers = Object.assign({}, proxy.headers);
+            const hostname = `${opts.host}:${opts.port}`;
+            let payload = `CONNECT ${hostname} HTTP/1.1\r\n`;
+            // Inject the `Proxy-Authorization` header if necessary.
+            if (proxy.auth) {
+                headers['Proxy-Authorization'] = `Basic ${Buffer.from(proxy.auth).toString('base64')}`;
+            }
+            // The `Host` header should only include the port
+            // number when it is not the default port.
+            let { host, port, secureEndpoint } = opts;
+            if (!isDefaultPort(port, secureEndpoint)) {
+                host += `:${port}`;
+            }
+            headers.Host = host;
+            headers.Connection = 'close';
+            for (const name of Object.keys(headers)) {
+                payload += `${name}: ${headers[name]}\r\n`;
+            }
+            const proxyResponsePromise = parse_proxy_response_1.default(socket);
+            socket.write(`${payload}\r\n`);
+            const { statusCode, buffered } = yield proxyResponsePromise;
+            if (statusCode === 200) {
+                req.once('socket', resume);
+                if (opts.secureEndpoint) {
+                    // The proxy is connecting to a TLS server, so upgrade
+                    // this socket connection to a TLS connection.
+                    debug('Upgrading socket connection to TLS');
+                    const servername = opts.servername || opts.host;
+                    return tls_1.default.connect(Object.assign(Object.assign({}, omit(opts, 'host', 'hostname', 'path', 'port')), { socket,
+                        servername }));
+                }
+                return socket;
+            }
+            // Some other status code that's not 200... need to re-play the HTTP
+            // header "data" events onto the socket once the HTTP machinery is
+            // attached so that the node core `http` can parse and handle the
+            // error status code.
+            // Close the original socket, and a new "fake" socket is returned
+            // instead, so that the proxy doesn't get the HTTP request
+            // written to it (which may contain `Authorization` headers or other
+            // sensitive data).
+            //
+            // See: https://hackerone.com/reports/541502
+            socket.destroy();
+            const fakeSocket = new net_1.default.Socket({ writable: false });
+            fakeSocket.readable = true;
+            // Need to wait for the "socket" event to re-play the "data" events.
+            req.once('socket', (s) => {
+                debug('replaying proxy buffer for failed request');
+                assert_1.default(s.listenerCount('data') > 0);
+                // Replay the "buffered" Buffer onto the fake `socket`, since at
+                // this point the HTTP module machinery has been hooked up for
+                // the user.
+                s.push(buffered);
+                s.push(null);
+            });
+            return fakeSocket;
+        });
+    }
+}
+exports["default"] = HttpsProxyAgent;
+function resume(socket) {
+    socket.resume();
+}
+function isDefaultPort(port, secure) {
+    return Boolean((!secure && port === 80) || (secure && port === 443));
+}
+function isHTTPS(protocol) {
+    return typeof protocol === 'string' ? /^https:?$/i.test(protocol) : false;
+}
+function omit(obj, ...keys) {
+    const ret = {};
+    let key;
+    for (key in obj) {
+        if (!keys.includes(key)) {
+            ret[key] = obj[key];
+        }
+    }
+    return ret;
+}
+//# sourceMappingURL=agent.js.map
+
+/***/ }),
+
+/***/ 7219:
+/***/ (function(module, __unused_webpack_exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+const agent_1 = __importDefault(__nccwpck_require__(5098));
+function createHttpsProxyAgent(opts) {
+    return new agent_1.default(opts);
+}
+(function (createHttpsProxyAgent) {
+    createHttpsProxyAgent.HttpsProxyAgent = agent_1.default;
+    createHttpsProxyAgent.prototype = agent_1.default.prototype;
+})(createHttpsProxyAgent || (createHttpsProxyAgent = {}));
+module.exports = createHttpsProxyAgent;
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 595:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const debug_1 = __importDefault(__nccwpck_require__(8237));
+const debug = debug_1.default('https-proxy-agent:parse-proxy-response');
+function parseProxyResponse(socket) {
+    return new Promise((resolve, reject) => {
+        // we need to buffer any HTTP traffic that happens with the proxy before we get
+        // the CONNECT response, so that if the response is anything other than an "200"
+        // response code, then we can re-play the "data" events on the socket once the
+        // HTTP parser is hooked up...
+        let buffersLength = 0;
+        const buffers = [];
+        function read() {
+            const b = socket.read();
+            if (b)
+                ondata(b);
+            else
+                socket.once('readable', read);
+        }
+        function cleanup() {
+            socket.removeListener('end', onend);
+            socket.removeListener('error', onerror);
+            socket.removeListener('close', onclose);
+            socket.removeListener('readable', read);
+        }
+        function onclose(err) {
+            debug('onclose had error %o', err);
+        }
+        function onend() {
+            debug('onend');
+        }
+        function onerror(err) {
+            cleanup();
+            debug('onerror %o', err);
+            reject(err);
+        }
+        function ondata(b) {
+            buffers.push(b);
+            buffersLength += b.length;
+            const buffered = Buffer.concat(buffers, buffersLength);
+            const endOfHeaders = buffered.indexOf('\r\n\r\n');
+            if (endOfHeaders === -1) {
+                // keep buffering
+                debug('have not received end of HTTP headers yet...');
+                read();
+                return;
+            }
+            const firstLine = buffered.toString('ascii', 0, buffered.indexOf('\r\n'));
+            const statusCode = +firstLine.split(' ')[1];
+            debug('got proxy server response: %o', firstLine);
+            resolve({
+                statusCode,
+                buffered
+            });
+        }
+        socket.on('error', onerror);
+        socket.on('close', onclose);
+        socket.on('end', onend);
+        read();
+    });
+}
+exports["default"] = parseProxyResponse;
+//# sourceMappingURL=parse-proxy-response.js.map
+
+/***/ }),
+
+/***/ 900:
+/***/ ((module) => {
+
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var w = d * 7;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} [options]
+ * @throws {Error} throw an error if val is not a non-empty string or a number
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function(val, options) {
+  options = options || {};
+  var type = typeof val;
+  if (type === 'string' && val.length > 0) {
+    return parse(val);
+  } else if (type === 'number' && isFinite(val)) {
+    return options.long ? fmtLong(val) : fmtShort(val);
+  }
+  throw new Error(
+    'val is not a non-empty string or a valid number. val=' +
+      JSON.stringify(val)
+  );
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = String(str);
+  if (str.length > 100) {
+    return;
+  }
+  var match = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
+    str
+  );
+  if (!match) {
+    return;
+  }
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtShort(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return Math.round(ms / d) + 'd';
+  }
+  if (msAbs >= h) {
+    return Math.round(ms / h) + 'h';
+  }
+  if (msAbs >= m) {
+    return Math.round(ms / m) + 'm';
+  }
+  if (msAbs >= s) {
+    return Math.round(ms / s) + 's';
+  }
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtLong(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
+}
+
+
+/***/ }),
+
 /***/ 4526:
 /***/ ((module) => {
 
@@ -16664,6 +18279,149 @@ function trimZeros(numStr){
     return numStr;
 }
 module.exports = toNumber
+
+
+/***/ }),
+
+/***/ 9318:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+const os = __nccwpck_require__(2037);
+const tty = __nccwpck_require__(6224);
+const hasFlag = __nccwpck_require__(1621);
+
+const {env} = process;
+
+let forceColor;
+if (hasFlag('no-color') ||
+	hasFlag('no-colors') ||
+	hasFlag('color=false') ||
+	hasFlag('color=never')) {
+	forceColor = 0;
+} else if (hasFlag('color') ||
+	hasFlag('colors') ||
+	hasFlag('color=true') ||
+	hasFlag('color=always')) {
+	forceColor = 1;
+}
+
+if ('FORCE_COLOR' in env) {
+	if (env.FORCE_COLOR === 'true') {
+		forceColor = 1;
+	} else if (env.FORCE_COLOR === 'false') {
+		forceColor = 0;
+	} else {
+		forceColor = env.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env.FORCE_COLOR, 10), 3);
+	}
+}
+
+function translateLevel(level) {
+	if (level === 0) {
+		return false;
+	}
+
+	return {
+		level,
+		hasBasic: true,
+		has256: level >= 2,
+		has16m: level >= 3
+	};
+}
+
+function supportsColor(haveStream, streamIsTTY) {
+	if (forceColor === 0) {
+		return 0;
+	}
+
+	if (hasFlag('color=16m') ||
+		hasFlag('color=full') ||
+		hasFlag('color=truecolor')) {
+		return 3;
+	}
+
+	if (hasFlag('color=256')) {
+		return 2;
+	}
+
+	if (haveStream && !streamIsTTY && forceColor === undefined) {
+		return 0;
+	}
+
+	const min = forceColor || 0;
+
+	if (env.TERM === 'dumb') {
+		return min;
+	}
+
+	if (process.platform === 'win32') {
+		// Windows 10 build 10586 is the first Windows release that supports 256 colors.
+		// Windows 10 build 14931 is the first release that supports 16m/TrueColor.
+		const osRelease = os.release().split('.');
+		if (
+			Number(osRelease[0]) >= 10 &&
+			Number(osRelease[2]) >= 10586
+		) {
+			return Number(osRelease[2]) >= 14931 ? 3 : 2;
+		}
+
+		return 1;
+	}
+
+	if ('CI' in env) {
+		if (['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI', 'GITHUB_ACTIONS', 'BUILDKITE'].some(sign => sign in env) || env.CI_NAME === 'codeship') {
+			return 1;
+		}
+
+		return min;
+	}
+
+	if ('TEAMCITY_VERSION' in env) {
+		return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env.TEAMCITY_VERSION) ? 1 : 0;
+	}
+
+	if (env.COLORTERM === 'truecolor') {
+		return 3;
+	}
+
+	if ('TERM_PROGRAM' in env) {
+		const version = parseInt((env.TERM_PROGRAM_VERSION || '').split('.')[0], 10);
+
+		switch (env.TERM_PROGRAM) {
+			case 'iTerm.app':
+				return version >= 3 ? 3 : 2;
+			case 'Apple_Terminal':
+				return 2;
+			// No default
+		}
+	}
+
+	if (/-256(color)?$/i.test(env.TERM)) {
+		return 2;
+	}
+
+	if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env.TERM)) {
+		return 1;
+	}
+
+	if ('COLORTERM' in env) {
+		return 1;
+	}
+
+	return min;
+}
+
+function getSupportLevel(stream) {
+	const level = supportsColor(stream, stream && stream.isTTY);
+	return translateLevel(level);
+}
+
+module.exports = {
+	supportsColor: getSupportLevel,
+	stdout: translateLevel(supportsColor(true, tty.isatty(1))),
+	stderr: translateLevel(supportsColor(true, tty.isatty(2)))
+};
 
 
 /***/ }),
@@ -18043,6 +19801,14 @@ module.exports = require("stream");
 
 "use strict";
 module.exports = require("tls");
+
+/***/ }),
+
+/***/ 6224:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("tty");
 
 /***/ }),
 
