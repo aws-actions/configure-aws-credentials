@@ -4,7 +4,7 @@ description: Configures AWS credentials for use in subsequent steps in a GitHub 
 runs:
   using: node16
   main: dist/index.js
-  post: dist/cleanup/cleanup/index.js
+  post: dist/cleanup/index.js
 branding:
   color: orange
   icon: cloud
