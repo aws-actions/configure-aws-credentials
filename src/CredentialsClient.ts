@@ -1,3 +1,4 @@
+import * as core from '@actions/core';
 import { STSClient } from '@aws-sdk/client-sts';
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 import proxy from 'https-proxy-agent';
@@ -18,8 +19,11 @@ export class CredentialsClient {
   constructor(props: CredentialsClientProps) {
     if (props.region) {
       this.region = props.region;
+    } else {
+      core.info('No region provided, using global STS endpoint');
     }
     if (props.proxyServer) {
+      core.info('Configurint proxy handler for STS client');
       const handler = proxy(props.proxyServer);
       this.requestHandler = new NodeHttpHandler({
         httpAgent: handler,

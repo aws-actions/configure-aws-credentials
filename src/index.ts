@@ -58,7 +58,6 @@ export async function run() {
 
     // Validate and export region
     if (region) {
-      core.info('Using global STS endpoint');
       if (!region.match(REGION_REGEX)) {
         throw new Error(`Region is not valid: ${region}`);
       }

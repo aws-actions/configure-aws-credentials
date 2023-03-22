@@ -6,11 +6,11 @@ describe('helpers', () => {
   });
 
   test('removes brackets from GitHub Actor', () => {
-    expect(helpers.sanitizeGithubActor('foo[bot]')).toEqual('foo_bot_');
+    expect(helpers.sanitizeGitHubVariables('foo[bot]')).toEqual('foo_bot_');
   });
 
   test('removes special characters from worflow names', () => {
-    expect(helpers.sanitizeGithubWorkflowName('sdf234@#$%$^&*()_+{}|:"<>?')).toEqual('sdf234@__________+___:_<>?');
+    expect(helpers.sanitizeGitHubVariables('sdf234@#$%$^&*()_+{}|:"<>?')).toEqual('sdf234@__________+___:_<>?');
   });
 
   test('can sleep', () => {
