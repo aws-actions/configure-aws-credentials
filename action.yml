@@ -1,4 +1,4 @@
-name: '"Configure AWS Credentials" Action For GitHub Actions'
+name: 'Configure AWS Credentials For GitHub Actions'
 description: 'Configure AWS credential and region environment variables for use with the AWS CLI and AWS SDKs'
 branding:
   icon: 'cloud'
@@ -54,6 +54,9 @@ inputs:
     required: false
   role-skip-session-tagging:
     description: 'Skip session tagging during role assumption'
+    required: false
+  http-proxy:
+    description: 'Proxy to use for the AWS SDK agent'
     required: false
 outputs:
   aws-account-id:
