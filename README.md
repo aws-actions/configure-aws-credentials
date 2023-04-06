@@ -39,7 +39,7 @@ We support four methods for fetching credentials from AWS, but we recommend that
 you use GitHub's OIDC provider in conjunction with a configured AWS IAM
 Identity Provider endpoint.
 
-To to that, you would add the following step to your workflow:
+To do that, you would add the following step to your workflow:
 
 ```yaml
     - name: Configure AWS Credentials
@@ -212,7 +212,7 @@ Parameters:
     Type: String
 
 Conditions:
-  CreateOIDCProvider: !Equals 
+  CreateOIDCProvider: !Equals
     - !Ref OIDCProviderArn
     - ""
 
@@ -225,7 +225,7 @@ Resources:
           - Effect: Allow
             Action: sts:AssumeRoleWithWebIdentity
             Principal:
-              Federated: !If 
+              Federated: !If
                 - CreateOIDCProvider
                 - !Ref GithubOidc
                 - !Ref OIDCProviderArn
@@ -240,14 +240,14 @@ Resources:
     Condition: CreateOIDCProvider
     Properties:
       Url: https://token.actions.githubusercontent.com
-      ClientIdList: 
+      ClientIdList:
         - sts.amazonaws.com
       ThumbprintList:
         - 6938fd4d98bab03faadb97b34396831e3780aea1
 
 Outputs:
   Role:
-    Value: !GetAtt Role.Arn 
+    Value: !GetAtt Role.Arn
 ```
 
 To align with the Amazon IAM best practice of
@@ -290,7 +290,7 @@ Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If
 `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid characters, the characters
 will be replaced with an '*'._
 
-The action will use session tagging by default during role assumption. 
+The action will use session tagging by default during role assumption.
 Note that for WebIdentity role assumption, the session tags have to be included
 in the encoded WebIdentity token. This means that Tags can only be supplied by
 the OIDC provider and not set during the AssumeRoleWithWebIdentity API call
@@ -373,10 +373,10 @@ This workflow does _not_ install the [AWS CLI](https://aws.amazon.com/cli/)
 into your environment. Self-hosted runners that intend to run this action prior
 to executing `aws` commands need to have the AWS CLI
 [installed](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
-if it's not already present. 
+if it's not already present.
 Most [GitHub hosted runner environments](https://github.com/actions/virtual-environments)
 should include the AWS CLI by default.
- 
+
 ## License Summary
 This code is made available under the MIT license.
 
