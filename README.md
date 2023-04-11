@@ -39,7 +39,7 @@ We support four methods for fetching credentials from AWS, but we recommend that
 you use GitHub's OIDC provider in conjunction with a configured AWS IAM
 Identity Provider endpoint.
 
-To to that, you would add the following step to your workflow:
+To do that, you would add the following step to your workflow:
 
 ```yaml
     - name: Configure AWS Credentials
