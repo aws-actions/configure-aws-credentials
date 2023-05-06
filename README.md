@@ -154,7 +154,7 @@ In this example, the Action will load the OIDC token from the GitHub-provided en
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
         role-session-name: MySessionName
     - name: Configure other AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::987654321000:role/my-second-role
