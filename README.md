@@ -108,7 +108,7 @@ There are four different supported ways to retrieve credentials. We recommend
 using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 to get short-lived credentials needed for your actions. Specifying
 `role-to-assume` **without** providing an `aws-access-key-id` or a
-`web-identity-token-file` (or setting `role-chaining`) will signal to the action that you wish to use the
+`web-identity-token-file`, or setting `role-chaining`, will signal to the action that you wish to use the
 OIDC provider. If `role-chaining` is `true`, existing credentials in the environment will be used to assume `role-to-assume`.
 
 The following table describes which identity is used based on which values are supplied to the Action:
