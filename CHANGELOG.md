@@ -5,12 +5,12 @@ All notable changes to this project will be documented in this file. See [standa
 ## [2.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.0.0...v2.1.0) (2023-05-31)
 
 ### Features
-* `role-chaining` prop enables role chaining use case
+* `role-chaining` prop enables role chaining use case ([6fbd316](https://github.com/aws-actions/configure-aws-credentials/commit/6fbd316fd15f52c3d9f68e7aa06eae4f5699a518))
 
 ## [2.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.7.0...v2.0.0) (2023-03-06)
 
 ### Features
-* Version bump to use Node 16 by default.
+* Version bump to use Node 16 by default. 
 
 ## [1.7.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.6.1...v1.7.0) (2022-08-03)
 
