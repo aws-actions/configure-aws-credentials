@@ -94,7 +94,7 @@ async function assumeRole(params) {
     delete assumeRoleRequest.Tags;
 
     assumeRoleRequest.WebIdentityToken = webIdentityToken;
-    if(isDefined(inlineSessionPolicy)) {
+    if (isDefined(inlineSessionPolicy)) {
       assumeRoleRequest.Policy = inlineSessionPolicy;
     }
     assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
