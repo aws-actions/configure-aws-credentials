@@ -624,6 +624,26 @@ describe('Configure AWS Credentials', () => {
         })
     });
 
+    test('Web identity token file with a inline session policy', async () => {
+        const CUSTOM_SESSION_POLICY = "{ super_secure_policy }";
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'web-identity-token-file': '/fake/token/file', 'inline-session-policy': CUSTOM_SESSION_POLICY}));
+
+        await run();
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
+            RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 6 * 3600,
+            Policy: CUSTOM_SESSION_POLICY,
+            WebIdentityToken: 'testpayload'
+        })
+        expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_ACCOUNT_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_ACCESS_KEY_ID);
+        expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SECRET_ACCESS_KEY);
+        expect(core.setSecret).toHaveBeenNthCalledWith(4, FAKE_STS_SESSION_TOKEN);
+    });
+
     test('only role arn and region provided to use GH OIDC Token', async () => {
         process.env.GITHUB_ACTIONS = 'true';
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
@@ -664,7 +684,7 @@ describe('Configure AWS Credentials', () => {
         expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
     });
 
-    test('GH OIDC With custom session policy', async () => {
+    test('GH OIDC With inline session policy', async () => {
         const CUSTOM_SESSION_POLICY = "{ super_secure_policy }";
         process.env.GITHUB_ACTIONS = 'true';
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
@@ -722,6 +742,30 @@ describe('Configure AWS Credentials', () => {
                 {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
             ],
             ExternalId: 'abcdef'
+        })
+    });
+
+    test('inline session policy provided', async () => {
+        const CUSTOM_SESSION_POLICY = "{ super_secure_policy }";
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'inline-session-policy': CUSTOM_SESSION_POLICY}));
+
+        await run();
+        expect(mockStsAssumeRole).toHaveBeenCalledWith({
+            RoleArn: ROLE_ARN,
+            RoleSessionName: 'GitHubActions',
+            DurationSeconds: 6 * 3600,
+            Tags: [
+                {Key: 'GitHub', Value: 'Actions'},
+                {Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY},
+                {Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW},
+                {Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION},
+                {Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED},
+                {Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA},
+                {Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF},
+            ],
+            Policy: CUSTOM_SESSION_POLICY
         })
     });
 

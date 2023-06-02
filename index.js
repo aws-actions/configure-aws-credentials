@@ -87,6 +87,10 @@ async function assumeRole(params) {
     assumeRoleRequest.ExternalId = roleExternalId;
   }
 
+  if (isDefined(inlineSessionPolicy)) {
+    assumeRoleRequest.Policy = inlineSessionPolicy;
+  }
+
   let assumeFunction = sts.assumeRole.bind(sts);
 
   // These are customizations needed for the GH OIDC Provider
@@ -94,9 +98,6 @@ async function assumeRole(params) {
     delete assumeRoleRequest.Tags;
 
     assumeRoleRequest.WebIdentityToken = webIdentityToken;
-    if (isDefined(inlineSessionPolicy)) {
-      assumeRoleRequest.Policy = inlineSessionPolicy;
-    }
     assumeFunction = sts.assumeRoleWithWebIdentity.bind(sts);
   } else if(isDefined(webIdentityTokenFile)) {
     core.debug("webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.");
