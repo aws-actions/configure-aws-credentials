@@ -64,6 +64,9 @@ inputs:
   inline-session-policy:
     description: 'Inline session policy'
     required: false
+  managed-session-policies:
+    description: 'List of managed session policies'
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'

@@ -30,7 +30,8 @@ async function assumeRole(params) {
     roleSkipSessionTagging,
     webIdentityTokenFile,
     webIdentityToken,
-    inlineSessionPolicy
+    inlineSessionPolicy,
+    managedSessionPolicies
   } = params;
   assert(
       [roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
@@ -89,6 +90,14 @@ async function assumeRole(params) {
 
   if (isDefined(inlineSessionPolicy)) {
     assumeRoleRequest.Policy = inlineSessionPolicy;
+  }
+
+  if (isDefined(managedSessionPolicies)) {
+    const policyArns = []
+    for (const managedSessionPolicy of managedSessionPolicies) {
+      policyArns.push({arn: managedSessionPolicy})
+    }
+    assumeRoleRequest.PolicyArns = policyArns;
   }
 
   let assumeFunction = sts.assumeRole.bind(sts);
@@ -311,6 +320,7 @@ async function run() {
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
+    const managedSessionPolicies = core.getInput('managed-session-policies', { required: false })
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -378,7 +388,8 @@ async function run() {
             roleSkipSessionTagging,
             webIdentityTokenFile,
             webIdentityToken,
-            inlineSessionPolicy
+            inlineSessionPolicy,
+            managedSessionPolicies
           }) }, true);
       exportCredentials(roleCredentials);
       // We need to validate the credentials in 2 of our use-cases
