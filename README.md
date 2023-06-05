@@ -321,9 +321,8 @@ within the Action. You can skip this session tagging by providing
 ```
 
 ### Inline session policy
-The inline session policy is an IAM policy in stringified JSON format that you 
-want to use as an inline session policy. Depending on preferences, the JSON could be
-written on a single line like this:
+An IAM policy in stringified JSON format that you want to use as an inline session policy.
+Depending on preferences, the JSON could be written on a single line like this:
 ```yaml
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -348,9 +347,8 @@ Or we can have a nicely formatted JSON as well:
 ```
 
 ### Managed session policies
-The managed session policies are Amazon Resource Names (ARNs) of the IAM managed policies 
-that you want to use as managed session policies. The policies must exist in the same account as the role.
-You can pass a single managed policy like this:
+The Amazon Resource Names (ARNs) of the IAM managed policies that you want to use as managed session policies.
+The policies must exist in the same account as the role. You can pass a single managed policy like this:
 ```yaml
       uses: aws-actions/configure-aws-credentials@v2
       with:
