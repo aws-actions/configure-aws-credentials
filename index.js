@@ -92,7 +92,7 @@ async function assumeRole(params) {
     assumeRoleRequest.Policy = inlineSessionPolicy;
   }
 
-  if (isDefined(managedSessionPolicies)) {
+  if (managedSessionPolicies && managedSessionPolicies.length) {
     const policyArns = []
     for (const managedSessionPolicy of managedSessionPolicies) {
       policyArns.push({arn: managedSessionPolicy})
@@ -320,7 +320,7 @@ async function run() {
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
-    const managedSessionPolicies = core.getInput('managed-session-policies', { required: false })
+    const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false })
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);

@@ -45,6 +45,7 @@ const DEFAULT_INPUTS = {
     'aws-region': FAKE_REGION,
     'mask-aws-account-id': 'TRUE'
 };
+const DEFAULT_MULTILINE_INPUTS = {}
 const ASSUME_ROLE_INPUTS = {...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION};
 
 const mockStsCallerIdentity = jest.fn();
@@ -89,6 +90,10 @@ describe('Configure AWS Credentials', () => {
         core.getInput = jest
             .fn()
             .mockImplementation(mockGetInput(DEFAULT_INPUTS));
+
+        core.getMultilineInput = jest
+            .fn()
+            .mockImplementation(mockGetInput(DEFAULT_MULTILINE_INPUTS));
 
         core.getIDToken = jest
             .fn()
@@ -648,7 +653,10 @@ describe('Configure AWS Credentials', () => {
         const MANAGED_SESSION_POLICIES = ["arn:aws:iam::111111111111:policy/foo", "arn:aws:iam::111111111111:policy/bar"];
         core.getInput = jest
             .fn()
-            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'web-identity-token-file': '/fake/token/file', 'managed-session-policies': MANAGED_SESSION_POLICIES}));
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'web-identity-token-file': '/fake/token/file'}));
+        core.getMultilineInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'managed-session-policies': MANAGED_SESSION_POLICIES}))
 
         await run();
         expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
@@ -731,7 +739,10 @@ describe('Configure AWS Credentials', () => {
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
         core.getInput = jest
             .fn()
-            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'managed-session-policies': MANAGED_SESSION_POLICIES}));
+            .mockImplementation(mockGetInput({'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION}));
+        core.getMultilineInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'managed-session-policies': MANAGED_SESSION_POLICIES}))
 
         await run();
         expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledWith({
@@ -810,11 +821,14 @@ describe('Configure AWS Credentials', () => {
         })
     });
 
-    test('inline session policy provided', async () => {
+    test('managed session policy provided', async () => {
         const MANAGED_SESSION_POLICIES = ["arn:aws:iam::111111111111:policy/foo", "arn:aws:iam::111111111111:policy/bar"];
         core.getInput = jest
             .fn()
-            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS, 'managed-session-policies': MANAGED_SESSION_POLICIES}));
+            .mockImplementation(mockGetInput({...ASSUME_ROLE_INPUTS}));
+        core.getMultilineInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({'managed-session-policies': MANAGED_SESSION_POLICIES}))
 
         await run();
         expect(mockStsAssumeRole).toHaveBeenCalledWith({
