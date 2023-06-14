@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.1.0...v2.2.0) (2023-05-31)
+
+### Features
+* `inline-session-policy` prop enables assuming a role with inline session policies ([d00f6c6](https://github.com/aws-actions/configure-aws-credentials/commit/d00f6c6f41fde02a9fd0d469040be6ed0df69e73))
+* `managed-session-policies` prop enables assuming a role with managed policy arns ([d00f6c6](https://github.com/aws-actions/configure-aws-credentials/commit/d00f6c6f41fde02a9fd0d469040be6ed0df69e73))
+
 ## [2.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.0.0...v2.1.0) (2023-05-31)
 
 ### Features
