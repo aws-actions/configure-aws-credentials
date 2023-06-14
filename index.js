@@ -29,7 +29,9 @@ async function assumeRole(params) {
     region,
     roleSkipSessionTagging,
     webIdentityTokenFile,
-    webIdentityToken
+    webIdentityToken,
+    inlineSessionPolicy,
+    managedSessionPolicies
   } = params;
   assert(
       [roleToAssume, roleDurationSeconds, roleSessionName, region].every(isDefined),
@@ -84,6 +86,18 @@ async function assumeRole(params) {
 
   if (roleExternalId) {
     assumeRoleRequest.ExternalId = roleExternalId;
+  }
+
+  if (isDefined(inlineSessionPolicy)) {
+    assumeRoleRequest.Policy = inlineSessionPolicy;
+  }
+
+  if (managedSessionPolicies && managedSessionPolicies.length) {
+    const policyArns = []
+    for (const managedSessionPolicy of managedSessionPolicies) {
+      policyArns.push({arn: managedSessionPolicy})
+    }
+    assumeRoleRequest.PolicyArns = policyArns;
   }
 
   let assumeFunction = sts.assumeRole.bind(sts);
@@ -305,6 +319,8 @@ async function run() {
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false });
+    const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
+    const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false })
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
@@ -313,12 +329,12 @@ async function run() {
     exportRegion(region);
 
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
-    // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
+    // the decision in a few different places. Consolidating it here makes the logic clearer elsewhere.
     const useGitHubOIDCProvider = () => {
         // The assumption here is that self-hosted runners won't be populating the `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
-        // environment variable and they won't be providing a web idenity token file or access key either.
+        // environment variable, and they won't be providing a web identity token file or access key either.
         // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
-        // can provide as much info as they want and we will follow the established credential loading precedence.
+        // can provide as much info as they want, and we will follow the established credential loading precedence.
 
         return roleToAssume && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !accessKeyId && !webIdentityTokenFile && !roleChaining
     }
@@ -371,7 +387,9 @@ async function run() {
             roleSessionName,
             roleSkipSessionTagging,
             webIdentityTokenFile,
-            webIdentityToken
+            webIdentityToken,
+            inlineSessionPolicy,
+            managedSessionPolicies
           }) }, true);
       exportCredentials(roleCredentials);
       // We need to validate the credentials in 2 of our use-cases

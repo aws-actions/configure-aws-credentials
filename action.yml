@@ -61,6 +61,12 @@ inputs:
   role-chaining:
     description: 'Use existing credentials from the environment to assume a new role'
     required: false
+  inline-session-policy:
+    description: 'Inline session policy'
+    required: false
+  managed-session-policies:
+    description: 'List of managed session policies'
+    required: false
 outputs:
   aws-account-id:
     description: 'The AWS account ID for the provided credentials'

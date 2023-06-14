@@ -320,6 +320,49 @@ within the Action. You can skip this session tagging by providing
         role-skip-session-tagging: true
 ```
 
+### Inline session policy
+An IAM policy in stringified JSON format that you want to use as an inline session policy.
+Depending on preferences, the JSON could be written on a single line like this:
+```yaml
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+         inline-session-policy: '{"Version":"2012-10-17","Statement":[{"Sid":"Stmt1","Effect":"Allow","Action":"s3:List*","Resource":"*"}]}'
+```
+Or we can have a nicely formatted JSON as well:
+```yaml
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+         inline-session-policy: >-
+          {
+           "Version": "2012-10-17",
+           "Statement": [
+            {
+             "Sid":"Stmt1",
+             "Effect":"Allow",
+             "Action":"s3:List*",
+             "Resource":"*"
+            }
+           ]
+          }
+```
+
+### Managed session policies
+The Amazon Resource Names (ARNs) of the IAM managed policies that you want to use as managed session policies.
+The policies must exist in the same account as the role. You can pass a single managed policy like this:
+```yaml
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+         managed-session-policies: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+```
+And we can pass multiple managed policies likes this:
+```yaml
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+         managed-session-policies: |
+          arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+          arn:aws:iam::aws:policy/AmazonS3OutpostsReadOnlyAccess
+```
+
 ## Self-Hosted Runners
 
 If you run your GitHub Actions in a
