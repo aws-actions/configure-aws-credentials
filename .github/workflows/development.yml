@@ -4,9 +4,7 @@ name: Devel_workflow
 on:
   workflow_dispatch:
   pull_request:
-  #  types:
-  #    - opened
-  #    - edited
+    branches: [main]
   #    - synchronize
   #    - reopened
   #workflow_call:
