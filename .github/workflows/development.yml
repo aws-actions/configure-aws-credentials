@@ -3,9 +3,6 @@
 name: Devel_workflow
 on:
   workflow_dispatch:
-  push:
-  #    - synchronize
-  #    - reopened
   #workflow_call:
 
 jobs:
