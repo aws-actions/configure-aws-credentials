@@ -33,9 +33,9 @@ jobs:
       matrix:
         os: [[self-hosted, linux-fargate], [self-hosted, windows-fargate], windows-latest, ubuntu-latest, macos-latest]
         node: [14, 16, 18]
-      name: Run integ tests
-      runs-on: ${{ matrix.os }}
-      timeout-minutes: 30
+    name: Run integ tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v3
