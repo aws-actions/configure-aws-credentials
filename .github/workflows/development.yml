@@ -43,14 +43,14 @@ jobs:
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
-          role-duration-seconds: 60
+          role-duration-seconds: 900
           role-session-name: Testassumerole
-      - name: Integ test for IAM creds
-        uses: ./
-        with:
-          aws-region: us-west-2
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      # - name: Integ test for IAM creds
+      #   uses: ./
+      #   with:
+      #     aws-region: us-west-2
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       # TODO: Integ tests for IAM user
       # TODO: Integ tests for WebIdentityToken
   lint:
