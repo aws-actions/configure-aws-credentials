@@ -27,6 +27,9 @@ jobs:
     #   - name: "Run tests"
     #     run: npm run test --if-present
   integ:
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
