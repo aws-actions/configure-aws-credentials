@@ -9,15 +9,14 @@ branding:
   color: orange
   icon: cloud
 inputs:
-  audience:
-    description: The audience to use for the OIDC provider
-    required: false
-    default: sts.amazonaws.com
-  aws-access-key-id:
-    description: AWS Access Key ID. This input is required if running in the GitHub hosted environment. It is optional if running in a self-hosted environment that already has AWS credentials, for example on an EC2 instance.
-    required: false
   aws-region:
     description: AWS Region, e.g. us-east-2
+    required: true
+  role-to-assume:
+    description: The Amazon Resource Name (ARN) of the role to assume. Use the provided credentials to assume an IAM role and configure the Actions environment with the assumed role credentials rather than with the provided credentials.
+    required: false
+  aws-access-key-id:
+    description: AWS Access Key ID. This input is required if running in the GitHub hosted environment. It is optional if running in a self-hosted environment that already has AWS credentials, for example on an EC2 instance.
     required: false
   aws-secret-access-key:
     description: AWS Access Key ID. This input is required if running in the GitHub hosted environment. It is optional if running in a self-hosted environment that already has AWS credentials, for example on an EC2 instance.
@@ -25,6 +24,16 @@ inputs:
   aws-session-token:
     description: AWS Session Token
     required: false
+  web-identity-token-file:
+    description: Use the web identity token file from the provided file system path in order to assume an IAM role using a web identity, e.g. from within an Amazon EKS worker node.
+    required: false
+  role-chaining:
+    description: 'Use existing credentials from the environment to assume a new role'
+    required: false
+  audience:
+    description: The audience to use for the OIDC provider
+    required: false
+    default: sts.amazonaws.com
   disable-oidc:
     description: Strictly disable action from attempting to fetch credentials with OIDC
     required: false
@@ -45,12 +54,6 @@ inputs:
     required: false
   role-skip-session-tagging:
     description: Skip session tagging during role assumption
-    required: false
-  role-to-assume:
-    description: The Amazon Resource Name (ARN) of the role to assume. Use the provided credentials to assume an IAM role and configure the Actions environment with the assumed role credentials rather than with the provided credentials.
-    required: false
-  web-identity-token-file:
-    description: Use the web identity token file from the provided file system path in order to assume an IAM role using a web identity, e.g. from within an Amazon EKS worker node.
     required: false
   inline-session-policy:
     description: 'Inline session policy'

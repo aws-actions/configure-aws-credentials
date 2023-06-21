@@ -14,10 +14,7 @@ export async function run() {
     const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
     const sessionTokenInput = core.getInput('aws-session-token', { required: false });
     const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
-    const region =
-      core.getInput('aws-region', { required: false }) ||
-      process.env['AWS_REGION'] ||
-      process.env['AWS_DEFAULT_REGION'];
+    const region = core.getInput('aws-region', { required: true });
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
     const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
@@ -35,6 +32,8 @@ export async function run() {
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
       managedSessionPolicies.push({arn: managedSessionPolicy});
     }
+    const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
+    const roleChaining = roleChainingInput.toLowerCase() === 'true';
 
     // Logic to decide whether to attempt to use OIDC or not
     const useGitHubOIDCProvider = () => {
@@ -47,7 +46,8 @@ export async function run() {
         !webIdentityTokenFile &&
         !AccessKeyId &&
         !disableOIDC &&
-        !process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN']
+        !process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
+        !roleChaining
       ) {
         core.info(
           'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?'
@@ -58,7 +58,8 @@ export async function run() {
         !!process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
         !AccessKeyId &&
         !webIdentityTokenFile &&
-        !disableOIDC
+        !disableOIDC &&
+        !roleChaining
       );
     };
 
@@ -98,7 +99,7 @@ export async function run() {
       // cases where this action is on a self-hosted runner that doesn't have credentials
       // configured correctly, and cases where the user intended to provide input
       // credentials but the secrets inputs resolved to empty strings.
-      await credentialsClient.validateCredentials(AccessKeyId);
+      await credentialsClient.validateCredentials(AccessKeyId, roleChaining);
 
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }

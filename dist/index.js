@@ -16,14 +16,9 @@ const helpers_1 = __nccwpck_require__(9787);
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 class CredentialsClient {
     constructor(props) {
-        if (props.region) {
-            this.region = props.region;
-        }
-        else {
-            (0, core_1.info)('No region provided, using global STS endpoint');
-        }
+        this.region = props.region;
         if (props.proxyServer) {
-            (0, core_1.info)('Configurint proxy handler for STS client');
+            (0, core_1.info)('Configuring proxy handler for STS client');
             const handler = new https_proxy_agent_1.HttpsProxyAgent(props.proxyServer);
             this.requestHandler = new node_http_handler_1.NodeHttpHandler({
                 httpAgent: handler,
@@ -31,18 +26,17 @@ class CredentialsClient {
             });
         }
     }
-    getStsClient() {
-        if (!this.stsClient) {
-            this.stsClient = new client_sts_1.STSClient({
-                region: this.region ? this.region : undefined,
+    get stsClient() {
+        if (!this._stsClient) {
+            this._stsClient = new client_sts_1.STSClient({
+                region: this.region,
                 customUserAgent: USER_AGENT,
                 requestHandler: this.requestHandler ? this.requestHandler : undefined,
-                useGlobalEndpoint: this.region ? false : true,
             });
         }
-        return this.stsClient;
+        return this._stsClient;
     }
-    async validateCredentials(expectedAccessKeyId) {
+    async validateCredentials(expectedAccessKeyId, roleChaining) {
         let credentials;
         try {
             credentials = await this.loadCredentials();
@@ -53,9 +47,11 @@ class CredentialsClient {
         catch (error) {
             throw new Error(`Credentials could not be loaded, please check your action inputs: ${(0, helpers_1.errorMessage)(error)}`);
         }
-        const actualAccessKeyId = credentials.accessKeyId;
-        if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
-            throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+        if (!roleChaining) {
+            const actualAccessKeyId = credentials.accessKeyId;
+            if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
+                throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+            }
         }
     }
     async loadCredentials() {
@@ -197,7 +193,7 @@ async function assumeRole(params) {
     const keys = Object.keys(commonAssumeRoleParams);
     keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
     // Instantiate STS client
-    const stsClient = credentialsClient.getStsClient();
+    const stsClient = credentialsClient.stsClient;
     // Assume role using one of three methods
     switch (true) {
         case !!webIdentityToken: {
@@ -278,7 +274,7 @@ function exportRegion(region) {
 exports.exportRegion = exportRegion;
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
-    const client = credentialsClient.getStsClient();
+    const client = credentialsClient.stsClient;
     const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
     const accountId = identity.Account;
     if (!accountId) {
@@ -390,9 +386,7 @@ async function run() {
         const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
         const sessionTokenInput = core.getInput('aws-session-token', { required: false });
         const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
-        const region = core.getInput('aws-region', { required: false }) ||
-            process.env['AWS_REGION'] ||
-            process.env['AWS_DEFAULT_REGION'];
+        const region = core.getInput('aws-region', { required: true });
         const roleToAssume = core.getInput('role-to-assume', { required: false });
         const audience = core.getInput('audience', { required: false });
         const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
@@ -410,6 +404,8 @@ async function run() {
         for (const managedSessionPolicy of managedSessionPoliciesInput) {
             managedSessionPolicies.push({ arn: managedSessionPolicy });
         }
+        const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
+        const roleChaining = roleChainingInput.toLowerCase() === 'true';
         // Logic to decide whether to attempt to use OIDC or not
         const useGitHubOIDCProvider = () => {
             // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted.
@@ -420,14 +416,16 @@ async function run() {
                 !webIdentityTokenFile &&
                 !AccessKeyId &&
                 !disableOIDC &&
-                !process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN']) {
+                !process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
+                !roleChaining) {
                 core.info('It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?');
             }
             return (!!roleToAssume &&
                 !!process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
                 !AccessKeyId &&
                 !webIdentityTokenFile &&
-                !disableOIDC);
+                !disableOIDC &&
+                !roleChaining);
         };
         // Validate and export region
         if (region) {
@@ -463,7 +461,7 @@ async function run() {
             // cases where this action is on a self-hosted runner that doesn't have credentials
             // configured correctly, and cases where the user intended to provide input
             // credentials but the secrets inputs resolved to empty strings.
-            await credentialsClient.validateCredentials(AccessKeyId);
+            await credentialsClient.validateCredentials(AccessKeyId, roleChaining);
             sourceAccountId = await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
         }
         // Get role credentials if configured to do so

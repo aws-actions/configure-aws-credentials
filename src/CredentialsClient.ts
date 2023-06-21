@@ -13,17 +13,13 @@ export interface CredentialsClientProps {
 
 export class CredentialsClient {
   public region?: string;
-  private stsClient?: STSClient;
+  private _stsClient?: STSClient;
   private readonly requestHandler?: NodeHttpHandler;
 
   constructor(props: CredentialsClientProps) {
-    if (props.region) {
-      this.region = props.region;
-    } else {
-      info('No region provided, using global STS endpoint');
-    }
+    this.region = props.region;
     if (props.proxyServer) {
-      info('Configurint proxy handler for STS client');
+      info('Configuring proxy handler for STS client');
       const handler = new HttpsProxyAgent(props.proxyServer);
       this.requestHandler = new NodeHttpHandler({
         httpAgent: handler,
@@ -32,19 +28,18 @@ export class CredentialsClient {
     }
   }
 
-  public getStsClient(): STSClient {
-    if (!this.stsClient) {
-      this.stsClient = new STSClient({
-        region: this.region ? this.region : undefined,
+  public get stsClient(): STSClient {
+    if (!this._stsClient) {
+      this._stsClient = new STSClient({
+        region: this.region,
         customUserAgent: USER_AGENT,
         requestHandler: this.requestHandler ? this.requestHandler : undefined,
-        useGlobalEndpoint: this.region ? false : true,
       });
     }
-    return this.stsClient;
+    return this._stsClient;
   }
 
-  public async validateCredentials(expectedAccessKeyId?: string) {
+  public async validateCredentials(expectedAccessKeyId?: string, roleChaining?: boolean) {
     let credentials;
     try {
       credentials = await this.loadCredentials();
@@ -55,12 +50,12 @@ export class CredentialsClient {
       throw new Error(`Credentials could not be loaded, please check your action inputs: ${errorMessage(error)}`);
     }
 
-    const actualAccessKeyId = credentials.accessKeyId;
+    if (!roleChaining) {
+      const actualAccessKeyId = credentials.accessKeyId;
 
-    if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
-      throw new Error(
-        'Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action'
-      );
+      if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
+        throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+      }
     }
   }
 

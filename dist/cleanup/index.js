@@ -17616,7 +17616,7 @@ function exportRegion(region) {
 exports.exportRegion = exportRegion;
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
-    const client = credentialsClient.getStsClient();
+    const client = credentialsClient.stsClient;
     const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
     const accountId = identity.Account;
     if (!accountId) {

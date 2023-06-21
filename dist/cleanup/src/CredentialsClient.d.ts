@@ -5,10 +5,10 @@ export interface CredentialsClientProps {
 }
 export declare class CredentialsClient {
     region?: string;
-    private stsClient?;
+    private _stsClient?;
     private readonly requestHandler?;
     constructor(props: CredentialsClientProps);
-    getStsClient(): STSClient;
-    validateCredentials(expectedAccessKeyId?: string): Promise<void>;
+    get stsClient(): STSClient;
+    validateCredentials(expectedAccessKeyId?: string, roleChaining?: boolean): Promise<void>;
     private loadCredentials;
 }

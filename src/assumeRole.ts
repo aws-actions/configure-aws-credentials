@@ -139,7 +139,7 @@ export async function assumeRole(params: assumeRoleParams) {
   keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
 
   // Instantiate STS client
-  const stsClient = credentialsClient.getStsClient();
+  const stsClient = credentialsClient.stsClient;
 
   // Assume role using one of three methods
   switch (true) {
