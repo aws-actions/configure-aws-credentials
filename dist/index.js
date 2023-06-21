@@ -153,7 +153,7 @@ async function assumeRoleWithCredentials(params, client) {
     }
 }
 async function assumeRole(params) {
-    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, } = { ...params };
+    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies } = { ...params };
     // Load GitHub environment variables
     const { GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA, GITHUB_WORKSPACE } = process.env;
     if (!GITHUB_REPOSITORY || !GITHUB_WORKFLOW || !GITHUB_ACTION || !GITHUB_ACTOR || !GITHUB_SHA || !GITHUB_WORKSPACE) {
@@ -191,6 +191,8 @@ async function assumeRole(params) {
         DurationSeconds: roleDuration,
         Tags: tags ? tags : undefined,
         ExternalId: roleExternalId ? roleExternalId : undefined,
+        Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
+        PolicyArns: managedSessionPolicies ? managedSessionPolicies : undefined,
     };
     const keys = Object.keys(commonAssumeRoleParams);
     keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
@@ -402,6 +404,12 @@ async function run() {
         const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
         const proxyServer = core.getInput('http-proxy', { required: false });
         const disableOIDC = core.getInput('disable-oidc', { required: false });
+        const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
+        const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
+        const managedSessionPolicies = [];
+        for (const managedSessionPolicy of managedSessionPoliciesInput) {
+            managedSessionPolicies.push(managedSessionPolicy);
+        }
         // Logic to decide whether to attempt to use OIDC or not
         const useGitHubOIDCProvider = () => {
             // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted.
@@ -471,6 +479,8 @@ async function run() {
                     roleSkipSessionTagging,
                     webIdentityTokenFile,
                     webIdentityToken,
+                    inlineSessionPolicy,
+                    managedSessionPolicies,
                 });
             }, true);
             core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser.AssumedRoleId}`);

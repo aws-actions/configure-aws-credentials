@@ -9,5 +9,7 @@ export interface assumeRoleParams {
     roleExternalId?: string;
     webIdentityTokenFile?: string;
     webIdentityToken?: string;
+    inlineSessionPolicy?: string;
+    managedSessionPolicies?: any[];
 }
 export declare function assumeRole(params: assumeRoleParams): Promise<import("@aws-sdk/client-sts").AssumeRoleCommandOutput>;
