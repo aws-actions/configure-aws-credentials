@@ -33,7 +33,7 @@ export async function run() {
     const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false })
     const managedSessionPolicies: any[] = [];
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
-      managedSessionPolicies.push({arn: managedSessionPolicy})
+      managedSessionPolicies.push(managedSessionPolicy)
     }
 
     // Logic to decide whether to attempt to use OIDC or not
