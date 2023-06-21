@@ -205,6 +205,27 @@ In this example, account ID masking has been disabled. By default, the AWS
 account ID will be obscured in the action's output. This may be helpful when
 debugging action failures.
 
+## Customizing The OIDC `sub` Claim
+
+AWS STS [only supports using the following ID token claims](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#condition-keys-wif) in role trust policies as condition keys:
+- `aud`
+- `azp`
+- `amr`
+- `sub`
+
+However, the ID tokens issued by GitHub have [several other useful claims](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#understanding-the-oidc-token)
+that can be used to further restrict access to an IAM role, such as:
+- `ref`
+- `job_workflow_ref`
+- `event_name`
+
+In order to use these claims in your IAM role trust policy, you can use the [GitHub Actions OIDC REST API](https://docs.github.com/en/rest/actions/oidc?apiVersion=2022-11-28)
+to apply a customization template for the `sub` claim for a GitHub repository or organization. This will allow you to embed
+claims like `job_workflow_ref` within the `sub` claim, which can then be validated in your IAM role trust policy.
+
+You can use the official [`actions-oidc-debugger`](https://github.com/github/actions-oidc-debugger) action to see what your
+`sub` claim looks like after applying a customization template.
+
 ## Sample IAM OIDC CloudFormation Template
 If you choose to use GitHub's OIDC provider, you must first set up federation
 with the provider in as an IAM IdP. The GitHub OIDC provider only needs to be
