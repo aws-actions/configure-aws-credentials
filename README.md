@@ -19,7 +19,7 @@ your repository's workflow files. The `v2` tag is a moving tag that will always
 apply to the lastest version 2 train release. We will also provide minor version
 tags on every release, and create a `v3` tag when we are ready for a new major
 release. If you had been following the development of this action so far, this
-is a change to previous states release policy.
+is a change to previous stated release policy.
 
 ### Table of Contents
 <!-- toc -->
