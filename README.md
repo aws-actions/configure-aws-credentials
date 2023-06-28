@@ -6,20 +6,10 @@ variable exports are detected by both the AWS SDKs and the AWS CLI for AWS API
 calls.
 
 ### Recent updates
-We've recently released a `v2` of this action that uses the Node 16 runtime by
-default. You should update your action references to `v2`. We intend `v2` to be
-the new default for this action and will no longer be providing updates to the
-`v1` tag.
 
-When migrating to `v2`, you don't have to consider any changes other than the node version.
-There are no breaking changes between versions; As of release of v2, the node version is the only change.
+**If you use OIDC, you may need to update your identity provider**
 
-As is usual for GitHub Actions, we provide release tags for you to reference in
-your repository's workflow files. The `v2` tag is a moving tag that will always
-apply to the lastest version 2 train release. We will also provide minor version
-tags on every release, and create a `v3` tag when we are ready for a new major
-release. If you had been following the development of this action so far, this
-is a change to previous states release policy.
+There are now [two possible intermediary certificates](https://github.blog/changelog/2023-06-27-github-actions-update-on-oidc-integration-with-aws/) for the Actions SSL certificate. Previously, the certificate with the thumbprint `6938fd4d98bab03faadb97b34396831e3780aea1` was guaranteed to return. Now, the certificate with the thumbprint `1c58a3a8518e8759bf075b76b750d4f2df264fcd` can also be returned, so you will need to [update your identity provider](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html) with this additional new thumbprint.
 
 ### Table of Contents
 <!-- toc -->
@@ -283,6 +273,7 @@ Resources:
         - sts.amazonaws.com
       ThumbprintList:
         - 6938fd4d98bab03faadb97b34396831e3780aea1
+        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
 
 Outputs:
   Role:
