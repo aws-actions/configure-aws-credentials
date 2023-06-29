@@ -54,7 +54,9 @@ export class CredentialsClient {
       const actualAccessKeyId = credentials.accessKeyId;
 
       if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
-        throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+        throw new Error(
+          'Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action'
+        );
       }
     }
   }

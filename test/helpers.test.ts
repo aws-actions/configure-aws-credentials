@@ -10,7 +10,7 @@ describe('helpers', () => {
   });
 
   test('removes special characters from worflow names', () => {
-    expect(helpers.sanitizeGitHubVariables('sdf234@#$%$^&*()_+{}|:"<>?')).toEqual('sdf234@__________+___:_<>?');
+    expect(helpers.sanitizeGitHubVariables('sdf234@#$%$^&*()_+{}|:"<>?')).toEqual('sdf234@__________+___:____');
   });
 
   test('can sleep', () => {

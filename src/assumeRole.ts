@@ -87,7 +87,7 @@ export async function assumeRole(params: assumeRoleParams) {
     webIdentityTokenFile,
     webIdentityToken,
     inlineSessionPolicy,
-    managedSessionPolicies
+    managedSessionPolicies,
   } = { ...params };
 
   // Load GitHub environment variables

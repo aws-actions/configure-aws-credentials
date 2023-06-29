@@ -27,10 +27,10 @@ export async function run() {
     const proxyServer = core.getInput('http-proxy', { required: false });
     const disableOIDC = core.getInput('disable-oidc', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
-    const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false })
+    const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
     const managedSessionPolicies: any[] = [];
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
-      managedSessionPolicies.push({arn: managedSessionPolicy});
+      managedSessionPolicies.push({ arn: managedSessionPolicy });
     }
     const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
     const roleChaining = roleChainingInput.toLowerCase() === 'true';

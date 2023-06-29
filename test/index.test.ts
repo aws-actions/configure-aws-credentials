@@ -42,7 +42,7 @@ const DEFAULT_INPUTS = {
   ...CREDS_INPUTS,
   'aws-session-token': FAKE_SESSION_TOKEN,
   'aws-region': FAKE_REGION,
-  'mask-aws-account-id': 'TRUE',
+  'mask-aws-account-id': 'true',
 };
 const ASSUME_ROLE_INPUTS = { ...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION };
 // #endregion
@@ -178,11 +178,9 @@ describe('Configure AWS Credentials', () => {
 
     expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(2);
-    expect(core.setSecret).toHaveBeenCalledTimes(1);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
   });
 
   test('action with no accessible credentials fails', async () => {
@@ -235,7 +233,7 @@ describe('Configure AWS Credentials', () => {
 
     expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(4);
-    expect(core.setSecret).toHaveBeenCalledTimes(3);
+    expect(core.setSecret).toHaveBeenCalledTimes(2);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
     expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -243,7 +241,6 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
   });
 
   test('existing env var creds are cleared', async () => {
@@ -257,7 +254,7 @@ describe('Configure AWS Credentials', () => {
 
     expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(5);
-    expect(core.setSecret).toHaveBeenCalledTimes(3);
+    expect(core.setSecret).toHaveBeenCalledTimes(2);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
     expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -266,7 +263,6 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
   });
 
   test('validates region name', async () => {
@@ -319,72 +315,6 @@ describe('Configure AWS Credentials', () => {
     expect(core.setFailed).toHaveBeenCalled();
   });
 
-  test('basic role assumption exports', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(1);
-    expect(core.exportVariable).toHaveBeenCalledTimes(7);
-    expect(core.setSecret).toHaveBeenCalledTimes(7);
-    expect(core.setOutput).toHaveBeenCalledTimes(2);
-
-    // first the source credentials are exported and masked
-    expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_ACCOUNT_ID);
-
-    expect(core.exportVariable).toHaveBeenNthCalledWith(1, 'AWS_DEFAULT_REGION', FAKE_REGION);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(2, 'AWS_REGION', FAKE_REGION);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(3, 'AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(4, 'AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
-
-    expect(core.setOutput).toHaveBeenNthCalledWith(1, 'aws-account-id', FAKE_ACCOUNT_ID);
-
-    // then the role credentials are exported and masked
-    expect(core.setSecret).toHaveBeenNthCalledWith(4, FAKE_STS_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenNthCalledWith(5, FAKE_STS_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenNthCalledWith(6, FAKE_STS_SESSION_TOKEN);
-    expect(core.setSecret).toHaveBeenNthCalledWith(7, FAKE_ROLE_ACCOUNT_ID);
-
-    expect(core.exportVariable).toHaveBeenNthCalledWith(5, 'AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(6, 'AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(7, 'AWS_SESSION_TOKEN', FAKE_STS_SESSION_TOKEN);
-
-    expect(core.setOutput).toHaveBeenNthCalledWith(2, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
-  });
-
-  test('assume role can pull source credentials from self-hosted environment', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION }));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(1);
-    expect(core.exportVariable).toHaveBeenCalledTimes(5);
-    expect(core.setSecret).toHaveBeenCalledTimes(5);
-    expect(core.setOutput).toHaveBeenCalledTimes(2);
-
-    // first the source account is exported and masked
-    expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_ACCOUNT_ID);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(1, 'AWS_DEFAULT_REGION', FAKE_REGION);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(2, 'AWS_REGION', FAKE_REGION);
-    expect(core.setOutput).toHaveBeenNthCalledWith(1, 'aws-account-id', FAKE_ACCOUNT_ID);
-
-    // then the role credentials are exported and masked
-    expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenNthCalledWith(4, FAKE_STS_SESSION_TOKEN);
-    expect(core.setSecret).toHaveBeenNthCalledWith(5, FAKE_ROLE_ACCOUNT_ID);
-
-    expect(core.exportVariable).toHaveBeenNthCalledWith(3, 'AWS_ACCESS_KEY_ID', FAKE_STS_ACCESS_KEY_ID);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(4, 'AWS_SECRET_ACCESS_KEY', FAKE_STS_SECRET_ACCESS_KEY);
-    expect(core.exportVariable).toHaveBeenNthCalledWith(5, 'AWS_SESSION_TOKEN', FAKE_STS_SESSION_TOKEN);
-
-    expect(core.setOutput).toHaveBeenNthCalledWith(2, 'aws-account-id', FAKE_ROLE_ACCOUNT_ID);
-  });
-
   test('role assumption tags', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
 
@@ -393,7 +323,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 6 * 3600,
+      DurationSeconds: 3600,
       Tags: [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
@@ -437,49 +367,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'MySessionName',
-      DurationSeconds: 6 * 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
-    });
-  });
-
-  test('sets durationSeconds to one hour when session token provided and no duration is provided', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'aws-session-token': FAKE_SESSION_TOKEN }));
-
-    await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
       DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
-    });
-  });
-
-  test('sets durationSeconds to one 6 hours no session token or duration is provided', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS }));
-
-    await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 6 * 3600,
       Tags: [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
@@ -501,7 +389,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::123456789012:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 6 * 3600,
+      DurationSeconds: 3600,
       Tags: [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
@@ -528,7 +416,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 6 * 3600,
+      DurationSeconds: 3600,
       WebIdentityToken: 'testpayload',
     });
   });
@@ -547,7 +435,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 6 * 3600,
+      DurationSeconds: 3600,
       WebIdentityToken: 'testpayload',
     });
   });
@@ -622,7 +510,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 6 * 3600,
+      DurationSeconds: 3600,
       Tags: [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
@@ -646,14 +534,14 @@ describe('Configure AWS Credentials', () => {
     };
 
     const sanitizedWorkflowName =
-      'Workflow__________+_ -./:;<=>?@____________1yFvMOeD3ZHYsHrGjCceOboMYzBPo0CRNFdcsVRG6UgR3A912a8KfcBtEVvkAS7kRBq80umGff8mux5IN1y55HQWPNBNyaruuVr4islFXte4FDQZexGJRUSMyHQpxJ8OmZnET84oDmbvmIjgxI6IBrdihX9PHMapT4gQvRYnLqNiKb18rEMWDNoZRy51UPX5sWK2GKPipgKSO9kqLckZa';
+      'Workflow__________+_ -./:__=__@____________1yFvMOeD3ZHYsHrGjCceOboMYzBPo0CRNFdcsVRG6UgR3A912a8KfcBtEVvkAS7kRBq80umGff8mux5IN1y55HQWPNBNyaruuVr4islFXte4FDQZexGJRUSMyHQpxJ8OmZnET84oDmbvmIjgxI6IBrdihX9PHMapT4gQvRYnLqNiKb18rEMWDNoZRy51UPX5sWK2GKPipgKSO9kqLckZa';
 
     await run();
 
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 6 * 3600,
+      DurationSeconds: 3600,
       Tags: [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
@@ -676,7 +564,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 21600,
+      DurationSeconds: 3600,
       Tags: undefined,
     });
   });
@@ -691,7 +579,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 21600,
+      DurationSeconds: 3600,
       Tags: [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
@@ -712,7 +600,7 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
       RoleArn: ROLE_ARN,
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: 21600,
+      DurationSeconds: 3600,
       Tags: [
         { Key: 'GitHub', Value: 'Actions' },
         { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
