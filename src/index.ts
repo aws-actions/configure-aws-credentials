@@ -29,11 +29,11 @@ export async function run() {
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
     const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
     const managedSessionPolicies: any[] = [];
+    const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
+    const roleChaining = roleChainingInput.toLowerCase() === 'true';
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
       managedSessionPolicies.push({ arn: managedSessionPolicy });
     }
-    const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
-    const roleChaining = roleChainingInput.toLowerCase() === 'true';
 
     // Logic to decide whether to attempt to use OIDC or not
     const useGitHubOIDCProvider = () => {
@@ -63,44 +63,38 @@ export async function run() {
       );
     };
 
-    // Validate and export region
-    if (region) {
-      if (!region.match(REGION_REGEX)) {
-        throw new Error(`Region is not valid: ${region}`);
-      }
-      exportRegion(region);
+    if (!region.match(REGION_REGEX)) {
+      throw new Error(`Region is not valid: ${region}`);
     }
+    exportRegion(region);
 
     // Instantiate credentials client
     const credentialsClient = new CredentialsClient({ region, proxyServer });
-
-    // Always export the source credentials and account ID.
-    // The STS client for calling AssumeRole pulls creds from the environment.
-    // Plus, in the assume role case, if the AssumeRole call fails, we want
-    // the source credentials and account ID to already be masked as secrets
-    // in any error messages.
-    if (AccessKeyId) {
-      if (!SecretAccessKey) {
-        throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
-      }
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
-    }
+    let sourceAccountId: string;
+    let webIdentityToken: string;
 
     // If OIDC is being used, generate token
     // Else, validate that the SDK can pick up credentials
-    let sourceAccountId: string;
-    let webIdentityToken: string;
     if (useGitHubOIDCProvider()) {
       webIdentityToken = await core.getIDToken(audience);
-      // Implement #359
-    } else {
-      // Regardless of whether any source credentials were provided as inputs,
-      // validate that the SDK can actually pick up credentials.  This validates
-      // cases where this action is on a self-hosted runner that doesn't have credentials
-      // configured correctly, and cases where the user intended to provide input
-      // credentials but the secrets inputs resolved to empty strings.
-      await credentialsClient.validateCredentials(AccessKeyId, roleChaining);
+    } else if (AccessKeyId) {
+      if (!SecretAccessKey) {
+        throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
+      }
+      // The STS client for calling AssumeRole pulls creds from the environment.
+      // Plus, in the assume role case, if the AssumeRole call fails, we want
+      // the source credentials and account ID to already be masked as secrets
+      // in any error messages.
+      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
+    } else if (!webIdentityTokenFile && !roleChaining) {
+      throw new Error('Could not determine how to assume credentials. Please check your inputs and try again.');
+    }
 
+    if (AccessKeyId || roleChaining) {
+      // Validate that the SDK can actually pick up credentials.
+      // This validates cases where this action is using existing environment credentials,
+      // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
+      await credentialsClient.validateCredentials(AccessKeyId, roleChaining);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
 
@@ -131,9 +125,7 @@ export async function run() {
         await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
       }
       await exportAccountId(credentialsClient, maskAccountId);
-      // implement #432
     } else {
-      // implement #370
       core.info('Proceeding with IAM user credentials');
     }
   } catch (error) {

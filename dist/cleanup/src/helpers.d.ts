@@ -2,7 +2,7 @@ import type { Credentials } from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
 export declare function exportCredentials(creds?: Partial<Credentials>): void;
 export declare function exportRegion(region: string): void;
-export declare function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: string): Promise<string>;
+export declare function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: boolean): Promise<string>;
 export declare function sanitizeGitHubVariables(name: string): string;
 export declare function defaultSleep(ms: number): Promise<unknown>;
 declare let sleep: typeof defaultSleep;

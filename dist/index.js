@@ -149,7 +149,7 @@ async function assumeRoleWithCredentials(params, client) {
     }
 }
 async function assumeRole(params) {
-    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies } = { ...params };
+    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies, } = { ...params };
     // Load GitHub environment variables
     const { GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA, GITHUB_WORKSPACE } = process.env;
     if (!GITHUB_REPOSITORY || !GITHUB_WORKFLOW || !GITHUB_ACTION || !GITHUB_ACTOR || !GITHUB_SHA || !GITHUB_WORKSPACE) {
@@ -188,7 +188,7 @@ async function assumeRole(params) {
         Tags: tags ? tags : undefined,
         ExternalId: roleExternalId ? roleExternalId : undefined,
         Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
-        PolicyArns: managedSessionPolicies ? managedSessionPolicies : undefined,
+        PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
     };
     const keys = Object.keys(commonAssumeRoleParams);
     keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
@@ -389,7 +389,7 @@ async function run() {
         const region = core.getInput('aws-region', { required: true });
         const roleToAssume = core.getInput('role-to-assume', { required: false });
         const audience = core.getInput('audience', { required: false });
-        const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
+        const maskAccountId = core.getBooleanInput('mask-aws-account-id', { required: false });
         const roleExternalId = core.getInput('role-external-id', { required: false });
         const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
         const roleDuration = parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
@@ -401,11 +401,11 @@ async function run() {
         const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
         const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
         const managedSessionPolicies = [];
+        const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
+        const roleChaining = roleChainingInput.toLowerCase() === 'true';
         for (const managedSessionPolicy of managedSessionPoliciesInput) {
             managedSessionPolicies.push({ arn: managedSessionPolicy });
         }
-        const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
-        const roleChaining = roleChainingInput.toLowerCase() === 'true';
         // Logic to decide whether to attempt to use OIDC or not
         const useGitHubOIDCProvider = () => {
             // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted.
@@ -427,40 +427,36 @@ async function run() {
                 !disableOIDC &&
                 !roleChaining);
         };
-        // Validate and export region
-        if (region) {
-            if (!region.match(REGION_REGEX)) {
-                throw new Error(`Region is not valid: ${region}`);
-            }
-            (0, helpers_1.exportRegion)(region);
+        if (!region.match(REGION_REGEX)) {
+            throw new Error(`Region is not valid: ${region}`);
         }
+        (0, helpers_1.exportRegion)(region);
         // Instantiate credentials client
         const credentialsClient = new CredentialsClient_1.CredentialsClient({ region, proxyServer });
-        // Always export the source credentials and account ID.
-        // The STS client for calling AssumeRole pulls creds from the environment.
-        // Plus, in the assume role case, if the AssumeRole call fails, we want
-        // the source credentials and account ID to already be masked as secrets
-        // in any error messages.
-        if (AccessKeyId) {
+        let sourceAccountId;
+        let webIdentityToken;
+        // If OIDC is being used, generate token
+        // Else, validate that the SDK can pick up credentials
+        if (useGitHubOIDCProvider()) {
+            webIdentityToken = await core.getIDToken(audience);
+        }
+        else if (AccessKeyId) {
             if (!SecretAccessKey) {
                 throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
             }
+            // The STS client for calling AssumeRole pulls creds from the environment.
+            // Plus, in the assume role case, if the AssumeRole call fails, we want
+            // the source credentials and account ID to already be masked as secrets
+            // in any error messages.
             (0, helpers_1.exportCredentials)({ AccessKeyId, SecretAccessKey, SessionToken });
         }
-        // If OIDC is being used, generate token
-        // Else, validate that the SDK can pick up credentials
-        let sourceAccountId;
-        let webIdentityToken;
-        if (useGitHubOIDCProvider()) {
-            webIdentityToken = await core.getIDToken(audience);
-            // Implement #359
+        else if (!webIdentityTokenFile && !roleChaining) {
+            throw new Error('Could not determine how to assume credentials. Please check your inputs and try again.');
         }
-        else {
-            // Regardless of whether any source credentials were provided as inputs,
-            // validate that the SDK can actually pick up credentials.  This validates
-            // cases where this action is on a self-hosted runner that doesn't have credentials
-            // configured correctly, and cases where the user intended to provide input
-            // credentials but the secrets inputs resolved to empty strings.
+        if (AccessKeyId || roleChaining) {
+            // Validate that the SDK can actually pick up credentials.
+            // This validates cases where this action is using existing environment credentials,
+            // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
             await credentialsClient.validateCredentials(AccessKeyId, roleChaining);
             sourceAccountId = await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
         }
@@ -491,10 +487,8 @@ async function run() {
                 await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
             }
             await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
-            // implement #432
         }
         else {
-            // implement #370
             core.info('Proceeding with IAM user credentials');
         }
     }

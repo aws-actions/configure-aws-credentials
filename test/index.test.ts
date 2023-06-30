@@ -171,19 +171,6 @@ describe('Configure AWS Credentials', () => {
     expect(core.setFailed).toHaveBeenCalledTimes(0);
   });
 
-  test('hosted runners can pull creds from a self-hosted environment', async () => {
-    const mockInputs = { 'aws-region': FAKE_REGION };
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
-    expect(core.exportVariable).toHaveBeenCalledTimes(2);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
-    expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-  });
-
   test('action with no accessible credentials fails', async () => {
     const mockInputs = { 'aws-region': FAKE_REGION };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
@@ -195,7 +182,7 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Credentials could not be loaded, please check your action inputs: Could not load credentials from any providers'
+      'Could not determine how to assume credentials. Please check your inputs and try again.'
     );
   });
 
@@ -210,7 +197,7 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Credentials could not be loaded, please check your action inputs: Access key ID empty after loading credentials'
+      'Could not determine how to assume credentials. Please check your inputs and try again.'
     );
   });
 
