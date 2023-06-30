@@ -364,6 +364,9 @@ async function run() {
       webIdentityToken = await core.getIDToken(audience);
       roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
+    } else if (webIdentityTokenFile) {
+      roleDurationSeconds = core.getInput('role-duration-seconds', {required: false}) || DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
+      // We don't validate the credentials here because we don't have them yet when using webIdentityTokenFile.      
     } else {
       // Regardless of whether any source credentials were provided as inputs,
       // validate that the SDK can actually pick up credentials.  This validates
