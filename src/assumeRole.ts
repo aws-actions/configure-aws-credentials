@@ -133,7 +133,7 @@ export async function assumeRole(params: assumeRoleParams) {
     Tags: tags ? tags : undefined,
     ExternalId: roleExternalId ? roleExternalId : undefined,
     Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
-    PolicyArns: managedSessionPolicies ? managedSessionPolicies : undefined,
+    PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
   };
   const keys = Object.keys(commonAssumeRoleParams) as Array<keyof typeof commonAssumeRoleParams>;
   keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);

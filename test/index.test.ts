@@ -85,6 +85,8 @@ describe('Configure AWS Credentials', () => {
     jest.clearAllMocks();
     mockedSTS.reset();
     (fromEnv as jest.Mock).mockReset();
+    jest.spyOn(core, 'getMultilineInput').mockImplementation(() => []);
+    jest.spyOn(core, 'getBooleanInput').mockImplementation();
     jest.spyOn(core, 'getIDToken').mockImplementation(async () => Promise.resolve('testtoken'));
     jest.spyOn(core, 'exportVariable').mockImplementation();
     jest.spyOn(core, 'setSecret').mockImplementation();
@@ -137,7 +139,7 @@ describe('Configure AWS Credentials', () => {
 
     expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(5);
-    expect(core.setSecret).toHaveBeenCalledTimes(4);
+    expect(core.setSecret).toHaveBeenCalledTimes(3);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
     expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -147,7 +149,6 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
   });
 
   test('action fails when github env vars are not set', async () => {
@@ -287,9 +288,10 @@ describe('Configure AWS Credentials', () => {
     );
   });
 
-  test('can opt out of masking account ID', async () => {
-    const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'false' };
+  test('can opt into masking account ID', async () => {
+    const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'true' };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
+    jest.spyOn(core, 'getBooleanInput').mockImplementation(() => true);
 
     await run();
 
@@ -302,7 +304,7 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-    expect(core.setSecret).toHaveBeenCalledTimes(2);
+    expect(core.setSecret).toHaveBeenCalledTimes(3);
   });
 
   test('error is caught by core.setFailed and caught', async () => {
@@ -456,9 +458,6 @@ describe('Configure AWS Credentials', () => {
       DurationSeconds: 3600,
       WebIdentityToken: 'testtoken',
     });
-    expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_STS_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
   });
 
   test('GH OIDC With custom role duration', async () => {
@@ -481,9 +480,6 @@ describe('Configure AWS Credentials', () => {
       DurationSeconds: parseInt(CUSTOM_ROLE_DURATION),
       WebIdentityToken: 'testtoken',
     });
-    expect(core.setSecret).toHaveBeenNthCalledWith(1, FAKE_STS_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenNthCalledWith(2, FAKE_STS_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenNthCalledWith(3, FAKE_STS_SESSION_TOKEN);
   });
 
   test('role assumption fails after maximum trials using OIDC provider', async () => {
