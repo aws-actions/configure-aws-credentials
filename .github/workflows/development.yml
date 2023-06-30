@@ -100,5 +100,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: "Install dependencies"
         uses: bahmutov/npm-install@v1
+      - name: "Disable auto CRLF"
+        run: git config --global core.autocrlf false
       - name: "Run tests"
         run: npm run test --if-present
