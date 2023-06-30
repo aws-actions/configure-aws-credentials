@@ -86,7 +86,6 @@ describe('Configure AWS Credentials', () => {
     mockedSTS.reset();
     (fromEnv as jest.Mock).mockReset();
     jest.spyOn(core, 'getMultilineInput').mockImplementation(() => []);
-    jest.spyOn(core, 'getBooleanInput').mockImplementation();
     jest.spyOn(core, 'getIDToken').mockImplementation(async () => Promise.resolve('testtoken'));
     jest.spyOn(core, 'exportVariable').mockImplementation();
     jest.spyOn(core, 'setSecret').mockImplementation();
@@ -139,7 +138,7 @@ describe('Configure AWS Credentials', () => {
 
     expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(5);
-    expect(core.setSecret).toHaveBeenCalledTimes(3);
+    expect(core.setSecret).toHaveBeenCalledTimes(4);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
     expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -278,7 +277,6 @@ describe('Configure AWS Credentials', () => {
   test('can opt into masking account ID', async () => {
     const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'true' };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    jest.spyOn(core, 'getBooleanInput').mockImplementation(() => true);
 
     await run();
 
