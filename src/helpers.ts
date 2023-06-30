@@ -34,7 +34,7 @@ export function exportRegion(region: string) {
 }
 
 // Obtains account ID from STS Client and sets it as output
-export async function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: string) {
+export async function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: boolean) {
   const client = credentialsClient.stsClient;
   const identity = await client.send(new GetCallerIdentityCommand({}));
   const accountId = identity.Account;

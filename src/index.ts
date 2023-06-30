@@ -17,7 +17,7 @@ export async function run() {
     const region = core.getInput('aws-region', { required: true });
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
-    const maskAccountId = core.getInput('mask-aws-account-id', { required: false });
+    const maskAccountId = core.getBooleanInput('mask-aws-account-id', { required: false });
     const roleExternalId = core.getInput('role-external-id', { required: false });
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const roleDuration = parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
@@ -27,10 +27,10 @@ export async function run() {
     const proxyServer = core.getInput('http-proxy', { required: false });
     const disableOIDC = core.getInput('disable-oidc', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
-    const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false })
+    const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
     const managedSessionPolicies: any[] = [];
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
-      managedSessionPolicies.push({arn: managedSessionPolicy});
+      managedSessionPolicies.push({ arn: managedSessionPolicy });
     }
     const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
     const roleChaining = roleChainingInput.toLowerCase() === 'true';
