@@ -8,7 +8,7 @@ const SANITIZATION_CHARACTER = '_';
 
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
-export function exportCredentials(creds?: Partial<Credentials>) {
+export function exportCredentials(creds?: Partial<Credentials>, outputCredentials?: boolean) {
   if (creds?.AccessKeyId) {
     core.setSecret(creds.AccessKeyId);
     core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
@@ -26,6 +26,26 @@ export function exportCredentials(creds?: Partial<Credentials>) {
     // clear session token from previous credentials action
     core.exportVariable('AWS_SESSION_TOKEN', '');
   }
+
+  if (outputCredentials) {
+    if (creds?.AccessKeyId) {
+      core.setOutput('aws-access-key-id', creds.AccessKeyId);
+    }
+    if (creds?.SecretAccessKey) {
+      core.setOutput('aws-secret-access-key', creds.SecretAccessKey);
+    }
+    if (creds?.SessionToken) {
+      core.setOutput('aws-session-token', creds.SessionToken);
+    }
+  }
+}
+
+export function unsetCredentials() {
+  core.exportVariable('AWS_ACCESS_KEY_ID', '');
+  core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
+  core.exportVariable('AWS_SESSION_TOKEN', '');
+  core.exportVariable('AWS_REGION', '');
+  core.exportVariable('AWS_DEFAULT_REGION', '');
 }
 
 export function exportRegion(region: string) {
@@ -74,8 +94,8 @@ export function reset() {
 export async function retryAndBackoff<T>(
   fn: () => Promise<T>,
   isRetryable: boolean,
-  retries = 0,
   maxRetries = 12,
+  retries = 0,
   base = 50
 ): Promise<T> {
   try {
@@ -90,7 +110,7 @@ export async function retryAndBackoff<T>(
     if (retries === maxRetries) {
       throw err;
     }
-    return await retryAndBackoff(fn, isRetryable, retries, maxRetries, base);
+    return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);
   }
 }
 

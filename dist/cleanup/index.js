@@ -17583,14 +17583,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.exportCredentials = void 0;
+exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.unsetCredentials = exports.exportCredentials = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const client_sts_1 = __nccwpck_require__(2209);
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
-function exportCredentials(creds) {
+function exportCredentials(creds, outputCredentials) {
     if (creds?.AccessKeyId) {
         core.setSecret(creds.AccessKeyId);
         core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
@@ -17607,8 +17607,27 @@ function exportCredentials(creds) {
         // clear session token from previous credentials action
         core.exportVariable('AWS_SESSION_TOKEN', '');
     }
+    if (outputCredentials) {
+        if (creds?.AccessKeyId) {
+            core.setOutput('aws-access-key-id', creds.AccessKeyId);
+        }
+        if (creds?.SecretAccessKey) {
+            core.setOutput('aws-secret-access-key', creds.SecretAccessKey);
+        }
+        if (creds?.SessionToken) {
+            core.setOutput('aws-session-token', creds.SessionToken);
+        }
+    }
 }
 exports.exportCredentials = exportCredentials;
+function unsetCredentials() {
+    core.exportVariable('AWS_ACCESS_KEY_ID', '');
+    core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
+    core.exportVariable('AWS_SESSION_TOKEN', '');
+    core.exportVariable('AWS_REGION', '');
+    core.exportVariable('AWS_DEFAULT_REGION', '');
+}
+exports.unsetCredentials = unsetCredentials;
 function exportRegion(region) {
     core.exportVariable('AWS_DEFAULT_REGION', region);
     core.exportVariable('AWS_REGION', region);
@@ -17652,7 +17671,7 @@ function reset() {
 }
 exports.reset = reset;
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
-async function retryAndBackoff(fn, isRetryable, retries = 0, maxRetries = 12, base = 50) {
+async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, base = 50) {
     try {
         return await fn();
     }
@@ -17666,7 +17685,7 @@ async function retryAndBackoff(fn, isRetryable, retries = 0, maxRetries = 12, ba
         if (retries === maxRetries) {
             throw err;
         }
-        return await retryAndBackoff(fn, isRetryable, retries, maxRetries, base);
+        return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);
     }
 }
 exports.retryAndBackoff = retryAndBackoff;

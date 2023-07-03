@@ -34,9 +34,6 @@ inputs:
     description: The audience to use for the OIDC provider
     required: false
     default: sts.amazonaws.com
-  disable-oidc:
-    description: Strictly disable action from attempting to fetch credentials with OIDC
-    required: false
   http-proxy:
     description: 'Proxy to use for the AWS SDK agent'
     required: false
@@ -60,6 +57,18 @@ inputs:
     required: false
   managed-session-policies:
     description: 'List of managed session policies'
+    required: false
+  output-credentials:
+    description: Whether to set credentials as step output
+    required: false
+  unset-current-credentials:
+    description: Whether to unset the existing credentials in your runner
+    required: false
+  disable-retry:
+    description: Whether to disable the retry and backoff mechanism when the assume role call fails
+    required: false
+  retry-max-attempts:
+    description: The maximum number of attempts it will attempt to retry the assume role call
     required: false
 outputs:
   aws-account-id:

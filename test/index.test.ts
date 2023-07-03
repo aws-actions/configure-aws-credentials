@@ -23,6 +23,10 @@ const FAKE_ACCOUNT_ID = '123456789012';
 const FAKE_ROLE_ACCOUNT_ID = '111111111111';
 const ROLE_NAME = 'MY-ROLE';
 const ROLE_ARN = 'arn:aws:iam::111111111111:role/MY-ROLE';
+const MANAGED_SESSION_POLICY_INPUT = [
+  'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess',
+  'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess',
+];
 const ENVIRONMENT_VARIABLE_OVERRIDES = {
   SHOW_STACK_TRACE: 'false',
   GITHUB_REPOSITORY: 'MY-REPOSITORY-NAME',
@@ -50,6 +54,12 @@ const ASSUME_ROLE_INPUTS = { ...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-r
 const mockedSTS = mockClient(STSClient);
 function mockGetInput(requestResponse: Record<string, string>) {
   return function (name: string, _options: unknown): string {
+    return requestResponse[name]!;
+  };
+}
+
+function mockGetMultilineInput(requestResponse: Record<string, string[]>) {
+  return function (name: string, _options: unknown): string[] {
     return requestResponse[name]!;
   };
 }
@@ -481,6 +491,40 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(12);
   });
 
+  test('role assumption fails after one trial when disabling retry', async () => {
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    jest
+      .spyOn(core, 'getInput')
+      .mockImplementation(
+        mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'disable-retry': 'true' })
+      );
+
+    mockedSTS.reset();
+    mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
+
+    await run();
+    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(1);
+  });
+
+  test('max retries is configurable', async () => {
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    jest.spyOn(core, 'getInput').mockImplementation(
+      mockGetInput({
+        'role-to-assume': ROLE_ARN,
+        'aws-region': FAKE_REGION,
+        'retry-max-attempts': '15',
+      })
+    );
+
+    mockedSTS.reset();
+    mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
+
+    await run();
+    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(15);
+  });
+
   test('role external ID provided', async () => {
     jest
       .spyOn(core, 'getInput')
@@ -613,5 +657,47 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.exportVariable).toReturn();
+  });
+
+  test('inline policy and managed session policies are provided in assume role calls', async () => {
+    jest
+      .spyOn(core, 'getInput')
+      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'inline-session-policy': 'inline' }));
+
+    jest
+      .spyOn(core, 'getMultilineInput')
+      .mockImplementation(mockGetMultilineInput({ 'managed-session-policies': MANAGED_SESSION_POLICY_INPUT }));
+
+    await run();
+
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
+      RoleArn: ROLE_ARN,
+      RoleSessionName: 'GitHubActions',
+      DurationSeconds: 3600,
+      Tags: [
+        { Key: 'GitHub', Value: 'Actions' },
+        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
+        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
+        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
+        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
+        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
+        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
+      ],
+      Policy: 'inline',
+      PolicyArns: [
+        { arn: 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess' },
+        { arn: 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess' },
+      ],
+    });
+  });
+
+  test('unsets credentials if enabled', async () => {
+    jest
+      .spyOn(core, 'getInput')
+      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'unset-current-credentials': 'true' }));
+
+    await run();
+
+    expect(core.exportVariable).toHaveBeenCalledTimes(9);
   });
 });

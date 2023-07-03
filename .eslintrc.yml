@@ -107,6 +107,7 @@ overrides:
       '@typescript-eslint/prefer-includes': [warn]
       dot-notation: [off]
       '@typescript-eslint/dot-notation': [error]
+      '@typescript-eslint/no-explicit-any': [off]
       '@typescript-eslint/consistent-type-exports': [warn]
       '@typescript-eslint/consistent-type-imports': [warn]
       '@typescript-eslint/no-base-to-string': [error]

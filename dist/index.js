@@ -241,14 +241,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.exportCredentials = void 0;
+exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.unsetCredentials = exports.exportCredentials = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const client_sts_1 = __nccwpck_require__(2209);
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
-function exportCredentials(creds) {
+function exportCredentials(creds, outputCredentials) {
     if (creds?.AccessKeyId) {
         core.setSecret(creds.AccessKeyId);
         core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
@@ -265,8 +265,27 @@ function exportCredentials(creds) {
         // clear session token from previous credentials action
         core.exportVariable('AWS_SESSION_TOKEN', '');
     }
+    if (outputCredentials) {
+        if (creds?.AccessKeyId) {
+            core.setOutput('aws-access-key-id', creds.AccessKeyId);
+        }
+        if (creds?.SecretAccessKey) {
+            core.setOutput('aws-secret-access-key', creds.SecretAccessKey);
+        }
+        if (creds?.SessionToken) {
+            core.setOutput('aws-session-token', creds.SessionToken);
+        }
+    }
 }
 exports.exportCredentials = exportCredentials;
+function unsetCredentials() {
+    core.exportVariable('AWS_ACCESS_KEY_ID', '');
+    core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
+    core.exportVariable('AWS_SESSION_TOKEN', '');
+    core.exportVariable('AWS_REGION', '');
+    core.exportVariable('AWS_DEFAULT_REGION', '');
+}
+exports.unsetCredentials = unsetCredentials;
 function exportRegion(region) {
     core.exportVariable('AWS_DEFAULT_REGION', region);
     core.exportVariable('AWS_REGION', region);
@@ -310,7 +329,7 @@ function reset() {
 }
 exports.reset = reset;
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
-async function retryAndBackoff(fn, isRetryable, retries = 0, maxRetries = 12, base = 50) {
+async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, base = 50) {
     try {
         return await fn();
     }
@@ -324,7 +343,7 @@ async function retryAndBackoff(fn, isRetryable, retries = 0, maxRetries = 12, ba
         if (retries === maxRetries) {
             throw err;
         }
-        return await retryAndBackoff(fn, isRetryable, retries, maxRetries, base);
+        return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);
     }
 }
 exports.retryAndBackoff = retryAndBackoff;
@@ -398,12 +417,18 @@ async function run() {
         const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
         const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
         const proxyServer = core.getInput('http-proxy', { required: false });
-        const disableOIDC = core.getInput('disable-oidc', { required: false });
         const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
         const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
         const managedSessionPolicies = [];
         const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
         const roleChaining = roleChainingInput.toLowerCase() === 'true';
+        const outputCredentialsInput = core.getInput('output-credentials', { required: false }) || 'false';
+        const outputCredentials = outputCredentialsInput.toLowerCase() === 'true';
+        const unsetCurrentCredentialsInput = core.getInput('unset-current-credentials', { required: false }) || 'false';
+        const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
+        const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
+        const disableRetry = disableRetryInput.toLowerCase() === 'true';
+        const maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
         for (const managedSessionPolicy of managedSessionPoliciesInput) {
             managedSessionPolicies.push({ arn: managedSessionPolicy });
         }
@@ -412,11 +437,10 @@ async function run() {
             // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted.
             // This is necessary to authenticate with OIDC, but not strictly set just for OIDC. If it is not set and all other
             // checks pass, it is likely but not guaranteed that the user needs but lacks this permission in their workflow.
-            // So, we will log a warning when it is the only piece absent, as well as add an opportunity to manually disable the entire check.
+            // So, we will log a warning when it is the only piece absent
             if (!!roleToAssume &&
                 !webIdentityTokenFile &&
                 !AccessKeyId &&
-                !disableOIDC &&
                 !process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
                 !roleChaining) {
                 core.info('It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?');
@@ -425,9 +449,11 @@ async function run() {
                 !!process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
                 !AccessKeyId &&
                 !webIdentityTokenFile &&
-                !disableOIDC &&
                 !roleChaining);
         };
+        if (unsetCurrentCredentials) {
+            (0, helpers_1.unsetCredentials)();
+        }
         if (!region.match(REGION_REGEX)) {
             throw new Error(`Region is not valid: ${region}`);
         }
@@ -477,9 +503,9 @@ async function run() {
                     inlineSessionPolicy,
                     managedSessionPolicies,
                 });
-            }, true);
+            }, !disableRetry, maxRetries);
             core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser.AssumedRoleId}`);
-            (0, helpers_1.exportCredentials)(roleCredentials.Credentials);
+            (0, helpers_1.exportCredentials)(roleCredentials.Credentials, outputCredentials);
             // We need to validate the credentials in 2 of our use-cases
             // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
             //  is set to `true` then we are NOT in a self-hosted runner.
