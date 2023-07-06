@@ -18,6 +18,7 @@ const FAKE_SESSION_TOKEN = 'MYAWSSESSIONTOKEN';
 const FAKE_STS_ACCESS_KEY_ID = 'STSAWSACCESSKEYID';
 const FAKE_STS_SECRET_ACCESS_KEY = 'STSAWSSECRETACCESSKEY';
 const FAKE_STS_SESSION_TOKEN = 'STSAWSSESSIONTOKEN';
+const FAKE_ASSUMED_ROLE_ID = 'AROAFAKEASSUMEDROLEID';
 const FAKE_REGION = 'fake-region-1';
 const FAKE_ACCOUNT_ID = '123456789012';
 const FAKE_ROLE_ACCOUNT_ID = '111111111111';
@@ -46,7 +47,6 @@ const DEFAULT_INPUTS = {
   ...CREDS_INPUTS,
   'aws-session-token': FAKE_SESSION_TOKEN,
   'aws-region': FAKE_REGION,
-  'mask-aws-account-id': 'true',
 };
 const ASSUME_ROLE_INPUTS = { ...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION };
 // #endregion
@@ -102,6 +102,9 @@ describe('Configure AWS Credentials', () => {
     jest.spyOn(core, 'setOutput').mockImplementation();
     jest.spyOn(core, 'setFailed').mockImplementation();
     jest.spyOn(core, 'debug').mockImplementation();
+    jest.spyOn(core, 'info').mockImplementation((string) => {
+      return string;
+    });
     (fromEnv as jest.Mock)
       .mockImplementationOnce(() => () => ({
         accessKeyId: FAKE_ACCESS_KEY_ID,
@@ -122,6 +125,10 @@ describe('Configure AWS Credentials', () => {
         SessionToken: FAKE_STS_SESSION_TOKEN,
         Expiration: new Date(8640000000000000),
       },
+      AssumedRoleUser: {
+        AssumedRoleId: FAKE_ASSUMED_ROLE_ID,
+        Arn: ROLE_ARN,
+      },
     });
     mockedSTS.on(AssumeRoleWithWebIdentityCommand).resolves({
       Credentials: {
@@ -129,6 +136,10 @@ describe('Configure AWS Credentials', () => {
         SecretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
         SessionToken: FAKE_STS_SESSION_TOKEN,
         Expiration: new Date(8640000000000000),
+      },
+      AssumedRoleUser: {
+        AssumedRoleId: FAKE_ASSUMED_ROLE_ID,
+        Arn: ROLE_ARN,
       },
     });
     withsleep(async () => {
@@ -148,7 +159,7 @@ describe('Configure AWS Credentials', () => {
 
     expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(5);
-    expect(core.setSecret).toHaveBeenCalledTimes(4);
+    expect(core.setSecret).toHaveBeenCalledTimes(3);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
     expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
@@ -299,6 +310,7 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
     expect(core.setSecret).toHaveBeenCalledTimes(3);
   });
 
@@ -495,6 +507,25 @@ describe('Configure AWS Credentials', () => {
     });
   });
 
+  test('GH OIDC check fails if token is not set', async () => {
+    process.env['GITHUB_ACTIONS'] = 'true';
+    jest.spyOn(core, 'getInput').mockImplementation(
+      mockGetInput({
+        'role-to-assume': ROLE_ARN,
+        'aws-region': FAKE_REGION,
+      })
+    );
+
+    await run();
+
+    expect(core.info).toHaveBeenCalledWith(
+      'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?'
+    );
+    expect(core.setFailed).toHaveBeenCalledWith(
+      'Could not determine how to assume credentials. Please check your inputs and try again.'
+    );
+  });
+
   test('role assumption fails after maximum trials using OIDC provider', async () => {
     process.env['GITHUB_ACTIONS'] = 'true';
     process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
@@ -592,12 +623,13 @@ describe('Configure AWS Credentials', () => {
         'retry-max-attempts': '15',
       })
     );
-
     mockedSTS.reset();
     mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
 
     await run();
+
     expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(15);
+    expect(core.setFailed).toHaveBeenCalledWith('Could not assume role with OIDC: ');
   });
 
   test('role external ID provided', async () => {
@@ -766,6 +798,14 @@ describe('Configure AWS Credentials', () => {
     });
   });
 
+  test('prints assumed role id', async () => {
+    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+
+    await run();
+
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as assumedRoleId ${FAKE_ASSUMED_ROLE_ID}`);
+  });
+
   test('unsets credentials if enabled', async () => {
     jest
       .spyOn(core, 'getInput')
@@ -773,6 +813,16 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(core.exportVariable).toHaveBeenCalledTimes(9);
+    expect(core.exportVariable).toHaveBeenCalledTimes(12);
+  });
+
+  test('sets credentials as output if enabled', async () => {
+    jest
+      .spyOn(core, 'getInput')
+      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'output-credentials': 'true' }));
+
+    await run();
+
+    expect(core.setOutput).toHaveBeenCalledTimes(4);
   });
 });

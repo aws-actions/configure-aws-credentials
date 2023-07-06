@@ -90,7 +90,7 @@ export async function run() {
     let webIdentityToken: string;
 
     // If OIDC is being used, generate token
-    // Else, validate that the SDK can pick up credentials
+    // Else, export credentials provided as input
     if (useGitHubOIDCProvider()) {
       try {
         webIdentityToken = await retryAndBackoff(
@@ -109,7 +109,7 @@ export async function run() {
       }
       // The STS client for calling AssumeRole pulls creds from the environment.
       // Plus, in the assume role case, if the AssumeRole call fails, we want
-      // the source credentials and account ID to already be masked as secrets
+      // the source credentials to already be masked as secrets
       // in any error messages.
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
     } else if (!webIdentityTokenFile && !roleChaining) {
