@@ -12,12 +12,12 @@ import { withsleep, reset } from '../src/helpers';
 import { run } from '../src/index';
 
 // #region
-const FAKE_ACCESS_KEY_ID = 'MY-AWS-ACCESS-KEY-ID';
-const FAKE_SECRET_ACCESS_KEY = 'MY-AWS-SECRET-ACCESS-KEY';
-const FAKE_SESSION_TOKEN = 'MY-AWS-SESSION-TOKEN';
-const FAKE_STS_ACCESS_KEY_ID = 'STS-AWS-ACCESS-KEY-ID';
-const FAKE_STS_SECRET_ACCESS_KEY = 'STS-AWS-SECRET-ACCESS-KEY';
-const FAKE_STS_SESSION_TOKEN = 'STS-AWS-SESSION-TOKEN';
+const FAKE_ACCESS_KEY_ID = 'MYAWSACCESSKEYID';
+const FAKE_SECRET_ACCESS_KEY = 'MYAWSSECRETACCESSKEY';
+const FAKE_SESSION_TOKEN = 'MYAWSSESSIONTOKEN';
+const FAKE_STS_ACCESS_KEY_ID = 'STSAWSACCESSKEYID';
+const FAKE_STS_SECRET_ACCESS_KEY = 'STSAWSSECRETACCESSKEY';
+const FAKE_STS_SESSION_TOKEN = 'STSAWSSESSIONTOKEN';
 const FAKE_REGION = 'fake-region-1';
 const FAKE_ACCOUNT_ID = '123456789012';
 const FAKE_ROLE_ACCOUNT_ID = '111111111111';
@@ -453,6 +453,24 @@ describe('Configure AWS Credentials', () => {
       DurationSeconds: 3600,
       WebIdentityToken: 'testtoken',
     });
+    expect(core.getIDToken).toHaveBeenCalledTimes(1);
+  });
+
+  test('getIDToken call retries when failing', async () => {
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    jest.spyOn(core, 'getIDToken').mockImplementation(() => {
+      throw new Error('test error');
+    });
+
+    jest
+      .spyOn(core, 'getInput')
+      .mockImplementation(mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION }));
+
+    await run();
+
+    expect(core.getIDToken).toHaveBeenCalledTimes(12);
+    expect(core.setFailed).toHaveBeenCalledWith('getIDToken call failed: test error');
   });
 
   test('GH OIDC With custom role duration', async () => {
@@ -505,6 +523,63 @@ describe('Configure AWS Credentials', () => {
 
     await run();
     expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(1);
+  });
+
+  test('role assumption fails if access key id contains special characters', async () => {
+    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS }));
+
+    mockedSTS.on(AssumeRoleCommand).resolves({
+      Credentials: {
+        AccessKeyId: 'asdf+',
+        SecretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
+        SessionToken: FAKE_STS_SESSION_TOKEN,
+        Expiration: new Date(8640000000000000),
+      },
+    });
+
+    await run();
+
+    expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(12);
+    expect(core.setFailed).toHaveBeenCalledWith(
+      'Could not assume role with user credentials: AccessKeyId contains special characters.'
+    );
+  });
+
+  test('role assumption fails if secret access key contains special characters', async () => {
+    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS }));
+
+    mockedSTS.on(AssumeRoleCommand).resolves({
+      Credentials: {
+        AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
+        SecretAccessKey: 'asdf+',
+        SessionToken: FAKE_STS_SESSION_TOKEN,
+        Expiration: new Date(8640000000000000),
+      },
+    });
+
+    await run();
+
+    expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(12);
+    expect(core.setFailed).toHaveBeenCalledWith(
+      'Could not assume role with user credentials: SecretAccessKey contains special characters.'
+    );
+  });
+
+  test('role assumption succeeds if keys have no special characters', async () => {
+    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS }));
+
+    mockedSTS.on(AssumeRoleCommand).resolves({
+      Credentials: {
+        AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
+        SecretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
+        SessionToken: FAKE_STS_SESSION_TOKEN,
+        Expiration: new Date(8640000000000000),
+      },
+    });
+
+    await run();
+
+    expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(1);
   });
 
   test('max retries is configurable', async () => {

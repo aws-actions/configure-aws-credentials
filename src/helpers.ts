@@ -5,6 +5,7 @@ import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
+const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
 
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
@@ -88,6 +89,22 @@ export function withsleep(s: typeof sleep) {
 
 export function reset() {
   sleep = defaultSleep;
+}
+
+export function verifyKeys(creds: Partial<Credentials> | undefined) {
+  if (!creds) {
+    return;
+  }
+  if (creds.AccessKeyId) {
+    if (SPECIAL_CHARS_REGEX.test(creds.AccessKeyId)) {
+      throw new Error('AccessKeyId contains special characters.');
+    }
+  }
+  if (creds.SecretAccessKey) {
+    if (SPECIAL_CHARS_REGEX.test(creds.SecretAccessKey)) {
+      throw new Error('SecretAccessKey contains special characters.');
+    }
+  }
 }
 
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.

@@ -1,0 +1,26 @@
+on:
+  [pull_request]
+
+name: Run unit tests
+
+jobs:
+  unit-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        node: [14, 16, 18]
+    name: Run unit tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v3
+      - name: "Setup node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - name: "Install dependencies"
+        uses: bahmutov/npm-install@v1
+      - name: "Run tests"
+        run: npm run test --if-present

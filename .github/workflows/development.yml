@@ -1,5 +1,4 @@
-## WIP
-name: Devel_workflow
+name: Run tests
 
 on:
   workflow_dispatch:

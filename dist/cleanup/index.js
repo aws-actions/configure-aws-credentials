@@ -17583,11 +17583,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.unsetCredentials = exports.exportCredentials = void 0;
+exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.verifyKeys = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.unsetCredentials = exports.exportCredentials = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const client_sts_1 = __nccwpck_require__(2209);
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
+const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
 function exportCredentials(creds, outputCredentials) {
@@ -17670,6 +17671,22 @@ function reset() {
     sleep = defaultSleep;
 }
 exports.reset = reset;
+function verifyKeys(creds) {
+    if (!creds) {
+        return;
+    }
+    if (creds.AccessKeyId) {
+        if (SPECIAL_CHARS_REGEX.test(creds.AccessKeyId)) {
+            throw new Error('AccessKeyId contains special characters.');
+        }
+    }
+    if (creds.SecretAccessKey) {
+        if (SPECIAL_CHARS_REGEX.test(creds.SecretAccessKey)) {
+            throw new Error('SecretAccessKey contains special characters.');
+        }
+    }
+}
+exports.verifyKeys = verifyKeys;
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
 async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, base = 50) {
     try {

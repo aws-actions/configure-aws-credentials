@@ -92,7 +92,17 @@ export async function run() {
     // If OIDC is being used, generate token
     // Else, validate that the SDK can pick up credentials
     if (useGitHubOIDCProvider()) {
-      webIdentityToken = await core.getIDToken(audience);
+      try {
+        webIdentityToken = await retryAndBackoff(
+          async () => {
+            return core.getIDToken(audience);
+          },
+          !disableRetry,
+          maxRetries
+        );
+      } catch (error) {
+        throw new Error(`getIDToken call failed: ${errorMessage(error)}`);
+      }
     } else if (AccessKeyId) {
       if (!SecretAccessKey) {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");

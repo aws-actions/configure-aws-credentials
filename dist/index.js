@@ -109,10 +109,12 @@ async function assumeRoleWithOIDC(params, client, webIdentityToken) {
     delete params.Tags;
     core.info('Assuming role with OIDC');
     try {
-        return await client.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
+        const creds = await client.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
             ...params,
             WebIdentityToken: webIdentityToken,
         }));
+        (0, helpers_1.verifyKeys)(creds.Credentials);
+        return creds;
     }
     catch (error) {
         throw new Error(`Could not assume role with OIDC: ${(0, helpers_1.errorMessage)(error)}`);
@@ -130,10 +132,12 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
     try {
         const webIdentityToken = fs_1.default.readFileSync(webIdentityTokenFilePath, 'utf8');
         delete params.Tags;
-        return await client.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
+        const creds = await client.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
             ...params,
             WebIdentityToken: webIdentityToken,
         }));
+        (0, helpers_1.verifyKeys)(creds.Credentials);
+        return creds;
     }
     catch (error) {
         throw new Error(`Could not assume role with web identity token file: ${(0, helpers_1.errorMessage)(error)}`);
@@ -142,7 +146,9 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
 async function assumeRoleWithCredentials(params, client) {
     core.info('Assuming role with user credentials');
     try {
-        return await client.send(new client_sts_1.AssumeRoleCommand({ ...params }));
+        const creds = await client.send(new client_sts_1.AssumeRoleCommand({ ...params }));
+        (0, helpers_1.verifyKeys)(creds.Credentials);
+        return creds;
     }
     catch (error) {
         throw new Error(`Could not assume role with user credentials: ${(0, helpers_1.errorMessage)(error)}`);
@@ -241,11 +247,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.unsetCredentials = exports.exportCredentials = void 0;
+exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.verifyKeys = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.unsetCredentials = exports.exportCredentials = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const client_sts_1 = __nccwpck_require__(2209);
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
+const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
 function exportCredentials(creds, outputCredentials) {
@@ -328,6 +335,22 @@ function reset() {
     sleep = defaultSleep;
 }
 exports.reset = reset;
+function verifyKeys(creds) {
+    if (!creds) {
+        return;
+    }
+    if (creds.AccessKeyId) {
+        if (SPECIAL_CHARS_REGEX.test(creds.AccessKeyId)) {
+            throw new Error('AccessKeyId contains special characters.');
+        }
+    }
+    if (creds.SecretAccessKey) {
+        if (SPECIAL_CHARS_REGEX.test(creds.SecretAccessKey)) {
+            throw new Error('SecretAccessKey contains special characters.');
+        }
+    }
+}
+exports.verifyKeys = verifyKeys;
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
 async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, base = 50) {
     try {
@@ -465,7 +488,14 @@ async function run() {
         // If OIDC is being used, generate token
         // Else, validate that the SDK can pick up credentials
         if (useGitHubOIDCProvider()) {
-            webIdentityToken = await core.getIDToken(audience);
+            try {
+                webIdentityToken = await (0, helpers_1.retryAndBackoff)(async () => {
+                    return core.getIDToken(audience);
+                }, !disableRetry, maxRetries);
+            }
+            catch (error) {
+                throw new Error(`getIDToken call failed: ${(0, helpers_1.errorMessage)(error)}`);
+            }
         }
         else if (AccessKeyId) {
             if (!SecretAccessKey) {

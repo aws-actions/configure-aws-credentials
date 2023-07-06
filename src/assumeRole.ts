@@ -5,18 +5,20 @@ import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, STSClient, Tag } from '@aws-sdk/client-sts';
 import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
-import { errorMessage, isDefined, sanitizeGitHubVariables } from './helpers';
+import { errorMessage, isDefined, sanitizeGitHubVariables, verifyKeys } from './helpers';
 
 async function assumeRoleWithOIDC(params: AssumeRoleCommandInput, client: STSClient, webIdentityToken: string) {
   delete params.Tags;
   core.info('Assuming role with OIDC');
   try {
-    return await client.send(
+    const creds = await client.send(
       new AssumeRoleWithWebIdentityCommand({
         ...params,
         WebIdentityToken: webIdentityToken,
       })
     );
+    verifyKeys(creds.Credentials);
+    return creds;
   } catch (error) {
     throw new Error(`Could not assume role with OIDC: ${errorMessage(error)}`);
   }
@@ -41,12 +43,14 @@ async function assumeRoleWithWebIdentityTokenFile(
   try {
     const webIdentityToken = fs.readFileSync(webIdentityTokenFilePath, 'utf8');
     delete params.Tags;
-    return await client.send(
+    const creds = await client.send(
       new AssumeRoleWithWebIdentityCommand({
         ...params,
         WebIdentityToken: webIdentityToken,
       })
     );
+    verifyKeys(creds.Credentials);
+    return creds;
   } catch (error) {
     throw new Error(`Could not assume role with web identity token file: ${errorMessage(error)}`);
   }
@@ -55,7 +59,9 @@ async function assumeRoleWithWebIdentityTokenFile(
 async function assumeRoleWithCredentials(params: AssumeRoleCommandInput, client: STSClient) {
   core.info('Assuming role with user credentials');
   try {
-    return await client.send(new AssumeRoleCommand({ ...params }));
+    const creds = await client.send(new AssumeRoleCommand({ ...params }));
+    verifyKeys(creds.Credentials);
+    return creds;
   } catch (error) {
     throw new Error(`Could not assume role with user credentials: ${errorMessage(error)}`);
   }
