@@ -7,8 +7,24 @@ calls.
 
 ### Recent updates
 
-**If you use OIDC, you may need to update your identity provider**
+**GitHub OIDC Changes**
 
+In #[357](https://github.com/aws-actions/configure-aws-credentials/issues/357), we
+observed that GitHub recently started offering one of several intermediate OIDC
+endpoint thumbprints. Because IAM requires statically configured endpoint
+thumbprints, AWS customers that had only one thumbprint configured could see
+intermittent authentication failures. **As of July 6, 2023, AWS has made a change to
+IAM that will no longer require any particular certificate thumbprint for
+tokens.actions.githubusercontent.com**, which is the GitHub OIDC endpoint. Instead,
+AWS secures communication with GitHub OIDC using our library of trusted CAs rather
+than using a certificate thumbprint to verify the server certificate. The IAM APIs
+still require that a thumbprint is configured, but those thumbprints will be ignored
+when authenticating tokens.actions.githubusercontent.com.
+
+GitHub Enterprise Server customers use a different endpoint so they are not affected by
+this change.
+
+*Original message:*
 There are now [two possible intermediary certificates](https://github.blog/changelog/2023-06-27-github-actions-update-on-oidc-integration-with-aws/) for the Actions SSL certificate. Previously, the certificate with the thumbprint `6938fd4d98bab03faadb97b34396831e3780aea1` was guaranteed to return. Now, the certificate with the thumbprint `1c58a3a8518e8759bf075b76b750d4f2df264fcd` can also be returned, so you will need to [update your identity provider](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html) with this additional new thumbprint.
 
 ### Table of Contents
@@ -201,6 +217,11 @@ with the provider in as an IAM IdP. The GitHub OIDC provider only needs to be
 created once per account (i.e. multiple IAM Roles that can be assumed by the
 GitHub's OIDC can share a single OIDC Provider).
 
+Note that the thumbprint has been set to all F's because the thumbprint is not
+used when authenticating tokens.actions.githubusercontent.com. Instead, IAM
+uses its library of trusted CAs to authenticate. However, this value is still
+required by the API.
+
 This CloudFormation template will configure the IdP for you.
 ```yaml
 Parameters:
@@ -251,8 +272,7 @@ Resources:
       ClientIdList: 
         - sts.amazonaws.com
       ThumbprintList:
-        - 6938fd4d98bab03faadb97b34396831e3780aea1
-        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+        - ffffffffffffffffffffffffffffffffffffffff
 
 Outputs:
   Role:
