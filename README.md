@@ -222,7 +222,10 @@ used when authenticating tokens.actions.githubusercontent.com. Instead, IAM
 uses its library of trusted CAs to authenticate. However, this value is still
 required by the API.
 
-This CloudFormation template will configure the IdP for you.
+This CloudFormation template will configure the IdP for you. You can copy the
+template below, or load it from here: 
+https://d38mtn6aq9zhn6.cloudfront.net/configure-aws-credentials-latest.yml
+
 ```yaml
 Parameters:
   GitHubOrg:
