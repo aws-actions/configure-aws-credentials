@@ -774,6 +774,27 @@ describe('Configure AWS Credentials', () => {
         expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledTimes(12)
     });
 
+    test('role assumption fails after configured maximum trials', async () => {
+        process.env.GITHUB_ACTIONS = 'true';
+        process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
+
+        core.getInput = jest
+            .fn()
+            .mockImplementation(mockGetInput({
+              'role-to-assume': ROLE_ARN,
+              'aws-region': FAKE_REGION,
+              'max-retries': 1
+            }));
+
+        mockStsAssumeRoleWithWebIdentity.mockReset();
+        mockStsAssumeRoleWithWebIdentity.mockImplementation(() => {
+            throw new Error();
+        });
+
+        await assert.rejects(() => run());
+        expect(mockStsAssumeRoleWithWebIdentity).toHaveBeenCalledTimes(1)
+    });
+
     test('role external ID provided', async () => {
         core.getInput = jest
             .fn()

@@ -260,7 +260,7 @@ let defaultSleep = function (ms) {
 let sleep = defaultSleep;
 
 // retryAndBackoff retries with exponential backoff the promise if the error isRetryable upto maxRetries time.
-const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 12, base = 50) => {
+const retryAndBackoff = async (fn, isRetryable, maxRetries, retries = 0, base = 50) => {
   try {
     return await fn();
   } catch (err) {
@@ -270,10 +270,11 @@ const retryAndBackoff = async (fn, isRetryable, retries = 0, maxRetries = 12, ba
     // It's retryable, so sleep and retry.
     await sleep(Math.random() * (Math.pow(2, retries) * base) );
     retries += 1;
-    if (retries === maxRetries) {
+    if (retries == maxRetries) {
       throw err;
     }
-    return await retryAndBackoff(fn, isRetryable, retries, maxRetries, base);
+    core.debug(`Retry (${retries}/${maxRetries})`)
+    return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);
   }
 }
 
@@ -320,6 +321,7 @@ async function run() {
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
+    const maxRetries = core.getInput('max-retries', { required: false }) || 12;
     const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false })
 
     if (!region.match(REGION_REGEX)) {
@@ -390,7 +392,7 @@ async function run() {
             webIdentityToken,
             inlineSessionPolicy,
             managedSessionPolicies
-          }) }, true);
+          }) }, true, maxRetries);
       exportCredentials(roleCredentials);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
