@@ -34,7 +34,6 @@
     "jest-junit": "^13",
     "json-schema": "^0.4.0",
     "prettier": "^2.7.1",
-    "projen-github-action-typescript": "^0.0.155",
     "standard-version": "^9",
     "ts-jest": "^29.0.3",
     "typescript": "^4.8.4"
