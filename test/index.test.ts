@@ -632,6 +632,25 @@ describe('Configure AWS Credentials', () => {
     expect(core.setFailed).toHaveBeenCalledWith('Could not assume role with OIDC: ');
   });
 
+  test('max retries negative input does not retry', async () => {
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    jest.spyOn(core, 'getInput').mockImplementation(
+      mockGetInput({
+        'role-to-assume': ROLE_ARN,
+        'aws-region': FAKE_REGION,
+        'retry-max-attempts': '-1',
+      })
+    );
+    mockedSTS.reset();
+    mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
+
+    await run();
+
+    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(1);
+    expect(core.setFailed).toHaveBeenCalledWith('Could not assume role with OIDC: ');
+  });
+
   test('role external ID provided', async () => {
     jest
       .spyOn(core, 'getInput')

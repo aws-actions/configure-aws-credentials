@@ -363,7 +363,7 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
         // It's retryable, so sleep and retry.
         await sleep(Math.random() * (Math.pow(2, retries) * base));
         retries += 1;
-        if (retries === maxRetries) {
+        if (retries >= maxRetries) {
             throw err;
         }
         return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);
@@ -451,7 +451,10 @@ async function run() {
         const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
         const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
         const disableRetry = disableRetryInput.toLowerCase() === 'true';
-        const maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
+        let maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
+        if (maxRetries < 1) {
+            maxRetries = 1;
+        }
         for (const managedSessionPolicy of managedSessionPoliciesInput) {
             managedSessionPolicies.push({ arn: managedSessionPolicy });
         }

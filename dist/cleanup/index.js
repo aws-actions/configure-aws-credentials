@@ -17699,7 +17699,7 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
         // It's retryable, so sleep and retry.
         await sleep(Math.random() * (Math.pow(2, retries) * base));
         retries += 1;
-        if (retries === maxRetries) {
+        if (retries >= maxRetries) {
             throw err;
         }
         return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);

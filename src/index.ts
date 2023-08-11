@@ -44,7 +44,10 @@ export async function run() {
     const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
     const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
     const disableRetry = disableRetryInput.toLowerCase() === 'true';
-    const maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
+    let maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
+    if (maxRetries < 1) {
+      maxRetries = 1;
+    }
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
       managedSessionPolicies.push({ arn: managedSessionPolicy });
     }
