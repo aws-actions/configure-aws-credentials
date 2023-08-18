@@ -107,6 +107,12 @@ jobs:
 See [action.yml](action.yml) for the full documentation for this action's inputs
 and outputs.
 
+### Note about GHES
+
+Some of this documentation may be inaccurate if you are using GHES (GitHub Enterprise Servers), please take note to review the GitHub documentation when relevant.
+
+For example, the URL that the OIDC JWT is issued from is different than the usual `tokens.actions.githubusercontent.com`, and will be unique to your enterprise server. As a result, you will need to configure this differently when you create the Identity Provider.
+
 ## Security recommendations
 
 We recommend following
