@@ -1,0 +1,150 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: EC2 bastion for latest AWS Linux 2 EC2 deployment
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "EC2 Configuration"
+        Parameters:
+          - pTagNameValue
+          - pOperatingSystem
+          - pInstanceType
+          - pVolumeSize
+          - pEbsDeleteOnTermination
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - pVpc
+          - pSubnet
+    ParameterLabels:
+      pOperatingSystem:
+        default: "Operating System"
+      pInstanceType:
+        default: "Instance Type"
+      pTagNameValue:
+        default: "EC2 Name"
+      pVolumeSize:
+        default: "Volume Size"
+      pEbsDeleteOnTermination:
+        default: "Delete EBS Volume on Termination"
+      pSubnet:
+        default: "Subnet"
+      pVpc:
+        default: "VPC"
+Parameters:
+  pSubnet:
+    Description: The subnet to launch the instance in to. It must be part of the VPC chosen above.
+    Type: AWS::EC2::Subnet::Id
+  pVpc:
+    Description: The VPC to launch the EC2 instance in to.
+    Type: AWS::EC2::VPC::Id
+  pOperatingSystem:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs"
+  pInstanceType:
+    Description: Desired Instance Size
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t3.small
+      - t3.medium
+      - t3.nano
+  pTagNameValue:
+    Description: "Required: Enter the tag name you'd like applied to the instance. Tag Name gives the name to the EC2 instance."
+    Type: String
+    MinLength: 1
+    Default: "myBastion"
+  pVolumeSize:
+    Description:
+      Enter the number of GBs you want your volume to be. The minimum value
+      is 8 GBs
+    Type: Number
+    Default: 50
+    MinValue: 8
+  pEbsDeleteOnTermination:
+    Description: "Specify if the EBS volume should be deleted if EC2 is deleted."
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+Rules:
+  SubnetInVPC:
+    Assertions:
+      - Assert: !EachMemberIn
+          - !ValueOfAll
+            - AWS::EC2::Subnet::Id
+            - VpcId
+          - !RefAll "AWS::EC2::VPC::Id"
+        AssertDescription: All subnets must in the VPC
+Resources:
+  rSecurityGroupDefault:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "Default SG for SC Product ${pTagNameValue} "
+      VpcId: !Ref pVpc
+      SecurityGroupEgress:
+        - Description: Outbound unrestricted traffic
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Ref pTagNameValue
+  rLinuxEc2:
+    Type: AWS::EC2::Instance
+    Metadata:
+      guard:
+        SuppressedRules:
+          - 'EC2_INSTANCE_DETAILED_MONITORING_ENABLED'
+    Properties:
+      ImageId: !Ref pOperatingSystem
+      IamInstanceProfile: !Ref rec2InstanceProfile
+      Monitoring: false
+      InstanceType: !Ref pInstanceType
+      EbsOptimized: true
+      SourceDestCheck: true
+      SubnetId: !Ref pSubnet
+      SecurityGroupIds:
+        - !Ref rSecurityGroupDefault
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeSize: !Ref pVolumeSize
+            DeleteOnTermination: !Ref pEbsDeleteOnTermination
+      Tags:
+        - Key: Name
+          Value: !Ref pTagNameValue
+      UserData:
+        Fn::Base64:
+          yum update -y
+  ## Instance Profiles
+  ## EC2 IAM Roles
+  rEc2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:  !Sub "ec2-role-${AWS::StackName}"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: /
+      ManagedPolicyArns:
+      - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
+      - !Sub 'arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy'
+  rec2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "ec2-profile-${AWS::StackName}"
+      Path: /
+      Roles:
+        - !Ref rEc2Role
+Outputs:
+  oLinuxEc2InstanceId:
+    Description: Resource ID of the newly created EC2 instance
+    Value: !Ref rLinuxEc2
+  oLinuxEc2PrivateIP:
+    Description: Private IP Address for EC2
+    Value: !GetAtt rLinuxEc2.PrivateIp
