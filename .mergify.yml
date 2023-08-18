@@ -1,14 +1,14 @@
-
 queue_rules:
   - name: default
     conditions:
+      # Conditions to get out of the queue (= merged)
       - status-success=Run Unit Tests
-      - -label~=(do-not-merge)
+
 pull_request_rules:
   - name: Automatically merge on CI success and review approval
     conditions:
-      - base~=master|integ-tests|main
-      - '"#approved-reviews-by>=1"'
+      - base~=main|integ-tests
+      - "#approved-reviews-by>=1"
       - -approved-reviews-by~=author
       - status-success=Run Unit Tests
       - label!=work-in-progress
@@ -18,20 +18,21 @@ pull_request_rules:
       - author!=dependabot[bot]
     actions:
       queue:
-        name: main
         method: squash
+        name: default
+
   - name: Automatically approve and merge Dependabot PRs
     conditions:
-      - base~=master|main
+      - base~=main
       - author=dependabot[bot]
-      - status-success=build
+      - status-success=Run Unit Tests
       - -title~=(WIP|wip)
-      - -label~=(do-not-merge|blocked)
+      - -label~=(blocked|do-not-merge)
       - -merged
       - -closed
     actions:
       review:
         type: APPROVE
       queue:
-        name: main
         method: squash
+        name: default
