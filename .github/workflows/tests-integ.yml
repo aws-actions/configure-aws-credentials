@@ -66,38 +66,3 @@ jobs:
           aws-region: us-west-2
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  lint:
-    name: Ensure code standards
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: "Checkout repostiory"
-        uses: actions/checkout@v3
-      - name: "Setup node"
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - name: "Install dependencies"
-        uses: bahmutov/npm-install@v1
-      - name: "Lint code"
-        run: npm run lint --if-present
-  unit-test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        node: [14, 16, 18]
-    name: Run unit tests
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
-    steps:
-      - name: "Checkout repository"
-        uses: actions/checkout@v3
-      - name: "Setup node"
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node }}
-      - name: "Install dependencies"
-        uses: bahmutov/npm-install@v1
-      - name: "Run tests"
-        run: npm run test --if-present
