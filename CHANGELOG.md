@@ -5,8 +5,21 @@ All notable changes to this project will be documented in this file. See [standa
 ## [3.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.2.0...v3.0.0) (2023-08-21)
 
 ### Features
+* Can configure `max-retries` and `disable-retry` to modify retry functionality when the assume role call fails
+* Set returned credentials as step outputs with `output-credentials`
+* Clear AWS related environment variables at the start of the action with `unset-current-credentials`
+* Unique role identifier is now printed in the workflow logs
 
 ### Bug Fixes
+* Can't use credentials if they contain a special character
+* Retry functionality added when generating the JWT fails
+* Can now use `webIdentityTokenFile` option
+* Branch name validation too strict
+* JS SDK v2 deprecation warning in workflow logs
+
+### Changes to existing functionality
+* Default session duration is now 1 hour in all cases (from 6 hours in some cases)
+* Account ID will not be masked by default in logs
 
 ## [2.2.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.1.0...v2.2.0) (2023-05-31)
 

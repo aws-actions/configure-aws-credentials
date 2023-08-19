@@ -24,7 +24,7 @@ In addition to the refactored codebase, we have also introduced some changes to 
 
 **Bug fixes**
 
-A number of bugs have been fixed. You can view the full list of resolved issues on the `v3` release PR.
+You can find a list of bugs that have been fixed in v3 in the [changelog](./changelog.md)
 
 ### Table of Contents
 <!-- toc -->
