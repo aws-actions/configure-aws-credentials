@@ -1,10 +1,9 @@
-
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: weekly
-      day: tuesday
-    open-pull-requests-limit: 10
-    target-branch: main
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: tuesday
+  open-pull-requests-limit: 10
+  target-branch: 'main'
