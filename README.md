@@ -5,26 +5,50 @@ and exports environment variables for your other Actions to use. Environment
 variable exports are detected by both the AWS SDKs and the AWS CLI for AWS API
 calls.
 
-### Launch of Configure AWS Credentials v3
+---
 
-We have recently release `v3` of Configure AWS Credentials! With this new release we have migrated the code to TypeScript, and have also migrated away from using `v2` of the JavaScript AWS SDK, to using `v3`. This should eliminate the warning you have seen in your workflow logs about `v2` deprecation
+### News
 
-In addition to the refactored codebase, we have also introduced some changes to existing functionality, added some new features, and fixed some bugs.
+We have recently released `v3` of Configure AWS Credentials! With this new
+release we have migrated the code to TypeScript, and have also migrated away
+from using `v2` of the JavaScript AWS SDK. This should eliminate the warning you
+have seen in your workflow logs about `v2` deprecation.
 
-**Changes to existing functionality**
+In addition to the refactored codebase, we have also introduced some changes to
+existing functionality, added some new features, and fixed some bugs. These
+changes should be backwards compatible with your existing workflows.
 
-- By default, the assumed role credentials will only be valid for one hour in _all_ use cases. This is changed from 6 hours in `v2`. You can adjust this value with the `role-duration-seconds` input.
-- By default, your account ID will not be masked in workflow logs. This is changed from being masked by default in `v2`. Account IDs are not considered sensitive information, so this change reflects that. You can mask your account ID in workflow logs by setting the `mask-aws-account-id` input to `true`.
+**Notable changes to existing functionality**
+
+- By default, the assumed role credentials will only be valid for one hour in
+_all_ use cases. This is changed from 6 hours in `v2`. You can adjust this value
+with the `role-duration-seconds` input.
+- By default, your account ID will not be masked in workflow logs. This was
+changed from being masked by default in the previous version. AWS does consider
+account IDs as sensitive information, so this change reflects that stance. You
+can rever to the old default and mask your account ID in workflow logs by
+setting the `mask-aws-account-id` input to `true`.
 
 **New features**
 
-- You can now configure retry settings for when the STS call fails. By default, we retry with exponential backoff `12` times. You can disable this behavior altogether by setting the `disable-retry` input to `true`, or you can configure the number of times it retries with the `retry-max-attempts` input.
-- You can now set the returned credentials as step outputs. To do this, you can set the `output-credentials` prop to `true`.
-- There's now an option to clear the AWS related environment variables at the start of the action. Clearing these variables are often a workaround for issues, so enabling this can be helpful as a built-in workaround if existing credentials are interfering with the action. You can enable this by setting the `unset-current-credentials` input to `true`.
+- You can now configure retry settings in case your STS call fails. By default,
+we retry with exponential backoff twelve times. You can disable this behavior
+altogether by setting the `disable-retry` input to `true`, or you can configure
+the number of times the action will retry with the `retry-max-attempts` input.
+- You can now set the returned credentials as action step outputs. To do this,
+you can set the `output-credentials` prop to `true`.
+- There's now an option to clear the AWS-related environment variables at the
+start of the action. Clearing these variables is often a workaround for 
+problems, so enabling this can be helpful if existing credentials or environment
+variables are interfering with the action. You can enable this by setting the
+`unset-current-credentials` input to `true`.
 
 **Bug fixes**
 
-You can find a list of bugs that have been fixed in v3 in the [changelog](./changelog.md)
+You can find a list of bugs that have been fixed in v3 in the
+[changelog](./changelog.md).
+
+---
 
 ### Table of Contents
 <!-- toc -->
