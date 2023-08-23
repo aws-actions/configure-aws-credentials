@@ -1,4 +1,4 @@
-name: Update dist files on 
+name: Update dist files on main branch
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           npm test
           npm run package
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}

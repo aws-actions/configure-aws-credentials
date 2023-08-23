@@ -20,7 +20,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1-node16
+      uses: aws-actions/configure-aws-credentials@v3
       with:
         aws-region: us-east-1
         ## the following creates an ARN based on the values entered into github secrets
