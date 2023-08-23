@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.2.0...v3.0.0) (2023-08-21)
+
+### Features
+* Can configure `max-retries` and `disable-retry` to modify retry functionality when the assume role call fails
+* Set returned credentials as step outputs with `output-credentials`
+* Clear AWS related environment variables at the start of the action with `unset-current-credentials`
+* Unique role identifier is now printed in the workflow logs
+
+### Bug Fixes
+* Can't use credentials if they contain a special character
+* Retry functionality added when generating the JWT fails
+* Can now use `webIdentityTokenFile` option
+* Branch name validation too strict
+* JS SDK v2 deprecation warning in workflow logs
+
+### Changes to existing functionality
+* Default session duration is now 1 hour in all cases (from 6 hours in some cases)
+* Account ID will not be masked by default in logs
+
+## [2.2.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.1.0...v2.2.0) (2023-05-31)
+
+### Features
+* `inline-session-policy` prop enables assuming a role with inline session policies ([d00f6c6](https://github.com/aws-actions/configure-aws-credentials/commit/d00f6c6f41fde02a9fd0d469040be6ed0df69e73))
+* `managed-session-policies` prop enables assuming a role with managed policy arns ([d00f6c6](https://github.com/aws-actions/configure-aws-credentials/commit/d00f6c6f41fde02a9fd0d469040be6ed0df69e73))
+
+## [2.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.0.0...v2.1.0) (2023-05-31)
+
+### Features
+* `role-chaining` prop enables role chaining use case ([6fbd316](https://github.com/aws-actions/configure-aws-credentials/commit/6fbd316fd15f52c3d9f68e7aa06eae4f5699a518))
+
+## [2.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.7.0...v2.0.0) (2023-03-06)
+
+### Features
+* Version bump to use Node 16 by default. 
+
 ## [1.7.0](https://github.com/aws-actions/configure-aws-credentials/compare/v1.6.1...v1.7.0) (2022-08-03)
 
 
