@@ -161,13 +161,15 @@ We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/d
 
 The following table describes which method is used based on which values are supplied to the Action:
 
-| **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` | `role-chaining` |
-| --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- | - |
-| [✅ Recommended] Assume Role directly using GitHub OIDC provider |                     | ✔                |                           | |
-| IAM User                                                        | ✔                   |                  |                           | |
-| Assume Role using IAM User credentials                          | ✔                   | ✔                |                           | |
-| Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | |
-| Assume Role using existing credentials | | ✔ | | ✔ |
+| **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` | `role-chaining` | `id-token` permission
+| --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- | - | - |
+| [✅ Recommended] Assume Role directly using GitHub OIDC provider |                     | ✔                |                           | | ✔ |
+| IAM User                                                        | ✔                   |                  |                           | | |
+| Assume Role using IAM User credentials                          | ✔                   | ✔                |                           | | |
+| Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | | |
+| Assume Role using existing credentials | | ✔ | | ✔ | |
+
+*Note: `role-chaining` is not necessary to use existing credentials in every use case. If you're getting a "Credentials loaded by the SDK do not match" error, try enabling this prop.
 
 ### Credential Lifetime
 The default session duration is **1 hour**.
