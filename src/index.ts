@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import type { AssumeRoleCommandOutput } from '@aws-sdk/client-sts';
 import { assumeRole } from './assumeRole';
 import { CredentialsClient } from './CredentialsClient';
 import {
@@ -8,6 +9,7 @@ import {
   exportCredentials,
   exportAccountId,
   unsetCredentials,
+  verifyKeys,
 } from './helpers';
 
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
@@ -43,10 +45,20 @@ export async function run() {
     const unsetCurrentCredentialsInput = core.getInput('unset-current-credentials', { required: false }) || 'false';
     const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
     const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
-    const disableRetry = disableRetryInput.toLowerCase() === 'true';
+    let disableRetry = disableRetryInput.toLowerCase() === 'true';
+    const specialCharacterWorkaroundInput =
+      core.getInput('special-characters-workaround', { required: false }) || 'false';
+    const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
     let maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
-    if (maxRetries < 1) {
-      maxRetries = 1;
+    switch (true) {
+      case specialCharacterWorkaround:
+        // 😳
+        disableRetry = false;
+        maxRetries = 12;
+        break;
+      case maxRetries < 1:
+        maxRetries = 1;
+        break;
     }
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
       managedSessionPolicies.push({ arn: managedSessionPolicy });
@@ -66,7 +78,8 @@ export async function run() {
         !roleChaining
       ) {
         core.info(
-          'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?'
+          'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission? ' +
+            'If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
         );
       }
       return (
@@ -115,11 +128,15 @@ export async function run() {
       // the source credentials to already be masked as secrets
       // in any error messages.
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
-    } else if (!webIdentityTokenFile && !roleChaining) {
+    } else if (
+      !webIdentityTokenFile &&
+      !roleChaining &&
+      !(process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])
+    ) {
       throw new Error('Could not determine how to assume credentials. Please check your inputs and try again.');
     }
 
-    if (AccessKeyId || roleChaining) {
+    if (AccessKeyId || roleChaining || (process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])) {
       // Validate that the SDK can actually pick up credentials.
       // This validates cases where this action is using existing environment credentials,
       // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
@@ -129,25 +146,30 @@ export async function run() {
 
     // Get role credentials if configured to do so
     if (roleToAssume) {
-      const roleCredentials = await retryAndBackoff(
-        async () => {
-          return assumeRole({
-            credentialsClient,
-            sourceAccountId,
-            roleToAssume,
-            roleExternalId,
-            roleDuration,
-            roleSessionName,
-            roleSkipSessionTagging,
-            webIdentityTokenFile,
-            webIdentityToken,
-            inlineSessionPolicy,
-            managedSessionPolicies,
-          });
-        },
-        !disableRetry,
-        maxRetries
-      );
+      let roleCredentials: AssumeRoleCommandOutput;
+      do {
+        // eslint-disable-next-line no-await-in-loop
+        roleCredentials = await retryAndBackoff(
+          async () => {
+            return assumeRole({
+              credentialsClient,
+              sourceAccountId,
+              roleToAssume,
+              roleExternalId,
+              roleDuration,
+              roleSessionName,
+              roleSkipSessionTagging,
+              webIdentityTokenFile,
+              webIdentityToken,
+              inlineSessionPolicy,
+              managedSessionPolicies,
+            });
+          },
+          !disableRetry,
+          maxRetries
+        );
+        // eslint-disable-next-line no-unmodified-loop-condition
+      } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser!.AssumedRoleId!}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials);
       // We need to validate the credentials in 2 of our use-cases
@@ -173,6 +195,7 @@ export async function run() {
 }
 
 /* c8 ignore start */
+/* istanbul ignore next */
 if (require.main === module) {
   (async () => {
     await run();

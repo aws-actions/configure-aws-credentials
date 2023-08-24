@@ -161,13 +161,15 @@ We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/d
 
 The following table describes which method is used based on which values are supplied to the Action:
 
-| **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` | `role-chaining` |
-| --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- | - |
-| [✅ Recommended] Assume Role directly using GitHub OIDC provider |                     | ✔                |                           | |
-| IAM User                                                        | ✔                   |                  |                           | |
-| Assume Role using IAM User credentials                          | ✔                   | ✔                |                           | |
-| Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | |
-| Assume Role using existing credentials | | ✔ | | ✔ |
+| **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` | `role-chaining` | `id-token` permission
+| --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- | - | - |
+| [✅ Recommended] Assume Role directly using GitHub OIDC provider |                     | ✔                |                           | | ✔ |
+| IAM User                                                        | ✔                   |                  |                           | | |
+| Assume Role using IAM User credentials                          | ✔                   | ✔                |                           | | |
+| Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | | |
+| Assume Role using existing credentials | | ✔ | | ✔ | |
+
+*Note: `role-chaining` is not necessary to use existing credentials in every use case. If you're getting a "Credentials loaded by the SDK do not match" error, try enabling this prop.
 
 ### Credential Lifetime
 The default session duration is **1 hour**.
@@ -267,6 +269,15 @@ Your account ID is not masked by default in workflow logs since it's not conside
 
 #### Unset current credentials
 Sometimes, existing credentials in your runner can get in the way of the intended outcome, and the recommended solution is to include another step in your workflow which unsets the environment variables set by this action. Now if you set the `unset-current-credentials` input to `true`, the workaround is made eaiser
+
+#### Special characters in AWS_SECRET_ACCESS_KEY
+Some edge cases are unable to properly parse an `AWS_SECRET_ACCESS_KEY` if it
+contains special characters. For more information, please see the
+[AWS CLI documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-troubleshooting.html#tshoot-signature-does-not-match).
+If you set the `special-characters-workaround` option, this action will
+continually retry fetching credentials until we get one that does not have
+special characters. This option overrides the `disable-retry` and
+`retry-max-attempts` options.
 
 ## OIDC
 
