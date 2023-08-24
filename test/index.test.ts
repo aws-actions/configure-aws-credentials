@@ -527,6 +527,25 @@ describe('Configure AWS Credentials', () => {
     );
   });
 
+  test('Assume role with existing credentials if nothing else set', async () => {
+    process.env['AWS_ACCESS_KEY_ID'] = FAKE_ACCESS_KEY_ID;
+    process.env['AWS_SECRET_ACCESS_KEY'] = FAKE_SECRET_ACCESS_KEY;
+    jest.spyOn(core, 'getInput').mockImplementation(
+      mockGetInput({
+        'role-to-assume': ROLE_ARN,
+        'aws-region': FAKE_REGION,
+      })
+    );
+
+    await run();
+
+    expect(core.info).toHaveBeenCalledWith(
+      'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?' +
+        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
+    );
+    expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(1);
+  });
+
   test('role assumption fails after maximum trials using OIDC provider', async () => {
     process.env['GITHUB_ACTIONS'] = 'true';
     process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
