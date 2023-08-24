@@ -5,7 +5,7 @@ import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, STSClient, Tag } from '@aws-sdk/client-sts';
 import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
-import { errorMessage, isDefined, sanitizeGitHubVariables, verifyKeys } from './helpers';
+import { errorMessage, isDefined, sanitizeGitHubVariables } from './helpers';
 
 async function assumeRoleWithOIDC(params: AssumeRoleCommandInput, client: STSClient, webIdentityToken: string) {
   delete params.Tags;
@@ -17,7 +17,6 @@ async function assumeRoleWithOIDC(params: AssumeRoleCommandInput, client: STSCli
         WebIdentityToken: webIdentityToken,
       })
     );
-    verifyKeys(creds.Credentials);
     return creds;
   } catch (error) {
     throw new Error(`Could not assume role with OIDC: ${errorMessage(error)}`);
@@ -49,7 +48,6 @@ async function assumeRoleWithWebIdentityTokenFile(
         WebIdentityToken: webIdentityToken,
       })
     );
-    verifyKeys(creds.Credentials);
     return creds;
   } catch (error) {
     throw new Error(`Could not assume role with web identity token file: ${errorMessage(error)}`);
@@ -60,7 +58,6 @@ async function assumeRoleWithCredentials(params: AssumeRoleCommandInput, client:
   core.info('Assuming role with user credentials');
   try {
     const creds = await client.send(new AssumeRoleCommand({ ...params }));
-    verifyKeys(creds.Credentials);
     return creds;
   } catch (error) {
     throw new Error(`Could not assume role with user credentials: ${errorMessage(error)}`);

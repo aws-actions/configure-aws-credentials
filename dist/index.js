@@ -113,7 +113,6 @@ async function assumeRoleWithOIDC(params, client, webIdentityToken) {
             ...params,
             WebIdentityToken: webIdentityToken,
         }));
-        (0, helpers_1.verifyKeys)(creds.Credentials);
         return creds;
     }
     catch (error) {
@@ -136,7 +135,6 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
             ...params,
             WebIdentityToken: webIdentityToken,
         }));
-        (0, helpers_1.verifyKeys)(creds.Credentials);
         return creds;
     }
     catch (error) {
@@ -147,7 +145,6 @@ async function assumeRoleWithCredentials(params, client) {
     core.info('Assuming role with user credentials');
     try {
         const creds = await client.send(new client_sts_1.AssumeRoleCommand({ ...params }));
-        (0, helpers_1.verifyKeys)(creds.Credentials);
         return creds;
     }
     catch (error) {
@@ -337,18 +334,21 @@ function reset() {
 exports.reset = reset;
 function verifyKeys(creds) {
     if (!creds) {
-        return;
+        return false;
     }
     if (creds.AccessKeyId) {
         if (SPECIAL_CHARS_REGEX.test(creds.AccessKeyId)) {
-            throw new Error('AccessKeyId contains special characters.');
+            core.debug('AccessKeyId contains special characters.');
+            return false;
         }
     }
     if (creds.SecretAccessKey) {
         if (SPECIAL_CHARS_REGEX.test(creds.SecretAccessKey)) {
-            throw new Error('SecretAccessKey contains special characters.');
+            core.debug('SecretAccessKey contains special characters.');
+            return false;
         }
     }
+    return true;
 }
 exports.verifyKeys = verifyKeys;
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
@@ -450,10 +450,19 @@ async function run() {
         const unsetCurrentCredentialsInput = core.getInput('unset-current-credentials', { required: false }) || 'false';
         const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
         const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
-        const disableRetry = disableRetryInput.toLowerCase() === 'true';
+        let disableRetry = disableRetryInput.toLowerCase() === 'true';
+        const specialCharacterWorkaroundInput = core.getInput('special-characters-workaround', { required: false }) || 'false';
+        const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
         let maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
-        if (maxRetries < 1) {
-            maxRetries = 1;
+        switch (true) {
+            case specialCharacterWorkaround:
+                // 😳
+                disableRetry = false;
+                maxRetries = 12;
+                break;
+            case maxRetries < 1:
+                maxRetries = 1;
+                break;
         }
         for (const managedSessionPolicy of managedSessionPoliciesInput) {
             managedSessionPolicies.push({ arn: managedSessionPolicy });
@@ -525,21 +534,26 @@ async function run() {
         }
         // Get role credentials if configured to do so
         if (roleToAssume) {
-            const roleCredentials = await (0, helpers_1.retryAndBackoff)(async () => {
-                return (0, assumeRole_1.assumeRole)({
-                    credentialsClient,
-                    sourceAccountId,
-                    roleToAssume,
-                    roleExternalId,
-                    roleDuration,
-                    roleSessionName,
-                    roleSkipSessionTagging,
-                    webIdentityTokenFile,
-                    webIdentityToken,
-                    inlineSessionPolicy,
-                    managedSessionPolicies,
-                });
-            }, !disableRetry, maxRetries);
+            let roleCredentials;
+            do {
+                // eslint-disable-next-line no-await-in-loop
+                roleCredentials = await (0, helpers_1.retryAndBackoff)(async () => {
+                    return (0, assumeRole_1.assumeRole)({
+                        credentialsClient,
+                        sourceAccountId,
+                        roleToAssume,
+                        roleExternalId,
+                        roleDuration,
+                        roleSessionName,
+                        roleSkipSessionTagging,
+                        webIdentityTokenFile,
+                        webIdentityToken,
+                        inlineSessionPolicy,
+                        managedSessionPolicies,
+                    });
+                }, !disableRetry, maxRetries);
+                // eslint-disable-next-line no-unmodified-loop-condition
+            } while (specialCharacterWorkaround && !(0, helpers_1.verifyKeys)(roleCredentials.Credentials));
             core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser.AssumedRoleId}`);
             (0, helpers_1.exportCredentials)(roleCredentials.Credentials, outputCredentials);
             // We need to validate the credentials in 2 of our use-cases
@@ -565,6 +579,7 @@ async function run() {
 }
 exports.run = run;
 /* c8 ignore start */
+/* istanbul ignore next */
 if (require.main === require.cache[eval('__filename')]) {
     (async () => {
         await run();
