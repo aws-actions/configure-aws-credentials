@@ -26,7 +26,7 @@ with the `role-duration-seconds` input.
 - By default, your account ID will not be masked in workflow logs. This was
 changed from being masked by default in the previous version. AWS does consider
 account IDs as sensitive information, so this change reflects that stance. You
-can rever to the old default and mask your account ID in workflow logs by
+can revert to the old default and mask your account ID in workflow logs by
 setting the `mask-aws-account-id` input to `true`.
 
 **New features**
