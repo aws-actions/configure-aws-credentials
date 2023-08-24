@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.1](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.0...v3.0.1) (2023-08-24)
+
+### Features
+* Can configure `special-characters-workaround` to keep retrying credentials if the returned
+  credentials have special characters (Fixes #599)
+
+### Bug Fixes
+* Fixes #792: Action fails when intending to use existing credentials
+* Minor typo fix from @ubaid-ansari21
+
+### Changes to existing functionality
+* Special characters are now allowed in returned credential variables unless you configure the
+  `special-characters-workaround` option
+
 ## [3.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v2.2.0...v3.0.0) (2023-08-21)
 
 ### Features
