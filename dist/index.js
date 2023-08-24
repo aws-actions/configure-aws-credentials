@@ -511,7 +511,9 @@ async function run() {
             // in any error messages.
             (0, helpers_1.exportCredentials)({ AccessKeyId, SecretAccessKey, SessionToken });
         }
-        else if (!webIdentityTokenFile && !roleChaining) {
+        else if (!webIdentityTokenFile &&
+            !roleChaining &&
+            !(process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])) {
             throw new Error('Could not determine how to assume credentials. Please check your inputs and try again.');
         }
         if (AccessKeyId || roleChaining || (process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])) {

@@ -116,7 +116,11 @@ export async function run() {
       // the source credentials to already be masked as secrets
       // in any error messages.
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
-    } else if (!webIdentityTokenFile && !roleChaining) {
+    } else if (
+      !webIdentityTokenFile &&
+      !roleChaining &&
+      !(process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])
+    ) {
       throw new Error('Could not determine how to assume credentials. Please check your inputs and try again.');
     }
 
