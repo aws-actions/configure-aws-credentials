@@ -519,7 +519,8 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.info).toHaveBeenCalledWith(
-      'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?'
+      'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?' +
+        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
     );
     expect(core.setFailed).toHaveBeenCalledWith(
       'Could not determine how to assume credentials. Please check your inputs and try again.'

@@ -66,7 +66,8 @@ export async function run() {
         !roleChaining
       ) {
         core.info(
-          'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?'
+          'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission? ' +
+            'If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
         );
       }
       return (
@@ -119,7 +120,7 @@ export async function run() {
       throw new Error('Could not determine how to assume credentials. Please check your inputs and try again.');
     }
 
-    if (AccessKeyId || roleChaining) {
+    if (AccessKeyId || roleChaining || (process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])) {
       // Validate that the SDK can actually pick up credentials.
       // This validates cases where this action is using existing environment credentials,
       // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
