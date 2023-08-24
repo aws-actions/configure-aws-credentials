@@ -48,6 +48,28 @@ jobs:
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
           role-session-name: IntegAccessKeysAssumeRole
           role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
+  integ-access-keys-env:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        node: [14, 16, 18]
+    name: Run access key integ tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v3
+      - name: Integ test for access keys
+        uses: ./
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
+          role-session-name: IntegAccessKeysAssumeRole
+          role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
   integ-iam-user:
     strategy:
       fail-fast: false
