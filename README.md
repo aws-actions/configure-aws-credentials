@@ -169,7 +169,7 @@ The following table describes which method is used based on which values are sup
 | Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | | |
 | Assume Role using existing credentials | | ✔ | | ✔ | |
 
-* Existing credentials in your runner 
+*Note: `role-chaining` is not necessary to use existing credentials in every use case. If you're getting a "Credentials loaded by the SDK do not match" error, try enabling this prop.
 
 ### Credential Lifetime
 The default session duration is **1 hour**.
