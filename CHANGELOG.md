@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file. See [standa
   credentials have special characters (Fixes #599)
 
 ### Bug Fixes
-* Fixes #792: V3 breaks by somehow assuming the use of OIDC
+* Fixes #792: Action fails when intending to use existing credentials
 * Minor typo fix from @ubaid-ansari21
 
 ### Changes to existing functionality
