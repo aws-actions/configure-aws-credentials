@@ -53,8 +53,8 @@ export async function run() {
     switch (true) {
       case specialCharacterWorkaround:
         // 😳
-        maxRetries = Number.MAX_SAFE_INTEGER;
         disableRetry = false;
+        maxRetries = 12;
         break;
       case maxRetries < 1:
         maxRetries = 1;

@@ -20748,18 +20748,21 @@ function reset() {
 exports.reset = reset;
 function verifyKeys(creds) {
     if (!creds) {
-        return;
+        return false;
     }
     if (creds.AccessKeyId) {
         if (SPECIAL_CHARS_REGEX.test(creds.AccessKeyId)) {
-            throw new Error('AccessKeyId contains special characters.');
+            core.debug('AccessKeyId contains special characters.');
+            return false;
         }
     }
     if (creds.SecretAccessKey) {
         if (SPECIAL_CHARS_REGEX.test(creds.SecretAccessKey)) {
-            throw new Error('SecretAccessKey contains special characters.');
+            core.debug('SecretAccessKey contains special characters.');
+            return false;
         }
     }
+    return true;
 }
 exports.verifyKeys = verifyKeys;
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
