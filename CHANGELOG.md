@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [3.0.1](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.0...v3.0.1) (2023-08024)
+## [3.0.1](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.0...v3.0.1) (2023-08-24)
 
 ### Features
 * Can configure `special-characters-workaround` to keep retrying credentials if the returned
