@@ -508,6 +508,7 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('GH OIDC check fails if token is not set', async () => {
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
     process.env['GITHUB_ACTIONS'] = 'true';
     jest.spyOn(core, 'getInput').mockImplementation(
       mockGetInput({
@@ -528,6 +529,7 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('Assume role with existing credentials if nothing else set', async () => {
+    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
     process.env['AWS_ACCESS_KEY_ID'] = FAKE_ACCESS_KEY_ID;
     process.env['AWS_SECRET_ACCESS_KEY'] = FAKE_SECRET_ACCESS_KEY;
     jest.spyOn(core, 'getInput').mockImplementation(

@@ -6,6 +6,7 @@ on:
       - main
     paths-ignore:
       - 'dist/**'
+  workflow_dispatch:
 
 jobs:
   package:
@@ -30,7 +31,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: us-west-2
-          role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
           role-session-name: SecretsManagerFetch
       - name: Get bot user token
@@ -38,7 +39,7 @@ jobs:
         with:
           parse-json-secrets: true
           secret-ids: |
-            OSDS,arn:aws:secretsmanager:us-west-2:294535624312:secret:github-aws-sdk-osds-automation-ZHNalp
+            OSDS,arn:aws:secretsmanager:us-west-2:206735643321:secret:github-aws-sdk-osds-automation-gebs9n
       - name: Commit
         run: |
           echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}"
