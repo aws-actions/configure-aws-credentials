@@ -24,7 +24,7 @@ changes should be backwards compatible with your existing workflows.
 _all_ use cases. This is changed from 6 hours in `v2`. You can adjust this value
 with the `role-duration-seconds` input.
 - By default, your account ID will not be masked in workflow logs. This was
-changed from being masked by default in the previous version. AWS does consider
+changed from being masked by default in the previous version. AWS does not consider
 account IDs as sensitive information, so this change reflects that stance. You
 can revert to the old default and mask your account ID in workflow logs by
 setting the `mask-aws-account-id` input to `true`.
