@@ -291,7 +291,7 @@ We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/d
 
 ### Audience
 
-When the JWT is created, an audience needs to be specified. By default, the audience is `sts.amazon.com` and this will work for most cases. Changing the default audience may be necessary when using non-default AWS partitions. You can specify the audience through the `audience` input:
+When the JWT is created, an audience needs to be specified. By default, the audience is `sts.amazonaws.com` and this will work for most cases. Changing the default audience may be necessary when using non-default AWS partitions. You can specify the audience through the `audience` input:
 
 ```yaml
     - name: Configure AWS Credentials for China region audience
