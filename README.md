@@ -46,7 +46,7 @@ variables are interfering with the action. You can enable this by setting the
 **Bug fixes**
 
 You can find a list of bugs that have been fixed in v3 in the
-[changelog](./changelog.md).
+[changelog](./CHANGELOG.md).
 
 ---
 
