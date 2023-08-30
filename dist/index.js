@@ -523,7 +523,9 @@ async function run() {
         else if (!webIdentityTokenFile &&
             !roleChaining &&
             !(process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])) {
-            throw new Error('Could not determine how to assume credentials. Please check your inputs and try again.');
+            // Proceed if credentials are picked up
+            await credentialsClient.validateCredentials();
+            sourceAccountId = await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
         }
         if (AccessKeyId || roleChaining || (process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])) {
             // Validate that the SDK can actually pick up credentials.
