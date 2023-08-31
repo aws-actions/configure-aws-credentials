@@ -128,17 +128,13 @@ export async function run() {
       // the source credentials to already be masked as secrets
       // in any error messages.
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
-    } else if (
-      !webIdentityTokenFile &&
-      !roleChaining &&
-      !(process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])
-    ) {
-      // Proceed if credentials are picked up
+    } else if (!webIdentityTokenFile && !roleChaining) {
+      // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials();
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
 
-    if (AccessKeyId || roleChaining || (process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY'])) {
+    if (AccessKeyId || roleChaining) {
       // Validate that the SDK can actually pick up credentials.
       // This validates cases where this action is using existing environment credentials,
       // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
