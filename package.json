@@ -36,7 +36,7 @@
     "prettier": "^2.7.1",
     "standard-version": "^9",
     "ts-jest": "^29.0.3",
-    "typescript": "^4.8.4"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
