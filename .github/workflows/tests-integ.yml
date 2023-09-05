@@ -1,4 +1,4 @@
-name: Run tests
+name: Run Integ tests
 
 on:
   workflow_dispatch:
@@ -15,6 +15,33 @@ jobs:
         node: [14, 16, 18]
     name: Run OIDC integ tests
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v3
+      - name: Integ test for OIDC
+        uses: ./
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.SECRETS_OIDC_AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: IntegOidcAssumeRole
+          role-external-id: ${{ secrets.SECRETS_OIDC_AWS_ROLE_EXTERNAL_ID }}
+  integ-oidc-env:
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        node: [14, 16, 18]
+    name: Run OIDC integ tests with existing invalid env vars
+    runs-on: ${{ matrix.os }}
+    env:
+      AWS_ACCESS_KEY_ID: dummyaccesskeyid
+      AWS_SECRET_ACCESS_KEY: dummysecretkey
+      AWS_SESSION_TOKEN: dummytoken
     timeout-minutes: 30
     steps:
       - name: "Checkout repository"

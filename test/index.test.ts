@@ -202,7 +202,7 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Could not determine how to assume credentials. Please check your inputs and try again.'
+      'Credentials could not be loaded, please check your action inputs: Could not load credentials from any providers'
     );
   });
 
@@ -217,7 +217,7 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Could not determine how to assume credentials. Please check your inputs and try again.'
+      'Credentials could not be loaded, please check your action inputs: Access key ID empty after loading credentials'
     );
   });
 
@@ -508,6 +508,7 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('GH OIDC check fails if token is not set', async () => {
+    (fromEnv as jest.Mock).mockReset();
     process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
     process.env['GITHUB_ACTIONS'] = 'true';
     jest.spyOn(core, 'getInput').mockImplementation(
@@ -524,7 +525,7 @@ describe('Configure AWS Credentials', () => {
         ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
     );
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Could not determine how to assume credentials. Please check your inputs and try again.'
+      'Credentials could not be loaded, please check your action inputs: provider is not a function'
     );
   });
 
