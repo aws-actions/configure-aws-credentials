@@ -1,8 +1,18 @@
 queue_rules:
   - name: default
     conditions:
-      # Conditions to get out of the queue (= merged)
-      - status-success=Run Unit Tests
+      # Conditions to merge a queued PR
+      - check-success=Run unit tests (windows-latest, 14)
+      - check-success=Run unit tests (windows-latest, 16)
+      - check-success=Run unit tests (windows-latest, 18)
+      - check-success=Run unit tests (ubuntu-latest, 14)
+      - check-success=Run unit tests (ubuntu-latest, 16)
+      - check-success=Run unit tests (ubuntu-latest, 18)
+      - check-success=Run unit tests (macos-latest, 14)
+      - check-success=Run unit tests (macos-latest, 16)
+      - check-success=Run unit tests (macos-latest, 18)
+      - "#approved-reviews-by>=1"
+      - -approved-reviews-by~=author
 
 pull_request_rules:
   - name: Automatically merge on CI success and review approval
@@ -10,7 +20,15 @@ pull_request_rules:
       - base~=main|integ-tests
       - "#approved-reviews-by>=1"
       - -approved-reviews-by~=author
-      - status-success=Run Unit Tests
+      - check-success=Run unit tests (windows-latest, 14)
+      - check-success=Run unit tests (windows-latest, 16)
+      - check-success=Run unit tests (windows-latest, 18)
+      - check-success=Run unit tests (ubuntu-latest, 14)
+      - check-success=Run unit tests (ubuntu-latest, 16)
+      - check-success=Run unit tests (ubuntu-latest, 18)
+      - check-success=Run unit tests (macos-latest, 14)
+      - check-success=Run unit tests (macos-latest, 16)
+      - check-success=Run unit tests (macos-latest, 18)
       - label!=work-in-progress
       - -title~=(WIP|wip)
       - -merged
@@ -25,7 +43,15 @@ pull_request_rules:
     conditions:
       - base~=main
       - author=dependabot[bot]
-      - status-success=Run Unit Tests
+      - check-success=Run unit tests (windows-latest, 14)
+      - check-success=Run unit tests (windows-latest, 16)
+      - check-success=Run unit tests (windows-latest, 18)
+      - check-success=Run unit tests (ubuntu-latest, 14)
+      - check-success=Run unit tests (ubuntu-latest, 16)
+      - check-success=Run unit tests (ubuntu-latest, 18)
+      - check-success=Run unit tests (macos-latest, 14)
+      - check-success=Run unit tests (macos-latest, 16)
+      - check-success=Run unit tests (macos-latest, 18)
       - -title~=(WIP|wip)
       - -label~=(blocked|do-not-merge)
       - -merged
