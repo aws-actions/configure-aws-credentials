@@ -2,7 +2,7 @@ queue_rules:
   - name: default
     conditions:
       # Conditions to get out of the queue (= merged)
-      - status-success=Run Unit Tests
+      - status-success=Run unit tests
 
 pull_request_rules:
   - name: Automatically merge on CI success and review approval
@@ -10,7 +10,7 @@ pull_request_rules:
       - base~=main|integ-tests
       - "#approved-reviews-by>=1"
       - -approved-reviews-by~=author
-      - status-success=Run Unit Tests
+      - status-success=Run unit tests
       - label!=work-in-progress
       - -title~=(WIP|wip)
       - -merged
@@ -25,7 +25,7 @@ pull_request_rules:
     conditions:
       - base~=main
       - author=dependabot[bot]
-      - status-success=Run Unit Tests
+      - status-success=Run unit tests
       - -title~=(WIP|wip)
       - -label~=(blocked|do-not-merge)
       - -merged
