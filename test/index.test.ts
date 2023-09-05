@@ -6,7 +6,7 @@ import {
   STSClient,
 } from '@aws-sdk/client-sts';
 import { fromEnv } from '@aws-sdk/credential-provider-env';
-import { CredentialsProviderError } from '@aws-sdk/property-provider';
+import { CredentialsProviderError } from '@smithy/property-provider';
 import { mockClient } from 'aws-sdk-client-mock';
 import { withsleep, reset } from '../src/helpers';
 import { run } from '../src/index';
