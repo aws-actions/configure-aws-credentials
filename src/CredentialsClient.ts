@@ -1,6 +1,6 @@
 import { info } from '@actions/core';
 import { STSClient } from '@aws-sdk/client-sts';
-import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { errorMessage } from './helpers';
 
