@@ -15,7 +15,7 @@
   "devDependencies": {
     "@aws-sdk/credential-provider-env": "^3.186.0",
     "@smithy/property-provider": "^2.0.6",
-    "@jest/globals": "^29.1.2",
+    "@jest/globals": "^29.6.4",
     "@types/jest": "^29.1.2",
     "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "<=5.62.0",
