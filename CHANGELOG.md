@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.2](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.1...v3.0.2) (2023-09-07)
+
+### Bug Fixes
+* fixes #817 #819: validation logic throwing unwanted errors [d78f55b](https://github.com/aws-actions/configure-aws-credentials/commit/d78f55b1db65186cb251a8504ae9527af06fc5fd)
+
 ## [3.0.1](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.0...v3.0.1) (2023-08-24)
 
 ### Features
