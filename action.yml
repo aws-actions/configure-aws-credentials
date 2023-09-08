@@ -2,7 +2,7 @@
 name: '"Configure AWS Credentials" Action for GitHub Actions'
 description: Configures AWS credentials for use in subsequent steps in a GitHub Action workflow
 runs:
-  using: node16
+  using: node20
   main: dist/index.js
   post: dist/cleanup/index.js
 branding:
