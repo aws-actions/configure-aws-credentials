@@ -12,7 +12,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        node: [14, 16, 18]
     name: Run OIDC integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -35,7 +34,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        node: [14, 16, 18]
     name: Run OIDC integ tests with existing invalid env vars
     runs-on: ${{ matrix.os }}
     env:
@@ -59,7 +57,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        node: [14, 16, 18]
     name: Run access key integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -80,7 +77,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        node: [14, 16, 18]
     name: Run access key from env integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -102,7 +98,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        node: [14, 16, 18]
     name: Run IAM User integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
