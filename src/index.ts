@@ -78,7 +78,7 @@ export async function run() {
         !roleChaining
       ) {
         core.info(
-          'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission? ' +
+          'It looks like you might be not trying to authenticate with OIDC. Did you mean to set the `id-token` permission? ' +
             'If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
         );
       }
