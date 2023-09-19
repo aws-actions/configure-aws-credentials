@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@aws-sdk/credential-provider-env": "^3.186.0",
-    "@smithy/property-provider": "^2.0.7",
+    "@smithy/property-provider": "^2.0.9",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.4",
     "@types/node": "^20",
