@@ -56,6 +56,12 @@ async function assumeRoleWithWebIdentityTokenFile(
 
 async function assumeRoleWithCredentials(params: AssumeRoleCommandInput, client: STSClient) {
   core.info('Assuming role with user credentials');
+  if (!process.env['AWS_SESSION_TOKEN']) {
+    core.warning(
+      'To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
+        ' See https://s12d.com/gha-oidc-aws for more information.'
+    );
+  }
   try {
     const creds = await client.send(new AssumeRoleCommand({ ...params }));
     return creds;
