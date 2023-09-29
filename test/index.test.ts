@@ -873,7 +873,7 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('prints warning for access key usage and no session token', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(CREDS_INPUTS));
+    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
 
     await run();
 
