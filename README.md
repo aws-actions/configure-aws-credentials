@@ -9,6 +9,14 @@ calls.
 
 ### Recent News
 
+#### Long-term credentials warning (10/2/23)
+
+We have added a warning when using long-term credentials to access AWS
+(IAM access keys and secret keys). Using long-term credentials requires you
+to create IAM users and properly secure the access keys to prevent their disclosure.
+A better approach is to use [GitHub's support for OpenID Connect](#OIDC) to authenticate
+using an IAM role to generate temporary security credentials.
+
 #### v4 Announcement (9/11/23)
 
 We have just released `v4` of Configure AWS Credentials. The only thing that
