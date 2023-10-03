@@ -9,7 +9,7 @@ calls.
 
 ### Recent News
 
-#### Long-term credentials warning (10/2/23)
+#### Long-term credentials warning (10/3/23)
 
 We have added a warning when using long-term credentials to access AWS
 (IAM access keys and secret keys). Using long-term credentials requires you
