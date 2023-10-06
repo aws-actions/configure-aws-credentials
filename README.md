@@ -106,7 +106,7 @@ To do that, you would add the following step to your workflow:
 This will cause the action to perform an [`AssumeRoleWithWebIdentity`](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html) call and
 return temporary security credentials for use by other steps in your workflow. In order for
 this to work, you'll need to preconfigure the IAM Identity Provider in your AWS account
-(see [Assuming a Role](#assuming-a-role) for details).
+(see the [OIDC](https://github.com/aws-actions/configure-aws-credentials#OIDC) section below for details).
 
 You can use this action with the AWS CLI available in
 [GitHub's hosted virtual environments](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners) or run this action multiple times
