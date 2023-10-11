@@ -1,0 +1,1 @@
+{"description": "Configure AWS credential environment variables for use in other GitHub Actions.", "maintainers": ["platform-ops"], "checks": ["build", "SonarQube"]}
