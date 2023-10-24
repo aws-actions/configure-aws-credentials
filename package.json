@@ -20,7 +20,7 @@
     "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "<=5.62.0",
     "@typescript-eslint/parser": "<=5.62.0",
-    "@vercel/ncc": "^0.38.0",
+    "@vercel/ncc": "^0.38.1",
     "aws-sdk-client-mock": "^3.0.0",
     "copyfiles": "^2.4.1",
     "del-cli": "^5.1.0",
@@ -41,7 +41,7 @@
   "dependencies": {
     "@actions/core": "^1.10.1",
     "@aws-sdk/client-sts": "^3",
-    "@smithy/node-http-handler": "^2.1.7",
+    "@smithy/node-http-handler": "^2.1.8",
     "https-proxy-agent": "^5.0.0"
   },
   "keywords": [
