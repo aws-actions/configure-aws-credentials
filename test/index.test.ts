@@ -874,6 +874,8 @@ describe('Configure AWS Credentials', () => {
 
   test('prints warning for access key usage and no session token', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+    process.env['AWS_ACCESS_KEY_ID'] = FAKE_ACCESS_KEY_ID;
+    process.env['AWS_SECRET_ACCESS_KEY'] = FAKE_SECRET_ACCESS_KEY;
 
     await run();
 
