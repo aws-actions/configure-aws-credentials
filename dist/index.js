@@ -143,7 +143,7 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
 }
 async function assumeRoleWithCredentials(params, client) {
     core.info('Assuming role with user credentials');
-    if (!process.env['AWS_SESSION_TOKEN']) {
+    if (!process.env['AWS_SESSION_TOKEN'] && process.env['AWS_ACCESS_KEY_ID'] && process.env['AWS_SECRET_ACCESS_KEY']) {
         core.warning('To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
             ' See https://s12d.com/gha-oidc-aws for more information.');
     }
