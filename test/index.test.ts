@@ -12,7 +12,7 @@ import { withsleep, reset } from '../src/helpers';
 import { run } from '../src/index';
 
 // #region
-const FAKE_ACCESS_KEY_ID = 'MYAWSACCESSKEYID';
+const FAKE_ACCESS_KEY_ID = 'AKIAMYAWSACCESSKEYID';
 const FAKE_SECRET_ACCESS_KEY = 'MYAWSSECRETACCESSKEY';
 const FAKE_SESSION_TOKEN = 'MYAWSSESSIONTOKEN';
 const FAKE_STS_ACCESS_KEY_ID = 'STSAWSACCESSKEYID';
