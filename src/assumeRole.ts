@@ -57,16 +57,15 @@ async function assumeRoleWithWebIdentityTokenFile(
 async function assumeRoleWithCredentials(params: AssumeRoleCommandInput, client: STSClient) {
   core.info('Assuming role with user credentials');
   const accessKey = process.env['AWS_ACCESS_KEY_ID'];
-  // check determine if using long-term credentials
   // IAM access key starts with 'AKIA' prefix.
   // https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-unique-ids
-  if (accessKey) {
-    if (accessKey.startsWith('AKIA')) {
-      core.warning(
-        'To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
-          ' See https://s12d.com/gha-oidc-aws for more information.'
-      );
-    }
+  const accessKeyPrefix = 'AKIA';
+  // check determine if using long-term credentials
+  if (accessKey?.startsWith(accessKeyPrefix)) {
+    core.warning(
+      'To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
+        ' See https://s12d.com/gha-oidc-aws for more information.'
+    );
   }
   try {
     const creds = await client.send(new AssumeRoleCommand({ ...params }));
