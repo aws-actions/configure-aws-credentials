@@ -885,6 +885,17 @@ describe('Configure AWS Credentials', () => {
     );
   });
 
+  test('skips warning for temporary access key usage', async () => {
+    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+    process.env['AWS_ACCESS_KEY_ID'] = FAKE_STS_ACCESS_KEY_ID;
+    process.env['AWS_SECRET_ACCESS_KEY'] = FAKE_STS_SECRET_ACCESS_KEY;
+    process.env['AWS_SESSION_TOKEN'] = FAKE_STS_SESSION_TOKEN;
+
+    await run();
+
+    expect(core.warning).toHaveBeenCalledTimes(0);
+  });
+
   test('skips warning for access key usage with session token', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
 
