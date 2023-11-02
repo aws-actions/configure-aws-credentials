@@ -105,6 +105,9 @@ const path_1 = __importDefault(__nccwpck_require__(71017));
 const core = __importStar(__nccwpck_require__(85899));
 const client_sts_1 = __nccwpck_require__(22676);
 const helpers_1 = __nccwpck_require__(62944);
+// IAM access key starts with 'AKIA' prefix.
+// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-unique-ids
+const IAM_ACCESS_KEY_PREFIX = 'AKIA';
 async function assumeRoleWithOIDC(params, client, webIdentityToken) {
     delete params.Tags;
     core.info('Assuming role with OIDC');
@@ -144,11 +147,8 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
 async function assumeRoleWithCredentials(params, client) {
     core.info('Assuming role with user credentials');
     const accessKey = process.env['AWS_ACCESS_KEY_ID'];
-    // IAM access key starts with 'AKIA' prefix.
-    // https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-unique-ids
-    const accessKeyPrefix = 'AKIA';
     // check determine if using long-term credentials
-    if (accessKey?.startsWith(accessKeyPrefix)) {
+    if (accessKey?.startsWith(IAM_ACCESS_KEY_PREFIX)) {
         core.warning('To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
             ' See https://s12d.com/gha-oidc-aws for more information.');
     }
