@@ -151,7 +151,7 @@ and outputs.
 
 Some of this documentation may be inaccurate if you are using GHES (GitHub Enterprise Servers), please take note to review the GitHub documentation when relevant.
 
-For example, the URL that the OIDC JWT is issued from is different than the usual `tokens.actions.githubusercontent.com`, and will be unique to your enterprise server. As a result, you will need to configure this differently when you create the Identity Provider.
+For example, the URL that the OIDC JWT is issued from is different than the usual `token.actions.githubusercontent.com`, and will be unique to your enterprise server. As a result, you will need to configure this differently when you create the Identity Provider.
 
 ## Security recommendations
 
@@ -325,7 +325,7 @@ created once per account (i.e. multiple IAM Roles that can be assumed by the
 GitHub's OIDC can share a single OIDC Provider).
 
 Note that the thumbprint has been set to all F's because the thumbprint is not
-used when authenticating `tokens.actions.githubusercontent.com`. Instead, IAM
+used when authenticating `token.actions.githubusercontent.com`. Instead, IAM
 uses its library of trusted CAs to authenticate. However, this value is still
 required by the API.
 
