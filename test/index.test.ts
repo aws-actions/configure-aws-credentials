@@ -879,7 +879,7 @@ describe('Configure AWS Credentials', () => {
 
     expect(core.warning).toHaveBeenCalledWith(
       'To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
-        ' See https://s12d.com/gha-oidc-aws for more information.'
+        ' See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services for more information.'
     );
   });
 
