@@ -143,10 +143,6 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
 }
 async function assumeRoleWithCredentials(params, client) {
     core.info('Assuming role with user credentials');
-    if (!process.env['AWS_SESSION_TOKEN']) {
-        core.warning('To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
-            ' See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services for more information.');
-    }
     try {
         const creds = await client.send(new client_sts_1.AssumeRoleCommand({ ...params }));
         return creds;
