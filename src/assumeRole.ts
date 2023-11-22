@@ -151,22 +151,16 @@ export async function assumeRole(params: assumeRoleParams) {
   const stsClient = credentialsClient.stsClient;
 
   // Assume role using one of three methods
-  switch (true) {
-    case !!webIdentityToken: {
-      return assumeRoleWithOIDC(commonAssumeRoleParams, stsClient, webIdentityToken!);
-    }
-
-    case !!webIdentityTokenFile: {
-      return assumeRoleWithWebIdentityTokenFile(
-        commonAssumeRoleParams,
-        stsClient,
-        webIdentityTokenFile!,
-        GITHUB_WORKSPACE
-      );
-    }
-
-    default: {
-      return assumeRoleWithCredentials(commonAssumeRoleParams, stsClient);
-    }
+  if (!!webIdentityToken) {
+    return assumeRoleWithOIDC(commonAssumeRoleParams, stsClient, webIdentityToken);
+  } else if (!!webIdentityTokenFile) {
+    return assumeRoleWithWebIdentityTokenFile(
+      commonAssumeRoleParams,
+      stsClient,
+      webIdentityTokenFile,
+      GITHUB_WORKSPACE
+    );
+  } else {
+    return assumeRoleWithCredentials(commonAssumeRoleParams, stsClient);
   }
 }
