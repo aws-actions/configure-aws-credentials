@@ -11962,6 +11962,12 @@ const set_socket_timeout_1 = __nccwpck_require__(42618);
 const write_request_body_1 = __nccwpck_require__(73766);
 exports.DEFAULT_REQUEST_TIMEOUT = 0;
 class NodeHttpHandler {
+    static create(instanceOrOptions) {
+        if (typeof (instanceOrOptions === null || instanceOrOptions === void 0 ? void 0 : instanceOrOptions.handle) === "function") {
+            return instanceOrOptions;
+        }
+        return new NodeHttpHandler(instanceOrOptions);
+    }
     constructor(options) {
         this.metadata = { handlerProtocol: "http/1.1" };
         this.configProvider = new Promise((resolve, reject) => {
@@ -12256,6 +12262,12 @@ const get_transformed_headers_1 = __nccwpck_require__(70508);
 const node_http2_connection_manager_1 = __nccwpck_require__(5771);
 const write_request_body_1 = __nccwpck_require__(73766);
 class NodeHttp2Handler {
+    static create(instanceOrOptions) {
+        if (typeof (instanceOrOptions === null || instanceOrOptions === void 0 ? void 0 : instanceOrOptions.handle) === "function") {
+            return instanceOrOptions;
+        }
+        return new NodeHttp2Handler(instanceOrOptions);
+    }
     constructor(options) {
         this.metadata = { handlerProtocol: "h2" };
         this.connectionManager = new node_http2_connection_manager_1.NodeHttp2ConnectionManager({});
@@ -15757,6 +15769,16 @@ var FieldPosition;
 
 /***/ }),
 
+/***/ 12842:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+
+/***/ }),
+
 /***/ 197:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -15833,6 +15855,7 @@ tslib_1.__exportStar(__nccwpck_require__(21550), exports);
 tslib_1.__exportStar(__nccwpck_require__(88508), exports);
 tslib_1.__exportStar(__nccwpck_require__(47447), exports);
 tslib_1.__exportStar(__nccwpck_require__(18883), exports);
+tslib_1.__exportStar(__nccwpck_require__(12842), exports);
 tslib_1.__exportStar(__nccwpck_require__(28006), exports);
 tslib_1.__exportStar(__nccwpck_require__(52866), exports);
 tslib_1.__exportStar(__nccwpck_require__(17756), exports);
