@@ -2911,32 +2911,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.paginateListAccountRoles = void 0;
+const core_1 = __nccwpck_require__(55829);
 const ListAccountRolesCommand_1 = __nccwpck_require__(1513);
 const SSOClient_1 = __nccwpck_require__(71057);
-const makePagedClientRequest = async (client, input, ...args) => {
-    return await client.send(new ListAccountRolesCommand_1.ListAccountRolesCommand(input), ...args);
-};
-async function* paginateListAccountRoles(config, input, ...additionalArguments) {
-    let token = config.startingToken || undefined;
-    let hasNext = true;
-    let page;
-    while (hasNext) {
-        input.nextToken = token;
-        input["maxResults"] = config.pageSize;
-        if (config.client instanceof SSOClient_1.SSOClient) {
-            page = await makePagedClientRequest(config.client, input, ...additionalArguments);
-        }
-        else {
-            throw new Error("Invalid client, expected SSO | SSOClient");
-        }
-        yield page;
-        const prevToken = token;
-        token = page.nextToken;
-        hasNext = !!(token && (!config.stopOnSameToken || token !== prevToken));
-    }
-    return undefined;
-}
-exports.paginateListAccountRoles = paginateListAccountRoles;
+exports.paginateListAccountRoles = (0, core_1.createPaginator)(SSOClient_1.SSOClient, ListAccountRolesCommand_1.ListAccountRolesCommand, "nextToken", "nextToken", "maxResults");
 
 
 /***/ }),
@@ -2948,32 +2926,10 @@ exports.paginateListAccountRoles = paginateListAccountRoles;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.paginateListAccounts = void 0;
+const core_1 = __nccwpck_require__(55829);
 const ListAccountsCommand_1 = __nccwpck_require__(64296);
 const SSOClient_1 = __nccwpck_require__(71057);
-const makePagedClientRequest = async (client, input, ...args) => {
-    return await client.send(new ListAccountsCommand_1.ListAccountsCommand(input), ...args);
-};
-async function* paginateListAccounts(config, input, ...additionalArguments) {
-    let token = config.startingToken || undefined;
-    let hasNext = true;
-    let page;
-    while (hasNext) {
-        input.nextToken = token;
-        input["maxResults"] = config.pageSize;
-        if (config.client instanceof SSOClient_1.SSOClient) {
-            page = await makePagedClientRequest(config.client, input, ...additionalArguments);
-        }
-        else {
-            throw new Error("Invalid client, expected SSO | SSOClient");
-        }
-        yield page;
-        const prevToken = token;
-        token = page.nextToken;
-        hasNext = !!(token && (!config.stopOnSameToken || token !== prevToken));
-    }
-    return undefined;
-}
-exports.paginateListAccounts = paginateListAccounts;
+exports.paginateListAccounts = (0, core_1.createPaginator)(SSOClient_1.SSOClient, ListAccountsCommand_1.ListAccountsCommand, "nextToken", "nextToken", "maxResults");
 
 
 /***/ }),
@@ -2999,96 +2955,65 @@ tslib_1.__exportStar(__nccwpck_require__(50938), exports);
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.de_LogoutCommand = exports.de_ListAccountsCommand = exports.de_ListAccountRolesCommand = exports.de_GetRoleCredentialsCommand = exports.se_LogoutCommand = exports.se_ListAccountsCommand = exports.se_ListAccountRolesCommand = exports.se_GetRoleCredentialsCommand = void 0;
-const protocol_http_1 = __nccwpck_require__(64418);
+const core_1 = __nccwpck_require__(55829);
 const smithy_client_1 = __nccwpck_require__(63570);
 const models_0_1 = __nccwpck_require__(66390);
 const SSOServiceException_1 = __nccwpck_require__(81517);
 const se_GetRoleCredentialsCommand = async (input, context) => {
-    const { hostname, protocol = "https", port, path: basePath } = await context.endpoint();
+    const b = (0, core_1.requestBuilder)(input, context);
     const headers = (0, smithy_client_1.map)({}, isSerializableHeaderValue, {
-        "x-amz-sso_bearer_token": input.accessToken,
+        [_xasbt]: input[_aT],
     });
-    const resolvedPath = `${basePath?.endsWith("/") ? basePath.slice(0, -1) : basePath || ""}` + "/federation/credentials";
+    b.bp("/federation/credentials");
     const query = (0, smithy_client_1.map)({
-        role_name: [, (0, smithy_client_1.expectNonNull)(input.roleName, `roleName`)],
-        account_id: [, (0, smithy_client_1.expectNonNull)(input.accountId, `accountId`)],
+        [_rn]: [, (0, smithy_client_1.expectNonNull)(input[_rN], `roleName`)],
+        [_ai]: [, (0, smithy_client_1.expectNonNull)(input[_aI], `accountId`)],
     });
     let body;
-    return new protocol_http_1.HttpRequest({
-        protocol,
-        hostname,
-        port,
-        method: "GET",
-        headers,
-        path: resolvedPath,
-        query,
-        body,
-    });
+    b.m("GET").h(headers).q(query).b(body);
+    return b.build();
 };
 exports.se_GetRoleCredentialsCommand = se_GetRoleCredentialsCommand;
 const se_ListAccountRolesCommand = async (input, context) => {
-    const { hostname, protocol = "https", port, path: basePath } = await context.endpoint();
+    const b = (0, core_1.requestBuilder)(input, context);
     const headers = (0, smithy_client_1.map)({}, isSerializableHeaderValue, {
-        "x-amz-sso_bearer_token": input.accessToken,
+        [_xasbt]: input[_aT],
     });
-    const resolvedPath = `${basePath?.endsWith("/") ? basePath.slice(0, -1) : basePath || ""}` + "/assignment/roles";
+    b.bp("/assignment/roles");
     const query = (0, smithy_client_1.map)({
-        next_token: [, input.nextToken],
-        max_result: [() => input.maxResults !== void 0, () => input.maxResults.toString()],
-        account_id: [, (0, smithy_client_1.expectNonNull)(input.accountId, `accountId`)],
+        [_nt]: [, input[_nT]],
+        [_mr]: [() => input.maxResults !== void 0, () => input[_mR].toString()],
+        [_ai]: [, (0, smithy_client_1.expectNonNull)(input[_aI], `accountId`)],
     });
     let body;
-    return new protocol_http_1.HttpRequest({
-        protocol,
-        hostname,
-        port,
-        method: "GET",
-        headers,
-        path: resolvedPath,
-        query,
-        body,
-    });
+    b.m("GET").h(headers).q(query).b(body);
+    return b.build();
 };
 exports.se_ListAccountRolesCommand = se_ListAccountRolesCommand;
 const se_ListAccountsCommand = async (input, context) => {
-    const { hostname, protocol = "https", port, path: basePath } = await context.endpoint();
+    const b = (0, core_1.requestBuilder)(input, context);
     const headers = (0, smithy_client_1.map)({}, isSerializableHeaderValue, {
-        "x-amz-sso_bearer_token": input.accessToken,
+        [_xasbt]: input[_aT],
     });
-    const resolvedPath = `${basePath?.endsWith("/") ? basePath.slice(0, -1) : basePath || ""}` + "/assignment/accounts";
+    b.bp("/assignment/accounts");
     const query = (0, smithy_client_1.map)({
-        next_token: [, input.nextToken],
-        max_result: [() => input.maxResults !== void 0, () => input.maxResults.toString()],
+        [_nt]: [, input[_nT]],
+        [_mr]: [() => input.maxResults !== void 0, () => input[_mR].toString()],
     });
     let body;
-    return new protocol_http_1.HttpRequest({
-        protocol,
-        hostname,
-        port,
-        method: "GET",
-        headers,
-        path: resolvedPath,
-        query,
-        body,
-    });
+    b.m("GET").h(headers).q(query).b(body);
+    return b.build();
 };
 exports.se_ListAccountsCommand = se_ListAccountsCommand;
 const se_LogoutCommand = async (input, context) => {
-    const { hostname, protocol = "https", port, path: basePath } = await context.endpoint();
+    const b = (0, core_1.requestBuilder)(input, context);
     const headers = (0, smithy_client_1.map)({}, isSerializableHeaderValue, {
-        "x-amz-sso_bearer_token": input.accessToken,
+        [_xasbt]: input[_aT],
     });
-    const resolvedPath = `${basePath?.endsWith("/") ? basePath.slice(0, -1) : basePath || ""}` + "/logout";
+    b.bp("/logout");
     let body;
-    return new protocol_http_1.HttpRequest({
-        protocol,
-        hostname,
-        port,
-        method: "POST",
-        headers,
-        path: resolvedPath,
-        body,
-    });
+    b.m("POST").h(headers).b(body);
+    return b.build();
 };
 exports.se_LogoutCommand = se_LogoutCommand;
 const de_GetRoleCredentialsCommand = async (output, context) => {
@@ -3323,6 +3248,16 @@ const isSerializableHeaderValue = (value) => value !== undefined &&
     value !== "" &&
     (!Object.getOwnPropertyNames(value).includes("length") || value.length != 0) &&
     (!Object.getOwnPropertyNames(value).includes("size") || value.size != 0);
+const _aI = "accountId";
+const _aT = "accessToken";
+const _ai = "account_id";
+const _mR = "maxResults";
+const _mr = "max_result";
+const _nT = "nextToken";
+const _nt = "next_token";
+const _rN = "roleName";
+const _rn = "role_name";
+const _xasbt = "x-amz-sso_bearer_token";
 const parseBody = (streamBody, context) => collectBodyString(streamBody, context).then((encoded) => {
     if (encoded.length) {
         return JSON.parse(encoded);
@@ -4615,8 +4550,8 @@ const se_AssumeRoleCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_AssumeRoleRequest(input, context),
-        Action: "AssumeRole",
-        Version: "2011-06-15",
+        [_A]: _AR,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -4626,8 +4561,8 @@ const se_AssumeRoleWithSAMLCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_AssumeRoleWithSAMLRequest(input, context),
-        Action: "AssumeRoleWithSAML",
-        Version: "2011-06-15",
+        [_A]: _ARWSAML,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -4637,8 +4572,8 @@ const se_AssumeRoleWithWebIdentityCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_AssumeRoleWithWebIdentityRequest(input, context),
-        Action: "AssumeRoleWithWebIdentity",
-        Version: "2011-06-15",
+        [_A]: _ARWWI,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -4648,8 +4583,8 @@ const se_DecodeAuthorizationMessageCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_DecodeAuthorizationMessageRequest(input, context),
-        Action: "DecodeAuthorizationMessage",
-        Version: "2011-06-15",
+        [_A]: _DAM,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -4659,8 +4594,8 @@ const se_GetAccessKeyInfoCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_GetAccessKeyInfoRequest(input, context),
-        Action: "GetAccessKeyInfo",
-        Version: "2011-06-15",
+        [_A]: _GAKI,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -4670,8 +4605,8 @@ const se_GetCallerIdentityCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_GetCallerIdentityRequest(input, context),
-        Action: "GetCallerIdentity",
-        Version: "2011-06-15",
+        [_A]: _GCI,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -4681,8 +4616,8 @@ const se_GetFederationTokenCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_GetFederationTokenRequest(input, context),
-        Action: "GetFederationToken",
-        Version: "2011-06-15",
+        [_A]: _GFT,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -4692,8 +4627,8 @@ const se_GetSessionTokenCommand = async (input, context) => {
     let body;
     body = buildFormUrlencodedString({
         ...se_GetSessionTokenRequest(input, context),
-        Action: "GetSessionToken",
-        Version: "2011-06-15",
+        [_A]: _GST,
+        [_V]: _,
     });
     return buildHttpRpcRequest(context, headers, "/", undefined, body);
 };
@@ -5072,15 +5007,15 @@ const de_RegionDisabledExceptionRes = async (parsedOutput, context) => {
 };
 const se_AssumeRoleRequest = (input, context) => {
     const entries = {};
-    if (input.RoleArn != null) {
-        entries["RoleArn"] = input.RoleArn;
+    if (input[_RA] != null) {
+        entries[_RA] = input[_RA];
     }
-    if (input.RoleSessionName != null) {
-        entries["RoleSessionName"] = input.RoleSessionName;
+    if (input[_RSN] != null) {
+        entries[_RSN] = input[_RSN];
     }
-    if (input.PolicyArns != null) {
-        const memberEntries = se_policyDescriptorListType(input.PolicyArns, context);
-        if (input.PolicyArns?.length === 0) {
+    if (input[_PA] != null) {
+        const memberEntries = se_policyDescriptorListType(input[_PA], context);
+        if (input[_PA]?.length === 0) {
             entries.PolicyArns = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5088,15 +5023,15 @@ const se_AssumeRoleRequest = (input, context) => {
             entries[loc] = value;
         });
     }
-    if (input.Policy != null) {
-        entries["Policy"] = input.Policy;
+    if (input[_P] != null) {
+        entries[_P] = input[_P];
     }
-    if (input.DurationSeconds != null) {
-        entries["DurationSeconds"] = input.DurationSeconds;
+    if (input[_DS] != null) {
+        entries[_DS] = input[_DS];
     }
-    if (input.Tags != null) {
-        const memberEntries = se_tagListType(input.Tags, context);
-        if (input.Tags?.length === 0) {
+    if (input[_T] != null) {
+        const memberEntries = se_tagListType(input[_T], context);
+        if (input[_T]?.length === 0) {
             entries.Tags = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5104,9 +5039,9 @@ const se_AssumeRoleRequest = (input, context) => {
             entries[loc] = value;
         });
     }
-    if (input.TransitiveTagKeys != null) {
-        const memberEntries = se_tagKeyListType(input.TransitiveTagKeys, context);
-        if (input.TransitiveTagKeys?.length === 0) {
+    if (input[_TTK] != null) {
+        const memberEntries = se_tagKeyListType(input[_TTK], context);
+        if (input[_TTK]?.length === 0) {
             entries.TransitiveTagKeys = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5114,21 +5049,21 @@ const se_AssumeRoleRequest = (input, context) => {
             entries[loc] = value;
         });
     }
-    if (input.ExternalId != null) {
-        entries["ExternalId"] = input.ExternalId;
+    if (input[_EI] != null) {
+        entries[_EI] = input[_EI];
     }
-    if (input.SerialNumber != null) {
-        entries["SerialNumber"] = input.SerialNumber;
+    if (input[_SN] != null) {
+        entries[_SN] = input[_SN];
     }
-    if (input.TokenCode != null) {
-        entries["TokenCode"] = input.TokenCode;
+    if (input[_TC] != null) {
+        entries[_TC] = input[_TC];
     }
-    if (input.SourceIdentity != null) {
-        entries["SourceIdentity"] = input.SourceIdentity;
+    if (input[_SI] != null) {
+        entries[_SI] = input[_SI];
     }
-    if (input.ProvidedContexts != null) {
-        const memberEntries = se_ProvidedContextsListType(input.ProvidedContexts, context);
-        if (input.ProvidedContexts?.length === 0) {
+    if (input[_PC] != null) {
+        const memberEntries = se_ProvidedContextsListType(input[_PC], context);
+        if (input[_PC]?.length === 0) {
             entries.ProvidedContexts = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5140,18 +5075,18 @@ const se_AssumeRoleRequest = (input, context) => {
 };
 const se_AssumeRoleWithSAMLRequest = (input, context) => {
     const entries = {};
-    if (input.RoleArn != null) {
-        entries["RoleArn"] = input.RoleArn;
+    if (input[_RA] != null) {
+        entries[_RA] = input[_RA];
     }
-    if (input.PrincipalArn != null) {
-        entries["PrincipalArn"] = input.PrincipalArn;
+    if (input[_PAr] != null) {
+        entries[_PAr] = input[_PAr];
     }
-    if (input.SAMLAssertion != null) {
-        entries["SAMLAssertion"] = input.SAMLAssertion;
+    if (input[_SAMLA] != null) {
+        entries[_SAMLA] = input[_SAMLA];
     }
-    if (input.PolicyArns != null) {
-        const memberEntries = se_policyDescriptorListType(input.PolicyArns, context);
-        if (input.PolicyArns?.length === 0) {
+    if (input[_PA] != null) {
+        const memberEntries = se_policyDescriptorListType(input[_PA], context);
+        if (input[_PA]?.length === 0) {
             entries.PolicyArns = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5159,31 +5094,31 @@ const se_AssumeRoleWithSAMLRequest = (input, context) => {
             entries[loc] = value;
         });
     }
-    if (input.Policy != null) {
-        entries["Policy"] = input.Policy;
+    if (input[_P] != null) {
+        entries[_P] = input[_P];
     }
-    if (input.DurationSeconds != null) {
-        entries["DurationSeconds"] = input.DurationSeconds;
+    if (input[_DS] != null) {
+        entries[_DS] = input[_DS];
     }
     return entries;
 };
 const se_AssumeRoleWithWebIdentityRequest = (input, context) => {
     const entries = {};
-    if (input.RoleArn != null) {
-        entries["RoleArn"] = input.RoleArn;
+    if (input[_RA] != null) {
+        entries[_RA] = input[_RA];
     }
-    if (input.RoleSessionName != null) {
-        entries["RoleSessionName"] = input.RoleSessionName;
+    if (input[_RSN] != null) {
+        entries[_RSN] = input[_RSN];
     }
-    if (input.WebIdentityToken != null) {
-        entries["WebIdentityToken"] = input.WebIdentityToken;
+    if (input[_WIT] != null) {
+        entries[_WIT] = input[_WIT];
     }
-    if (input.ProviderId != null) {
-        entries["ProviderId"] = input.ProviderId;
+    if (input[_PI] != null) {
+        entries[_PI] = input[_PI];
     }
-    if (input.PolicyArns != null) {
-        const memberEntries = se_policyDescriptorListType(input.PolicyArns, context);
-        if (input.PolicyArns?.length === 0) {
+    if (input[_PA] != null) {
+        const memberEntries = se_policyDescriptorListType(input[_PA], context);
+        if (input[_PA]?.length === 0) {
             entries.PolicyArns = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5191,25 +5126,25 @@ const se_AssumeRoleWithWebIdentityRequest = (input, context) => {
             entries[loc] = value;
         });
     }
-    if (input.Policy != null) {
-        entries["Policy"] = input.Policy;
+    if (input[_P] != null) {
+        entries[_P] = input[_P];
     }
-    if (input.DurationSeconds != null) {
-        entries["DurationSeconds"] = input.DurationSeconds;
+    if (input[_DS] != null) {
+        entries[_DS] = input[_DS];
     }
     return entries;
 };
 const se_DecodeAuthorizationMessageRequest = (input, context) => {
     const entries = {};
-    if (input.EncodedMessage != null) {
-        entries["EncodedMessage"] = input.EncodedMessage;
+    if (input[_EM] != null) {
+        entries[_EM] = input[_EM];
     }
     return entries;
 };
 const se_GetAccessKeyInfoRequest = (input, context) => {
     const entries = {};
-    if (input.AccessKeyId != null) {
-        entries["AccessKeyId"] = input.AccessKeyId;
+    if (input[_AKI] != null) {
+        entries[_AKI] = input[_AKI];
     }
     return entries;
 };
@@ -5219,15 +5154,15 @@ const se_GetCallerIdentityRequest = (input, context) => {
 };
 const se_GetFederationTokenRequest = (input, context) => {
     const entries = {};
-    if (input.Name != null) {
-        entries["Name"] = input.Name;
+    if (input[_N] != null) {
+        entries[_N] = input[_N];
     }
-    if (input.Policy != null) {
-        entries["Policy"] = input.Policy;
+    if (input[_P] != null) {
+        entries[_P] = input[_P];
     }
-    if (input.PolicyArns != null) {
-        const memberEntries = se_policyDescriptorListType(input.PolicyArns, context);
-        if (input.PolicyArns?.length === 0) {
+    if (input[_PA] != null) {
+        const memberEntries = se_policyDescriptorListType(input[_PA], context);
+        if (input[_PA]?.length === 0) {
             entries.PolicyArns = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5235,12 +5170,12 @@ const se_GetFederationTokenRequest = (input, context) => {
             entries[loc] = value;
         });
     }
-    if (input.DurationSeconds != null) {
-        entries["DurationSeconds"] = input.DurationSeconds;
+    if (input[_DS] != null) {
+        entries[_DS] = input[_DS];
     }
-    if (input.Tags != null) {
-        const memberEntries = se_tagListType(input.Tags, context);
-        if (input.Tags?.length === 0) {
+    if (input[_T] != null) {
+        const memberEntries = se_tagListType(input[_T], context);
+        if (input[_T]?.length === 0) {
             entries.Tags = [];
         }
         Object.entries(memberEntries).forEach(([key, value]) => {
@@ -5252,14 +5187,14 @@ const se_GetFederationTokenRequest = (input, context) => {
 };
 const se_GetSessionTokenRequest = (input, context) => {
     const entries = {};
-    if (input.DurationSeconds != null) {
-        entries["DurationSeconds"] = input.DurationSeconds;
+    if (input[_DS] != null) {
+        entries[_DS] = input[_DS];
     }
-    if (input.SerialNumber != null) {
-        entries["SerialNumber"] = input.SerialNumber;
+    if (input[_SN] != null) {
+        entries[_SN] = input[_SN];
     }
-    if (input.TokenCode != null) {
-        entries["TokenCode"] = input.TokenCode;
+    if (input[_TC] != null) {
+        entries[_TC] = input[_TC];
     }
     return entries;
 };
@@ -5280,18 +5215,18 @@ const se_policyDescriptorListType = (input, context) => {
 };
 const se_PolicyDescriptorType = (input, context) => {
     const entries = {};
-    if (input.arn != null) {
-        entries["arn"] = input.arn;
+    if (input[_a] != null) {
+        entries[_a] = input[_a];
     }
     return entries;
 };
 const se_ProvidedContext = (input, context) => {
     const entries = {};
-    if (input.ProviderArn != null) {
-        entries["ProviderArn"] = input.ProviderArn;
+    if (input[_PAro] != null) {
+        entries[_PAro] = input[_PAro];
     }
-    if (input.ContextAssertion != null) {
-        entries["ContextAssertion"] = input.ContextAssertion;
+    if (input[_CA] != null) {
+        entries[_CA] = input[_CA];
     }
     return entries;
 };
@@ -5312,11 +5247,11 @@ const se_ProvidedContextsListType = (input, context) => {
 };
 const se_Tag = (input, context) => {
     const entries = {};
-    if (input.Key != null) {
-        entries["Key"] = input.Key;
+    if (input[_K] != null) {
+        entries[_K] = input[_K];
     }
-    if (input.Value != null) {
-        entries["Value"] = input.Value;
+    if (input[_Va] != null) {
+        entries[_Va] = input[_Va];
     }
     return entries;
 };
@@ -5349,212 +5284,212 @@ const se_tagListType = (input, context) => {
 };
 const de_AssumedRoleUser = (output, context) => {
     const contents = {};
-    if (output["AssumedRoleId"] !== undefined) {
-        contents.AssumedRoleId = (0, smithy_client_1.expectString)(output["AssumedRoleId"]);
+    if (output[_ARI] != null) {
+        contents[_ARI] = (0, smithy_client_1.expectString)(output[_ARI]);
     }
-    if (output["Arn"] !== undefined) {
-        contents.Arn = (0, smithy_client_1.expectString)(output["Arn"]);
+    if (output[_Ar] != null) {
+        contents[_Ar] = (0, smithy_client_1.expectString)(output[_Ar]);
     }
     return contents;
 };
 const de_AssumeRoleResponse = (output, context) => {
     const contents = {};
-    if (output["Credentials"] !== undefined) {
-        contents.Credentials = de_Credentials(output["Credentials"], context);
+    if (output[_C] != null) {
+        contents[_C] = de_Credentials(output[_C], context);
     }
-    if (output["AssumedRoleUser"] !== undefined) {
-        contents.AssumedRoleUser = de_AssumedRoleUser(output["AssumedRoleUser"], context);
+    if (output[_ARU] != null) {
+        contents[_ARU] = de_AssumedRoleUser(output[_ARU], context);
     }
-    if (output["PackedPolicySize"] !== undefined) {
-        contents.PackedPolicySize = (0, smithy_client_1.strictParseInt32)(output["PackedPolicySize"]);
+    if (output[_PPS] != null) {
+        contents[_PPS] = (0, smithy_client_1.strictParseInt32)(output[_PPS]);
     }
-    if (output["SourceIdentity"] !== undefined) {
-        contents.SourceIdentity = (0, smithy_client_1.expectString)(output["SourceIdentity"]);
+    if (output[_SI] != null) {
+        contents[_SI] = (0, smithy_client_1.expectString)(output[_SI]);
     }
     return contents;
 };
 const de_AssumeRoleWithSAMLResponse = (output, context) => {
     const contents = {};
-    if (output["Credentials"] !== undefined) {
-        contents.Credentials = de_Credentials(output["Credentials"], context);
+    if (output[_C] != null) {
+        contents[_C] = de_Credentials(output[_C], context);
     }
-    if (output["AssumedRoleUser"] !== undefined) {
-        contents.AssumedRoleUser = de_AssumedRoleUser(output["AssumedRoleUser"], context);
+    if (output[_ARU] != null) {
+        contents[_ARU] = de_AssumedRoleUser(output[_ARU], context);
     }
-    if (output["PackedPolicySize"] !== undefined) {
-        contents.PackedPolicySize = (0, smithy_client_1.strictParseInt32)(output["PackedPolicySize"]);
+    if (output[_PPS] != null) {
+        contents[_PPS] = (0, smithy_client_1.strictParseInt32)(output[_PPS]);
     }
-    if (output["Subject"] !== undefined) {
-        contents.Subject = (0, smithy_client_1.expectString)(output["Subject"]);
+    if (output[_S] != null) {
+        contents[_S] = (0, smithy_client_1.expectString)(output[_S]);
     }
-    if (output["SubjectType"] !== undefined) {
-        contents.SubjectType = (0, smithy_client_1.expectString)(output["SubjectType"]);
+    if (output[_ST] != null) {
+        contents[_ST] = (0, smithy_client_1.expectString)(output[_ST]);
     }
-    if (output["Issuer"] !== undefined) {
-        contents.Issuer = (0, smithy_client_1.expectString)(output["Issuer"]);
+    if (output[_I] != null) {
+        contents[_I] = (0, smithy_client_1.expectString)(output[_I]);
     }
-    if (output["Audience"] !== undefined) {
-        contents.Audience = (0, smithy_client_1.expectString)(output["Audience"]);
+    if (output[_Au] != null) {
+        contents[_Au] = (0, smithy_client_1.expectString)(output[_Au]);
     }
-    if (output["NameQualifier"] !== undefined) {
-        contents.NameQualifier = (0, smithy_client_1.expectString)(output["NameQualifier"]);
+    if (output[_NQ] != null) {
+        contents[_NQ] = (0, smithy_client_1.expectString)(output[_NQ]);
     }
-    if (output["SourceIdentity"] !== undefined) {
-        contents.SourceIdentity = (0, smithy_client_1.expectString)(output["SourceIdentity"]);
+    if (output[_SI] != null) {
+        contents[_SI] = (0, smithy_client_1.expectString)(output[_SI]);
     }
     return contents;
 };
 const de_AssumeRoleWithWebIdentityResponse = (output, context) => {
     const contents = {};
-    if (output["Credentials"] !== undefined) {
-        contents.Credentials = de_Credentials(output["Credentials"], context);
+    if (output[_C] != null) {
+        contents[_C] = de_Credentials(output[_C], context);
     }
-    if (output["SubjectFromWebIdentityToken"] !== undefined) {
-        contents.SubjectFromWebIdentityToken = (0, smithy_client_1.expectString)(output["SubjectFromWebIdentityToken"]);
+    if (output[_SFWIT] != null) {
+        contents[_SFWIT] = (0, smithy_client_1.expectString)(output[_SFWIT]);
     }
-    if (output["AssumedRoleUser"] !== undefined) {
-        contents.AssumedRoleUser = de_AssumedRoleUser(output["AssumedRoleUser"], context);
+    if (output[_ARU] != null) {
+        contents[_ARU] = de_AssumedRoleUser(output[_ARU], context);
     }
-    if (output["PackedPolicySize"] !== undefined) {
-        contents.PackedPolicySize = (0, smithy_client_1.strictParseInt32)(output["PackedPolicySize"]);
+    if (output[_PPS] != null) {
+        contents[_PPS] = (0, smithy_client_1.strictParseInt32)(output[_PPS]);
     }
-    if (output["Provider"] !== undefined) {
-        contents.Provider = (0, smithy_client_1.expectString)(output["Provider"]);
+    if (output[_Pr] != null) {
+        contents[_Pr] = (0, smithy_client_1.expectString)(output[_Pr]);
     }
-    if (output["Audience"] !== undefined) {
-        contents.Audience = (0, smithy_client_1.expectString)(output["Audience"]);
+    if (output[_Au] != null) {
+        contents[_Au] = (0, smithy_client_1.expectString)(output[_Au]);
     }
-    if (output["SourceIdentity"] !== undefined) {
-        contents.SourceIdentity = (0, smithy_client_1.expectString)(output["SourceIdentity"]);
+    if (output[_SI] != null) {
+        contents[_SI] = (0, smithy_client_1.expectString)(output[_SI]);
     }
     return contents;
 };
 const de_Credentials = (output, context) => {
     const contents = {};
-    if (output["AccessKeyId"] !== undefined) {
-        contents.AccessKeyId = (0, smithy_client_1.expectString)(output["AccessKeyId"]);
+    if (output[_AKI] != null) {
+        contents[_AKI] = (0, smithy_client_1.expectString)(output[_AKI]);
     }
-    if (output["SecretAccessKey"] !== undefined) {
-        contents.SecretAccessKey = (0, smithy_client_1.expectString)(output["SecretAccessKey"]);
+    if (output[_SAK] != null) {
+        contents[_SAK] = (0, smithy_client_1.expectString)(output[_SAK]);
     }
-    if (output["SessionToken"] !== undefined) {
-        contents.SessionToken = (0, smithy_client_1.expectString)(output["SessionToken"]);
+    if (output[_STe] != null) {
+        contents[_STe] = (0, smithy_client_1.expectString)(output[_STe]);
     }
-    if (output["Expiration"] !== undefined) {
-        contents.Expiration = (0, smithy_client_1.expectNonNull)((0, smithy_client_1.parseRfc3339DateTimeWithOffset)(output["Expiration"]));
+    if (output[_E] != null) {
+        contents[_E] = (0, smithy_client_1.expectNonNull)((0, smithy_client_1.parseRfc3339DateTimeWithOffset)(output[_E]));
     }
     return contents;
 };
 const de_DecodeAuthorizationMessageResponse = (output, context) => {
     const contents = {};
-    if (output["DecodedMessage"] !== undefined) {
-        contents.DecodedMessage = (0, smithy_client_1.expectString)(output["DecodedMessage"]);
+    if (output[_DM] != null) {
+        contents[_DM] = (0, smithy_client_1.expectString)(output[_DM]);
     }
     return contents;
 };
 const de_ExpiredTokenException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
 const de_FederatedUser = (output, context) => {
     const contents = {};
-    if (output["FederatedUserId"] !== undefined) {
-        contents.FederatedUserId = (0, smithy_client_1.expectString)(output["FederatedUserId"]);
+    if (output[_FUI] != null) {
+        contents[_FUI] = (0, smithy_client_1.expectString)(output[_FUI]);
     }
-    if (output["Arn"] !== undefined) {
-        contents.Arn = (0, smithy_client_1.expectString)(output["Arn"]);
+    if (output[_Ar] != null) {
+        contents[_Ar] = (0, smithy_client_1.expectString)(output[_Ar]);
     }
     return contents;
 };
 const de_GetAccessKeyInfoResponse = (output, context) => {
     const contents = {};
-    if (output["Account"] !== undefined) {
-        contents.Account = (0, smithy_client_1.expectString)(output["Account"]);
+    if (output[_Ac] != null) {
+        contents[_Ac] = (0, smithy_client_1.expectString)(output[_Ac]);
     }
     return contents;
 };
 const de_GetCallerIdentityResponse = (output, context) => {
     const contents = {};
-    if (output["UserId"] !== undefined) {
-        contents.UserId = (0, smithy_client_1.expectString)(output["UserId"]);
+    if (output[_UI] != null) {
+        contents[_UI] = (0, smithy_client_1.expectString)(output[_UI]);
     }
-    if (output["Account"] !== undefined) {
-        contents.Account = (0, smithy_client_1.expectString)(output["Account"]);
+    if (output[_Ac] != null) {
+        contents[_Ac] = (0, smithy_client_1.expectString)(output[_Ac]);
     }
-    if (output["Arn"] !== undefined) {
-        contents.Arn = (0, smithy_client_1.expectString)(output["Arn"]);
+    if (output[_Ar] != null) {
+        contents[_Ar] = (0, smithy_client_1.expectString)(output[_Ar]);
     }
     return contents;
 };
 const de_GetFederationTokenResponse = (output, context) => {
     const contents = {};
-    if (output["Credentials"] !== undefined) {
-        contents.Credentials = de_Credentials(output["Credentials"], context);
+    if (output[_C] != null) {
+        contents[_C] = de_Credentials(output[_C], context);
     }
-    if (output["FederatedUser"] !== undefined) {
-        contents.FederatedUser = de_FederatedUser(output["FederatedUser"], context);
+    if (output[_FU] != null) {
+        contents[_FU] = de_FederatedUser(output[_FU], context);
     }
-    if (output["PackedPolicySize"] !== undefined) {
-        contents.PackedPolicySize = (0, smithy_client_1.strictParseInt32)(output["PackedPolicySize"]);
+    if (output[_PPS] != null) {
+        contents[_PPS] = (0, smithy_client_1.strictParseInt32)(output[_PPS]);
     }
     return contents;
 };
 const de_GetSessionTokenResponse = (output, context) => {
     const contents = {};
-    if (output["Credentials"] !== undefined) {
-        contents.Credentials = de_Credentials(output["Credentials"], context);
+    if (output[_C] != null) {
+        contents[_C] = de_Credentials(output[_C], context);
     }
     return contents;
 };
 const de_IDPCommunicationErrorException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
 const de_IDPRejectedClaimException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
 const de_InvalidAuthorizationMessageException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
 const de_InvalidIdentityTokenException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
 const de_MalformedPolicyDocumentException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
 const de_PackedPolicyTooLargeException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
 const de_RegionDisabledException = (output, context) => {
     const contents = {};
-    if (output["message"] !== undefined) {
-        contents.message = (0, smithy_client_1.expectString)(output["message"]);
+    if (output[_m] != null) {
+        contents[_m] = (0, smithy_client_1.expectString)(output[_m]);
     }
     return contents;
 };
@@ -5587,6 +5522,62 @@ const buildHttpRpcRequest = async (context, headers, path, resolvedHostname, bod
 const SHARED_HEADERS = {
     "content-type": "application/x-www-form-urlencoded",
 };
+const _ = "2011-06-15";
+const _A = "Action";
+const _AKI = "AccessKeyId";
+const _AR = "AssumeRole";
+const _ARI = "AssumedRoleId";
+const _ARU = "AssumedRoleUser";
+const _ARWSAML = "AssumeRoleWithSAML";
+const _ARWWI = "AssumeRoleWithWebIdentity";
+const _Ac = "Account";
+const _Ar = "Arn";
+const _Au = "Audience";
+const _C = "Credentials";
+const _CA = "ContextAssertion";
+const _DAM = "DecodeAuthorizationMessage";
+const _DM = "DecodedMessage";
+const _DS = "DurationSeconds";
+const _E = "Expiration";
+const _EI = "ExternalId";
+const _EM = "EncodedMessage";
+const _FU = "FederatedUser";
+const _FUI = "FederatedUserId";
+const _GAKI = "GetAccessKeyInfo";
+const _GCI = "GetCallerIdentity";
+const _GFT = "GetFederationToken";
+const _GST = "GetSessionToken";
+const _I = "Issuer";
+const _K = "Key";
+const _N = "Name";
+const _NQ = "NameQualifier";
+const _P = "Policy";
+const _PA = "PolicyArns";
+const _PAr = "PrincipalArn";
+const _PAro = "ProviderArn";
+const _PC = "ProvidedContexts";
+const _PI = "ProviderId";
+const _PPS = "PackedPolicySize";
+const _Pr = "Provider";
+const _RA = "RoleArn";
+const _RSN = "RoleSessionName";
+const _S = "Subject";
+const _SAK = "SecretAccessKey";
+const _SAMLA = "SAMLAssertion";
+const _SFWIT = "SubjectFromWebIdentityToken";
+const _SI = "SourceIdentity";
+const _SN = "SerialNumber";
+const _ST = "SubjectType";
+const _STe = "SessionToken";
+const _T = "Tags";
+const _TC = "TokenCode";
+const _TTK = "TransitiveTagKeys";
+const _UI = "UserId";
+const _V = "Version";
+const _Va = "Value";
+const _WIT = "WebIdentityToken";
+const _a = "arn";
+const _m = "message";
 const parseBody = (streamBody, context) => collectBodyString(streamBody, context).then((encoded) => {
     if (encoded.length) {
         const parser = new fast_xml_parser_1.XMLParser({
@@ -5824,7 +5815,7 @@ tslib_1.__exportStar(__nccwpck_require__(14154), exports);
 
 /***/ }),
 
-/***/ 74802:
+/***/ 47584:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -5833,7 +5824,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AWSSDKSigV4Signer = void 0;
 const protocol_http_1 = __nccwpck_require__(64418);
 const utils_1 = __nccwpck_require__(76026);
-const throwAWSSDKSigningPropertyError_1 = __nccwpck_require__(45736);
+const throwAWSSDKSigningPropertyError_1 = __nccwpck_require__(29809);
 const validateSigningProperties = async (signingProperties) => {
     var _a, _b, _c;
     const context = (0, throwAWSSDKSigningPropertyError_1.throwAWSSDKSigningPropertyError)("context", signingProperties.context);
@@ -5887,20 +5878,20 @@ exports.AWSSDKSigV4Signer = AWSSDKSigV4Signer;
 
 /***/ }),
 
-/***/ 18254:
+/***/ 86710:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const tslib_1 = __nccwpck_require__(4351);
-tslib_1.__exportStar(__nccwpck_require__(74802), exports);
-tslib_1.__exportStar(__nccwpck_require__(45510), exports);
+tslib_1.__exportStar(__nccwpck_require__(47584), exports);
+tslib_1.__exportStar(__nccwpck_require__(17668), exports);
 
 
 /***/ }),
 
-/***/ 45510:
+/***/ 17668:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -5989,7 +5980,7 @@ exports.resolveAWSSDKSigV4Config = resolveAWSSDKSigV4Config;
 
 /***/ }),
 
-/***/ 45736:
+/***/ 29809:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -6014,7 +6005,7 @@ exports.throwAWSSDKSigningPropertyError = throwAWSSDKSigningPropertyError;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const tslib_1 = __nccwpck_require__(4351);
-tslib_1.__exportStar(__nccwpck_require__(18254), exports);
+tslib_1.__exportStar(__nccwpck_require__(86710), exports);
 
 
 /***/ }),
@@ -15003,12 +14994,120 @@ exports.collectBody = collectBody;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Command = void 0;
 const middleware_stack_1 = __nccwpck_require__(97911);
+const types_1 = __nccwpck_require__(55756);
 class Command {
     constructor() {
         this.middlewareStack = (0, middleware_stack_1.constructStack)();
     }
+    static classBuilder() {
+        return new ClassBuilder();
+    }
+    resolveMiddlewareWithContext(clientStack, configuration, options, { middlewareFn, clientName, commandName, inputFilterSensitiveLog, outputFilterSensitiveLog, smithyContext, additionalContext, CommandCtor, }) {
+        for (const mw of middlewareFn.bind(this)(CommandCtor, clientStack, configuration, options)) {
+            this.middlewareStack.use(mw);
+        }
+        const stack = clientStack.concat(this.middlewareStack);
+        const { logger } = configuration;
+        const handlerExecutionContext = {
+            logger,
+            clientName,
+            commandName,
+            inputFilterSensitiveLog,
+            outputFilterSensitiveLog,
+            [types_1.SMITHY_CONTEXT_KEY]: {
+                ...smithyContext,
+            },
+            ...additionalContext,
+        };
+        const { requestHandler } = configuration;
+        return stack.resolve((request) => requestHandler.handle(request.request, options || {}), handlerExecutionContext);
+    }
 }
 exports.Command = Command;
+class ClassBuilder {
+    constructor() {
+        this._init = () => { };
+        this._ep = {};
+        this._middlewareFn = () => [];
+        this._commandName = "";
+        this._clientName = "";
+        this._additionalContext = {};
+        this._smithyContext = {};
+        this._inputFilterSensitiveLog = (_) => _;
+        this._outputFilterSensitiveLog = (_) => _;
+        this._serializer = null;
+        this._deserializer = null;
+    }
+    init(cb) {
+        this._init = cb;
+    }
+    ep(endpointParameterInstructions) {
+        this._ep = endpointParameterInstructions;
+        return this;
+    }
+    m(middlewareSupplier) {
+        this._middlewareFn = middlewareSupplier;
+        return this;
+    }
+    s(service, operation, smithyContext = {}) {
+        this._smithyContext = {
+            service,
+            operation,
+            ...smithyContext,
+        };
+        return this;
+    }
+    c(additionalContext = {}) {
+        this._additionalContext = additionalContext;
+        return this;
+    }
+    n(clientName, commandName) {
+        this._clientName = clientName;
+        this._commandName = commandName;
+        return this;
+    }
+    f(inputFilter = (_) => _, outputFilter = (_) => _) {
+        this._inputFilterSensitiveLog = inputFilter;
+        this._outputFilterSensitiveLog = outputFilter;
+        return this;
+    }
+    ser(serializer) {
+        this._serializer = serializer;
+        return this;
+    }
+    de(deserializer) {
+        this._deserializer = deserializer;
+        return this;
+    }
+    build() {
+        const closure = this;
+        let CommandRef;
+        return (CommandRef = class extends Command {
+            static getEndpointParameterInstructions() {
+                return closure._ep;
+            }
+            constructor(input) {
+                super();
+                this.input = input;
+                this.serialize = closure._serializer;
+                this.deserialize = closure._deserializer;
+                closure._init(this);
+            }
+            resolveMiddleware(stack, configuration, options) {
+                return this.resolveMiddlewareWithContext(stack, configuration, options, {
+                    CommandCtor: CommandRef,
+                    middlewareFn: closure._middlewareFn,
+                    clientName: closure._clientName,
+                    commandName: closure._commandName,
+                    inputFilterSensitiveLog: closure._inputFilterSensitiveLog,
+                    outputFilterSensitiveLog: closure._outputFilterSensitiveLog,
+                    smithyContext: closure._smithyContext,
+                    additionalContext: closure._additionalContext,
+                });
+            }
+        });
+    }
+}
 
 
 /***/ }),
@@ -22683,7 +22782,7 @@ module.exports = require("util");
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.476.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.476.0","@aws-sdk/middleware-host-header":"3.468.0","@aws-sdk/middleware-logger":"3.468.0","@aws-sdk/middleware-recursion-detection":"3.468.0","@aws-sdk/middleware-user-agent":"3.470.0","@aws-sdk/region-config-resolver":"3.470.0","@aws-sdk/types":"3.468.0","@aws-sdk/util-endpoints":"3.470.0","@aws-sdk/util-user-agent-browser":"3.468.0","@aws-sdk/util-user-agent-node":"3.470.0","@smithy/config-resolver":"^2.0.21","@smithy/fetch-http-handler":"^2.3.1","@smithy/hash-node":"^2.0.17","@smithy/invalid-dependency":"^2.0.15","@smithy/middleware-content-length":"^2.0.17","@smithy/middleware-endpoint":"^2.2.3","@smithy/middleware-retry":"^2.0.24","@smithy/middleware-serde":"^2.0.15","@smithy/middleware-stack":"^2.0.9","@smithy/node-config-provider":"^2.1.8","@smithy/node-http-handler":"^2.2.1","@smithy/protocol-http":"^3.0.11","@smithy/smithy-client":"^2.1.18","@smithy/types":"^2.7.0","@smithy/url-parser":"^2.0.15","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.22","@smithy/util-defaults-mode-node":"^2.0.29","@smithy/util-endpoints":"^1.0.7","@smithy/util-retry":"^2.0.8","@smithy/util-utf8":"^2.0.2","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
+module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.478.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.477.0","@aws-sdk/middleware-host-header":"3.468.0","@aws-sdk/middleware-logger":"3.468.0","@aws-sdk/middleware-recursion-detection":"3.468.0","@aws-sdk/middleware-user-agent":"3.478.0","@aws-sdk/region-config-resolver":"3.470.0","@aws-sdk/types":"3.468.0","@aws-sdk/util-endpoints":"3.478.0","@aws-sdk/util-user-agent-browser":"3.468.0","@aws-sdk/util-user-agent-node":"3.470.0","@smithy/config-resolver":"^2.0.21","@smithy/core":"^1.2.0","@smithy/fetch-http-handler":"^2.3.1","@smithy/hash-node":"^2.0.17","@smithy/invalid-dependency":"^2.0.15","@smithy/middleware-content-length":"^2.0.17","@smithy/middleware-endpoint":"^2.2.3","@smithy/middleware-retry":"^2.0.24","@smithy/middleware-serde":"^2.0.15","@smithy/middleware-stack":"^2.0.9","@smithy/node-config-provider":"^2.1.8","@smithy/node-http-handler":"^2.2.1","@smithy/protocol-http":"^3.0.11","@smithy/smithy-client":"^2.1.18","@smithy/types":"^2.7.0","@smithy/url-parser":"^2.0.15","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.22","@smithy/util-defaults-mode-node":"^2.0.29","@smithy/util-endpoints":"^1.0.7","@smithy/util-retry":"^2.0.8","@smithy/util-utf8":"^2.0.2","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
 
 /***/ }),
 
@@ -22691,7 +22790,7 @@ module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SD
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.476.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn test:unit","test:unit":"jest"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.476.0","@aws-sdk/credential-provider-node":"3.476.0","@aws-sdk/middleware-host-header":"3.468.0","@aws-sdk/middleware-logger":"3.468.0","@aws-sdk/middleware-recursion-detection":"3.468.0","@aws-sdk/middleware-user-agent":"3.470.0","@aws-sdk/region-config-resolver":"3.470.0","@aws-sdk/types":"3.468.0","@aws-sdk/util-endpoints":"3.470.0","@aws-sdk/util-user-agent-browser":"3.468.0","@aws-sdk/util-user-agent-node":"3.470.0","@smithy/config-resolver":"^2.0.21","@smithy/core":"^1.1.0","@smithy/fetch-http-handler":"^2.3.1","@smithy/hash-node":"^2.0.17","@smithy/invalid-dependency":"^2.0.15","@smithy/middleware-content-length":"^2.0.17","@smithy/middleware-endpoint":"^2.2.3","@smithy/middleware-retry":"^2.0.24","@smithy/middleware-serde":"^2.0.15","@smithy/middleware-stack":"^2.0.9","@smithy/node-config-provider":"^2.1.8","@smithy/node-http-handler":"^2.2.1","@smithy/protocol-http":"^3.0.11","@smithy/smithy-client":"^2.1.18","@smithy/types":"^2.7.0","@smithy/url-parser":"^2.0.15","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.22","@smithy/util-defaults-mode-node":"^2.0.29","@smithy/util-endpoints":"^1.0.7","@smithy/util-middleware":"^2.0.8","@smithy/util-retry":"^2.0.8","@smithy/util-utf8":"^2.0.2","fast-xml-parser":"4.2.5","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.478.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn test:unit","test:unit":"jest"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.477.0","@aws-sdk/credential-provider-node":"3.478.0","@aws-sdk/middleware-host-header":"3.468.0","@aws-sdk/middleware-logger":"3.468.0","@aws-sdk/middleware-recursion-detection":"3.468.0","@aws-sdk/middleware-user-agent":"3.478.0","@aws-sdk/region-config-resolver":"3.470.0","@aws-sdk/types":"3.468.0","@aws-sdk/util-endpoints":"3.478.0","@aws-sdk/util-user-agent-browser":"3.468.0","@aws-sdk/util-user-agent-node":"3.470.0","@smithy/config-resolver":"^2.0.21","@smithy/core":"^1.2.0","@smithy/fetch-http-handler":"^2.3.1","@smithy/hash-node":"^2.0.17","@smithy/invalid-dependency":"^2.0.15","@smithy/middleware-content-length":"^2.0.17","@smithy/middleware-endpoint":"^2.2.3","@smithy/middleware-retry":"^2.0.24","@smithy/middleware-serde":"^2.0.15","@smithy/middleware-stack":"^2.0.9","@smithy/node-config-provider":"^2.1.8","@smithy/node-http-handler":"^2.2.1","@smithy/protocol-http":"^3.0.11","@smithy/smithy-client":"^2.1.18","@smithy/types":"^2.7.0","@smithy/url-parser":"^2.0.15","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.22","@smithy/util-defaults-mode-node":"^2.0.29","@smithy/util-endpoints":"^1.0.7","@smithy/util-middleware":"^2.0.8","@smithy/util-retry":"^2.0.8","@smithy/util-utf8":"^2.0.2","fast-xml-parser":"4.2.5","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ }),
 
@@ -22699,7 +22798,7 @@ module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SD
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"partitions":[{"id":"aws","outputs":{"dnsSuffix":"amazonaws.com","dualStackDnsSuffix":"api.aws","implicitGlobalRegion":"us-east-1","name":"aws","supportsDualStack":true,"supportsFIPS":true},"regionRegex":"^(us|eu|ap|sa|ca|me|af|il)\\\\-\\\\w+\\\\-\\\\d+$","regions":{"af-south-1":{"description":"Africa (Cape Town)"},"ap-east-1":{"description":"Asia Pacific (Hong Kong)"},"ap-northeast-1":{"description":"Asia Pacific (Tokyo)"},"ap-northeast-2":{"description":"Asia Pacific (Seoul)"},"ap-northeast-3":{"description":"Asia Pacific (Osaka)"},"ap-south-1":{"description":"Asia Pacific (Mumbai)"},"ap-south-2":{"description":"Asia Pacific (Hyderabad)"},"ap-southeast-1":{"description":"Asia Pacific (Singapore)"},"ap-southeast-2":{"description":"Asia Pacific (Sydney)"},"ap-southeast-3":{"description":"Asia Pacific (Jakarta)"},"ap-southeast-4":{"description":"Asia Pacific (Melbourne)"},"aws-global":{"description":"AWS Standard global region"},"ca-central-1":{"description":"Canada (Central)"},"eu-central-1":{"description":"Europe (Frankfurt)"},"eu-central-2":{"description":"Europe (Zurich)"},"eu-north-1":{"description":"Europe (Stockholm)"},"eu-south-1":{"description":"Europe (Milan)"},"eu-south-2":{"description":"Europe (Spain)"},"eu-west-1":{"description":"Europe (Ireland)"},"eu-west-2":{"description":"Europe (London)"},"eu-west-3":{"description":"Europe (Paris)"},"il-central-1":{"description":"Israel (Tel Aviv)"},"me-central-1":{"description":"Middle East (UAE)"},"me-south-1":{"description":"Middle East (Bahrain)"},"sa-east-1":{"description":"South America (Sao Paulo)"},"us-east-1":{"description":"US East (N. Virginia)"},"us-east-2":{"description":"US East (Ohio)"},"us-west-1":{"description":"US West (N. California)"},"us-west-2":{"description":"US West (Oregon)"}}},{"id":"aws-cn","outputs":{"dnsSuffix":"amazonaws.com.cn","dualStackDnsSuffix":"api.amazonwebservices.com.cn","implicitGlobalRegion":"cn-northwest-1","name":"aws-cn","supportsDualStack":true,"supportsFIPS":true},"regionRegex":"^cn\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-cn-global":{"description":"AWS China global region"},"cn-north-1":{"description":"China (Beijing)"},"cn-northwest-1":{"description":"China (Ningxia)"}}},{"id":"aws-us-gov","outputs":{"dnsSuffix":"amazonaws.com","dualStackDnsSuffix":"api.aws","implicitGlobalRegion":"us-gov-west-1","name":"aws-us-gov","supportsDualStack":true,"supportsFIPS":true},"regionRegex":"^us\\\\-gov\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-us-gov-global":{"description":"AWS GovCloud (US) global region"},"us-gov-east-1":{"description":"AWS GovCloud (US-East)"},"us-gov-west-1":{"description":"AWS GovCloud (US-West)"}}},{"id":"aws-iso","outputs":{"dnsSuffix":"c2s.ic.gov","dualStackDnsSuffix":"c2s.ic.gov","implicitGlobalRegion":"us-iso-east-1","name":"aws-iso","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^us\\\\-iso\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-iso-global":{"description":"AWS ISO (US) global region"},"us-iso-east-1":{"description":"US ISO East"},"us-iso-west-1":{"description":"US ISO WEST"}}},{"id":"aws-iso-b","outputs":{"dnsSuffix":"sc2s.sgov.gov","dualStackDnsSuffix":"sc2s.sgov.gov","implicitGlobalRegion":"us-isob-east-1","name":"aws-iso-b","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^us\\\\-isob\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-iso-b-global":{"description":"AWS ISOB (US) global region"},"us-isob-east-1":{"description":"US ISOB East (Ohio)"}}},{"id":"aws-iso-e","outputs":{"dnsSuffix":"cloud.adc-e.uk","dualStackDnsSuffix":"cloud.adc-e.uk","implicitGlobalRegion":"eu-isoe-west-1","name":"aws-iso-e","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^eu\\\\-isoe\\\\-\\\\w+\\\\-\\\\d+$","regions":{}},{"id":"aws-iso-f","outputs":{"dnsSuffix":"csp.hci.ic.gov","dualStackDnsSuffix":"csp.hci.ic.gov","implicitGlobalRegion":"us-isof-south-1","name":"aws-iso-f","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^us\\\\-isof\\\\-\\\\w+\\\\-\\\\d+$","regions":{}}],"version":"1.1"}');
+module.exports = JSON.parse('{"partitions":[{"id":"aws","outputs":{"dnsSuffix":"amazonaws.com","dualStackDnsSuffix":"api.aws","implicitGlobalRegion":"us-east-1","name":"aws","supportsDualStack":true,"supportsFIPS":true},"regionRegex":"^(us|eu|ap|sa|ca|me|af|il)\\\\-\\\\w+\\\\-\\\\d+$","regions":{"af-south-1":{"description":"Africa (Cape Town)"},"ap-east-1":{"description":"Asia Pacific (Hong Kong)"},"ap-northeast-1":{"description":"Asia Pacific (Tokyo)"},"ap-northeast-2":{"description":"Asia Pacific (Seoul)"},"ap-northeast-3":{"description":"Asia Pacific (Osaka)"},"ap-south-1":{"description":"Asia Pacific (Mumbai)"},"ap-south-2":{"description":"Asia Pacific (Hyderabad)"},"ap-southeast-1":{"description":"Asia Pacific (Singapore)"},"ap-southeast-2":{"description":"Asia Pacific (Sydney)"},"ap-southeast-3":{"description":"Asia Pacific (Jakarta)"},"ap-southeast-4":{"description":"Asia Pacific (Melbourne)"},"aws-global":{"description":"AWS Standard global region"},"ca-central-1":{"description":"Canada (Central)"},"ca-west-1":{"description":"Canada West (Calgary)"},"eu-central-1":{"description":"Europe (Frankfurt)"},"eu-central-2":{"description":"Europe (Zurich)"},"eu-north-1":{"description":"Europe (Stockholm)"},"eu-south-1":{"description":"Europe (Milan)"},"eu-south-2":{"description":"Europe (Spain)"},"eu-west-1":{"description":"Europe (Ireland)"},"eu-west-2":{"description":"Europe (London)"},"eu-west-3":{"description":"Europe (Paris)"},"il-central-1":{"description":"Israel (Tel Aviv)"},"me-central-1":{"description":"Middle East (UAE)"},"me-south-1":{"description":"Middle East (Bahrain)"},"sa-east-1":{"description":"South America (Sao Paulo)"},"us-east-1":{"description":"US East (N. Virginia)"},"us-east-2":{"description":"US East (Ohio)"},"us-west-1":{"description":"US West (N. California)"},"us-west-2":{"description":"US West (Oregon)"}}},{"id":"aws-cn","outputs":{"dnsSuffix":"amazonaws.com.cn","dualStackDnsSuffix":"api.amazonwebservices.com.cn","implicitGlobalRegion":"cn-northwest-1","name":"aws-cn","supportsDualStack":true,"supportsFIPS":true},"regionRegex":"^cn\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-cn-global":{"description":"AWS China global region"},"cn-north-1":{"description":"China (Beijing)"},"cn-northwest-1":{"description":"China (Ningxia)"}}},{"id":"aws-us-gov","outputs":{"dnsSuffix":"amazonaws.com","dualStackDnsSuffix":"api.aws","implicitGlobalRegion":"us-gov-west-1","name":"aws-us-gov","supportsDualStack":true,"supportsFIPS":true},"regionRegex":"^us\\\\-gov\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-us-gov-global":{"description":"AWS GovCloud (US) global region"},"us-gov-east-1":{"description":"AWS GovCloud (US-East)"},"us-gov-west-1":{"description":"AWS GovCloud (US-West)"}}},{"id":"aws-iso","outputs":{"dnsSuffix":"c2s.ic.gov","dualStackDnsSuffix":"c2s.ic.gov","implicitGlobalRegion":"us-iso-east-1","name":"aws-iso","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^us\\\\-iso\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-iso-global":{"description":"AWS ISO (US) global region"},"us-iso-east-1":{"description":"US ISO East"},"us-iso-west-1":{"description":"US ISO WEST"}}},{"id":"aws-iso-b","outputs":{"dnsSuffix":"sc2s.sgov.gov","dualStackDnsSuffix":"sc2s.sgov.gov","implicitGlobalRegion":"us-isob-east-1","name":"aws-iso-b","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^us\\\\-isob\\\\-\\\\w+\\\\-\\\\d+$","regions":{"aws-iso-b-global":{"description":"AWS ISOB (US) global region"},"us-isob-east-1":{"description":"US ISOB East (Ohio)"}}},{"id":"aws-iso-e","outputs":{"dnsSuffix":"cloud.adc-e.uk","dualStackDnsSuffix":"cloud.adc-e.uk","implicitGlobalRegion":"eu-isoe-west-1","name":"aws-iso-e","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^eu\\\\-isoe\\\\-\\\\w+\\\\-\\\\d+$","regions":{}},{"id":"aws-iso-f","outputs":{"dnsSuffix":"csp.hci.ic.gov","dualStackDnsSuffix":"csp.hci.ic.gov","implicitGlobalRegion":"us-isof-south-1","name":"aws-iso-f","supportsDualStack":false,"supportsFIPS":true},"regionRegex":"^us\\\\-isof\\\\-\\\\w+\\\\-\\\\d+$","regions":{}}],"version":"1.1"}');
 
 /***/ })
 
