@@ -20,7 +20,7 @@ using an IAM role to generate temporary security credentials.
 #### v4 Announcement (9/11/23)
 
 We have just released `v4` of Configure AWS Credentials. The only thing that
-changed from `v3` is that the action now runs on `node20` instead of `node16`.
+changed from `v3` is that the action now runs on `node20` instead of `node16`. If using a self-hosted runner, specify [v2.311.0](https://github.com/actions/runner/releases/tag/v2.311.0) or above for `node20` support.
 You can still see the `v3` announcement below, as it is still recent.
 
 #### v3 Announcement (8/23/23)
