@@ -105,9 +105,6 @@ describe('Configure AWS Credentials', () => {
     jest.spyOn(core, 'info').mockImplementation((string) => {
       return string;
     });
-    jest.spyOn(core, 'warning').mockImplementation((string) => {
-      return string;
-    });
     (fromEnv as jest.Mock)
       .mockImplementationOnce(() => () => ({
         accessKeyId: FAKE_ACCESS_KEY_ID,
@@ -870,24 +867,5 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setOutput).toHaveBeenCalledTimes(4);
-  });
-
-  test('prints warning for access key usage and no session token', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
-
-    await run();
-
-    expect(core.warning).toHaveBeenCalledWith(
-      'To avoid using long-term AWS credentials, please update your workflows to authenticate using OpenID Connect.' +
-        ' See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services for more information.'
-    );
-  });
-
-  test('skips warning for access key usage with session token', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-
-    await run();
-
-    expect(core.warning).toHaveBeenCalledTimes(0);
   });
 });
