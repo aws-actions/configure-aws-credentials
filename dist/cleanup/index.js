@@ -3429,14 +3429,6 @@ const EndpointParameters_1 = __nccwpck_require__(20510);
 const runtimeConfig_1 = __nccwpck_require__(83405);
 const runtimeExtensions_1 = __nccwpck_require__(32053);
 class STSClient extends smithy_client_1.Client {
-    getDefaultHttpAuthSchemeParametersProvider() {
-        return httpAuthSchemeProvider_1.defaultSTSHttpAuthSchemeParametersProvider;
-    }
-    getIdentityProviderConfigProvider() {
-        return async (config) => new core_1.DefaultIdentityProviderConfig({
-            "aws.auth#sigv4": config.credentials,
-        });
-    }
     constructor(...[configuration]) {
         const _config_0 = (0, runtimeConfig_1.getRuntimeConfig)(configuration || {});
         const _config_1 = (0, EndpointParameters_1.resolveClientEndpointParameters)(_config_0);
@@ -3463,6 +3455,14 @@ class STSClient extends smithy_client_1.Client {
     }
     destroy() {
         super.destroy();
+    }
+    getDefaultHttpAuthSchemeParametersProvider() {
+        return httpAuthSchemeProvider_1.defaultSTSHttpAuthSchemeParametersProvider;
+    }
+    getIdentityProviderConfigProvider() {
+        return async (config) => new core_1.DefaultIdentityProviderConfig({
+            "aws.auth#sigv4": config.credentials,
+        });
     }
 }
 exports.STSClient = STSClient;
@@ -3586,7 +3586,7 @@ const resolveStsAuthConfig = (input) => ({
 exports.resolveStsAuthConfig = resolveStsAuthConfig;
 const resolveHttpAuthSchemeConfig = (config) => {
     const config_0 = (0, exports.resolveStsAuthConfig)(config);
-    const config_1 = (0, core_1.resolveAWSSDKSigV4Config)(config_0);
+    const config_1 = (0, core_1.resolveAwsSdkSigV4Config)(config_0);
     return {
         ...config_1,
     };
@@ -5439,7 +5439,7 @@ const getRuntimeConfig = (config) => {
                 schemeId: "aws.auth#sigv4",
                 identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") ||
                     (async (idProps) => await (0, defaultStsRoleAssumers_1.decorateDefaultCredentialProvider)(credential_provider_node_1.defaultProvider)(idProps?.__config || {})()),
-                signer: new core_1.AWSSDKSigV4Signer(),
+                signer: new core_1.AwsSdkSigV4Signer(),
             },
             {
                 schemeId: "smithy.api#noAuth",
@@ -5494,7 +5494,7 @@ const getRuntimeConfig = (config) => {
             {
                 schemeId: "aws.auth#sigv4",
                 identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
-                signer: new core_1.AWSSDKSigV4Signer(),
+                signer: new core_1.AwsSdkSigV4Signer(),
             },
             {
                 schemeId: "smithy.api#noAuth",
@@ -5584,22 +5584,27 @@ tslib_1.__exportStar(__nccwpck_require__(14154), exports);
 
 /***/ }),
 
-/***/ 47584:
+/***/ 82220:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AWSSDKSigV4Signer = void 0;
+exports.AWSSDKSigV4Signer = exports.AwsSdkSigV4Signer = void 0;
 const protocol_http_1 = __nccwpck_require__(64418);
 const utils_1 = __nccwpck_require__(76026);
-const throwAWSSDKSigningPropertyError_1 = __nccwpck_require__(29809);
+const throwSigningPropertyError = (name, property) => {
+    if (!property) {
+        throw new Error(`Property \`${name}\` is not resolved for AWS SDK SigV4Auth`);
+    }
+    return property;
+};
 const validateSigningProperties = async (signingProperties) => {
     var _a, _b, _c;
-    const context = (0, throwAWSSDKSigningPropertyError_1.throwAWSSDKSigningPropertyError)("context", signingProperties.context);
-    const config = (0, throwAWSSDKSigningPropertyError_1.throwAWSSDKSigningPropertyError)("config", signingProperties.config);
+    const context = throwSigningPropertyError("context", signingProperties.context);
+    const config = throwSigningPropertyError("config", signingProperties.config);
     const authScheme = (_c = (_b = (_a = context.endpointV2) === null || _a === void 0 ? void 0 : _a.properties) === null || _b === void 0 ? void 0 : _b.authSchemes) === null || _c === void 0 ? void 0 : _c[0];
-    const signerFunction = (0, throwAWSSDKSigningPropertyError_1.throwAWSSDKSigningPropertyError)("signer", config.signer);
+    const signerFunction = throwSigningPropertyError("signer", config.signer);
     const signer = await signerFunction(authScheme);
     const signingRegion = signingProperties === null || signingProperties === void 0 ? void 0 : signingProperties.signingRegion;
     const signingName = signingProperties === null || signingProperties === void 0 ? void 0 : signingProperties.signingName;
@@ -5610,7 +5615,7 @@ const validateSigningProperties = async (signingProperties) => {
         signingName,
     };
 };
-class AWSSDKSigV4Signer {
+class AwsSdkSigV4Signer {
     async sign(httpRequest, identity, signingProperties) {
         if (!protocol_http_1.HttpRequest.isInstance(httpRequest)) {
             throw new Error("The request is not an instance of `HttpRequest` and cannot be signed");
@@ -5628,7 +5633,7 @@ class AWSSDKSigV4Signer {
             var _a;
             const serverTime = (_a = error.ServerTime) !== null && _a !== void 0 ? _a : (0, utils_1.getDateHeader)(error.$response);
             if (serverTime) {
-                const config = (0, throwAWSSDKSigningPropertyError_1.throwAWSSDKSigningPropertyError)("config", signingProperties.config);
+                const config = throwSigningPropertyError("config", signingProperties.config);
                 config.systemClockOffset = (0, utils_1.getUpdatedSystemClockOffset)(serverTime, config.systemClockOffset);
             }
             throw error;
@@ -5637,12 +5642,13 @@ class AWSSDKSigV4Signer {
     successHandler(httpResponse, signingProperties) {
         const dateHeader = (0, utils_1.getDateHeader)(httpResponse);
         if (dateHeader) {
-            const config = (0, throwAWSSDKSigningPropertyError_1.throwAWSSDKSigningPropertyError)("config", signingProperties.config);
+            const config = throwSigningPropertyError("config", signingProperties.config);
             config.systemClockOffset = (0, utils_1.getUpdatedSystemClockOffset)(dateHeader, config.systemClockOffset);
         }
     }
 }
-exports.AWSSDKSigV4Signer = AWSSDKSigV4Signer;
+exports.AwsSdkSigV4Signer = AwsSdkSigV4Signer;
+exports.AWSSDKSigV4Signer = AwsSdkSigV4Signer;
 
 
 /***/ }),
@@ -5654,22 +5660,22 @@ exports.AWSSDKSigV4Signer = AWSSDKSigV4Signer;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const tslib_1 = __nccwpck_require__(4351);
-tslib_1.__exportStar(__nccwpck_require__(47584), exports);
-tslib_1.__exportStar(__nccwpck_require__(17668), exports);
+tslib_1.__exportStar(__nccwpck_require__(82220), exports);
+tslib_1.__exportStar(__nccwpck_require__(41566), exports);
 
 
 /***/ }),
 
-/***/ 17668:
+/***/ 41566:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resolveAWSSDKSigV4Config = void 0;
+exports.resolveAWSSDKSigV4Config = exports.resolveAwsSdkSigV4Config = void 0;
 const core_1 = __nccwpck_require__(55829);
 const signature_v4_1 = __nccwpck_require__(11528);
-const resolveAWSSDKSigV4Config = (config) => {
+const resolveAwsSdkSigV4Config = (config) => {
     let normalizedCreds;
     if (config.credentials) {
         normalizedCreds = (0, core_1.memoizeIdentityProvider)(config.credentials, core_1.isIdentityExpired, core_1.doesIdentityRequireRefresh);
@@ -5744,25 +5750,8 @@ const resolveAWSSDKSigV4Config = (config) => {
         signer,
     };
 };
-exports.resolveAWSSDKSigV4Config = resolveAWSSDKSigV4Config;
-
-
-/***/ }),
-
-/***/ 29809:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.throwAWSSDKSigningPropertyError = void 0;
-const throwAWSSDKSigningPropertyError = (name, property) => {
-    if (!property) {
-        throw new Error(`Property \`${name}\` is not resolved for AWS SDK SigV4Auth`);
-    }
-    return property;
-};
-exports.throwAWSSDKSigningPropertyError = throwAWSSDKSigningPropertyError;
+exports.resolveAwsSdkSigV4Config = resolveAwsSdkSigV4Config;
+exports.resolveAWSSDKSigV4Config = exports.resolveAwsSdkSigV4Config;
 
 
 /***/ }),
@@ -46265,7 +46254,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.485.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.485.0","@aws-sdk/middleware-host-header":"3.485.0","@aws-sdk/middleware-logger":"3.485.0","@aws-sdk/middleware-recursion-detection":"3.485.0","@aws-sdk/middleware-user-agent":"3.485.0","@aws-sdk/region-config-resolver":"3.485.0","@aws-sdk/types":"3.485.0","@aws-sdk/util-endpoints":"3.485.0","@aws-sdk/util-user-agent-browser":"3.485.0","@aws-sdk/util-user-agent-node":"3.485.0","@smithy/config-resolver":"^2.0.23","@smithy/core":"^1.2.2","@smithy/fetch-http-handler":"^2.3.2","@smithy/hash-node":"^2.0.18","@smithy/invalid-dependency":"^2.0.16","@smithy/middleware-content-length":"^2.0.18","@smithy/middleware-endpoint":"^2.3.0","@smithy/middleware-retry":"^2.0.26","@smithy/middleware-serde":"^2.0.16","@smithy/middleware-stack":"^2.0.10","@smithy/node-config-provider":"^2.1.9","@smithy/node-http-handler":"^2.2.2","@smithy/protocol-http":"^3.0.12","@smithy/smithy-client":"^2.2.1","@smithy/types":"^2.8.0","@smithy/url-parser":"^2.0.16","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.24","@smithy/util-defaults-mode-node":"^2.0.32","@smithy/util-endpoints":"^1.0.8","@smithy/util-retry":"^2.0.9","@smithy/util-utf8":"^2.0.2","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
+module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.490.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.490.0","@aws-sdk/middleware-host-header":"3.489.0","@aws-sdk/middleware-logger":"3.489.0","@aws-sdk/middleware-recursion-detection":"3.489.0","@aws-sdk/middleware-user-agent":"3.489.0","@aws-sdk/region-config-resolver":"3.489.0","@aws-sdk/types":"3.489.0","@aws-sdk/util-endpoints":"3.489.0","@aws-sdk/util-user-agent-browser":"3.489.0","@aws-sdk/util-user-agent-node":"3.489.0","@smithy/config-resolver":"^2.0.23","@smithy/core":"^1.2.2","@smithy/fetch-http-handler":"^2.3.2","@smithy/hash-node":"^2.0.18","@smithy/invalid-dependency":"^2.0.16","@smithy/middleware-content-length":"^2.0.18","@smithy/middleware-endpoint":"^2.3.0","@smithy/middleware-retry":"^2.0.26","@smithy/middleware-serde":"^2.0.16","@smithy/middleware-stack":"^2.0.10","@smithy/node-config-provider":"^2.1.9","@smithy/node-http-handler":"^2.2.2","@smithy/protocol-http":"^3.0.12","@smithy/smithy-client":"^2.2.1","@smithy/types":"^2.8.0","@smithy/url-parser":"^2.0.16","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.24","@smithy/util-defaults-mode-node":"^2.0.32","@smithy/util-endpoints":"^1.0.8","@smithy/util-retry":"^2.0.9","@smithy/util-utf8":"^2.0.2","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
 
 /***/ }),
 
@@ -46273,7 +46262,7 @@ module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SD
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.485.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn test:unit","test:unit":"jest"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.485.0","@aws-sdk/credential-provider-node":"3.485.0","@aws-sdk/middleware-host-header":"3.485.0","@aws-sdk/middleware-logger":"3.485.0","@aws-sdk/middleware-recursion-detection":"3.485.0","@aws-sdk/middleware-user-agent":"3.485.0","@aws-sdk/region-config-resolver":"3.485.0","@aws-sdk/types":"3.485.0","@aws-sdk/util-endpoints":"3.485.0","@aws-sdk/util-user-agent-browser":"3.485.0","@aws-sdk/util-user-agent-node":"3.485.0","@smithy/config-resolver":"^2.0.23","@smithy/core":"^1.2.2","@smithy/fetch-http-handler":"^2.3.2","@smithy/hash-node":"^2.0.18","@smithy/invalid-dependency":"^2.0.16","@smithy/middleware-content-length":"^2.0.18","@smithy/middleware-endpoint":"^2.3.0","@smithy/middleware-retry":"^2.0.26","@smithy/middleware-serde":"^2.0.16","@smithy/middleware-stack":"^2.0.10","@smithy/node-config-provider":"^2.1.9","@smithy/node-http-handler":"^2.2.2","@smithy/protocol-http":"^3.0.12","@smithy/smithy-client":"^2.2.1","@smithy/types":"^2.8.0","@smithy/url-parser":"^2.0.16","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.24","@smithy/util-defaults-mode-node":"^2.0.32","@smithy/util-endpoints":"^1.0.8","@smithy/util-middleware":"^2.0.9","@smithy/util-retry":"^2.0.9","@smithy/util-utf8":"^2.0.2","fast-xml-parser":"4.2.5","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.490.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn test:unit","test:unit":"jest"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"3.0.0","@aws-crypto/sha256-js":"3.0.0","@aws-sdk/core":"3.490.0","@aws-sdk/credential-provider-node":"3.490.0","@aws-sdk/middleware-host-header":"3.489.0","@aws-sdk/middleware-logger":"3.489.0","@aws-sdk/middleware-recursion-detection":"3.489.0","@aws-sdk/middleware-user-agent":"3.489.0","@aws-sdk/region-config-resolver":"3.489.0","@aws-sdk/types":"3.489.0","@aws-sdk/util-endpoints":"3.489.0","@aws-sdk/util-user-agent-browser":"3.489.0","@aws-sdk/util-user-agent-node":"3.489.0","@smithy/config-resolver":"^2.0.23","@smithy/core":"^1.2.2","@smithy/fetch-http-handler":"^2.3.2","@smithy/hash-node":"^2.0.18","@smithy/invalid-dependency":"^2.0.16","@smithy/middleware-content-length":"^2.0.18","@smithy/middleware-endpoint":"^2.3.0","@smithy/middleware-retry":"^2.0.26","@smithy/middleware-serde":"^2.0.16","@smithy/middleware-stack":"^2.0.10","@smithy/node-config-provider":"^2.1.9","@smithy/node-http-handler":"^2.2.2","@smithy/protocol-http":"^3.0.12","@smithy/smithy-client":"^2.2.1","@smithy/types":"^2.8.0","@smithy/url-parser":"^2.0.16","@smithy/util-base64":"^2.0.1","@smithy/util-body-length-browser":"^2.0.1","@smithy/util-body-length-node":"^2.1.0","@smithy/util-defaults-mode-browser":"^2.0.24","@smithy/util-defaults-mode-node":"^2.0.32","@smithy/util-endpoints":"^1.0.8","@smithy/util-middleware":"^2.0.9","@smithy/util-retry":"^2.0.9","@smithy/util-utf8":"^2.0.2","fast-xml-parser":"4.2.5","tslib":"^2.5.0"},"devDependencies":{"@smithy/service-client-documentation-generator":"^2.0.0","@tsconfig/node14":"1.0.3","@types/node":"^14.14.31","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~4.9.5"},"engines":{"node":">=14.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ }),
 
