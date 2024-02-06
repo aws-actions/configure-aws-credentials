@@ -16,7 +16,7 @@
     "@aws-sdk/credential-provider-env": "^3.186.0",
     "@smithy/property-provider": "^2.1.1",
     "@jest/globals": "^29.7.0",
-    "@types/jest": "^29.5.11",
+    "@types/jest": "^29.5.12",
     "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "<=5.62.0",
     "@typescript-eslint/parser": "<=5.62.0",
