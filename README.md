@@ -294,7 +294,7 @@ You can specify the audience through the `audience` input:
 
 ### Configuring IAM to trust GitHub
 To use GitHub's OIDC provider, you must first set up federation
-with the provider in as an IAM IdP. The GitHub OIDC provider only needs to be
+with the provider as an IAM IdP. The GitHub OIDC provider only needs to be
 created once per account (i.e. multiple IAM Roles that can be assumed by the
 GitHub's OIDC can share a single OIDC Provider). Here is a sample CloudFormation
 template that will configure this trust for you.
