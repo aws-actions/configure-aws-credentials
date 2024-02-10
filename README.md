@@ -7,8 +7,6 @@ and exports session environment variables for your other Actions to use.
 Environment variable exports are detected by both the AWS SDKs and the AWS CLI
 for AWS API calls.
 
----
-
 ## Overview
 API calls to AWS need to be signed with credential information, so when you use
 one of the AWS SDKs or an AWS tool, you must provide it with AWS credentials and
@@ -16,7 +14,7 @@ and AWS region. One way to do that in GitHub Actions is to use a repository
 secret with IAM credentials, but this doesn't follow [AWS security
 guidelines](https://docs.aws.amazon.com/IAM/latest/UserGuide/security-creds.html)
 on using long term credentials. Instead, we recommend that you use a long term
-credential to fetch a temporary credential, and use that with your tools
+credential or JWT to fetch a temporary credential, and use that with your tools
 instead. This GitHub Action facilitates just that.
 
 AWS SDKs and Tools look for your credentials in standardized environment
