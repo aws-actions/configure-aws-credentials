@@ -1,157 +1,47 @@
 ## Configure AWS Credentials for GitHub Actions
 Configure your AWS credentials and region environment variables for use in other
-GitHub Actions. This action implements the AWS SDK credential resolution chain
-and exports environment variables for your other Actions to use. Environment
-variable exports are detected by both the AWS SDKs and the AWS CLI for AWS API
-calls.
+GitHub Actions.
 
----
-
-### Recent News
-
-#### Long-term credentials warning (10/3/23)
-
-We have added a warning when using long-term credentials to access AWS
-(IAM access keys and secret keys). Using long-term credentials requires you
-to create IAM users and properly secure the access keys to prevent their disclosure.
-A better approach is to use [GitHub's support for OpenID Connect](#OIDC) to authenticate
-using an IAM role to generate temporary security credentials.
-
-#### v4 Announcement (9/11/23)
-
-We have just released `v4` of Configure AWS Credentials. The only thing that
-changed from `v3` is that the action now runs on `node20` instead of `node16`. If using a self-hosted runner, specify [v2.311.0](https://github.com/actions/runner/releases/tag/v2.311.0) or above for `node20` support.
-You can still see the `v3` announcement below, as it is still recent.
-
-#### v3 Announcement (8/23/23)
-
-We have recently released `v3` of Configure AWS Credentials! With this new
-release we have migrated the code to TypeScript, and have also migrated away
-from using `v2` of the JavaScript AWS SDK. This should eliminate the warning you
-have seen in your workflow logs about `v2` deprecation.
-
-In addition to the refactored codebase, we have also introduced some changes to
-existing functionality, added some new features, and fixed some bugs. These
-changes should be backwards compatible with your existing workflows.
-
-**Notable changes to existing functionality**
-
-- By default, the assumed role credentials will only be valid for one hour in
-_all_ use cases. This is changed from 6 hours in `v2`. You can adjust this value
-with the `role-duration-seconds` input.
-- By default, your account ID will not be masked in workflow logs. This was
-changed from being masked by default in the previous version. AWS does not consider
-account IDs as sensitive information, so this change reflects that stance. You
-can revert to the old default and mask your account ID in workflow logs by
-setting the `mask-aws-account-id` input to `true`.
-
-**New features**
-
-- You can now configure retry settings in case your STS call fails. By default,
-we retry with exponential backoff twelve times. You can disable this behavior
-altogether by setting the `disable-retry` input to `true`, or you can configure
-the number of times the action will retry with the `retry-max-attempts` input.
-- You can now set the returned credentials as action step outputs. To do this,
-you can set the `output-credentials` prop to `true`.
-- There's now an option to clear the AWS-related environment variables at the
-start of the action. Clearing these variables is often a workaround for 
-problems, so enabling this can be helpful if existing credentials or environment
-variables are interfering with the action. You can enable this by setting the
-`unset-current-credentials` input to `true`.
-
-**Bug fixes**
-
-You can find a list of bugs that have been fixed in v3 in the
-[changelog](./CHANGELOG.md).
-
----
-
-### Table of Contents
-<!-- toc -->
-- [Overview](#overview)
-- [Security recommendations](#security-recommendations)
-- [Using this action](#using-this-action)
-    + [Credential Lifetime](#credential-lifetime)
-    + [External ID](#external-id)
-    + [Session tagging](#session-tagging-and-name)
-    + [Sample IAM Role Permissions](#sample-iam-role-cloudformation-template)
-    + [Misc](#misc)
-- [OIDC](#OIDC)
-    + [Audience](#audience)
-    + [Sample IAM OIDC CloudFormation Template](#sample-iam-oidc-cloudformation-template)
-    + [Claims and scoping permissions](#claims-and-scoping-permissions)
-    + [Further info](#further-info)
-- [Self-Hosted Runners](#self-hosted-runners)
-    + [Proxy Configuration](#proxy-configuration)
-    + [Use with the AWS CLI](#use-with-the-aws-cli)
-- [Examples](#examples)
-- [License Summary](#license-summary)
-- [Security Disclosures](#security-disclosures)
-<!-- tocstop -->
+This action implements the AWS JavaScript SDK credential resolution chain
+and exports session environment variables for your other Actions to use.
+Environment variable exports are detected by both the AWS SDKs and the AWS CLI
+for AWS API calls.
 
 ## Overview
+API calls to AWS need to be signed with credential information, so when you use
+one of the AWS SDKs or an AWS tool, you must provide it with AWS credentials and
+and AWS region. One way to do that in GitHub Actions is to use a repository
+secret with IAM credentials, but this doesn't follow [AWS security
+guidelines](https://docs.aws.amazon.com/IAM/latest/UserGuide/security-creds.html)
+on using long term credentials. Instead, we recommend that you use a long term
+credential or JWT to fetch a temporary credential, and use that with your tools
+instead. This GitHub Action facilitates just that.
+
+AWS SDKs and Tools look for your credentials in standardized environment
+variables. In essence, this Action runs through the standard [credential
+resolution flow](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html),
+and at the end, exports environment variables for you to use later.
+
 We support five methods for fetching credentials from AWS, but we recommend that
 you use GitHub's OIDC provider in conjunction with a configured AWS IAM
 Identity Provider endpoint.
 
-To do that, you would add the following step to your workflow:
-
-```yaml
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
-        aws-region: us-east-2
-```
-This will cause the action to perform an [`AssumeRoleWithWebIdentity`](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html) call and
-return temporary security credentials for use by other steps in your workflow. In order for
-this to work, you'll need to preconfigure the IAM Identity Provider in your AWS account
-(see the [OIDC](https://github.com/aws-actions/configure-aws-credentials#OIDC) section below for details).
-
-You can use this action with the AWS CLI available in
-[GitHub's hosted virtual environments](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners) or run this action multiple times
-to use different AWS accounts, regions, or IAM roles in the same GitHub Actions
-workflow. As an example, here is a complete workflow file that uploads artifacts
-to Amazon S3.
-
-```yaml
-jobs:
-  deploy:
-    name: Upload to Amazon S3
-    runs-on: ubuntu-latest
-    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Configure AWS credentials from Test account
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::111111111111:role/my-github-actions-role-test
-        aws-region: us-east-1
-    - name: Copy files to the test website with the AWS CLI
-      run: |
-        aws s3 sync . s3://my-s3-test-website-bucket
-    - name: Configure AWS credentials from Production account
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::222222222222:role/my-github-actions-role-prod
-        aws-region: us-west-2
-    - name: Copy files to the production website with the AWS CLI
-      run: |
-        aws s3 sync . s3://my-s3-prod-website-bucket
-```
-
-See [action.yml](action.yml) for the full documentation for this action's inputs
-and outputs.
+For more information on how to do that, read on.
 
 ### Note about GHES
 
-Some of this documentation may be inaccurate if you are using GHES (GitHub Enterprise Servers), please take note to review the GitHub documentation when relevant.
+Some of this documentation may be inaccurate if you are using GHES (GitHub
+Enterprise Servers), please take note to review the GitHub documentation when
+relevant.
 
-For example, the URL that the OIDC JWT is issued from is different than the usual `token.actions.githubusercontent.com`, and will be unique to your enterprise server. As a result, you will need to configure this differently when you create the Identity Provider.
+For example, the URL that the OIDC JWT is issued from is different than the
+usual `token.actions.githubusercontent.com`, and will be unique to your
+enterprise server. As a result, you will need to configure this differently when
+you create the Identity Provider.
+
+We do not presently have a GHES testing environment to validate this action. If
+you are running in GHES and encounter problems, please
+[let us know](https://github.com/aws-actions/configure-aws-credentials/issues/new/choose).
 
 ## Security recommendations
 
@@ -159,10 +49,14 @@ We recommend following
 [Amazon IAM best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
 for the AWS credentials used in GitHub Actions workflows, including:
   * Do not store credentials in your repository's code.
-  * [Grant least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege) to the credentials used in GitHub Actions
-  workflows. Grant only the permissions required to perform the actions in your
-  GitHub Actions workflows.
-  * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log) of the credentials used in GitHub Actions workflows.
+  * [Grant least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege)
+  to the credentials used in GitHub Actions workflows. Grant only the
+  permissions required to perform the actions in your GitHub Actions workflows.
+  Do not assume overly permissive roles, even for testing.
+  * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log)
+  of the credentials used in GitHub Actions workflows.
+  * Use temporary credentials when possible.
+  * Peridically rotate any long-term credentials you use.
 
 ## Using this action
 There are five different supported ways to retrieve credentials:
@@ -173,9 +67,17 @@ There are five different supported ways to retrieve credentials:
 - Using a WebIdentity Token File (`AssumeRoleWithWebIdentity`)
 - Using existing credentials in your runner (`AssumeRole`)
 
-We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) to get short-lived AWS credentials needed for your actions. See [OIDC](#OIDC) for more information on how to setup your AWS account to assume a role with OIDC. 
+Because we use the AWS JavaScript SDK, we always will use the [credential
+resolution flow for Node.js](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html).
+Depending on your inputs, the action might override parts of this flow.
 
-The following table describes which method is used based on which values are supplied to the Action:
+We recommend using the first option above: [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services).
+This method uses OIDC to get short-lived credentials needed for your actions.
+See [OIDC](#OIDC) for more information on how to setup your AWS account to
+assume a role with OIDC. 
+
+The following table describes which method we'll use to get your credentials
+based on which values are supplied to the Action:
 
 | **Identity Used**                                               | `aws-access-key-id` | `role-to-assume` | `web-identity-token-file` | `role-chaining` | `id-token` permission
 | --------------------------------------------------------------- | ------------------- | ---------------- | ------------------------- | - | - |
@@ -185,20 +87,52 @@ The following table describes which method is used based on which values are sup
 | Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | | |
 | Assume Role using existing credentials | | ✔ | | ✔ | |
 
-*Note: `role-chaining` is not necessary to use existing credentials in every use case. If you're getting a "Credentials loaded by the SDK do not match" error, try enabling this prop.
+*Note: `role-chaining` is not necessary to use existing credentials in every use
+case. If you're getting a "Credentials loaded by the SDK do not match" error,
+try enabling this option.
 
-### Credential Lifetime
+### Options
+See [action.yml](./action.yml) for more detail.
+
+|          Option           |                                            Description                                            | Required |
+|---------------------------|---------------------------------------------------------------------------------------------------|----------|
+| aws-region                | Which AWS region to use                                                                           |    Yes   |
+| role-to-assume            | Role for which to fetch credentials. Only required for some authentication types.                 |    No    |
+| aws-access-key-id         | AWS access key to use. Only required for some authentication types.                               |    No    |
+| aws-secret-access-key     | AWS secret key to use. Only required for some authentication types.                               |    No    |
+| aws-session-token         | AWS session token to use. Used in uncommon authentication scenarios.                              |    No    |
+| role-chaining             | Use existing credentials from the environment to assume a new role.                               |    No    |
+| audience                  | The JWT audience when using OIDC. Used in non-default AWS partitions, like China regions.         |    No    |
+| http-proxy                | An HTTP proxy to use for API calls.                                                               |    No    |
+| mask-aws-account-id       | AWS account IDs are not considered secret. Setting this will hide account IDs from output anyway. |    No    |
+| role-duration-seconds     | The assumed role duration in seconds, if assuming a role. Defaults to 1 hour.                     |    No    |
+| role-external-id          | The external ID of the role to assume. Only needed if your role requires it.                      |    No    |
+| role-session-name         | Defaults to "GitHubActions", but may be changed if required.                                      |    No    |
+| role-skip-session-tagging | Skips session tagging if set.                                                                     |    No    |
+| inline-session-policy     | You may further restrict the assumed role policy by defining an inline policy here.               |    No    |
+| managed-session-policies  | You may further restrict the assumed role policy by specifying a managed policy here.             |    No    |
+| output-credentials        | When set, outputs fetched credentials as action step output. Defaults to false.                   |    No    |
+| unset-current-credentials | When set, attempts to unset any existing credentials in your action runner.                       |    No    |
+| disable-retry             | Disabled retry/backoff logic for assume role calls. By default, retries are enabled.              |    No    |
+| retry-max-attempts        | Limits the number of retry attempts before giving up. Defaults to 12.                             |    No    |
+| special-characters-workaround | Uncommonly, some environments cannot tolerate special characters in a secret key. This option will retry fetching credentials until the secret access key does not contain special characters. This option overrides disable-retry and retry-max-attempts. | No |
+
+#### Credential Lifetime
 The default session duration is **1 hour**.
 
-If you would like to adjust this you can pass a duration to `role-duration-seconds`, but the duration cannot exceed the maximum that was defined when the IAM Role was created.
+If you would like to adjust this you can pass a duration to
+`role-duration-seconds`, but the duration cannot exceed the maximum that was
+defined when the IAM Role was created.
 
-### External ID
-If your role requires an external ID to assume, you can provide the external ID with the `role-external-id` input
+#### External ID
+If your role requires an external ID to assume, you can provide the external ID
+with the `role-external-id` input
 
-### Session tagging and name
-The default session name is "GitHubActions", and you can modify it by specifying the desired name in `role-session-name`.
-The session will be tagged with the following tags: (`GITHUB_` environment variable definitions can be
-[found here](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
+#### Session tagging and name
+The default session name is "GitHubActions", and you can modify it by specifying
+the desired name in `role-session-name`. The session will be tagged with the
+following tags: (Refer to [GitHub's documentation for `GITHUB_` environment
+variable definitions](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
 
 | Key        | Value             |
 | ---------- | ----------------- |
@@ -211,16 +145,18 @@ The session will be tagged with the following tags: (`GITHUB_` environment varia
 | Commit     | GITHUB_SHA        |
 
 _Note: all tag values must conform to
-[the requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html).
+[the tag requirements](https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html).
 Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If
 `GITHUB_ACTOR` or `GITHUB_WORKFLOW` contain invalid characters, the characters
 will be replaced with an '*'._
 
-The action will use session tagging by default during role assumption, unless you are assuming a role with a WebIdentity. 
-For WebIdentity role assumption, the session tags have to be included
-in the encoded WebIdentity token. This means that Tags can only be supplied by
-the OIDC provider, and they cannot set during the AssumeRoleWithWebIdentity API call
-within the Action. See [issue 419](https://github.com/aws-actions/configure-aws-credentials/issues/419) for more info
+The action will use session tagging by default during role assumption, unless
+you follow our recommendation and are assuming a role with a WebIdentity. For
+WebIdentity role assumption, the session tags have to be included in the encoded
+WebIdentity token. This means that tags can only be supplied by the OIDC
+provider, and they cannot set during the AssumeRoleWithWebIdentity API call
+within the Action. See [#419](https://github.com/aws-actions/configure-aws-credentials/issues/419)
+for more information.
 
 You can skip this session tagging by providing
 `role-skip-session-tagging` as true in the action's inputs:
@@ -231,10 +167,15 @@ You can skip this session tagging by providing
 ```
 
 ### Session policies
+Session policies are not required, but they allow you to limit the scope of the
+fetched credentials without making changes to IAM roles. You can specify inline
+session policies right in your workflow file, or refer to an existing managed
+session policy by its ARN.
 
 #### Inline session policies
-An IAM policy in stringified JSON format that you want to use as an inline session policy.
-Depending on preferences, the JSON could be written on a single line like this:
+An IAM policy in stringified JSON format that you want to use as an inline
+session policy. Depending on preferences, the JSON could be written on a single
+line like this:
 ```yaml
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -259,8 +200,9 @@ Or we can have a nicely formatted JSON as well:
 ```
 
 #### Managed session policies
-The Amazon Resource Names (ARNs) of the IAM managed policies that you want to use as managed session policies.
-The policies must exist in the same account as the role. You can pass a single managed policy like this:
+The Amazon Resource Names (ARNs) of the IAM managed policies that you want to
+use as managed session policies. The policies must exist in the same account as
+the role. You can pass a single managed policy like this:
 ```yaml
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -278,13 +220,20 @@ And we can pass multiple managed policies likes this:
 ### Misc
 
 #### Adjust the retry mechanism
-You can now configure retry settings for when the STS call fails. By default, we retry with exponential backoff `12` times. You can disable this behavior altogether by setting the `disable-retry` input to `true`, or you can configure the number of times it retries with the `retry-max-attempts` input.
+You can now configure retry settings for when the STS call fails. By default, we
+retry with exponential backoff `12` times. You can disable this behavior
+altogether by setting the `disable-retry` input to `true`, or you can configure
+the number of times it retries with the `retry-max-attempts` input.
 
 #### Mask account ID
-Your account ID is not masked by default in workflow logs since it's not considered sensitive information. However, you can set the `mask-aws-account-id` input to `true` to mask your account ID in workflow logs if desired.
+Your account ID is not masked by default in workflow logs since it's not
+considered sensitive information. However, you can set the `mask-aws-account-id`
+input to `true` to mask your account ID in workflow logs if desired.
 
 #### Unset current credentials
-Sometimes, existing credentials in your runner can get in the way of the intended outcome, and the recommended solution is to include another step in your workflow which unsets the environment variables set by this action. Now if you set the `unset-current-credentials` input to `true`, the workaround is made eaiser
+Sometimes, existing credentials in your runner can get in the way of the
+intended outcome. You can set the `unset-current-credentials` input to `true` to
+work around this issue.
 
 #### Special characters in AWS_SECRET_ACCESS_KEY
 Some edge cases are unable to properly parse an `AWS_SECRET_ACCESS_KEY` if it
@@ -293,11 +242,32 @@ contains special characters. For more information, please see the
 If you set the `special-characters-workaround` option, this action will
 continually retry fetching credentials until we get one that does not have
 special characters. This option overrides the `disable-retry` and
-`retry-max-attempts` options.
+`retry-max-attempts` options. We recommend that you do not enable this option
+unless required, because retrying API infinitely until they succeed is not best
+practice.
 
 ## OIDC
 
-We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) to get short-lived AWS credentials needed for your actions. When using OIDC, this action will create a JWT unique to the workflow run, and it will use this JWT to assume the role. For this action to create the JWT, it is required for your workflow to have the `id-token: write` permission:
+We recommend using [GitHub's OIDC
+provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
+to get short-lived AWS credentials needed for your actions. When using OIDC, you
+configure IAM to accept JWTs from GitHub's OIDC endpoint. This action will
+then create a JWT unique to the workflow run using the OIDC endpoint, and it
+will use the JWT to assume the specified role with short-term credentials. 
+
+To get this to work
+1. Configure your workflow to use the `id-token: write` permission.
+2. Configure your audience, if required.
+3. In your AWS account, configure IAM to trust GitHub's OIDC identity provider.
+4. Configure an IAM role with appropriate claim limits and permission scope.
+
+   *Note*: Naming your role "GitHubActions" has been reported to not work. See
+   [#953](https://github.com/aws-actions/configure-aws-credentials/issues/953).
+
+5. Specify that role's ARN when setting up this action.
+
+First, in order for this action to create the JWT, your workflow file must have
+the `id-token: write` permission:
 
 ```yaml
     permissions:
@@ -305,9 +275,13 @@ We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/d
       contents: read
 ```
 
-### Audience
+### OIDC Audience
 
-When the JWT is created, an audience needs to be specified. By default, the audience is `sts.amazonaws.com` and this will work for most cases. Changing the default audience may be necessary when using non-default AWS partitions. You can specify the audience through the `audience` input:
+When the JWT is created, an audience needs to be specified. Normally, you would
+use `sts.amazonaws.com`, and this action uses this by default if you don't
+specify one. This will work for most cases. Changing the default audience may
+be necessary when using non-default AWS partitions, such as China regions.
+You can specify the audience through the `audience` input:
 
 ```yaml
     - name: Configure AWS Credentials for China region audience
@@ -318,19 +292,20 @@ When the JWT is created, an audience needs to be specified. By default, the audi
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
 ```
 
-### Sample IAM OIDC CloudFormation Template
+### Configuring IAM to trust GitHub
 To use GitHub's OIDC provider, you must first set up federation
-with the provider in as an IAM IdP. The GitHub OIDC provider only needs to be
+with the provider as an IAM IdP. The GitHub OIDC provider only needs to be
 created once per account (i.e. multiple IAM Roles that can be assumed by the
-GitHub's OIDC can share a single OIDC Provider).
+GitHub's OIDC can share a single OIDC Provider). Here is a sample CloudFormation
+template that will configure this trust for you.
 
-Note that the thumbprint has been set to all F's because the thumbprint is not
-used when authenticating `token.actions.githubusercontent.com`. Instead, IAM
-uses its library of trusted CAs to authenticate. However, this value is still
-required by the API.
+Note that the thumbprint below has been set to all F's because the thumbprint is
+not used when authenticating `token.actions.githubusercontent.com`. This is a
+special case used *only when GitHub's OIDC is authenticating to IAM*. IAM uses
+its library of trusted CAs to authenticate. The value is still the API, so it
+must be specified.
 
-This CloudFormation template will configure the IdP for you. You can copy the
-template below, or load it from here: 
+You can copy the template below, or load it from here: 
 https://d38mtn6aq9zhn6.cloudfront.net/configure-aws-credentials-latest.yml
 
 ```yaml
@@ -390,13 +365,35 @@ Outputs:
 ```
 
 ### Claims and scoping permissions
-To align with the Amazon IAM best practice of [granting least privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege), the assume role policy document should contain a [`Condition`](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html) that specifies a subject (`sub`) allowed to assume the role. [GitHub also recommends](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-trust-conditions-on-cloud-roles-using-oidc-claims) filtering for the correct audience (`aud`). See [AWS IAM documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#condition-keys-wif) on which claims you can filter for in your trust policies.
+To align with the Amazon IAM best practice of [granting least
+privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege),
+the assume role policy document should contain a
+[`Condition`](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html)
+that specifies a subject (`sub`) allowed to assume the role. [GitHub also
+recommends](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-trust-conditions-on-cloud-roles-using-oidc-claims)
+filtering for the correct audience (`aud`). See [AWS IAM
+documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#condition-keys-wif)
+on which claims you can filter for in your trust policies.
 
-Without a subject (`sub`) condition, any GitHub user or repository could potentially assume the role. The subject can be scoped to a GitHub organization and repository as shown in the CloudFormation template. However, scoping it down to your org and repo may cause the role assumption to fail in some cases. See [Example subject claims](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#example-subject-claims) for specific details on what the subject value will be depending on your workflow. You can also [customize your subject claim](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-token-claims) if you want full control over the information you can filter for in your trust policy. If you aren't sure what your subject (`sub`) key is, you can add the [`actions-oidc-debugger`](https://github.com/github/actions-oidc-debugger) action to your workflow to see the value of the subject (`sub`) key, as well as other claims.
+Without a subject (`sub`) condition, any GitHub user or repository could
+potentially assume the role. The subject can be scoped to a GitHub organization
+and repository as shown in the CloudFormation template. However, scoping it down
+to your org and repo may cause the role assumption to fail in some cases. See
+[Example subject claims](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#example-subject-claims)
+for specific details on what the subject value will be depending on your
+workflow. You can also [customize your subject claim](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-token-claims)
+if you want full control over the information you can filter for in your trust
+policy. If you aren't sure what your subject (`sub`) key is, you can add the
+[`actions-oidc-debugger`](https://github.com/github/actions-oidc-debugger)
+action to your workflow to see the value of the subject (`sub`) key, as well as
+other claims.
 
-Additional claim conditions can be added for higher specificity as explained in the [GitHub documentation](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect). Due to implementation details, not every OIDC claim is presently supported by IAM.
+Additional claim conditions can be added for higher specificity as explained in
+the [GitHub documentation](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect).
+Due to implementation details, not every OIDC claim is presently supported by
+IAM.
 
-### Further info
+### Further information about OIDC
 
 For further information on OIDC and GitHub Actions, please see:
 
@@ -448,11 +445,10 @@ web identity.
 
 ### Proxy Configuration
 
-If you run in self-hosted environments and in secured environment where you need
-use a specific proxy you can set it in the action manually.
+If need use a HTTP proxy you can set it in the action manually.
 
-Additionally this action will always consider already configured proxy in the
-environment.
+Additionally this action will always consider the `HTTP_PROXY` environment
+variable.
 
 Manually configured proxy:
 ```yaml
@@ -468,9 +464,6 @@ Proxy configured in the environment variable:
 # Your environment configuration
 HTTP_PROXY="http://companydomain.com:3128"
 ```
-
-The action will read the underlying proxy configuration from the environment and
-you don't need to configure it in the action.
 
 ### Use with the AWS CLI
 This workflow does _not_ install the [AWS CLI](https://aws.amazon.com/cli/)
@@ -492,7 +485,10 @@ should include the AWS CLI by default.
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
         role-session-name: MySessionName
 ```
-In this example, the Action will load the OIDC token from the GitHub-provided environment variable and use it to assume the role `arn:aws:iam::123456789100:role/my-github-actions-role` with the session name `MySessionName`.
+In this example, the Action will load the OIDC token from the GitHub-provided
+environment variable and use it to assume the role
+`arn:aws:iam::123456789100:role/my-github-actions-role` with the session name
+`MySessionName`.
 
 ### AssumeRole with role previously assumed by action in same workflow
 ```yaml
@@ -510,7 +506,10 @@ In this example, the Action will load the OIDC token from the GitHub-provided en
         role-session-name: MySessionName
         role-chaining: true
 ```
-In this two-step example, the first step will use OIDC to assume the role `arn:aws:iam::123456789100:role/my-github-actions-role` just as in the prior example. Following that, a second step will use this role to assume a different role, `arn:aws:iam::987654321000:role/my-second-role`.
+In this two-step example, the first step will use OIDC to assume the role
+`arn:aws:iam::123456789100:role/my-github-actions-role` just as in the prior
+example. Following that, a second step will use this role to assume a different
+role, `arn:aws:iam::987654321000:role/my-second-role`.
 
 ### AssumeRole with static IAM credentials in repository secrets
 ```yaml
@@ -525,7 +524,10 @@ In this two-step example, the first step will use OIDC to assume the role `arn:a
         role-duration-seconds: 1200
         role-session-name: MySessionName
 ```
-In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws:iam::123456789100:role/my-github-actions-role`.  To assume a role in the same account as the static credentials, you can simply specify the role name, like `role-to-assume: my-github-actions-role`.
+In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like
+`arn:aws:iam::123456789100:role/my-github-actions-role`.  To assume a role in
+the same account as the static credentials, you can simply specify the role
+name, like `role-to-assume: my-github-actions-role`.
 
 ### Retrieving credentials from step output, AssumeRole with temporary credentials
 ```yaml
@@ -551,10 +553,16 @@ In this example, the secret `AWS_ROLE_TO_ASSUME` contains a string like `arn:aws
       run: |
         aws sts get-caller-identity
 ```
-This example shows that you can reference the fetched credentials as outputs if `output-credentials` is set to true. This example also shows that you can use the `aws-session-token` input in a situation where session tokens are fetched and passed to this action.
+This example shows that you can reference the fetched credentials as outputs if
+`output-credentials` is set to true. This example also shows that you can use
+the `aws-session-token` input in a situation where session tokens are fetched
+and passed to this action.
  
 ## License Summary
 This code is made available under the MIT license.
 
 ## Security Disclosures
-If you would like to report a potential security issue in this project, please do not create a GitHub issue.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
+If you would like to report a potential security issue in this project, please
+do not create a GitHub issue.  Instead, please follow the instructions
+[here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS
+security directly](mailto:aws-security@amazon.com).
