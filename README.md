@@ -31,7 +31,7 @@ For more information on how to do that, read on.
 ### Note about GHES
 
 Some of this documentation may be inaccurate if you are using GHES (GitHub
-Enterprise Servers), please take note to review the GitHub documentation when
+Enterprise Server), please take note to review the GitHub documentation when
 relevant.
 
 For example, the URL that the OIDC JWT is issued from is different than the
@@ -56,7 +56,7 @@ for the AWS credentials used in GitHub Actions workflows, including:
   * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log)
   of the credentials used in GitHub Actions workflows.
   * Use temporary credentials when possible.
-  * Peridically rotate any long-term credentials you use.
+  * Periodically rotate any long-term credentials you use.
 
 ## Using this action
 There are five different supported ways to retrieve credentials:
