@@ -31,7 +31,7 @@ For more information on how to do that, read on.
 ### Note about GHES
 
 Some of this documentation may be inaccurate if you are using GHES (GitHub
-Enterprise Servers), please take note to review the GitHub documentation when
+Enterprise Server), please take note to review the GitHub documentation when
 relevant.
 
 For example, the URL that the OIDC JWT is issued from is different than the
@@ -56,7 +56,7 @@ for the AWS credentials used in GitHub Actions workflows, including:
   * [Monitor the activity](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#keep-a-log)
   of the credentials used in GitHub Actions workflows.
   * Use temporary credentials when possible.
-  * Peridically rotate any long-term credentials you use.
+  * Periodically rotate any long-term credentials you use.
 
 ## Using this action
 There are five different supported ways to retrieve credentials:
@@ -87,9 +87,9 @@ based on which values are supplied to the Action:
 | Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | | |
 | Assume Role using existing credentials | | ✔ | | ✔ | |
 
-*Note: `role-chaining` is not necessary to use existing credentials in every use
-case. If you're getting a "Credentials loaded by the SDK do not match" error,
-try enabling this option.
+*Note: `role-chaining` is not always necessary to use existing credentials.
+If you're getting a "Credentials loaded by the SDK do not match" error,
+try enabling this option.*
 
 ### Options
 See [action.yml](./action.yml) for more detail.
@@ -243,7 +243,7 @@ If you set the `special-characters-workaround` option, this action will
 continually retry fetching credentials until we get one that does not have
 special characters. This option overrides the `disable-retry` and
 `retry-max-attempts` options. We recommend that you do not enable this option
-unless required, because retrying API infinitely until they succeed is not best
+unless required, because retrying APIs infinitely until they succeed is not best
 practice.
 
 ## OIDC
