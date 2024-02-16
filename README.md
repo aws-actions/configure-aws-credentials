@@ -87,9 +87,9 @@ based on which values are supplied to the Action:
 | Assume Role using WebIdentity Token File credentials            |                     | ✔                | ✔                         | | |
 | Assume Role using existing credentials | | ✔ | | ✔ | |
 
-*Note: `role-chaining` is not necessary to use existing credentials in every use
-case. If you're getting a "Credentials loaded by the SDK do not match" error,
-try enabling this option.
+*Note: `role-chaining` is not always necessary to use existing credentials.
+If you're getting a "Credentials loaded by the SDK do not match" error,
+try enabling this option.*
 
 ### Options
 See [action.yml](./action.yml) for more detail.
@@ -243,7 +243,7 @@ If you set the `special-characters-workaround` option, this action will
 continually retry fetching credentials until we get one that does not have
 special characters. This option overrides the `disable-retry` and
 `retry-max-attempts` options. We recommend that you do not enable this option
-unless required, because retrying API infinitely until they succeed is not best
+unless required, because retrying APIs infinitely until they succeed is not best
 practice.
 
 ## OIDC
