@@ -13,7 +13,7 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.515.0",
+    "@aws-sdk/credential-provider-env": "^3.523.0",
     "@smithy/property-provider": "^2.1.3",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.12",
