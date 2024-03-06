@@ -289,7 +289,7 @@ You can specify the audience through the `audience` input:
       with:
         audience: sts.amazonaws.com.cn
         aws-region: us-east-3
-        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        role-to-assume: arn:aws-cn:iam::123456789100:role/my-github-actions-role
 ```
 
 ### Configuring IAM to trust GitHub
