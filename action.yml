@@ -1,4 +1,6 @@
-
+              - name: "Configure AWS Credentials" Action for GitHub Actions
+                uses: aws-actions/configure-aws-credentials@v4.0.2
+            
 name: '"Configure AWS Credentials" Action for GitHub Actions'
 description: Configures AWS credentials for use in subsequent steps in a GitHub Action workflow
 runs:
