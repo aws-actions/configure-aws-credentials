@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import type { AssumeRoleCommandOutput } from '@aws-sdk/client-sts';
+import { getProxyForUrl } from 'proxy-from-env';
 import { assumeRole } from './assumeRole';
 import { CredentialsClient } from './CredentialsClient';
 import {
@@ -34,7 +35,7 @@ export async function run() {
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
-    const proxyServer = core.getInput('http-proxy', { required: false });
+    let proxyServer = core.getInput('http-proxy', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
     const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
     const managedSessionPolicies: any[] = [];
@@ -99,6 +100,11 @@ export async function run() {
       throw new Error(`Region is not valid: ${region}`);
     }
     exportRegion(region);
+
+    // determine proxy if not set via action input
+    if (!proxyServer) {
+      proxyServer = getProxyForUrl(`https://sts.${region}.amazonaws.com`);
+    }
 
     // Instantiate credentials client
     const credentialsClient = new CredentialsClient({ region, proxyServer });
