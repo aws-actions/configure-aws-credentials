@@ -98,7 +98,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.assumeRole = void 0;
+exports.assumeRole = assumeRole;
 const assert_1 = __importDefault(__nccwpck_require__(9491));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const path_1 = __importDefault(__nccwpck_require__(1017));
@@ -208,7 +208,6 @@ async function assumeRole(params) {
         return assumeRoleWithCredentials(commonAssumeRoleParams, stsClient);
     }
 }
-exports.assumeRole = assumeRole;
 //# sourceMappingURL=assumeRole.js.map
 
 /***/ }),
@@ -242,7 +241,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDefined = exports.errorMessage = exports.retryAndBackoff = exports.verifyKeys = exports.reset = exports.withsleep = exports.defaultSleep = exports.sanitizeGitHubVariables = exports.exportAccountId = exports.exportRegion = exports.unsetCredentials = exports.exportCredentials = void 0;
+exports.exportCredentials = exportCredentials;
+exports.unsetCredentials = unsetCredentials;
+exports.exportRegion = exportRegion;
+exports.exportAccountId = exportAccountId;
+exports.sanitizeGitHubVariables = sanitizeGitHubVariables;
+exports.defaultSleep = defaultSleep;
+exports.withsleep = withsleep;
+exports.reset = reset;
+exports.verifyKeys = verifyKeys;
+exports.retryAndBackoff = retryAndBackoff;
+exports.errorMessage = errorMessage;
+exports.isDefined = isDefined;
 const core = __importStar(__nccwpck_require__(2186));
 const client_sts_1 = __nccwpck_require__(2209);
 const MAX_TAG_VALUE_LENGTH = 256;
@@ -279,7 +289,6 @@ function exportCredentials(creds, outputCredentials) {
         }
     }
 }
-exports.exportCredentials = exportCredentials;
 function unsetCredentials() {
     core.exportVariable('AWS_ACCESS_KEY_ID', '');
     core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
@@ -287,12 +296,10 @@ function unsetCredentials() {
     core.exportVariable('AWS_REGION', '');
     core.exportVariable('AWS_DEFAULT_REGION', '');
 }
-exports.unsetCredentials = unsetCredentials;
 function exportRegion(region) {
     core.exportVariable('AWS_DEFAULT_REGION', region);
     core.exportVariable('AWS_REGION', region);
 }
-exports.exportRegion = exportRegion;
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
     const client = credentialsClient.stsClient;
@@ -307,7 +314,6 @@ async function exportAccountId(credentialsClient, maskAccountId) {
     core.setOutput('aws-account-id', accountId);
     return accountId;
 }
-exports.exportAccountId = exportAccountId;
 // Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
 // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
 // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
@@ -316,20 +322,16 @@ function sanitizeGitHubVariables(name) {
     const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH);
     return nameTruncated;
 }
-exports.sanitizeGitHubVariables = sanitizeGitHubVariables;
 async function defaultSleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
-exports.defaultSleep = defaultSleep;
 let sleep = defaultSleep;
 function withsleep(s) {
     sleep = s;
 }
-exports.withsleep = withsleep;
 function reset() {
     sleep = defaultSleep;
 }
-exports.reset = reset;
 function verifyKeys(creds) {
     if (!creds) {
         return false;
@@ -348,7 +350,6 @@ function verifyKeys(creds) {
     }
     return true;
 }
-exports.verifyKeys = verifyKeys;
 // Retries the promise with exponential backoff if the error isRetryable up to maxRetries time.
 async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, base = 50) {
     try {
@@ -367,16 +368,13 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
         return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);
     }
 }
-exports.retryAndBackoff = retryAndBackoff;
 /* c8 ignore start */
 function errorMessage(error) {
     return error instanceof Error ? error.message : String(error);
 }
-exports.errorMessage = errorMessage;
 function isDefined(i) {
     return i !== undefined && i !== null;
 }
-exports.isDefined = isDefined;
 /* c8 ignore stop */
 //# sourceMappingURL=helpers.js.map
 
@@ -411,7 +409,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = void 0;
+exports.run = run;
 const core = __importStar(__nccwpck_require__(2186));
 const assumeRole_1 = __nccwpck_require__(1209);
 const CredentialsClient_1 = __nccwpck_require__(3301);
@@ -575,7 +573,6 @@ async function run() {
         }
     }
 }
-exports.run = run;
 /* c8 ignore start */
 /* istanbul ignore next */
 if (require.main === require.cache[eval('__filename')]) {
