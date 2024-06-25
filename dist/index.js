@@ -16784,10 +16784,12 @@ var _NodeHttpHandler = class _NodeHttpHandler {
    * @internal
    *
    * @param agent - http(s) agent in use by the NodeHttpHandler instance.
+   * @param socketWarningTimestamp - last socket usage check timestamp.
+   * @param logger - channel for the warning.
    * @returns timestamp of last emitted warning.
    */
-  static checkSocketUsage(agent, socketWarningTimestamp) {
-    var _a, _b;
+  static checkSocketUsage(agent, socketWarningTimestamp, logger = console) {
+    var _a, _b, _c;
     const { sockets, requests, maxSockets } = agent;
     if (typeof maxSockets !== "number" || maxSockets === Infinity) {
       return socketWarningTimestamp;
@@ -16801,11 +16803,11 @@ var _NodeHttpHandler = class _NodeHttpHandler {
         const socketsInUse = ((_a = sockets[origin]) == null ? void 0 : _a.length) ?? 0;
         const requestsEnqueued = ((_b = requests[origin]) == null ? void 0 : _b.length) ?? 0;
         if (socketsInUse >= maxSockets && requestsEnqueued >= 2 * maxSockets) {
-          console.warn(
-            "@smithy/node-http-handler:WARN",
-            `socket usage at capacity=${socketsInUse} and ${requestsEnqueued} additional requests are enqueued.`,
-            "See https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/node-configuring-maxsockets.html",
-            "or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler config."
+          (_c = logger == null ? void 0 : logger.warn) == null ? void 0 : _c.call(
+            logger,
+            `@smithy/node-http-handler:WARN - socket usage at capacity=${socketsInUse} and ${requestsEnqueued} additional requests are enqueued.
+See https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/node-configuring-maxsockets.html
+or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler config.`
           );
           return Date.now();
         }
@@ -16831,7 +16833,8 @@ var _NodeHttpHandler = class _NodeHttpHandler {
           return httpsAgent;
         }
         return new import_https.Agent({ keepAlive, maxSockets, ...httpsAgent });
-      })()
+      })(),
+      logger: console
     };
   }
   destroy() {
@@ -16853,6 +16856,7 @@ var _NodeHttpHandler = class _NodeHttpHandler {
       }, "resolve");
       const reject = /* @__PURE__ */ __name(async (arg) => {
         await writeRequestBodyPromise;
+        clearTimeout(socketCheckTimeoutId);
         _reject(arg);
       }, "reject");
       if (!this.config) {
@@ -16868,7 +16872,11 @@ var _NodeHttpHandler = class _NodeHttpHandler {
       const agent = isSSL ? this.config.httpsAgent : this.config.httpAgent;
       socketCheckTimeoutId = setTimeout(
         () => {
-          this.socketWarningTimestamp = _NodeHttpHandler.checkSocketUsage(agent, this.socketWarningTimestamp);
+          this.socketWarningTimestamp = _NodeHttpHandler.checkSocketUsage(
+            agent,
+            this.socketWarningTimestamp,
+            this.config.logger
+          );
         },
         this.config.socketAcquisitionWarningTimeout ?? (this.config.requestTimeout ?? 2e3) + (this.config.connectionTimeout ?? 1e3)
       );
@@ -16915,12 +16923,17 @@ var _NodeHttpHandler = class _NodeHttpHandler {
       setConnectionTimeout(req, reject, this.config.connectionTimeout);
       setSocketTimeout(req, reject, this.config.requestTimeout);
       if (abortSignal) {
-        abortSignal.onabort = () => {
-          req.abort();
+        const onAbort = /* @__PURE__ */ __name(() => {
+          req.destroy();
           const abortError = new Error("Request aborted");
           abortError.name = "AbortError";
           reject(abortError);
-        };
+        }, "onAbort");
+        if (typeof abortSignal.addEventListener === "function") {
+          abortSignal.addEventListener("abort", onAbort);
+        } else {
+          abortSignal.onabort = onAbort;
+        }
       }
       const httpAgent = nodeHttpsOptions.agent;
       if (typeof httpAgent === "object" && "keepAlive" in httpAgent) {
@@ -16931,7 +16944,10 @@ var _NodeHttpHandler = class _NodeHttpHandler {
           keepAliveMsecs: httpAgent.keepAliveMsecs
         });
       }
-      writeRequestBodyPromise = writeRequestBody(req, request, this.config.requestTimeout).catch(_reject);
+      writeRequestBodyPromise = writeRequestBody(req, request, this.config.requestTimeout).catch((e) => {
+        clearTimeout(socketCheckTimeoutId);
+        return _reject(e);
+      });
     });
   }
   updateHttpClientConfig(key, value) {
@@ -17199,12 +17215,17 @@ var _NodeHttp2Handler = class _NodeHttp2Handler {
         });
       }
       if (abortSignal) {
-        abortSignal.onabort = () => {
+        const onAbort = /* @__PURE__ */ __name(() => {
           req.close();
           const abortError = new Error("Request aborted");
           abortError.name = "AbortError";
           rejectWithDestroy(abortError);
-        };
+        }, "onAbort");
+        if (typeof abortSignal.addEventListener === "function") {
+          abortSignal.addEventListener("abort", onAbort);
+        } else {
+          abortSignal.onabort = onAbort;
+        }
       }
       req.on("frameError", (type, code, id) => {
         rejectWithDestroy(new Error(`Frame type id ${type} in stream id ${id} has failed with code ${code}.`));
