@@ -16927,7 +16927,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           reject(abortError);
         }, "onAbort");
         if (typeof abortSignal.addEventListener === "function") {
-          abortSignal.addEventListener("abort", onAbort);
+          const signal = abortSignal;
+          signal.addEventListener("abort", onAbort, { once: true });
+          req.once("close", () => signal.removeEventListener("abort", onAbort));
         } else {
           abortSignal.onabort = onAbort;
         }
@@ -17219,7 +17221,9 @@ var _NodeHttp2Handler = class _NodeHttp2Handler {
           rejectWithDestroy(abortError);
         }, "onAbort");
         if (typeof abortSignal.addEventListener === "function") {
-          abortSignal.addEventListener("abort", onAbort);
+          const signal = abortSignal;
+          signal.addEventListener("abort", onAbort, { once: true });
+          req.once("close", () => signal.removeEventListener("abort", onAbort));
         } else {
           abortSignal.onabort = onAbort;
         }
