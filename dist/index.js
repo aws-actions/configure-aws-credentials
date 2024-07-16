@@ -17368,6 +17368,7 @@ __export(src_exports, {
   Fields: () => Fields,
   HttpRequest: () => HttpRequest,
   HttpResponse: () => HttpResponse,
+  IHttpRequest: () => import_types.HttpRequest,
   getHttpHandlerExtensionConfiguration: () => getHttpHandlerExtensionConfiguration,
   isValidHostname: () => isValidHostname,
   resolveHttpHandlerRuntimeConfig: () => resolveHttpHandlerRuntimeConfig
@@ -17500,6 +17501,7 @@ __name(_Fields, "Fields");
 var Fields = _Fields;
 
 // src/httpRequest.ts
+
 var _HttpRequest = class _HttpRequest {
   constructor(options) {
     this.method = options.method || "GET";
@@ -17514,20 +17516,40 @@ var _HttpRequest = class _HttpRequest {
     this.password = options.password;
     this.fragment = options.fragment;
   }
+  /**
+   * Note: this does not deep-clone the body.
+   */
+  static clone(request) {
+    const cloned = new _HttpRequest({
+      ...request,
+      headers: { ...request.headers }
+    });
+    if (cloned.query) {
+      cloned.query = cloneQuery(cloned.query);
+    }
+    return cloned;
+  }
+  /**
+   * This method only actually asserts that request is the interface {@link IHttpRequest},
+   * and not necessarily this concrete class. Left in place for API stability.
+   *
+   * Do not call instance methods on the input of this function, and
+   * do not assume it has the HttpRequest prototype.
+   */
   static isInstance(request) {
-    if (!request)
+    if (!request) {
       return false;
+    }
     const req = request;
     return "method" in req && "protocol" in req && "hostname" in req && "path" in req && typeof req["query"] === "object" && typeof req["headers"] === "object";
   }
+  /**
+   * @deprecated use static HttpRequest.clone(request) instead. It's not safe to call
+   * this method because {@link HttpRequest.isInstance} incorrectly
+   * asserts that IHttpRequest (interface) objects are of type HttpRequest (class).
+   */
   clone() {
-    const cloned = new _HttpRequest({
-      ...this,
-      headers: { ...this.headers }
-    });
-    if (cloned.query)
-      cloned.query = cloneQuery(cloned.query);
-    return cloned;
+    return _HttpRequest.clone(this);
   }
 };
 __name(_HttpRequest, "HttpRequest");
