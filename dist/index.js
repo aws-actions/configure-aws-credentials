@@ -152,7 +152,7 @@ async function assumeRoleWithCredentials(params, client) {
     }
 }
 async function assumeRole(params) {
-    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies, } = { ...params };
+    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, mfaSerial, mfaToken, inlineSessionPolicy, managedSessionPolicies, } = { ...params };
     // Load GitHub environment variables
     const { GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA, GITHUB_WORKSPACE } = process.env;
     if (!GITHUB_REPOSITORY || !GITHUB_WORKFLOW || !GITHUB_ACTION || !GITHUB_ACTOR || !GITHUB_SHA || !GITHUB_WORKSPACE) {
@@ -192,6 +192,8 @@ async function assumeRole(params) {
         ExternalId: roleExternalId ? roleExternalId : undefined,
         Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
         PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
+        SerialNumber: mfaSerial,
+        TokenCode: mfaToken,
     };
     const keys = Object.keys(commonAssumeRoleParams);
     keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
@@ -431,6 +433,8 @@ async function run() {
         const maskAccountId = maskAccountIdInput.toLowerCase() === 'true';
         const roleExternalId = core.getInput('role-external-id', { required: false });
         const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
+        const mfaSerial = core.getInput('mfa-serial', { required: false });
+        const mfaToken = core.getInput('mfa-token', { required: false });
         const roleDuration = parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
         const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
         const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
@@ -544,6 +548,8 @@ async function run() {
                         roleSkipSessionTagging,
                         webIdentityTokenFile,
                         webIdentityToken,
+                        mfaSerial,
+                        mfaToken,
                         inlineSessionPolicy,
                         managedSessionPolicies,
                     });

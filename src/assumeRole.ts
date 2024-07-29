@@ -74,6 +74,8 @@ export interface assumeRoleParams {
   roleExternalId?: string;
   webIdentityTokenFile?: string;
   webIdentityToken?: string;
+  mfaSerial?: string;
+  mfaToken?: string;
   inlineSessionPolicy?: string;
   managedSessionPolicies?: any[];
 }
@@ -89,6 +91,8 @@ export async function assumeRole(params: assumeRoleParams) {
     roleSkipSessionTagging,
     webIdentityTokenFile,
     webIdentityToken,
+    mfaSerial,
+    mfaToken,
     inlineSessionPolicy,
     managedSessionPolicies,
   } = { ...params };
@@ -137,6 +141,8 @@ export async function assumeRole(params: assumeRoleParams) {
     ExternalId: roleExternalId ? roleExternalId : undefined,
     Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
     PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
+    SerialNumber: mfaSerial,
+    TokenCode: mfaToken,
   };
   const keys = Object.keys(commonAssumeRoleParams) as Array<keyof typeof commonAssumeRoleParams>;
   keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);

@@ -30,6 +30,8 @@ export async function run() {
     const maskAccountId = maskAccountIdInput.toLowerCase() === 'true';
     const roleExternalId = core.getInput('role-external-id', { required: false });
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
+    const mfaSerial = core.getInput('mfa-serial', { required: false });
+    const mfaToken = core.getInput('mfa-token', { required: false });
     const roleDuration = parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
@@ -159,6 +161,8 @@ export async function run() {
               roleSkipSessionTagging,
               webIdentityTokenFile,
               webIdentityToken,
+              mfaSerial,
+              mfaToken,
               inlineSessionPolicy,
               managedSessionPolicies,
             });
