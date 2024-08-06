@@ -9,6 +9,8 @@ export interface assumeRoleParams {
     roleExternalId?: string;
     webIdentityTokenFile?: string;
     webIdentityToken?: string;
+    mfaSerial?: string;
+    mfaToken?: string;
     inlineSessionPolicy?: string;
     managedSessionPolicies?: any[];
 }
