@@ -35,7 +35,7 @@
     "json-schema": "^0.4.0",
     "prettier": "^3.3.3",
     "standard-version": "^9",
-    "ts-jest": "^29.2.3",
+    "ts-jest": "^29.2.4",
     "typescript": "^5.5.4"
   },
   "dependencies": {
