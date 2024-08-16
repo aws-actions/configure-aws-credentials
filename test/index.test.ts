@@ -70,10 +70,11 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(() => 'testpayload'),
 }));
 
-const fromEnvMock = jest.fn();
+// hoist along with jest.mock calls.
+var fromEnvMock;
 
 jest.mock('@aws-sdk/credential-provider-env', () => ({
-  fromEnv: fromEnvMock,
+  fromEnv: fromEnvMock = jest.fn(),
 }));
 
 describe('Configure AWS Credentials', () => {
