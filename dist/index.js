@@ -16656,45 +16656,81 @@ var getTransformedHeaders = /* @__PURE__ */ __name((headers) => {
 }, "getTransformedHeaders");
 
 // src/set-connection-timeout.ts
+var DEFER_EVENT_LISTENER_TIME = 1e3;
 var setConnectionTimeout = /* @__PURE__ */ __name((request, reject, timeoutInMs = 0) => {
   if (!timeoutInMs) {
-    return;
+    return -1;
   }
-  const timeoutId = setTimeout(() => {
-    request.destroy();
-    reject(
-      Object.assign(new Error(`Socket timed out without establishing a connection within ${timeoutInMs} ms`), {
-        name: "TimeoutError"
-      })
-    );
-  }, timeoutInMs);
-  request.on("socket", (socket) => {
-    if (socket.connecting) {
-      socket.on("connect", () => {
+  const registerTimeout = /* @__PURE__ */ __name((offset) => {
+    const timeoutId = setTimeout(() => {
+      request.destroy();
+      reject(
+        Object.assign(new Error(`Socket timed out without establishing a connection within ${timeoutInMs} ms`), {
+          name: "TimeoutError"
+        })
+      );
+    }, timeoutInMs - offset);
+    const doWithSocket = /* @__PURE__ */ __name((socket) => {
+      if (socket == null ? void 0 : socket.connecting) {
+        socket.on("connect", () => {
+          clearTimeout(timeoutId);
+        });
+      } else {
         clearTimeout(timeoutId);
-      });
+      }
+    }, "doWithSocket");
+    if (request.socket) {
+      doWithSocket(request.socket);
     } else {
-      clearTimeout(timeoutId);
+      request.on("socket", doWithSocket);
     }
-  });
+  }, "registerTimeout");
+  if (timeoutInMs < 2e3) {
+    registerTimeout(0);
+    return 0;
+  }
+  return setTimeout(registerTimeout.bind(null, DEFER_EVENT_LISTENER_TIME), DEFER_EVENT_LISTENER_TIME);
 }, "setConnectionTimeout");
 
 // src/set-socket-keep-alive.ts
-var setSocketKeepAlive = /* @__PURE__ */ __name((request, { keepAlive, keepAliveMsecs }) => {
+var DEFER_EVENT_LISTENER_TIME2 = 3e3;
+var setSocketKeepAlive = /* @__PURE__ */ __name((request, { keepAlive, keepAliveMsecs }, deferTimeMs = DEFER_EVENT_LISTENER_TIME2) => {
   if (keepAlive !== true) {
-    return;
+    return -1;
   }
-  request.on("socket", (socket) => {
-    socket.setKeepAlive(keepAlive, keepAliveMsecs || 0);
-  });
+  const registerListener = /* @__PURE__ */ __name(() => {
+    if (request.socket) {
+      request.socket.setKeepAlive(keepAlive, keepAliveMsecs || 0);
+    } else {
+      request.on("socket", (socket) => {
+        socket.setKeepAlive(keepAlive, keepAliveMsecs || 0);
+      });
+    }
+  }, "registerListener");
+  if (deferTimeMs === 0) {
+    registerListener();
+    return 0;
+  }
+  return setTimeout(registerListener, deferTimeMs);
 }, "setSocketKeepAlive");
 
 // src/set-socket-timeout.ts
+var DEFER_EVENT_LISTENER_TIME3 = 3e3;
 var setSocketTimeout = /* @__PURE__ */ __name((request, reject, timeoutInMs = 0) => {
-  request.setTimeout(timeoutInMs, () => {
-    request.destroy();
-    reject(Object.assign(new Error(`Connection timed out after ${timeoutInMs} ms`), { name: "TimeoutError" }));
-  });
+  const registerTimeout = /* @__PURE__ */ __name((offset) => {
+    request.setTimeout(timeoutInMs - offset, () => {
+      request.destroy();
+      reject(Object.assign(new Error(`Connection timed out after ${timeoutInMs} ms`), { name: "TimeoutError" }));
+    });
+  }, "registerTimeout");
+  if (0 < timeoutInMs && timeoutInMs < 6e3) {
+    registerTimeout(0);
+    return 0;
+  }
+  return setTimeout(
+    registerTimeout.bind(null, timeoutInMs === 0 ? 0 : DEFER_EVENT_LISTENER_TIME3),
+    DEFER_EVENT_LISTENER_TIME3
+  );
 }, "setSocketTimeout");
 
 // src/write-request-body.ts
@@ -16843,17 +16879,17 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
     if (!this.config) {
       this.config = await this.configProvider;
     }
-    let socketCheckTimeoutId;
     return new Promise((_resolve, _reject) => {
       let writeRequestBodyPromise = void 0;
+      const timeouts = [];
       const resolve = /* @__PURE__ */ __name(async (arg) => {
         await writeRequestBodyPromise;
-        clearTimeout(socketCheckTimeoutId);
+        timeouts.forEach(clearTimeout);
         _resolve(arg);
       }, "resolve");
       const reject = /* @__PURE__ */ __name(async (arg) => {
         await writeRequestBodyPromise;
-        clearTimeout(socketCheckTimeoutId);
+        timeouts.forEach(clearTimeout);
         _reject(arg);
       }, "reject");
       if (!this.config) {
@@ -16867,15 +16903,17 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
       const isSSL = request.protocol === "https:";
       const agent = isSSL ? this.config.httpsAgent : this.config.httpAgent;
-      socketCheckTimeoutId = setTimeout(
-        () => {
-          this.socketWarningTimestamp = _NodeHttpHandler.checkSocketUsage(
-            agent,
-            this.socketWarningTimestamp,
-            this.config.logger
-          );
-        },
-        this.config.socketAcquisitionWarningTimeout ?? (this.config.requestTimeout ?? 2e3) + (this.config.connectionTimeout ?? 1e3)
+      timeouts.push(
+        setTimeout(
+          () => {
+            this.socketWarningTimestamp = _NodeHttpHandler.checkSocketUsage(
+              agent,
+              this.socketWarningTimestamp,
+              this.config.logger
+            );
+          },
+          this.config.socketAcquisitionWarningTimeout ?? (this.config.requestTimeout ?? 2e3) + (this.config.connectionTimeout ?? 1e3)
+        )
       );
       const queryString = (0, import_querystring_builder.buildQueryString)(request.query || {});
       let auth = void 0;
@@ -16917,8 +16955,6 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           reject(err);
         }
       });
-      setConnectionTimeout(req, reject, this.config.connectionTimeout);
-      setSocketTimeout(req, reject, this.config.requestTimeout);
       if (abortSignal) {
         const onAbort = /* @__PURE__ */ __name(() => {
           req.destroy();
@@ -16934,17 +16970,21 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           abortSignal.onabort = onAbort;
         }
       }
+      timeouts.push(setConnectionTimeout(req, reject, this.config.connectionTimeout));
+      timeouts.push(setSocketTimeout(req, reject, this.config.requestTimeout));
       const httpAgent = nodeHttpsOptions.agent;
       if (typeof httpAgent === "object" && "keepAlive" in httpAgent) {
-        setSocketKeepAlive(req, {
-          // @ts-expect-error keepAlive is not public on httpAgent.
-          keepAlive: httpAgent.keepAlive,
-          // @ts-expect-error keepAliveMsecs is not public on httpAgent.
-          keepAliveMsecs: httpAgent.keepAliveMsecs
-        });
+        timeouts.push(
+          setSocketKeepAlive(req, {
+            // @ts-expect-error keepAlive is not public on httpAgent.
+            keepAlive: httpAgent.keepAlive,
+            // @ts-expect-error keepAliveMsecs is not public on httpAgent.
+            keepAliveMsecs: httpAgent.keepAliveMsecs
+          })
+        );
       }
       writeRequestBodyPromise = writeRequestBody(req, request, this.config.requestTimeout).catch((e) => {
-        clearTimeout(socketCheckTimeoutId);
+        timeouts.forEach(clearTimeout);
         return _reject(e);
       });
     });
