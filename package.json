@@ -21,7 +21,7 @@
     "@typescript-eslint/eslint-plugin": "<=5.62.0",
     "@typescript-eslint/parser": "<=5.62.0",
     "@vercel/ncc": "^0.38.1",
-    "aws-sdk-client-mock": "^4.0.1",
+    "aws-sdk-client-mock": "^4.0.2",
     "copyfiles": "^2.4.1",
     "del-cli": "^5.1.0",
     "eslint": "^8",
