@@ -1,0 +1,34 @@
+{
+  "formatter": {
+    "indentStyle": "space",
+    "lineWidth": 120,
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "enabled": true,
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "performance": {
+        "noDelete": "off",
+      },
+      "complexity": {
+        "noExtraBooleanCast": "off",
+      }
+    },
+  },
+  "javascript": {
+    "formatter": {
+      "trailingCommas": "all",
+      "jsxQuoteStyle": "double",
+      "quoteStyle": "single",
+      "bracketSpacing": true,
+      "arrowParentheses": "always",
+    },
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "all",
+    },
+  },
+}

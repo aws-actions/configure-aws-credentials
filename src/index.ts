@@ -1,13 +1,13 @@
 import * as core from '@actions/core';
 import type { AssumeRoleCommandOutput } from '@aws-sdk/client-sts';
-import { assumeRole } from './assumeRole';
 import { CredentialsClient } from './CredentialsClient';
+import { assumeRole } from './assumeRole';
 import {
   errorMessage,
-  retryAndBackoff,
-  exportRegion,
-  exportCredentials,
   exportAccountId,
+  exportCredentials,
+  exportRegion,
+  retryAndBackoff,
   unsetCredentials,
   verifyKeys,
 } from './helpers';
@@ -20,24 +20,35 @@ export async function run() {
   try {
     // Get inputs
     const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
-    const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
-    const sessionTokenInput = core.getInput('aws-session-token', { required: false });
+    const SecretAccessKey = core.getInput('aws-secret-access-key', {
+      required: false,
+    });
+    const sessionTokenInput = core.getInput('aws-session-token', {
+      required: false,
+    });
     const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
     const region = core.getInput('aws-region', { required: true });
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
     const maskAccountIdInput = core.getInput('mask-aws-account-id', { required: false }) || 'false';
     const maskAccountId = maskAccountIdInput.toLowerCase() === 'true';
-    const roleExternalId = core.getInput('role-external-id', { required: false });
-    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
-    const roleDuration = parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
+    const roleExternalId = core.getInput('role-external-id', {
+      required: false,
+    });
+    const webIdentityTokenFile = core.getInput('web-identity-token-file', {
+      required: false,
+    });
+    const roleDuration =
+      Number.parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const proxyServer = core.getInput('http-proxy', { required: false });
-    const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
+    const inlineSessionPolicy = core.getInput('inline-session-policy', {
+      required: false,
+    });
     const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
-    const managedSessionPolicies: any[] = [];
+    const managedSessionPolicies: { arn: string }[] = [];
     const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
     const roleChaining = roleChainingInput.toLowerCase() === 'true';
     const outputCredentialsInput = core.getInput('output-credentials', { required: false }) || 'false';
@@ -49,7 +60,7 @@ export async function run() {
     const specialCharacterWorkaroundInput =
       core.getInput('special-characters-workaround', { required: false }) || 'false';
     const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
-    let maxRetries = parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
+    let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
     switch (true) {
       case specialCharacterWorkaround:
         // 😳
@@ -74,17 +85,17 @@ export async function run() {
         !!roleToAssume &&
         !webIdentityTokenFile &&
         !AccessKeyId &&
-        !process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
+        !process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN &&
         !roleChaining
       ) {
         core.info(
           'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission? ' +
-            'If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
+            'If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.',
         );
       }
       return (
         !!roleToAssume &&
-        !!process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] &&
+        !!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN &&
         !AccessKeyId &&
         !webIdentityTokenFile &&
         !roleChaining
@@ -114,7 +125,7 @@ export async function run() {
             return core.getIDToken(audience);
           },
           !disableRetry,
-          maxRetries
+          maxRetries,
         );
       } catch (error) {
         throw new Error(`getIDToken call failed: ${errorMessage(error)}`);
@@ -146,7 +157,6 @@ export async function run() {
     if (roleToAssume) {
       let roleCredentials: AssumeRoleCommandOutput;
       do {
-        // eslint-disable-next-line no-await-in-loop
         roleCredentials = await retryAndBackoff(
           async () => {
             return assumeRole({
@@ -164,17 +174,16 @@ export async function run() {
             });
           },
           !disableRetry,
-          maxRetries
+          maxRetries,
         );
-        // eslint-disable-next-line no-unmodified-loop-condition
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
-      core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser!.AssumedRoleId!}`);
+      core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
       // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
-      if (!process.env['GITHUB_ACTIONS'] || AccessKeyId) {
+      if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
         await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
       }
       await exportAccountId(credentialsClient, maskAccountId);
@@ -184,7 +193,7 @@ export async function run() {
   } catch (error) {
     core.setFailed(errorMessage(error));
 
-    const showStackTrace = process.env['SHOW_STACK_TRACE'];
+    const showStackTrace = process.env.SHOW_STACK_TRACE;
 
     if (showStackTrace === 'true') {
       throw error;
