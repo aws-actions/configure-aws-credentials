@@ -5,8 +5,7 @@ import {
   GetCallerIdentityCommand,
   STSClient,
 } from '@aws-sdk/client-sts';
-import { fromEnv } from '@aws-sdk/credential-provider-env';
-import { CredentialsProviderError } from '@aws-sdk/property-provider';
+import { CredentialsProviderError } from '@smithy/property-provider';
 import { mockClient } from 'aws-sdk-client-mock';
 import { withsleep, reset } from '../src/helpers';
 import { run } from '../src/index';
@@ -70,20 +69,11 @@ jest.mock('fs', () => ({
   existsSync: jest.fn(() => true),
   readFileSync: jest.fn(() => 'testpayload'),
 }));
+
+const fromEnvMock = jest.fn();
+
 jest.mock('@aws-sdk/credential-provider-env', () => ({
-  // This is the actual implementation in the SDK ^_^
-  fromEnv: jest.fn().mockImplementation(() => () => {
-    const accessKeyId = process.env['AWS_ACCESS_KEY_ID'];
-    const secretAccessKey = process.env['AWS_SECRET_ACCESS_KEY'];
-    const sessionToken = process.env['AWS_SESSION_TOKEN'];
-    const expiration = process.env['AWS_CREDENTIAL_EXPIRATION'];
-    return {
-      accessKeyId,
-      secretAccessKey,
-      sessionToken,
-      expiration,
-    };
-  }),
+  fromEnv: fromEnvMock,
 }));
 
 describe('Configure AWS Credentials', () => {
@@ -94,7 +84,7 @@ describe('Configure AWS Credentials', () => {
     process.env = { ...OLD_ENV, ...ENVIRONMENT_VARIABLE_OVERRIDES };
     jest.clearAllMocks();
     mockedSTS.reset();
-    (fromEnv as jest.Mock).mockReset();
+    fromEnvMock.mockReset();
     jest.spyOn(core, 'getMultilineInput').mockImplementation(() => []);
     jest.spyOn(core, 'getIDToken').mockImplementation(async () => Promise.resolve('testtoken'));
     jest.spyOn(core, 'exportVariable').mockImplementation();
@@ -105,15 +95,12 @@ describe('Configure AWS Credentials', () => {
     jest.spyOn(core, 'info').mockImplementation((string) => {
       return string;
     });
-    (fromEnv as jest.Mock)
-      .mockImplementationOnce(() => () => ({
+    fromEnvMock.mockImplementation(() => () => {
+      return {
         accessKeyId: FAKE_ACCESS_KEY_ID,
         secretAccessKey: FAKE_SECRET_ACCESS_KEY,
-      }))
-      .mockImplementationOnce(() => () => ({
-        accessKeyId: FAKE_STS_ACCESS_KEY_ID,
-        secretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
-      }));
+      };
+    });
     mockedSTS
       .on(GetCallerIdentityCommand)
       .resolvesOnce({ Account: FAKE_ACCOUNT_ID })
@@ -194,37 +181,35 @@ describe('Configure AWS Credentials', () => {
   test('action with no accessible credentials fails', async () => {
     const mockInputs = { 'aws-region': FAKE_REGION };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    (fromEnv as jest.Mock).mockReset();
-    (fromEnv as jest.Mock).mockImplementation(() => () => {
+    fromEnvMock.mockReset();
+    fromEnvMock.mockImplementation(() => () => {
       throw new CredentialsProviderError('test');
     });
 
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Could not determine how to assume credentials. Please check your inputs and try again.'
+      'Credentials could not be loaded, please check your action inputs: Could not load credentials from any providers'
     );
   });
 
   test('action with empty credentials fails', async () => {
     const mockInputs = { 'aws-region': FAKE_REGION };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    (fromEnv as jest.Mock).mockReset();
-    (fromEnv as jest.Mock).mockImplementation(
-      () => async () => Promise.resolve({ accessKeyId: '', secretAccessKey: '' })
-    );
+    fromEnvMock.mockReset();
+    fromEnvMock.mockImplementation(() => async () => Promise.resolve({ accessKeyId: '', secretAccessKey: '' }));
 
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Could not determine how to assume credentials. Please check your inputs and try again.'
+      'Credentials could not be loaded, please check your action inputs: Access key ID empty after loading credentials'
     );
   });
 
   test('action fails when credentials are not set in the SDK correctly', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-    (fromEnv as jest.Mock).mockReset();
-    (fromEnv as jest.Mock).mockImplementationOnce(() => async () => Promise.resolve({ accessKeyId: '123' }));
+    fromEnvMock.mockReset();
+    fromEnvMock.mockImplementationOnce(() => async () => Promise.resolve({ accessKeyId: '123' }));
 
     await run();
 
@@ -508,6 +493,7 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('GH OIDC check fails if token is not set', async () => {
+    fromEnvMock.mockReset();
     process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
     process.env['GITHUB_ACTIONS'] = 'true';
     jest.spyOn(core, 'getInput').mockImplementation(
@@ -524,7 +510,7 @@ describe('Configure AWS Credentials', () => {
         ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
     );
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Could not determine how to assume credentials. Please check your inputs and try again.'
+      expect.stringMatching(/Credentials could not be loaded, please check your action inputs: (.*?) is not a function/)
     );
   });
 

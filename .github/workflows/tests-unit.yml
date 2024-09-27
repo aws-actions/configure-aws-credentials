@@ -9,17 +9,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        node: [14, 16, 18]
     name: Run unit tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     steps:
       - name: "Checkout repository"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: "Setup node"
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 20
       - name: "Install dependencies"
         uses: bahmutov/npm-install@v1
       - name: "Run tests"
@@ -30,11 +29,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: "Checkout repostiory"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: "Setup node"
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 20
       - name: "Install dependencies"
         uses: bahmutov/npm-install@v1
       - name: "Lint code"

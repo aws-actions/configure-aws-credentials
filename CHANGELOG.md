@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.2](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.1...v4.0.2) (2024-02-09)
+
+* Revert 4.0.1 to remove warning
+
+## [4.0.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.0...v4.0.1) (2023-10-03)
+
+### Documentation
+*  Throw a warning when customers use long-term credentials.
+
+## [4.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.2...v4.0.0) (2023-09-11)
+
+* Upgraded runtime to `node20` from `node16`
+
+## [3.0.2](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.1...v3.0.2) (2023-09-07)
+
+### Bug Fixes
+* fixes #817 #819: validation logic throwing unwanted errors [d78f55b](https://github.com/aws-actions/configure-aws-credentials/commit/d78f55b1db65186cb251a8504ae9527af06fc5fd)
+
 ## [3.0.1](https://github.com/aws-actions/configure-aws-credentials/compare/v3.0.0...v3.0.1) (2023-08-24)
 
 ### Features
