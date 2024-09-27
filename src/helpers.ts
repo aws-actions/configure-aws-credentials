@@ -23,7 +23,7 @@ export function exportCredentials(creds?: Partial<Credentials>, outputCredential
   if (creds?.SessionToken) {
     core.setSecret(creds.SessionToken);
     core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
-  } else if (process.env['AWS_SESSION_TOKEN']) {
+  } else if (process.env.AWS_SESSION_TOKEN) {
     // clear session token from previous credentials action
     core.exportVariable('AWS_SESSION_TOKEN', '');
   }
@@ -116,7 +116,7 @@ export async function retryAndBackoff<T>(
   isRetryable: boolean,
   maxRetries = 12,
   retries = 0,
-  base = 50
+  base = 50,
 ): Promise<T> {
   try {
     return await fn();
@@ -125,7 +125,8 @@ export async function retryAndBackoff<T>(
       throw err;
     }
     // It's retryable, so sleep and retry.
-    await sleep(Math.random() * (Math.pow(2, retries) * base));
+    await sleep(Math.random() * (2 ** retries * base));
+    // biome-ignore lint/style/noParameterAssign: This is a loop variable
     retries += 1;
     if (retries >= maxRetries) {
       throw err;

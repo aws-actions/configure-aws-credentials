@@ -1,3 +1,4 @@
+const fromEnvMock = jest.fn();
 import * as core from '@actions/core';
 import {
   AssumeRoleCommand,
@@ -52,25 +53,20 @@ const ASSUME_ROLE_INPUTS = { ...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-r
 
 const mockedSTS = mockClient(STSClient);
 function mockGetInput(requestResponse: Record<string, string>) {
-  return function (name: string, _options: unknown): string {
-    return requestResponse[name]!;
-  };
+  // biome-ignore lint/style/noNonNullAssertion:
+  return (name: string, _options: unknown): string => requestResponse[name]!;
 }
 
 function mockGetMultilineInput(requestResponse: Record<string, string[]>) {
-  return function (name: string, _options: unknown): string[] {
-    return requestResponse[name]!;
-  };
+  // biome-ignore lint/style/noNonNullAssertion:
+  return (name: string, _options: unknown): string[] => requestResponse[name]!;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   existsSync: jest.fn(() => true),
   readFileSync: jest.fn(() => 'testpayload'),
 }));
-
-const fromEnvMock = jest.fn();
 
 jest.mock('@aws-sdk/credential-provider-env', () => ({
   fromEnv: fromEnvMock,
@@ -95,7 +91,7 @@ describe('Configure AWS Credentials', () => {
     jest.spyOn(core, 'info').mockImplementation((string) => {
       return string;
     });
-    fromEnvMock.mockImplementation(() => () => {
+    fromEnvMock.mockImplementationOnce(() => () => {
       return {
         accessKeyId: FAKE_ACCESS_KEY_ID,
         secretAccessKey: FAKE_SECRET_ACCESS_KEY,
@@ -160,18 +156,18 @@ describe('Configure AWS Credentials', () => {
 
   test('action fails when github env vars are not set', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
-    delete process.env['GITHUB_SHA'];
+    delete process.env.GITHUB_SHA;
 
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Missing required environment variables. Are you running in GitHub Actions?'
+      'Missing required environment variables. Are you running in GitHub Actions?',
     );
   });
 
   test('action does not require GITHUB_REF env var', async () => {
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-    delete process.env['GITHUB_REF'];
+    delete process.env.GITHUB_REF;
 
     await run();
 
@@ -182,14 +178,14 @@ describe('Configure AWS Credentials', () => {
     const mockInputs = { 'aws-region': FAKE_REGION };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
     fromEnvMock.mockReset();
-    fromEnvMock.mockImplementation(() => () => {
+    fromEnvMock.mockImplementationOnce(() => () => {
       throw new CredentialsProviderError('test');
     });
 
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Credentials could not be loaded, please check your action inputs: Could not load credentials from any providers'
+      'Credentials could not be loaded, please check your action inputs: Could not load credentials from any providers',
     );
   });
 
@@ -202,7 +198,7 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Credentials could not be loaded, please check your action inputs: Access key ID empty after loading credentials'
+      'Credentials could not be loaded, please check your action inputs: Access key ID empty after loading credentials',
     );
   });
 
@@ -214,7 +210,7 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      'Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action'
+      'Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action',
     );
   });
 
@@ -239,9 +235,9 @@ describe('Configure AWS Credentials', () => {
   test('existing env var creds are cleared', async () => {
     const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'eu-west-1' };
     jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    process.env['AWS_ACCESS_KEY_ID'] = 'foo';
-    process.env['AWS_SECRET_ACCESS_KEY'] = 'bar';
-    process.env['AWS_SESSION_TOKEN'] = 'helloworld';
+    process.env.AWS_ACCESS_KEY_ID = 'foo';
+    process.env.AWS_SECRET_ACCESS_KEY = 'bar';
+    process.env.AWS_SESSION_TOKEN = 'helloworld';
 
     await run();
 
@@ -276,7 +272,7 @@ describe('Configure AWS Credentials', () => {
     await run();
 
     expect(core.setFailed).toHaveBeenCalledWith(
-      "'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided"
+      "'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided",
     );
   });
 
@@ -402,7 +398,7 @@ describe('Configure AWS Credentials', () => {
         'role-to-assume': ROLE_ARN,
         'aws-region': FAKE_REGION,
         'web-identity-token-file': '/fake/token/file',
-      })
+      }),
     );
 
     await run();
@@ -421,7 +417,7 @@ describe('Configure AWS Credentials', () => {
         'role-to-assume': ROLE_ARN,
         'aws-region': FAKE_REGION,
         'web-identity-token-file': 'fake/token/file',
-      })
+      }),
     );
 
     await run();
@@ -435,8 +431,8 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('only role arn and region provided to use GH OIDC Token', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    process.env.GITHUB_ACTIONS = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
 
     jest
       .spyOn(core, 'getInput')
@@ -454,8 +450,8 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('getIDToken call retries when failing', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    process.env.GITHUB_ACTIONS = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
     jest.spyOn(core, 'getIDToken').mockImplementation(() => {
       throw new Error('test error');
     });
@@ -472,14 +468,14 @@ describe('Configure AWS Credentials', () => {
 
   test('GH OIDC With custom role duration', async () => {
     const CUSTOM_ROLE_DURATION = '1234';
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    process.env.GITHUB_ACTIONS = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
     jest.spyOn(core, 'getInput').mockImplementation(
       mockGetInput({
         'role-to-assume': ROLE_ARN,
         'aws-region': FAKE_REGION,
         'role-duration-seconds': CUSTOM_ROLE_DURATION,
-      })
+      }),
     );
 
     await run();
@@ -487,56 +483,58 @@ describe('Configure AWS Credentials', () => {
     expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
       RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
       RoleSessionName: 'GitHubActions',
-      DurationSeconds: parseInt(CUSTOM_ROLE_DURATION),
+      DurationSeconds: Number.parseInt(CUSTOM_ROLE_DURATION),
       WebIdentityToken: 'testtoken',
     });
   });
 
   test('GH OIDC check fails if token is not set', async () => {
     fromEnvMock.mockReset();
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
-    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = undefined;
+    process.env.GITHUB_ACTIONS = 'true';
     jest.spyOn(core, 'getInput').mockImplementation(
       mockGetInput({
         'role-to-assume': ROLE_ARN,
         'aws-region': FAKE_REGION,
-      })
+      }),
     );
 
     await run();
 
     expect(core.info).toHaveBeenCalledWith(
       'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?' +
-        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
+        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.',
     );
     expect(core.setFailed).toHaveBeenCalledWith(
-      expect.stringMatching(/Credentials could not be loaded, please check your action inputs: (.*?) is not a function/)
+      expect.stringMatching(
+        /Credentials could not be loaded, please check your action inputs: (.*?) is not a function/,
+      ),
     );
   });
 
   test('Assume role with existing credentials if nothing else set', async () => {
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
-    process.env['AWS_ACCESS_KEY_ID'] = FAKE_ACCESS_KEY_ID;
-    process.env['AWS_SECRET_ACCESS_KEY'] = FAKE_SECRET_ACCESS_KEY;
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = undefined;
+    process.env.AWS_ACCESS_KEY_ID = FAKE_ACCESS_KEY_ID;
+    process.env.AWS_SECRET_ACCESS_KEY = FAKE_SECRET_ACCESS_KEY;
     jest.spyOn(core, 'getInput').mockImplementation(
       mockGetInput({
         'role-to-assume': ROLE_ARN,
         'aws-region': FAKE_REGION,
-      })
+      }),
     );
 
     await run();
 
     expect(core.info).toHaveBeenCalledWith(
       'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?' +
-        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
+        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.',
     );
     expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(1);
   });
 
   test('role assumption fails after maximum trials using OIDC provider', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    process.env.GITHUB_ACTIONS = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
     jest
       .spyOn(core, 'getInput')
       .mockImplementation(mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION }));
@@ -549,12 +547,12 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('role assumption fails after one trial when disabling retry', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    process.env.GITHUB_ACTIONS = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
     jest
       .spyOn(core, 'getInput')
       .mockImplementation(
-        mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'disable-retry': 'true' })
+        mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'disable-retry': 'true' }),
       );
 
     mockedSTS.reset();
@@ -623,14 +621,14 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('max retries is configurable', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    process.env.GITHUB_ACTIONS = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
     jest.spyOn(core, 'getInput').mockImplementation(
       mockGetInput({
         'role-to-assume': ROLE_ARN,
         'aws-region': FAKE_REGION,
         'retry-max-attempts': '15',
-      })
+      }),
     );
     mockedSTS.reset();
     mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
@@ -642,14 +640,14 @@ describe('Configure AWS Credentials', () => {
   });
 
   test('max retries negative input does not retry', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
+    process.env.GITHUB_ACTIONS = 'true';
+    process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'test-token';
     jest.spyOn(core, 'getInput').mockImplementation(
       mockGetInput({
         'role-to-assume': ROLE_ARN,
         'aws-region': FAKE_REGION,
         'retry-max-attempts': '-1',
-      })
+      }),
     );
     mockedSTS.reset();
     mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
