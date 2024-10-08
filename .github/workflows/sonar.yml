@@ -1,0 +1,24 @@
+name: SonarQube
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  SonarQube:
+    runs-on: [self-hosted,ts-large-x64-docker-large]
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - name: fetching
+        if: contains(github.ref, 'pull')
+        run: |
+          git fetch origin ${{ github.event.pull_request.head.sha }}
+          git checkout ${{ github.event.pull_request.head.sha }}
+      - name: SonarQube Scan
+        uses: tradeshift/actions-sonarqube@v2
+        with:
+          ca-cert: ${{ secrets.MTLS_CACERT }}
+          client-cert: ${{ secrets.MTLS_CERT }}
+          client-key: ${{ secrets.MTLS_KEY }}
+          token: ${{ secrets.SONAR_TOKEN }}
