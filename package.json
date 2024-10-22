@@ -41,7 +41,7 @@
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@aws-sdk/client-sts": "^3",
-    "@smithy/node-http-handler": "^3.2.4",
+    "@smithy/node-http-handler": "^3.2.5",
     "https-proxy-agent": "^5.0.0"
   },
   "keywords": [
