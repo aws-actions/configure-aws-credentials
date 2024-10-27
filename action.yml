@@ -40,6 +40,9 @@ inputs:
   mask-aws-account-id:
     description: Whether to mask the AWS account ID for these credentials as a secret value. By default the account ID will not be masked
     required: false
+  mask-arn:
+    description: Whether to mask the Amazon Resource Name (ARN) for these credentials as a secret value. By default the Amazon Resource Name (ARN) will not be masked
+    required: false
   role-duration-seconds:
     description: Role duration in seconds. Default is one hour.
     required: false

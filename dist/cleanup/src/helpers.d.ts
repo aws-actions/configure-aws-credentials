@@ -3,7 +3,7 @@ import type { CredentialsClient } from './CredentialsClient';
 export declare function exportCredentials(creds?: Partial<Credentials>, outputCredentials?: boolean): void;
 export declare function unsetCredentials(): void;
 export declare function exportRegion(region: string): void;
-export declare function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: boolean): Promise<string>;
+export declare function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: boolean, maskArn?: boolean): Promise<string>;
 export declare function sanitizeGitHubVariables(name: string): string;
 export declare function defaultSleep(ms: number): Promise<unknown>;
 declare let sleep: typeof defaultSleep;

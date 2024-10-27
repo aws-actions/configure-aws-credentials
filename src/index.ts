@@ -28,6 +28,8 @@ export async function run() {
     const audience = core.getInput('audience', { required: false });
     const maskAccountIdInput = core.getInput('mask-aws-account-id', { required: false }) || 'false';
     const maskAccountId = maskAccountIdInput.toLowerCase() === 'true';
+    const maskArnInput = core.getInput('mask-arn', { required: false }) || 'false';
+    const maskArn = maskArnInput.toLowerCase() === 'true';
     const roleExternalId = core.getInput('role-external-id', { required: false });
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const roleDuration = parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
@@ -131,7 +133,7 @@ export async function run() {
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials();
-      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
+      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId, maskArn);
     }
 
     if (AccessKeyId || roleChaining) {
@@ -139,7 +141,7 @@ export async function run() {
       // This validates cases where this action is using existing environment credentials,
       // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
       await credentialsClient.validateCredentials(AccessKeyId, roleChaining);
-      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
+      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId, maskArn);
     }
 
     // Get role credentials if configured to do so
@@ -177,7 +179,7 @@ export async function run() {
       if (!process.env['GITHUB_ACTIONS'] || AccessKeyId) {
         await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
       }
-      await exportAccountId(credentialsClient, maskAccountId);
+      await exportAccountId(credentialsClient, maskAccountId, maskArn);
     } else {
       core.info('Proceeding with IAM user credentials');
     }

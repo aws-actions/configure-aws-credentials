@@ -47665,17 +47665,31 @@ function exportRegion(region) {
     core.exportVariable('AWS_REGION', region);
 }
 // Obtains account ID from STS Client and sets it as output
-async function exportAccountId(credentialsClient, maskAccountId) {
+async function exportAccountId(credentialsClient, maskAccountId, maskArn) {
     const client = credentialsClient.stsClient;
     const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
     const accountId = identity.Account;
+    const arn = identity.Arn;
     if (!accountId) {
         throw new Error('Could not get Account ID from STS. Did you set credentials?');
     }
     if (maskAccountId) {
         core.setSecret(accountId);
     }
+    else {
+        core.info(`Authenticated as accountId ${accountId}`);
+    }
+    if (!arn) {
+        throw new Error('Could not get Amazon Resource Name (ARN) from STS. Did you set credentials?');
+    }
+    if (maskArn) {
+        core.setSecret(arn);
+    }
+    else {
+        core.info(`Authenticated as arn ${arn}`);
+    }
     core.setOutput('aws-account-id', accountId);
+    core.setOutput('arn', arn);
     return accountId;
 }
 // Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
