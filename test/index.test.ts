@@ -20,6 +20,7 @@ const FAKE_STS_SESSION_TOKEN = 'STSAWSSESSIONTOKEN';
 const FAKE_ASSUMED_ROLE_ID = 'AROAFAKEASSUMEDROLEID';
 const FAKE_REGION = 'fake-region-1';
 const FAKE_ACCOUNT_ID = '123456789012';
+const FAKE_USER_ARN = 'arn:aws:iam:123456789012:user/FAKE-USER';
 const FAKE_ROLE_ACCOUNT_ID = '111111111111';
 const ROLE_NAME = 'MY-ROLE';
 const ROLE_ARN = 'arn:aws:iam::111111111111:role/MY-ROLE';
@@ -103,7 +104,10 @@ describe('Configure AWS Credentials', () => {
     });
     mockedSTS
       .on(GetCallerIdentityCommand)
-      .resolvesOnce({ Account: FAKE_ACCOUNT_ID })
+      .resolvesOnce({
+        Account: FAKE_ACCOUNT_ID,
+        Arn: FAKE_USER_ARN,
+      })
       .resolvesOnce({ Account: FAKE_ROLE_ACCOUNT_ID });
     mockedSTS.on(AssumeRoleCommand).resolves({
       Credentials: {
@@ -156,6 +160,9 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as accountId ${FAKE_ACCOUNT_ID}`);
+    expect(core.setOutput).toHaveBeenCalledWith('arn', FAKE_USER_ARN);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as arn ${FAKE_USER_ARN}`);
   });
 
   test('action fails when github env vars are not set', async () => {
@@ -234,6 +241,9 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as accountId ${FAKE_ACCOUNT_ID}`);
+    expect(core.setOutput).toHaveBeenCalledWith('arn', FAKE_USER_ARN);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as arn ${FAKE_USER_ARN}`);
   });
 
   test('existing env var creds are cleared', async () => {
@@ -256,6 +266,9 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as accountId ${FAKE_ACCOUNT_ID}`);
+    expect(core.setOutput).toHaveBeenCalledWith('arn', FAKE_USER_ARN);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as arn ${FAKE_USER_ARN}`);
   });
 
   test('validates region name', async () => {
@@ -295,7 +308,30 @@ describe('Configure AWS Credentials', () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
     expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+    expect(core.setOutput).toHaveBeenCalledWith('arn', FAKE_USER_ARN);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as arn ${FAKE_USER_ARN}`);
     expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
+    expect(core.setSecret).toHaveBeenCalledTimes(3);
+  });
+
+  test('can opt into masking ARN', async () => {
+    const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-arn': 'true' };
+    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
+
+    await run();
+
+    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    expect(core.exportVariable).toHaveBeenCalledTimes(4);
+    expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
+    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
+    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
+    expect(core.setSecret).toHaveBeenCalledWith(FAKE_SECRET_ACCESS_KEY);
+    expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
+    expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
+    expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
+    expect(core.info).toHaveBeenCalledWith(`Authenticated as accountId ${FAKE_ACCOUNT_ID}`);
+    expect(core.setOutput).toHaveBeenCalledWith('arn', FAKE_USER_ARN);
+    expect(core.setSecret).toHaveBeenCalledWith(FAKE_USER_ARN);
     expect(core.setSecret).toHaveBeenCalledTimes(3);
   });
 
@@ -851,6 +887,6 @@ describe('Configure AWS Credentials', () => {
 
     await run();
 
-    expect(core.setOutput).toHaveBeenCalledTimes(4);
+    expect(core.setOutput).toHaveBeenCalledTimes(5);
   });
 });
