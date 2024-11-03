@@ -1,0 +1,23 @@
+name: Dependabot auto-approve
+on: pull_request
+permissions:
+  pull-requests: write
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'aws/configure-aws-credentials'
+    steps:
+      - name: Get Metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@v2
+      - uses: actions/checkout@v4
+      - name: Approve PR if not already approved
+        run: |
+          gh pr checkout "$PR_URL"
+          if [ "$(gh pr status --json reviewDecision - q .currentBranch.reviewDecision)" != "APPROVED" ]; then
+            gh pr review "$PR_URL" --approve
+          else echo "PR already approved"
+          fi
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
