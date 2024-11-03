@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "lint": "biome check --error-on-warnings ./src",
-    "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && copyup -E dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
+    "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && cpy -E dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
     "test": "npm run lint && vitest run"
   },
   "author": {
@@ -20,8 +20,8 @@
     "@vercel/ncc": "^0.38.2",
     "@vitest/coverage-v8": "^2.1.3",
     "aws-sdk-client-mock": "^4.1.0",
-    "copyfiles": "^2.4.1",
-    "del-cli": "^5.1.0",
+    "cpy-cli": "^5.0.0",
+    "del-cli": "^6.0.0",
     "json-schema": "^0.4.0",
     "memfs": "^4.14.0",
     "standard-version": "^9.5.0",
