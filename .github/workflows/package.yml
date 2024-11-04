@@ -48,4 +48,4 @@ jobs:
           git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
           git add dist
           git commit -m "chore: Update dist" || echo "No changes to commit"
-          git push origin
+          git push --force origin
