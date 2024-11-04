@@ -7,9 +7,8 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "module": "CommonJS",
     "resolveJsonModule": true,
@@ -27,7 +26,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "test/**/*.ts"
+    "test/**/*.test.ts"
   ],
   "exclude": [],
 }

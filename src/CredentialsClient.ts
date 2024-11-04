@@ -1,5 +1,6 @@
 import { info } from '@actions/core';
 import { STSClient } from '@aws-sdk/client-sts';
+import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { errorMessage } from './helpers';
@@ -40,7 +41,7 @@ export class CredentialsClient {
   }
 
   public async validateCredentials(expectedAccessKeyId?: string, roleChaining?: boolean) {
-    let credentials;
+    let credentials: AwsCredentialIdentity;
     try {
       credentials = await this.loadCredentials();
       if (!credentials.accessKeyId) {
@@ -55,7 +56,7 @@ export class CredentialsClient {
 
       if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
         throw new Error(
-          'Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action'
+          'Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action',
         );
       }
     }
