@@ -1,0 +1,47 @@
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+name: release-please
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: SecretsManagerFetch
+      - name: Get bot user token
+        uses: aws-actions/aws-secretsmanager-get-secrets@v2
+        with:
+          parse-json-secrets: true
+          secret-ids: |
+            OSDS,arn:aws:secretsmanager:us-west-2:206735643321:secret:github-aws-sdk-osds-automation-gebs9n
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ env.OSDS_ACCESS_TOKEN }}
+          release-type: node
+          target-branch: release
+      - uses: actions/checkout@v4
+        with:
+          ref: release
+      - name: update the major release tag
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-aws-sdk-osds-automation@amazon.com"
+          git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
+          # Delete existing major tag
+          git tag -d v${{ steps.release.outputs.major }} || true
+          git push origin :refs/tags/v${{ steps.release.outputs.major }} || true
+          # Create new major tag
+          git tag -a v${{ steps.release.outputs.major }} -m "Release v${{ steps.release.outputs.major }}"
+          git push origin v${{ steps.release.outputs.major }}
