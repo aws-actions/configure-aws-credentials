@@ -8,6 +8,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     if: >-
       github.event.review.state == 'approved' &&
       github.event.repository == 'aws/configure-aws-credentials' &&
