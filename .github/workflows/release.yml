@@ -2,6 +2,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'dist/**'
 permissions:
   contents: write
   pull-requests: write
