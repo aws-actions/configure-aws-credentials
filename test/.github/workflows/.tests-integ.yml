@@ -1,0 +1,20 @@
+
+# ...existing code...
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      # ...existing code...
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      # ...existing code...
+      - name: Install dependencies
+        run: npm install
+      # ...existing code...
+      - name: Run integration tests
+        run: npm run test:integ
+      # ...existing code...
