@@ -1,0 +1,9 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/elanhasson/devcontainer-features/dotnet-aspire-daily:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/dotnet:2": {},
+    "ghcr.io/devcontainers-extra/features/vercel-release:1": {}
+  }
+}
