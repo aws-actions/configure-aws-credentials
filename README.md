@@ -566,3 +566,14 @@ If you would like to report a potential security issue in this project, please
 do not create a GitHub issue.  Instead, please follow the instructions
 [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS
 security directly](mailto:aws-security@amazon.com).
+
+## Repository Investigation
+
+The `configure-aws-credentials` action provides several key functionalities:
+
+* Configuring AWS credentials and region environment variables for use in other GitHub Actions workflows.
+* Supporting multiple methods for fetching AWS credentials, including GitHub's OIDC provider, IAM user credentials, access keys, web identity token files, and existing credentials in the runner.
+* Exporting AWS credentials and region as environment variables, which are detected by AWS SDKs and the AWS CLI for API calls.
+* Providing options to assume roles with various configurations, such as role duration, session name, external ID, session policies, and session tagging.
+* Handling special cases like proxy configuration, masking AWS account IDs, and retry mechanisms for assume role calls.
+* Cleaning up environment variables after the job is done to ensure they are not shared with other jobs.
