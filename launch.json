@@ -1,0 +1,42 @@
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Program",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/a.out",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "variables": {
+                "workspaceFolder": "${workspaceFolder}",
+                "workspaceFolderBasename": "${workspaceFolderBasename}",
+                "file": "${file}",
+                "relativeFile": "${relativeFile}",
+                "fileBasename": "${fileBasename}",
+                "fileBasenameNoExtension": "${fileBasenameNoExtension}",
+                "fileDirname": "${fileDirname}",
+                "fileExtname": "${fileExtname}",
+                "cwd": "${cwd}",
+                "lineNumber": "${lineNumber}",
+                "selectedText": "${selectedText}",
+                "execPath": "${execPath}",
+                "defaultBuildTask": "${defaultBuildTask}"
+            }
+        }
+    ]
+}
