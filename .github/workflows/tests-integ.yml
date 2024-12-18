@@ -12,20 +12,25 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1, ap-northeast-1, sa-east-1]
     name: Run OIDC integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
+      - name: Record start time
+        run: echo "Start time: $(date)"
       - name: Integ test for OIDC
         uses: ./
         with:
-          aws-region: us-west-2
+          aws-region: ${{ matrix.region }}
           role-to-assume: ${{ secrets.SECRETS_OIDC_AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
           role-session-name: IntegOidcAssumeRole
           role-external-id: ${{ secrets.SECRETS_OIDC_AWS_ROLE_EXTERNAL_ID }}
+      - name: Record end time
+        run: echo "End time: $(date)"
   integ-oidc-env:
     permissions:
       contents: read
@@ -34,6 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1, ap-northeast-1, sa-east-1]
     name: Run OIDC integ tests with existing invalid env vars
     runs-on: ${{ matrix.os }}
     env:
@@ -44,69 +50,113 @@ jobs:
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
+      - name: Record start time
+        run: echo "Start time: $(date)"
       - name: Integ test for OIDC
         uses: ./
         with:
-          aws-region: us-west-2
+          aws-region: ${{ matrix.region }}
           role-to-assume: ${{ secrets.SECRETS_OIDC_AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
           role-session-name: IntegOidcAssumeRole
           role-external-id: ${{ secrets.SECRETS_OIDC_AWS_ROLE_EXTERNAL_ID }}
+      - name: Record end time
+        run: echo "End time: $(date)"
   integ-access-keys:
     strategy:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1, ap-northeast-1, sa-east-1]
     name: Run access key integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
+      - name: Record start time
+        run: echo "Start time: $(date)"
       - name: Integ test for access keys
         uses: ./
         with:
-          aws-region: us-west-2
+          aws-region: ${{ matrix.region }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
           role-session-name: IntegAccessKeysAssumeRole
           role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
+      - name: Record end time
+        run: echo "End time: $(date)"
   integ-access-keys-env:
     strategy:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1, ap-northeast-1, sa-east-1]
     name: Run access key from env integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
+      - name: Record start time
+        run: echo "Start time: $(date)"
       - name: Integ test for access keys
         uses: ./
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         with:
-          aws-region: us-west-2
+          aws-region: ${{ matrix.region }}
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
           role-session-name: IntegAccessKeysAssumeRole
           role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
+      - name: Record end time
+        run: echo "End time: $(date)"
   integ-iam-user:
     strategy:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1, ap-northeast-1, sa-east-1]
     name: Run IAM User integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
+      - name: Record start time
+        run: echo "Start time: $(date)"
       - name: Integ test for IAM user
         uses: ./
         with:
-          aws-region: us-west-2
+          aws-region: ${{ matrix.region }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Record end time
+        run: echo "End time: $(date)"
+  integ-load-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1, ap-northeast-1, sa-east-1]
+    name: Run load tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+      - name: Record start time
+        run: echo "Start time: $(date)"
+      - name: Integ load test
+        uses: ./
+        with:
+          aws-region: ${{ matrix.region }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
+          role-session-name: IntegLoadTestAssumeRole
+          role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
+      - name: Record end time
+        run: echo "End time: $(date)"

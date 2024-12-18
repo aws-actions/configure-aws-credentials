@@ -300,4 +300,100 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).toHaveBeenCalled();
     });
   });
+
+  // Additional test cases for different AWS regions and IAM roles
+  describe('Additional Scenarios', {}, () => {
+    it('handles different AWS regions', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-region': 'us-west-2' }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      await run();
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-west-2');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-west-2');
+      expect(core.exportVariable).toHaveBeenCalledTimes(2);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('handles different IAM roles', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_ASSUMEROLE_INPUTS, 'role-to-assume': 'arn:aws:iam::123456789012:role/AnotherRole' }));
+      mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(core.info).toHaveBeenCalledTimes(2);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+  });
+
+  // Additional test cases for missing, invalid, and expired AWS credentials
+  describe('Edge Cases for AWS Credentials', {}, () => {
+    it('fails with missing AWS credentials', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-access-key-id': '', 'aws-secret-access-key': '' }));
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+
+    it('fails with invalid AWS credentials', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-access-key-id': 'INVALID', 'aws-secret-access-key': 'INVALID' }));
+      mockedSTSClient.on(GetCallerIdentityCommand).rejects(new Error('InvalidClientTokenId: The security token included in the request is invalid.'));
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+
+    it('fails with expired AWS credentials', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).rejects(new Error('ExpiredToken: The security token included in the request is expired.'));
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+  });
+
+  // Additional test cases for missing or corrupted web identity token file
+  describe('Edge Cases for Web Identity Token File', {}, () => {
+    it('fails with missing web identity token file', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.WEBIDENTITY_TOKEN_FILE_INPUTS));
+      vol.reset();
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+
+    it('fails with corrupted web identity token file', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.WEBIDENTITY_TOKEN_FILE_INPUTS));
+      vol.reset();
+      fs.mkdirSync('/home/github', { recursive: true });
+      fs.writeFileSync('/home/github/file.txt', 'corrupted-token');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).rejects(new Error('InvalidIdentityToken: The web identity token that was passed is expired or is not valid.'));
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+  });
+
+  // Additional test cases for special characters in AWS_SECRET_ACCESS_KEY
+  describe('Edge Cases for AWS_SECRET_ACCESS_KEY', {}, () => {
+    it('handles special characters in AWS_SECRET_ACCESS_KEY', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-secret-access-key': 'sp3c!@l$ecret' }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      await run();
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'sp3c!@l$ecret');
+      expect(core.exportVariable).toHaveBeenCalledTimes(1);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+  });
+
+  // Additional test cases for invalid AWS regions and missing GitHub environment variables
+  describe('Edge Cases for Invalid Inputs', {}, () => {
+    it('fails with invalid AWS region', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-region': 'invalid-region' }));
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+
+    it('fails with missing GitHub environment variables', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      delete process.env.GITHUB_REPOSITORY;
+      delete process.env.GITHUB_SHA;
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+  });
 });

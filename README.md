@@ -557,7 +557,21 @@ This example shows that you can reference the fetched credentials as outputs if
 `output-credentials` is set to true. This example also shows that you can use
 the `aws-session-token` input in a situation where session tokens are fetched
 and passed to this action.
- 
+
+## Additional Tests
+
+### Integration tests for different AWS regions
+We have added integration tests for different AWS regions to ensure the action works correctly across various regions. This helps verify that the action can handle different regional configurations and provides consistent results.
+
+### Integration tests for different IAM roles
+We have added integration tests for different IAM roles to ensure the action handles various permission configurations correctly. This helps verify that the action can assume roles with different policies and permissions without issues.
+
+### Edge case testing for invalid AWS credentials
+We have added tests for edge cases involving invalid AWS credentials to ensure the action fails gracefully and provides meaningful error messages. These tests cover scenarios such as missing credentials, invalid credentials, expired credentials, and corrupted web identity token files.
+
+### Performance and load testing
+We have performed performance and load testing to ensure the action can handle multiple concurrent requests without performance degradation. This helps identify potential performance bottlenecks and ensures the action's retry mechanism works effectively under various network conditions.
+
 ## License Summary
 This code is made available under the MIT license.
 

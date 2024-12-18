@@ -18,6 +18,9 @@ const REGION_REGEX = /^[a-z0-9-]+$/g;
 
 export async function run() {
   try {
+    // Record the start time
+    const startTime = Date.now();
+
     // Get inputs
     const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
     const SecretAccessKey = core.getInput('aws-secret-access-key', {
@@ -190,6 +193,13 @@ export async function run() {
     } else {
       core.info('Proceeding with IAM user credentials');
     }
+
+    // Record the end time
+    const endTime = Date.now();
+
+    // Calculate the execution time
+    const executionTime = endTime - startTime;
+    core.info(`Execution time: ${executionTime} ms`);
   } catch (error) {
     core.setFailed(errorMessage(error));
 
