@@ -1,0 +1,22 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+  }
+}"ghcr.io/devcontainers/features/aws-cli:1": {}
+"ghcr.io/devcontainers-extra/features/aws-cdk:2": {}
+"ghcr.io/itsmechlark/features/1password:1": {}
+"ghcr.io/wxw-matt/devcontainer-features/script_runner:0": {}
+
+{
+    "name": "my-project-devcontainer",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",  // Any generic, debian-based image.
+    "features": {
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "1.18"
+        },
+        "ghcr.io/devcontainers/features/docker-in-docker:1": {
+            "version": "latest",
+            "moby": true
+        }
+    }
+}
