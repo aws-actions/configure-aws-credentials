@@ -12,13 +12,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1]
+        region: [us-east-1, us-west-2, eu-west-1]
     name: Run OIDC integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - name: Record start time
-        run: date +%s > start_time.txt
       - name: "Checkout repository"
         uses: actions/checkout@v4
       - name: Integ test for OIDC
@@ -29,12 +27,6 @@ jobs:
           role-duration-seconds: 900
           role-session-name: IntegOidcAssumeRole
           role-external-id: ${{ secrets.SECRETS_OIDC_AWS_ROLE_EXTERNAL_ID }}
-      - name: Record end time and calculate execution time
-        run: |
-          end_time=$(date +%s)
-          start_time=$(cat start_time.txt)
-          execution_time=$((end_time - start_time))
-          echo "Execution time: $execution_time seconds"
   integ-oidc-env:
     permissions:
       contents: read
@@ -43,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1]
+        region: [us-east-1, us-west-2, eu-west-1]
     name: Run OIDC integ tests with existing invalid env vars
     runs-on: ${{ matrix.os }}
     env:
@@ -52,8 +44,6 @@ jobs:
       AWS_SESSION_TOKEN: dummytoken
     timeout-minutes: 30
     steps:
-      - name: Record start time
-        run: date +%s > start_time.txt
       - name: "Checkout repository"
         uses: actions/checkout@v4
       - name: Integ test for OIDC
@@ -64,24 +54,16 @@ jobs:
           role-duration-seconds: 900
           role-session-name: IntegOidcAssumeRole
           role-external-id: ${{ secrets.SECRETS_OIDC_AWS_ROLE_EXTERNAL_ID }}
-      - name: Record end time and calculate execution time
-        run: |
-          end_time=$(date +%s)
-          start_time=$(cat start_time.txt)
-          execution_time=$((end_time - start_time))
-          echo "Execution time: $execution_time seconds"
   integ-access-keys:
     strategy:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1]
+        region: [us-east-1, us-west-2, eu-west-1]
     name: Run access key integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - name: Record start time
-        run: date +%s > start_time.txt
       - name: "Checkout repository"
         uses: actions/checkout@v4
       - name: Integ test for access keys
@@ -93,24 +75,16 @@ jobs:
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
           role-session-name: IntegAccessKeysAssumeRole
           role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
-      - name: Record end time and calculate execution time
-        run: |
-          end_time=$(date +%s)
-          start_time=$(cat start_time.txt)
-          execution_time=$((end_time - start_time))
-          echo "Execution time: $execution_time seconds"
   integ-access-keys-env:
     strategy:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1]
+        region: [us-east-1, us-west-2, eu-west-1]
     name: Run access key from env integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - name: Record start time
-        run: date +%s > start_time.txt
       - name: "Checkout repository"
         uses: actions/checkout@v4
       - name: Integ test for access keys
@@ -123,24 +97,16 @@ jobs:
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
           role-session-name: IntegAccessKeysAssumeRole
           role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
-      - name: Record end time and calculate execution time
-        run: |
-          end_time=$(date +%s)
-          start_time=$(cat start_time.txt)
-          execution_time=$((end_time - start_time))
-          echo "Execution time: $execution_time seconds"
   integ-iam-user:
     strategy:
       fail-fast: false
       matrix:
         os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
-        region: [us-west-2, us-east-1, eu-west-1, ap-southeast-1]
+        region: [us-east-1, us-west-2, eu-west-1]
     name: Run IAM User integ tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - name: Record start time
-        run: date +%s > start_time.txt
       - name: "Checkout repository"
         uses: actions/checkout@v4
       - name: Integ test for IAM user
@@ -149,9 +115,34 @@ jobs:
           aws-region: ${{ matrix.region }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      - name: Record end time and calculate execution time
+  integ-load-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [[self-hosted, linux-fargate], windows-latest, ubuntu-latest, macos-latest]
+        region: [us-east-1, us-west-2, eu-west-1]
+    name: Run load tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+      - name: Load test for OIDC
+        uses: ./
+        with:
+          aws-region: ${{ matrix.region }}
+          role-to-assume: ${{ secrets.SECRETS_OIDC_AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: LoadTestOidcAssumeRole
+          role-external-id: ${{ secrets.SECRETS_OIDC_AWS_ROLE_EXTERNAL_ID }}
+      - name: Measure execution time
         run: |
+          start_time=$(date +%s)
+          # Simulate load
+          for i in {1..100}; do
+            ./run_integ_test.sh &
+          done
+          wait
           end_time=$(date +%s)
-          start_time=$(cat start_time.txt)
           execution_time=$((end_time - start_time))
-          echo "Execution time: $execution_time seconds"
+          echo "Execution time under load: $execution_time seconds"

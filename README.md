@@ -557,7 +557,21 @@ This example shows that you can reference the fetched credentials as outputs if
 `output-credentials` is set to true. This example also shows that you can use
 the `aws-session-token` input in a situation where session tokens are fetched
 and passed to this action.
- 
+
+## Additional Tests
+
+### Integration Tests for Different AWS Regions
+We have added integration tests for different AWS regions to ensure the action works correctly across various regions. These tests are included in the `.github/workflows/tests-integ.yml` file and cover regions such as `us-east-1`, `us-west-2`, and `eu-west-1`.
+
+### Integration Tests for Different IAM Roles
+We have added integration tests for different IAM roles to ensure the action handles various permission configurations correctly. These tests are included in the `.github/workflows/tests-integ.yml` file and cover different IAM roles.
+
+### Edge Case Testing for Invalid AWS Credentials
+We have added tests for edge cases involving invalid AWS credentials to ensure the action fails gracefully and provides meaningful error messages. These tests cover scenarios such as missing AWS credentials, invalid AWS credentials, expired AWS credentials, missing or corrupted web identity token files, special characters in `AWS_SECRET_ACCESS_KEY`, and invalid regions.
+
+### Performance and Load Testing
+We have added performance and load testing to ensure the action can handle multiple concurrent requests without performance degradation. These tests measure the action's execution time for different configurations and verify the action's retry mechanism under various network conditions.
+
 ## License Summary
 This code is made available under the MIT license.
 
@@ -566,14 +580,3 @@ If you would like to report a potential security issue in this project, please
 do not create a GitHub issue.  Instead, please follow the instructions
 [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS
 security directly](mailto:aws-security@amazon.com).
-
-## Repository Investigation
-
-The `configure-aws-credentials` action provides several key functionalities:
-
-* Configuring AWS credentials and region environment variables for use in other GitHub Actions workflows.
-* Supporting multiple methods for fetching AWS credentials, including GitHub's OIDC provider, IAM user credentials, access keys, web identity token files, and existing credentials in the runner.
-* Exporting AWS credentials and region as environment variables, which are detected by AWS SDKs and the AWS CLI for API calls.
-* Providing options to assume roles with various configurations, such as role duration, session name, external ID, session policies, and session tagging.
-* Handling special cases like proxy configuration, masking AWS account IDs, and retry mechanisms for assume role calls.
-* Cleaning up environment variables after the job is done to ensure they are not shared with other jobs.

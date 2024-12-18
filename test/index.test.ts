@@ -300,4 +300,103 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).toHaveBeenCalled();
     });
   });
+
+  // New test cases for different AWS regions
+  describe('AWS Region Tests', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+    });
+    it('tests with different AWS regions', async () => {
+      const regions = ['us-east-1', 'us-west-2', 'eu-west-1'];
+      for (const region of regions) {
+        process.env.AWS_REGION = region;
+        mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+        await run();
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', region);
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', region);
+      }
+    });
+  });
+
+  // New test cases for different IAM roles
+  describe('IAM Role Tests', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+    });
+    it('tests with different IAM roles', async () => {
+      const roles = [
+        'arn:aws:iam::111111111111:role/Role1',
+        'arn:aws:iam::111111111111:role/Role2',
+        'arn:aws:iam::111111111111:role/Role3',
+      ];
+      for (const role of roles) {
+        process.env.ROLE_TO_ASSUME = role;
+        mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+        await run();
+        expect(core.exportVariable).toHaveBeenCalledWith('AWS_ROLE_TO_ASSUME', role);
+      }
+    });
+  });
+
+  // New test cases for edge cases for invalid AWS credentials
+  describe('Invalid AWS Credentials Tests', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'INVALIDACCESSKEYID',
+      });
+    });
+    it('fails with invalid AWS credentials', async () => {
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+  });
+
+  // New test cases for special characters in AWS_SECRET_ACCESS_KEY
+  describe('Special Characters in AWS_SECRET_ACCESS_KEY Tests', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+        secretAccessKey: 'MYAWSSECRETACCESSKEY!@#$%^&*()',
+      });
+    });
+    it('handles special characters in AWS_SECRET_ACCESS_KEY', async () => {
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+  });
+
+  // New test cases for performance and load testing
+  describe('Performance and Load Testing', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+    });
+    it('measures execution time under load', async () => {
+      const startTime = Date.now();
+      const load = 100; // Simulate 100 concurrent requests
+      const promises = [];
+      for (let i = 0; i < load; i++) {
+        promises.push(run());
+      }
+      await Promise.all(promises);
+      const endTime = Date.now();
+      const executionTime = endTime - startTime;
+      console.log(`Execution time under load: ${executionTime} ms`);
+      expect(executionTime).toBeLessThan(5000); // Ensure it completes within 5 seconds
+    });
+  });
 });
