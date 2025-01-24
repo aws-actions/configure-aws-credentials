@@ -300,4 +300,37 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).toHaveBeenCalled();
     });
   });
+
+  describe('Allowed-id-list', {}, () => {
+    it('denies accounts not defined in allow-account-ids', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'allowed-account-ids': '000000000000'}));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(`Account ID of the provided credentials is not in 'allowed-account-ids': 111111111111`);
+    })
+    it('allows accounts defined in allow-account-ids', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'allowed-account-ids': '111111111111'}));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      await run();
+    })
+    it('throws if account id list is invalid', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'allowed-account-ids': '0'}));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith('Allowed account ID list is not valid; it must be a comma-separated list of 12-digit IDs: 0');
+    })
+  });
+
 });
