@@ -1,7 +1,7 @@
 {
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "lint": "biome check --error-on-warnings ./src",

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.3](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.2...v4.0.3) (2025-01-27)
+
+
+### Features
+
+* added release-please action config ([0f88004](https://github.com/aws-actions/configure-aws-credentials/commit/0f88004d9c27e0bdbbc254b3f7c8053cb38f04d7))
+
+
+### Bug Fixes
+
+* add id-token permission to automerge ([97834a4](https://github.com/aws-actions/configure-aws-credentials/commit/97834a484a5ab3c40fa9e2eb40fcf8041105a573))
+* cpy syntax on npm package ([#1195](https://github.com/aws-actions/configure-aws-credentials/issues/1195)) ([83b5a56](https://github.com/aws-actions/configure-aws-credentials/commit/83b5a565471214aec459e234bef606339fe07111))
+* force push packaged files to main ([bfd2185](https://github.com/aws-actions/configure-aws-credentials/commit/bfd218503eb87938c29603a551e19c6b594f5fe5))
+
+
+### Miscellaneous Chores
+
+* release 4.0.3 ([ca00fd4](https://github.com/aws-actions/configure-aws-credentials/commit/ca00fd4d3842ad58c3c21ebfe69defa1f0e7bdc4))
+
 ## [4.0.2](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.1...v4.0.2) (2024-02-09)
 
 * Revert 4.0.1 to remove warning
