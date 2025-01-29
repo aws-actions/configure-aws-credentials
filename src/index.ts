@@ -15,6 +15,7 @@ import {
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
+const ACCOUNT_ID_LIST_REGEX = /^\d{12}(,\s?\d{12})*$/;
 
 export async function run() {
   try {
@@ -60,6 +61,7 @@ export async function run() {
     const specialCharacterWorkaroundInput =
       core.getInput('special-characters-workaround', { required: false }) || 'false';
     const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
+    const allowedAccountIds = core.getInput('allowed-account-ids', { required: false });
     let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
     switch (true) {
       case specialCharacterWorkaround:
@@ -111,9 +113,18 @@ export async function run() {
     }
     exportRegion(region);
 
+    //validate the provided allowed account ID list
+    if (allowedAccountIds && !allowedAccountIds.match(ACCOUNT_ID_LIST_REGEX)) {
+      let errorMessage = 'Allowed account ID list is not valid; it must be a comma-separated list of 12-digit IDs';
+      if (!maskAccountId) {
+        errorMessage += `: ${allowedAccountIds}`;
+      }
+      throw new Error(errorMessage);
+    }
+
     // Instantiate credentials client
     const credentialsClient = new CredentialsClient({ region, proxyServer });
-    let sourceAccountId: string;
+    let sourceAccountId: string | undefined = undefined;
     let webIdentityToken: string;
 
     // If OIDC is being used, generate token
@@ -189,6 +200,20 @@ export async function run() {
       await exportAccountId(credentialsClient, maskAccountId);
     } else {
       core.info('Proceeding with IAM user credentials');
+    }
+
+    if (allowedAccountIds) {
+      const accountIdList = allowedAccountIds.split(',').map((id) => id.trim());
+      if (sourceAccountId === undefined) {
+        sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
+      }
+      if (!accountIdList.includes(sourceAccountId)) {
+        let errorMessage = "Account ID of the provided credentials is not in 'allowed-account-ids'";
+        if (!maskAccountId) {
+          errorMessage += `: ${sourceAccountId}`;
+        }
+        throw new Error(errorMessage);
+      }
     }
   } catch (error) {
     core.setFailed(errorMessage(error));
