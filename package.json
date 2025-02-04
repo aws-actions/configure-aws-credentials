@@ -3,7 +3,7 @@
   "description": "A GitHub Action to configure AWS credentials",
   "version": "4.0.3",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsc",
     "lint": "biome check --error-on-warnings ./src",
     "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && cpy dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
     "test": "npm run lint && vitest run"
