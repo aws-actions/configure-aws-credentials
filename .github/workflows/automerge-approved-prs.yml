@@ -3,33 +3,29 @@ on:
     types: submitted
 
 jobs:
+  print_stuff:
+    name: Print stuff for the if stmt check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Print context
+      run: |
+        echo "The review state is ${{ github.event.review.state }}"
+        echo "The repository is ${{ github.repository }}"
+        echo "The review author-association is ${{ github.event.review.author_association }}"
+        echo "The review user-login is ${{ github.event.review.user.login }}"
+
   approved_pr:
     name: Automerge approved PRs
+    needs: print_stuff
     permissions:
       contents: write
       pull-requests: write
       id-token: write
-    if: >-
-      github.event.review.state == 'approved' &&
-      github.event.repository == 'aws/configure-aws-credentials' &&
-      (github.event.review.author_association == 'OWNER' || github.event.review.user.login == 'aws-sdk-osds')
+    if: ${{ github.event.review.state == 'approved' && github.repository == 'lehmanmj/configure-aws-credentials' && (github.event.review.author_association == 'OWNER' || github.event.review.author_association == 'MEMBER' || github.event.review.user.login == 'aws-sdk-osds') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: us-west-2
-          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
-          role-duration-seconds: 900
-          role-session-name: SecretsManagerFetch
-      - name: Get bot user token
-        uses: aws-actions/aws-secretsmanager-get-secrets@v2
-        with:
-          parse-json-secrets: true
-          secret-ids: |
-            OSDS,arn:aws:secretsmanager:us-west-2:206735643321:secret:github-aws-sdk-osds-automation-gebs9n
       - name: Enable PR automerge
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ env.OSDS_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.token }}
