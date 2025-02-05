@@ -1,0 +1,20 @@
+name: Test Configure AWS Credential
+on:
+  workflow_dispatch:
+
+jobs:
+  cawsc:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: CAWSC
+        uses: aws-actions/configure-aws-credentials@main
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: TestCAWSC
+      - name: Whoami
+        run: |
+          aws sts get-caller-identity
