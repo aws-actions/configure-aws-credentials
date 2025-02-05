@@ -2,10 +2,11 @@ name: Dependabot auto-approve
 on: pull_request
 permissions:
   pull-requests: write
+  id-token: write
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'aws/configure-aws-credentials'
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'aws-actions/configure-aws-credentials' }}
     steps:
       - name: Get Metadata
         id: dependabot-metadata
