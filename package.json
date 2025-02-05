@@ -1,8 +1,9 @@
 {
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
+  "version": "4.0.3",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsc",
     "lint": "biome check --error-on-warnings ./src",
     "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && cpy dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
     "test": "npm run lint && vitest run"
@@ -15,22 +16,22 @@
   "devDependencies": {
     "@aws-sdk/credential-provider-env": "^3.515.0",
     "@biomejs/biome": "1.9.4",
-    "@smithy/property-provider": "^3.1.7",
-    "@types/node": "^22.9.0",
-    "@vercel/ncc": "^0.38.2",
-    "@vitest/coverage-v8": "^2.1.3",
+    "@smithy/property-provider": "^4.0.1",
+    "@types/node": "^22.13.1",
+    "@vercel/ncc": "^0.38.3",
+    "@vitest/coverage-v8": "^2.1.9",
     "aws-sdk-client-mock": "^4.1.0",
     "cpy-cli": "^5.0.0",
     "del-cli": "^6.0.0",
     "json-schema": "^0.4.0",
-    "memfs": "^4.14.0",
+    "memfs": "^4.17.0",
     "standard-version": "^9.5.0",
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.3"
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
-    "@aws-sdk/client-sts": "^3.675.0",
+    "@aws-sdk/client-sts": "^3.741.0",
     "@smithy/node-http-handler": "^4.0.1",
     "https-proxy-agent": "^5.0.1"
   },
@@ -45,7 +46,6 @@
   "main": "build/index.js",
   "license": "MIT",
   "homepage": "https://github.com/aws-actions/configure-aws-credentials",
-  "version": "0.0.0",
   "bugs": {
     "url": "https://github.com/aws-actions/configure-aws-credentials/issues"
   },
