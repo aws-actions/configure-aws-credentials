@@ -18,7 +18,7 @@
     "@biomejs/biome": "1.9.4",
     "@smithy/property-provider": "^3.1.7",
     "@types/node": "^22.13.1",
-    "@vercel/ncc": "^0.38.2",
+    "@vercel/ncc": "^0.38.3",
     "@vitest/coverage-v8": "^2.1.9",
     "aws-sdk-client-mock": "^4.1.0",
     "cpy-cli": "^5.0.0",
