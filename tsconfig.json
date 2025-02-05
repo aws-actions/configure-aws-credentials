@@ -22,12 +22,14 @@
     "lib": [ "ES2020" ],
     "target": "ES2020",
     "noErrorTruncation": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "rootDir": "src",
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.test.ts"
+    "src/**/*.ts"
   ],
-  "exclude": [],
+  "exclude": [
+    "test/**/*.ts"
+  ],
 }
 
