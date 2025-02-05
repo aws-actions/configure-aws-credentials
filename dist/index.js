@@ -87,13 +87,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -235,13 +245,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.exportCredentials = exportCredentials;
 exports.unsetCredentials = unsetCredentials;
@@ -404,13 +424,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const core = __importStar(__nccwpck_require__(7484));
@@ -6818,7 +6848,7 @@ var AwsSdkSigV4ASigner = class extends AwsSdkSigV4Signer {
 
 // src/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4AConfig.ts
 var import_core = __nccwpck_require__(402);
-var import_property_provider = __nccwpck_require__(6180);
+var import_property_provider = __nccwpck_require__(1238);
 var resolveAwsSdkSigV4AConfig = /* @__PURE__ */ __name((config) => {
   config.sigv4aSigningRegionSet = (0, import_core.normalizeProvider)(config.sigv4aSigningRegionSet);
   return config;
@@ -7174,176 +7204,6 @@ var loadRestXmlErrorCode = /* @__PURE__ */ __name((output, data) => {
 
 /***/ }),
 
-/***/ 6180:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 5606:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -7383,7 +7243,7 @@ module.exports = __toCommonJS(src_exports);
 
 // src/fromEnv.ts
 var import_client = __nccwpck_require__(5152);
-var import_property_provider = __nccwpck_require__(9006);
+var import_property_provider = __nccwpck_require__(1238);
 var ENV_KEY = "AWS_ACCESS_KEY_ID";
 var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
 var ENV_SESSION = "AWS_SESSION_TOKEN";
@@ -7420,176 +7280,6 @@ var fromEnv = /* @__PURE__ */ __name((init) => async () => {
 
 /***/ }),
 
-/***/ 9006:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 1509:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -7597,7 +7287,7 @@ var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkUrl = void 0;
-const property_provider_1 = __nccwpck_require__(6855);
+const property_provider_1 = __nccwpck_require__(1238);
 const LOOPBACK_CIDR_IPv4 = "127.0.0.0/8";
 const LOOPBACK_CIDR_IPv6 = "::1/128";
 const ECS_CONTAINER_HOST = "169.254.170.2";
@@ -7654,7 +7344,7 @@ exports.fromHttp = void 0;
 const tslib_1 = __nccwpck_require__(1860);
 const client_1 = __nccwpck_require__(5152);
 const node_http_handler_1 = __nccwpck_require__(1279);
-const property_provider_1 = __nccwpck_require__(6855);
+const property_provider_1 = __nccwpck_require__(1238);
 const promises_1 = tslib_1.__importDefault(__nccwpck_require__(1943));
 const checkUrl_1 = __nccwpck_require__(1509);
 const requestHelpers_1 = __nccwpck_require__(8914);
@@ -7727,7 +7417,7 @@ exports.fromHttp = fromHttp;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getCredentials = exports.createGetRequest = void 0;
-const property_provider_1 = __nccwpck_require__(6855);
+const property_provider_1 = __nccwpck_require__(1238);
 const protocol_http_1 = __nccwpck_require__(2356);
 const smithy_client_1 = __nccwpck_require__(1411);
 const util_stream_1 = __nccwpck_require__(4252);
@@ -7820,176 +7510,6 @@ Object.defineProperty(exports, "fromHttp", ({ enumerable: true, get: function ()
 
 /***/ }),
 
-/***/ 6855:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 5869:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -8044,7 +7564,7 @@ var import_shared_ini_file_loader = __nccwpck_require__(4964);
 
 // src/resolveCredentialSource.ts
 var import_client = __nccwpck_require__(5152);
-var import_property_provider = __nccwpck_require__(8215);
+var import_property_provider = __nccwpck_require__(1238);
 var resolveCredentialSource = /* @__PURE__ */ __name((credentialSource, profileName, logger) => {
   const sourceProvidersMap = {
     EcsContainer: async (options) => {
@@ -8272,176 +7792,6 @@ var fromIni = /* @__PURE__ */ __name((_init = {}) => async ({ callerClientConfig
 
 /***/ }),
 
-/***/ 8215:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 5861:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -8491,7 +7841,7 @@ var import_credential_provider_env = __nccwpck_require__(5606);
 var import_shared_ini_file_loader = __nccwpck_require__(4964);
 
 // src/remoteProvider.ts
-var import_property_provider = __nccwpck_require__(2335);
+var import_property_provider = __nccwpck_require__(1238);
 var ENV_IMDS_DISABLED = "AWS_EC2_METADATA_DISABLED";
 var remoteProvider = /* @__PURE__ */ __name(async (init) => {
   const { ENV_CMDS_FULL_URI, ENV_CMDS_RELATIVE_URI, fromContainerMetadata, fromInstanceMetadata } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(566)));
@@ -8593,176 +7943,6 @@ var credentialsTreatedAsExpired = /* @__PURE__ */ __name((credentials) => creden
 
 /***/ }),
 
-/***/ 2335:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 5360:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -8798,7 +7978,7 @@ module.exports = __toCommonJS(src_exports);
 var import_shared_ini_file_loader = __nccwpck_require__(4964);
 
 // src/resolveProcessCredentials.ts
-var import_property_provider = __nccwpck_require__(1508);
+var import_property_provider = __nccwpck_require__(1238);
 var import_child_process = __nccwpck_require__(5317);
 var import_util = __nccwpck_require__(9023);
 
@@ -8883,176 +8063,6 @@ var fromProcess = /* @__PURE__ */ __name((init = {}) => async ({ callerClientCon
 
 /***/ }),
 
-/***/ 1508:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 998:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -9113,7 +8123,7 @@ var isSsoProfile = /* @__PURE__ */ __name((arg) => arg && (typeof arg.sso_start_
 // src/resolveSSOCredentials.ts
 var import_client = __nccwpck_require__(5152);
 var import_token_providers = __nccwpck_require__(5433);
-var import_property_provider = __nccwpck_require__(8430);
+var import_property_provider = __nccwpck_require__(1238);
 var import_shared_ini_file_loader = __nccwpck_require__(4964);
 var SHOULD_FAIL_CREDENTIAL_CHAIN = false;
 var resolveSSOCredentials = /* @__PURE__ */ __name(async ({
@@ -9303,176 +8313,6 @@ var fromSSO = /* @__PURE__ */ __name((init = {}) => async ({ callerClientConfig 
 
 /***/ }),
 
-/***/ 8430:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 8079:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -9481,7 +8321,7 @@ var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fromTokenFile = void 0;
 const client_1 = __nccwpck_require__(5152);
-const property_provider_1 = __nccwpck_require__(1264);
+const property_provider_1 = __nccwpck_require__(1238);
 const fs_1 = __nccwpck_require__(9896);
 const fromWebToken_1 = __nccwpck_require__(4453);
 const ENV_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
@@ -9598,176 +8438,6 @@ var src_exports = {};
 module.exports = __toCommonJS(src_exports);
 __reExport(src_exports, __nccwpck_require__(8079), module.exports);
 __reExport(src_exports, __nccwpck_require__(4453), module.exports);
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 1264:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -12848,7 +11518,7 @@ var getNewSsoOidcToken = /* @__PURE__ */ __name(async (ssoToken, ssoRegion, init
 }, "getNewSsoOidcToken");
 
 // src/validateTokenExpiry.ts
-var import_property_provider = __nccwpck_require__(1515);
+var import_property_provider = __nccwpck_require__(1238);
 var validateTokenExpiry = /* @__PURE__ */ __name((token) => {
   if (token.expiration && token.expiration.getTime() < Date.now()) {
     throw new import_property_provider.TokenProviderError(`Token is expired. ${REFRESH_MESSAGE}`, false);
@@ -12983,176 +11653,6 @@ var nodeProvider = /* @__PURE__ */ __name((init = {}) => (0, import_property_pro
   (token) => token.expiration !== void 0 && token.expiration.getTime() - Date.now() < 3e5,
   (token) => token.expiration !== void 0
 ), "nodeProvider");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 1515:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -13958,7 +12458,7 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 
 // src/getSmithyContext.ts
-var import_types = __nccwpck_require__(2526);
+var import_types = __nccwpck_require__(690);
 var getSmithyContext = /* @__PURE__ */ __name((context) => context[import_types.SMITHY_CONTEXT_KEY] || (context[import_types.SMITHY_CONTEXT_KEY] = {}), "getSmithyContext");
 
 // src/middleware-http-auth-scheme/httpAuthSchemeMiddleware.ts
@@ -14484,151 +12984,6 @@ var RequestBuilder = class {
 
 /***/ }),
 
-/***/ 2526:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  AlgorithmId: () => AlgorithmId,
-  EndpointURLScheme: () => EndpointURLScheme,
-  FieldPosition: () => FieldPosition,
-  HttpApiKeyAuthLocation: () => HttpApiKeyAuthLocation,
-  HttpAuthLocation: () => HttpAuthLocation,
-  IniSectionType: () => IniSectionType,
-  RequestHandlerProtocol: () => RequestHandlerProtocol,
-  SMITHY_CONTEXT_KEY: () => SMITHY_CONTEXT_KEY,
-  getDefaultClientConfiguration: () => getDefaultClientConfiguration,
-  resolveDefaultRuntimeConfig: () => resolveDefaultRuntimeConfig
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/auth/auth.ts
-var HttpAuthLocation = /* @__PURE__ */ ((HttpAuthLocation2) => {
-  HttpAuthLocation2["HEADER"] = "header";
-  HttpAuthLocation2["QUERY"] = "query";
-  return HttpAuthLocation2;
-})(HttpAuthLocation || {});
-
-// src/auth/HttpApiKeyAuth.ts
-var HttpApiKeyAuthLocation = /* @__PURE__ */ ((HttpApiKeyAuthLocation2) => {
-  HttpApiKeyAuthLocation2["HEADER"] = "header";
-  HttpApiKeyAuthLocation2["QUERY"] = "query";
-  return HttpApiKeyAuthLocation2;
-})(HttpApiKeyAuthLocation || {});
-
-// src/endpoint.ts
-var EndpointURLScheme = /* @__PURE__ */ ((EndpointURLScheme2) => {
-  EndpointURLScheme2["HTTP"] = "http";
-  EndpointURLScheme2["HTTPS"] = "https";
-  return EndpointURLScheme2;
-})(EndpointURLScheme || {});
-
-// src/extensions/checksum.ts
-var AlgorithmId = /* @__PURE__ */ ((AlgorithmId2) => {
-  AlgorithmId2["MD5"] = "md5";
-  AlgorithmId2["CRC32"] = "crc32";
-  AlgorithmId2["CRC32C"] = "crc32c";
-  AlgorithmId2["SHA1"] = "sha1";
-  AlgorithmId2["SHA256"] = "sha256";
-  return AlgorithmId2;
-})(AlgorithmId || {});
-var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  const checksumAlgorithms = [];
-  if (runtimeConfig.sha256 !== void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "sha256" /* SHA256 */,
-      checksumConstructor: () => runtimeConfig.sha256
-    });
-  }
-  if (runtimeConfig.md5 != void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "md5" /* MD5 */,
-      checksumConstructor: () => runtimeConfig.md5
-    });
-  }
-  return {
-    _checksumAlgorithms: checksumAlgorithms,
-    addChecksumAlgorithm(algo) {
-      this._checksumAlgorithms.push(algo);
-    },
-    checksumAlgorithms() {
-      return this._checksumAlgorithms;
-    }
-  };
-}, "getChecksumConfiguration");
-var resolveChecksumRuntimeConfig = /* @__PURE__ */ __name((clientConfig) => {
-  const runtimeConfig = {};
-  clientConfig.checksumAlgorithms().forEach((checksumAlgorithm) => {
-    runtimeConfig[checksumAlgorithm.algorithmId()] = checksumAlgorithm.checksumConstructor();
-  });
-  return runtimeConfig;
-}, "resolveChecksumRuntimeConfig");
-
-// src/extensions/defaultClientConfiguration.ts
-var getDefaultClientConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  return {
-    ...getChecksumConfiguration(runtimeConfig)
-  };
-}, "getDefaultClientConfiguration");
-var resolveDefaultRuntimeConfig = /* @__PURE__ */ __name((config) => {
-  return {
-    ...resolveChecksumRuntimeConfig(config)
-  };
-}, "resolveDefaultRuntimeConfig");
-
-// src/http.ts
-var FieldPosition = /* @__PURE__ */ ((FieldPosition2) => {
-  FieldPosition2[FieldPosition2["HEADER"] = 0] = "HEADER";
-  FieldPosition2[FieldPosition2["TRAILER"] = 1] = "TRAILER";
-  return FieldPosition2;
-})(FieldPosition || {});
-
-// src/middleware.ts
-var SMITHY_CONTEXT_KEY = "__smithy_context";
-
-// src/profile.ts
-var IniSectionType = /* @__PURE__ */ ((IniSectionType2) => {
-  IniSectionType2["PROFILE"] = "profile";
-  IniSectionType2["SSO_SESSION"] = "sso-session";
-  IniSectionType2["SERVICES"] = "services";
-  return IniSectionType2;
-})(IniSectionType || {});
-
-// src/transfer.ts
-var RequestHandlerProtocol = /* @__PURE__ */ ((RequestHandlerProtocol2) => {
-  RequestHandlerProtocol2["HTTP_0_9"] = "http/0.9";
-  RequestHandlerProtocol2["HTTP_1_0"] = "http/1.0";
-  RequestHandlerProtocol2["TDS_8_0"] = "tds/8.0";
-  return RequestHandlerProtocol2;
-})(RequestHandlerProtocol || {});
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 566:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -14673,7 +13028,7 @@ module.exports = __toCommonJS(src_exports);
 var import_url = __nccwpck_require__(7016);
 
 // src/remoteProvider/httpRequest.ts
-var import_property_provider = __nccwpck_require__(2382);
+var import_property_provider = __nccwpck_require__(1238);
 var import_buffer = __nccwpck_require__(181);
 var import_http = __nccwpck_require__(8611);
 function httpRequest(options) {
@@ -15061,176 +13416,6 @@ var getCredentialsFromProfile = /* @__PURE__ */ __name(async (profile, options, 
   }
   return fromImdsCredentials(credentialsResponse);
 }, "getCredentialsFromProfile");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 2382:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -16916,7 +15101,7 @@ module.exports = __toCommonJS(src_exports);
 
 
 // src/fromEnv.ts
-var import_property_provider = __nccwpck_require__(6796);
+var import_property_provider = __nccwpck_require__(1238);
 
 // src/getSelectorName.ts
 function getSelectorName(functionString) {
@@ -16985,176 +15170,6 @@ var loadConfig = /* @__PURE__ */ __name(({ environmentVariableSelector, configFi
     fromStatic(defaultValue)
   )
 ), "loadConfig");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 6796:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -17969,6 +15984,176 @@ __name(collectReadableStream, "collectReadableStream");
 
 /***/ }),
 
+/***/ 1238:
+/***/ ((module) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.ts
+var src_exports = {};
+__export(src_exports, {
+  CredentialsProviderError: () => CredentialsProviderError,
+  ProviderError: () => ProviderError,
+  TokenProviderError: () => TokenProviderError,
+  chain: () => chain,
+  fromStatic: () => fromStatic,
+  memoize: () => memoize
+});
+module.exports = __toCommonJS(src_exports);
+
+// src/ProviderError.ts
+var ProviderError = class _ProviderError extends Error {
+  constructor(message, options = true) {
+    let logger;
+    let tryNextLink = true;
+    if (typeof options === "boolean") {
+      logger = void 0;
+      tryNextLink = options;
+    } else if (options != null && typeof options === "object") {
+      logger = options.logger;
+      tryNextLink = options.tryNextLink ?? true;
+    }
+    super(message);
+    this.name = "ProviderError";
+    this.tryNextLink = tryNextLink;
+    Object.setPrototypeOf(this, _ProviderError.prototype);
+    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
+  }
+  static {
+    __name(this, "ProviderError");
+  }
+  /**
+   * @deprecated use new operator.
+   */
+  static from(error, options = true) {
+    return Object.assign(new this(error.message, options), error);
+  }
+};
+
+// src/CredentialsProviderError.ts
+var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
+  /**
+   * @override
+   */
+  constructor(message, options = true) {
+    super(message, options);
+    this.name = "CredentialsProviderError";
+    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
+  }
+  static {
+    __name(this, "CredentialsProviderError");
+  }
+};
+
+// src/TokenProviderError.ts
+var TokenProviderError = class _TokenProviderError extends ProviderError {
+  /**
+   * @override
+   */
+  constructor(message, options = true) {
+    super(message, options);
+    this.name = "TokenProviderError";
+    Object.setPrototypeOf(this, _TokenProviderError.prototype);
+  }
+  static {
+    __name(this, "TokenProviderError");
+  }
+};
+
+// src/chain.ts
+var chain = /* @__PURE__ */ __name((...providers) => async () => {
+  if (providers.length === 0) {
+    throw new ProviderError("No providers in chain");
+  }
+  let lastProviderError;
+  for (const provider of providers) {
+    try {
+      const credentials = await provider();
+      return credentials;
+    } catch (err) {
+      lastProviderError = err;
+      if (err?.tryNextLink) {
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastProviderError;
+}, "chain");
+
+// src/fromStatic.ts
+var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
+
+// src/memoize.ts
+var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
+  let resolved;
+  let pending;
+  let hasResult;
+  let isConstant = false;
+  const coalesceProvider = /* @__PURE__ */ __name(async () => {
+    if (!pending) {
+      pending = provider();
+    }
+    try {
+      resolved = await pending;
+      hasResult = true;
+      isConstant = false;
+    } finally {
+      pending = void 0;
+    }
+    return resolved;
+  }, "coalesceProvider");
+  if (isExpired === void 0) {
+    return async (options) => {
+      if (!hasResult || options?.forceRefresh) {
+        resolved = await coalesceProvider();
+      }
+      return resolved;
+    };
+  }
+  return async (options) => {
+    if (!hasResult || options?.forceRefresh) {
+      resolved = await coalesceProvider();
+    }
+    if (isConstant) {
+      return resolved;
+    }
+    if (requiresRefresh && !requiresRefresh(resolved)) {
+      isConstant = true;
+      return resolved;
+    }
+    if (isExpired(resolved)) {
+      await coalesceProvider();
+      return resolved;
+    }
+    return resolved;
+  };
+}, "memoize");
+// Annotate the CommonJS export names for ESM import in node:
+
+0 && (0);
+
+
+
+/***/ }),
+
 /***/ 2356:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -18030,7 +16215,7 @@ var resolveHttpHandlerRuntimeConfig = /* @__PURE__ */ __name((httpHandlerExtensi
 }, "resolveHttpHandlerRuntimeConfig");
 
 // src/Field.ts
-var import_types = __nccwpck_require__(5132);
+var import_types = __nccwpck_require__(690);
 var Field = class {
   static {
     __name(this, "Field");
@@ -18223,151 +16408,6 @@ function isValidHostname(hostname) {
   return hostPattern.test(hostname);
 }
 __name(isValidHostname, "isValidHostname");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 5132:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  AlgorithmId: () => AlgorithmId,
-  EndpointURLScheme: () => EndpointURLScheme,
-  FieldPosition: () => FieldPosition,
-  HttpApiKeyAuthLocation: () => HttpApiKeyAuthLocation,
-  HttpAuthLocation: () => HttpAuthLocation,
-  IniSectionType: () => IniSectionType,
-  RequestHandlerProtocol: () => RequestHandlerProtocol,
-  SMITHY_CONTEXT_KEY: () => SMITHY_CONTEXT_KEY,
-  getDefaultClientConfiguration: () => getDefaultClientConfiguration,
-  resolveDefaultRuntimeConfig: () => resolveDefaultRuntimeConfig
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/auth/auth.ts
-var HttpAuthLocation = /* @__PURE__ */ ((HttpAuthLocation2) => {
-  HttpAuthLocation2["HEADER"] = "header";
-  HttpAuthLocation2["QUERY"] = "query";
-  return HttpAuthLocation2;
-})(HttpAuthLocation || {});
-
-// src/auth/HttpApiKeyAuth.ts
-var HttpApiKeyAuthLocation = /* @__PURE__ */ ((HttpApiKeyAuthLocation2) => {
-  HttpApiKeyAuthLocation2["HEADER"] = "header";
-  HttpApiKeyAuthLocation2["QUERY"] = "query";
-  return HttpApiKeyAuthLocation2;
-})(HttpApiKeyAuthLocation || {});
-
-// src/endpoint.ts
-var EndpointURLScheme = /* @__PURE__ */ ((EndpointURLScheme2) => {
-  EndpointURLScheme2["HTTP"] = "http";
-  EndpointURLScheme2["HTTPS"] = "https";
-  return EndpointURLScheme2;
-})(EndpointURLScheme || {});
-
-// src/extensions/checksum.ts
-var AlgorithmId = /* @__PURE__ */ ((AlgorithmId2) => {
-  AlgorithmId2["MD5"] = "md5";
-  AlgorithmId2["CRC32"] = "crc32";
-  AlgorithmId2["CRC32C"] = "crc32c";
-  AlgorithmId2["SHA1"] = "sha1";
-  AlgorithmId2["SHA256"] = "sha256";
-  return AlgorithmId2;
-})(AlgorithmId || {});
-var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  const checksumAlgorithms = [];
-  if (runtimeConfig.sha256 !== void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "sha256" /* SHA256 */,
-      checksumConstructor: () => runtimeConfig.sha256
-    });
-  }
-  if (runtimeConfig.md5 != void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "md5" /* MD5 */,
-      checksumConstructor: () => runtimeConfig.md5
-    });
-  }
-  return {
-    _checksumAlgorithms: checksumAlgorithms,
-    addChecksumAlgorithm(algo) {
-      this._checksumAlgorithms.push(algo);
-    },
-    checksumAlgorithms() {
-      return this._checksumAlgorithms;
-    }
-  };
-}, "getChecksumConfiguration");
-var resolveChecksumRuntimeConfig = /* @__PURE__ */ __name((clientConfig) => {
-  const runtimeConfig = {};
-  clientConfig.checksumAlgorithms().forEach((checksumAlgorithm) => {
-    runtimeConfig[checksumAlgorithm.algorithmId()] = checksumAlgorithm.checksumConstructor();
-  });
-  return runtimeConfig;
-}, "resolveChecksumRuntimeConfig");
-
-// src/extensions/defaultClientConfiguration.ts
-var getDefaultClientConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  return {
-    ...getChecksumConfiguration(runtimeConfig)
-  };
-}, "getDefaultClientConfiguration");
-var resolveDefaultRuntimeConfig = /* @__PURE__ */ __name((config) => {
-  return {
-    ...resolveChecksumRuntimeConfig(config)
-  };
-}, "resolveDefaultRuntimeConfig");
-
-// src/http.ts
-var FieldPosition = /* @__PURE__ */ ((FieldPosition2) => {
-  FieldPosition2[FieldPosition2["HEADER"] = 0] = "HEADER";
-  FieldPosition2[FieldPosition2["TRAILER"] = 1] = "TRAILER";
-  return FieldPosition2;
-})(FieldPosition || {});
-
-// src/middleware.ts
-var SMITHY_CONTEXT_KEY = "__smithy_context";
-
-// src/profile.ts
-var IniSectionType = /* @__PURE__ */ ((IniSectionType2) => {
-  IniSectionType2["PROFILE"] = "profile";
-  IniSectionType2["SSO_SESSION"] = "sso-session";
-  IniSectionType2["SERVICES"] = "services";
-  return IniSectionType2;
-})(IniSectionType || {});
-
-// src/transfer.ts
-var RequestHandlerProtocol = /* @__PURE__ */ ((RequestHandlerProtocol2) => {
-  RequestHandlerProtocol2["HTTP_0_9"] = "http/0.9";
-  RequestHandlerProtocol2["HTTP_1_0"] = "http/1.0";
-  RequestHandlerProtocol2["TDS_8_0"] = "tds/8.0";
-  return RequestHandlerProtocol2;
-})(RequestHandlerProtocol || {});
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -18703,7 +16743,7 @@ __reExport(src_exports, __nccwpck_require__(1326), module.exports);
 
 
 // src/getConfigData.ts
-var import_types = __nccwpck_require__(7388);
+var import_types = __nccwpck_require__(690);
 var getConfigData = /* @__PURE__ */ __name((data) => Object.entries(data).filter(([key]) => {
   const indexOfSeparator = key.indexOf(CONFIG_PREFIX_SEPARATOR);
   if (indexOfSeparator === -1) {
@@ -18872,151 +16912,6 @@ const slurpFile = (path, options) => {
     return filePromisesHash[path];
 };
 exports.slurpFile = slurpFile;
-
-
-/***/ }),
-
-/***/ 7388:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  AlgorithmId: () => AlgorithmId,
-  EndpointURLScheme: () => EndpointURLScheme,
-  FieldPosition: () => FieldPosition,
-  HttpApiKeyAuthLocation: () => HttpApiKeyAuthLocation,
-  HttpAuthLocation: () => HttpAuthLocation,
-  IniSectionType: () => IniSectionType,
-  RequestHandlerProtocol: () => RequestHandlerProtocol,
-  SMITHY_CONTEXT_KEY: () => SMITHY_CONTEXT_KEY,
-  getDefaultClientConfiguration: () => getDefaultClientConfiguration,
-  resolveDefaultRuntimeConfig: () => resolveDefaultRuntimeConfig
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/auth/auth.ts
-var HttpAuthLocation = /* @__PURE__ */ ((HttpAuthLocation2) => {
-  HttpAuthLocation2["HEADER"] = "header";
-  HttpAuthLocation2["QUERY"] = "query";
-  return HttpAuthLocation2;
-})(HttpAuthLocation || {});
-
-// src/auth/HttpApiKeyAuth.ts
-var HttpApiKeyAuthLocation = /* @__PURE__ */ ((HttpApiKeyAuthLocation2) => {
-  HttpApiKeyAuthLocation2["HEADER"] = "header";
-  HttpApiKeyAuthLocation2["QUERY"] = "query";
-  return HttpApiKeyAuthLocation2;
-})(HttpApiKeyAuthLocation || {});
-
-// src/endpoint.ts
-var EndpointURLScheme = /* @__PURE__ */ ((EndpointURLScheme2) => {
-  EndpointURLScheme2["HTTP"] = "http";
-  EndpointURLScheme2["HTTPS"] = "https";
-  return EndpointURLScheme2;
-})(EndpointURLScheme || {});
-
-// src/extensions/checksum.ts
-var AlgorithmId = /* @__PURE__ */ ((AlgorithmId2) => {
-  AlgorithmId2["MD5"] = "md5";
-  AlgorithmId2["CRC32"] = "crc32";
-  AlgorithmId2["CRC32C"] = "crc32c";
-  AlgorithmId2["SHA1"] = "sha1";
-  AlgorithmId2["SHA256"] = "sha256";
-  return AlgorithmId2;
-})(AlgorithmId || {});
-var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  const checksumAlgorithms = [];
-  if (runtimeConfig.sha256 !== void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "sha256" /* SHA256 */,
-      checksumConstructor: () => runtimeConfig.sha256
-    });
-  }
-  if (runtimeConfig.md5 != void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "md5" /* MD5 */,
-      checksumConstructor: () => runtimeConfig.md5
-    });
-  }
-  return {
-    _checksumAlgorithms: checksumAlgorithms,
-    addChecksumAlgorithm(algo) {
-      this._checksumAlgorithms.push(algo);
-    },
-    checksumAlgorithms() {
-      return this._checksumAlgorithms;
-    }
-  };
-}, "getChecksumConfiguration");
-var resolveChecksumRuntimeConfig = /* @__PURE__ */ __name((clientConfig) => {
-  const runtimeConfig = {};
-  clientConfig.checksumAlgorithms().forEach((checksumAlgorithm) => {
-    runtimeConfig[checksumAlgorithm.algorithmId()] = checksumAlgorithm.checksumConstructor();
-  });
-  return runtimeConfig;
-}, "resolveChecksumRuntimeConfig");
-
-// src/extensions/defaultClientConfiguration.ts
-var getDefaultClientConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  return {
-    ...getChecksumConfiguration(runtimeConfig)
-  };
-}, "getDefaultClientConfiguration");
-var resolveDefaultRuntimeConfig = /* @__PURE__ */ __name((config) => {
-  return {
-    ...resolveChecksumRuntimeConfig(config)
-  };
-}, "resolveDefaultRuntimeConfig");
-
-// src/http.ts
-var FieldPosition = /* @__PURE__ */ ((FieldPosition2) => {
-  FieldPosition2[FieldPosition2["HEADER"] = 0] = "HEADER";
-  FieldPosition2[FieldPosition2["TRAILER"] = 1] = "TRAILER";
-  return FieldPosition2;
-})(FieldPosition || {});
-
-// src/middleware.ts
-var SMITHY_CONTEXT_KEY = "__smithy_context";
-
-// src/profile.ts
-var IniSectionType = /* @__PURE__ */ ((IniSectionType2) => {
-  IniSectionType2["PROFILE"] = "profile";
-  IniSectionType2["SSO_SESSION"] = "sso-session";
-  IniSectionType2["SERVICES"] = "services";
-  return IniSectionType2;
-})(IniSectionType || {});
-
-// src/transfer.ts
-var RequestHandlerProtocol = /* @__PURE__ */ ((RequestHandlerProtocol2) => {
-  RequestHandlerProtocol2["HTTP_0_9"] = "http/0.9";
-  RequestHandlerProtocol2["HTTP_1_0"] = "http/1.0";
-  RequestHandlerProtocol2["TDS_8_0"] = "tds/8.0";
-  return RequestHandlerProtocol2;
-})(RequestHandlerProtocol || {});
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
 
 
 /***/ }),
@@ -19740,7 +17635,7 @@ var import_protocols = __nccwpck_require__(3422);
 
 // src/command.ts
 
-var import_types = __nccwpck_require__(809);
+var import_types = __nccwpck_require__(690);
 var Command = class {
   constructor() {
     this.middlewareStack = (0, import_middleware_stack.constructStack)();
@@ -20870,7 +18765,7 @@ var splitHeader = /* @__PURE__ */ __name((value) => {
 
 /***/ }),
 
-/***/ 809:
+/***/ 690:
 /***/ ((module) => {
 
 var __defProp = Object.defineProperty;
@@ -21369,7 +19264,7 @@ module.exports = __toCommonJS(src_exports);
 // src/resolveDefaultsModeConfig.ts
 var import_config_resolver = __nccwpck_require__(9316);
 var import_node_config_provider = __nccwpck_require__(5704);
-var import_property_provider = __nccwpck_require__(4377);
+var import_property_provider = __nccwpck_require__(1238);
 
 // src/constants.ts
 var AWS_EXECUTION_ENV = "AWS_EXECUTION_ENV";
@@ -21443,176 +19338,6 @@ var inferPhysicalRegion = /* @__PURE__ */ __name(async () => {
     }
   }
 }, "inferPhysicalRegion");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 4377:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  CredentialsProviderError: () => CredentialsProviderError,
-  ProviderError: () => ProviderError,
-  TokenProviderError: () => TokenProviderError,
-  chain: () => chain,
-  fromStatic: () => fromStatic,
-  memoize: () => memoize
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/ProviderError.ts
-var ProviderError = class _ProviderError extends Error {
-  constructor(message, options = true) {
-    let logger;
-    let tryNextLink = true;
-    if (typeof options === "boolean") {
-      logger = void 0;
-      tryNextLink = options;
-    } else if (options != null && typeof options === "object") {
-      logger = options.logger;
-      tryNextLink = options.tryNextLink ?? true;
-    }
-    super(message);
-    this.name = "ProviderError";
-    this.tryNextLink = tryNextLink;
-    Object.setPrototypeOf(this, _ProviderError.prototype);
-    logger?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-  }
-  static {
-    __name(this, "ProviderError");
-  }
-  /**
-   * @deprecated use new operator.
-   */
-  static from(error, options = true) {
-    return Object.assign(new this(error.message, options), error);
-  }
-};
-
-// src/CredentialsProviderError.ts
-var CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "CredentialsProviderError";
-    Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-  }
-  static {
-    __name(this, "CredentialsProviderError");
-  }
-};
-
-// src/TokenProviderError.ts
-var TokenProviderError = class _TokenProviderError extends ProviderError {
-  /**
-   * @override
-   */
-  constructor(message, options = true) {
-    super(message, options);
-    this.name = "TokenProviderError";
-    Object.setPrototypeOf(this, _TokenProviderError.prototype);
-  }
-  static {
-    __name(this, "TokenProviderError");
-  }
-};
-
-// src/chain.ts
-var chain = /* @__PURE__ */ __name((...providers) => async () => {
-  if (providers.length === 0) {
-    throw new ProviderError("No providers in chain");
-  }
-  let lastProviderError;
-  for (const provider of providers) {
-    try {
-      const credentials = await provider();
-      return credentials;
-    } catch (err) {
-      lastProviderError = err;
-      if (err?.tryNextLink) {
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastProviderError;
-}, "chain");
-
-// src/fromStatic.ts
-var fromStatic = /* @__PURE__ */ __name((staticValue) => () => Promise.resolve(staticValue), "fromStatic");
-
-// src/memoize.ts
-var memoize = /* @__PURE__ */ __name((provider, isExpired, requiresRefresh) => {
-  let resolved;
-  let pending;
-  let hasResult;
-  let isConstant = false;
-  const coalesceProvider = /* @__PURE__ */ __name(async () => {
-    if (!pending) {
-      pending = provider();
-    }
-    try {
-      resolved = await pending;
-      hasResult = true;
-      isConstant = false;
-    } finally {
-      pending = void 0;
-    }
-    return resolved;
-  }, "coalesceProvider");
-  if (isExpired === void 0) {
-    return async (options) => {
-      if (!hasResult || options?.forceRefresh) {
-        resolved = await coalesceProvider();
-      }
-      return resolved;
-    };
-  }
-  return async (options) => {
-    if (!hasResult || options?.forceRefresh) {
-      resolved = await coalesceProvider();
-    }
-    if (isConstant) {
-      return resolved;
-    }
-    if (requiresRefresh && !requiresRefresh(resolved)) {
-      isConstant = true;
-      return resolved;
-    }
-    if (isExpired(resolved)) {
-      await coalesceProvider();
-      return resolved;
-    }
-    return resolved;
-  };
-}, "memoize");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -21823,7 +19548,7 @@ var isSet = /* @__PURE__ */ __name((value) => value != null, "isSet");
 var not = /* @__PURE__ */ __name((value) => !value, "not");
 
 // src/lib/parseURL.ts
-var import_types3 = __nccwpck_require__(5430);
+var import_types3 = __nccwpck_require__(690);
 var DEFAULT_PORTS = {
   [import_types3.EndpointURLScheme.HTTP]: 80,
   [import_types3.EndpointURLScheme.HTTPS]: 443
@@ -22165,151 +19890,6 @@ var resolveEndpoint = /* @__PURE__ */ __name((ruleSetObject, options) => {
 
 /***/ }),
 
-/***/ 5430:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  AlgorithmId: () => AlgorithmId,
-  EndpointURLScheme: () => EndpointURLScheme,
-  FieldPosition: () => FieldPosition,
-  HttpApiKeyAuthLocation: () => HttpApiKeyAuthLocation,
-  HttpAuthLocation: () => HttpAuthLocation,
-  IniSectionType: () => IniSectionType,
-  RequestHandlerProtocol: () => RequestHandlerProtocol,
-  SMITHY_CONTEXT_KEY: () => SMITHY_CONTEXT_KEY,
-  getDefaultClientConfiguration: () => getDefaultClientConfiguration,
-  resolveDefaultRuntimeConfig: () => resolveDefaultRuntimeConfig
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/auth/auth.ts
-var HttpAuthLocation = /* @__PURE__ */ ((HttpAuthLocation2) => {
-  HttpAuthLocation2["HEADER"] = "header";
-  HttpAuthLocation2["QUERY"] = "query";
-  return HttpAuthLocation2;
-})(HttpAuthLocation || {});
-
-// src/auth/HttpApiKeyAuth.ts
-var HttpApiKeyAuthLocation = /* @__PURE__ */ ((HttpApiKeyAuthLocation2) => {
-  HttpApiKeyAuthLocation2["HEADER"] = "header";
-  HttpApiKeyAuthLocation2["QUERY"] = "query";
-  return HttpApiKeyAuthLocation2;
-})(HttpApiKeyAuthLocation || {});
-
-// src/endpoint.ts
-var EndpointURLScheme = /* @__PURE__ */ ((EndpointURLScheme2) => {
-  EndpointURLScheme2["HTTP"] = "http";
-  EndpointURLScheme2["HTTPS"] = "https";
-  return EndpointURLScheme2;
-})(EndpointURLScheme || {});
-
-// src/extensions/checksum.ts
-var AlgorithmId = /* @__PURE__ */ ((AlgorithmId2) => {
-  AlgorithmId2["MD5"] = "md5";
-  AlgorithmId2["CRC32"] = "crc32";
-  AlgorithmId2["CRC32C"] = "crc32c";
-  AlgorithmId2["SHA1"] = "sha1";
-  AlgorithmId2["SHA256"] = "sha256";
-  return AlgorithmId2;
-})(AlgorithmId || {});
-var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  const checksumAlgorithms = [];
-  if (runtimeConfig.sha256 !== void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "sha256" /* SHA256 */,
-      checksumConstructor: () => runtimeConfig.sha256
-    });
-  }
-  if (runtimeConfig.md5 != void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "md5" /* MD5 */,
-      checksumConstructor: () => runtimeConfig.md5
-    });
-  }
-  return {
-    _checksumAlgorithms: checksumAlgorithms,
-    addChecksumAlgorithm(algo) {
-      this._checksumAlgorithms.push(algo);
-    },
-    checksumAlgorithms() {
-      return this._checksumAlgorithms;
-    }
-  };
-}, "getChecksumConfiguration");
-var resolveChecksumRuntimeConfig = /* @__PURE__ */ __name((clientConfig) => {
-  const runtimeConfig = {};
-  clientConfig.checksumAlgorithms().forEach((checksumAlgorithm) => {
-    runtimeConfig[checksumAlgorithm.algorithmId()] = checksumAlgorithm.checksumConstructor();
-  });
-  return runtimeConfig;
-}, "resolveChecksumRuntimeConfig");
-
-// src/extensions/defaultClientConfiguration.ts
-var getDefaultClientConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  return {
-    ...getChecksumConfiguration(runtimeConfig)
-  };
-}, "getDefaultClientConfiguration");
-var resolveDefaultRuntimeConfig = /* @__PURE__ */ __name((config) => {
-  return {
-    ...resolveChecksumRuntimeConfig(config)
-  };
-}, "resolveDefaultRuntimeConfig");
-
-// src/http.ts
-var FieldPosition = /* @__PURE__ */ ((FieldPosition2) => {
-  FieldPosition2[FieldPosition2["HEADER"] = 0] = "HEADER";
-  FieldPosition2[FieldPosition2["TRAILER"] = 1] = "TRAILER";
-  return FieldPosition2;
-})(FieldPosition || {});
-
-// src/middleware.ts
-var SMITHY_CONTEXT_KEY = "__smithy_context";
-
-// src/profile.ts
-var IniSectionType = /* @__PURE__ */ ((IniSectionType2) => {
-  IniSectionType2["PROFILE"] = "profile";
-  IniSectionType2["SSO_SESSION"] = "sso-session";
-  IniSectionType2["SERVICES"] = "services";
-  return IniSectionType2;
-})(IniSectionType || {});
-
-// src/transfer.ts
-var RequestHandlerProtocol = /* @__PURE__ */ ((RequestHandlerProtocol2) => {
-  RequestHandlerProtocol2["HTTP_0_9"] = "http/0.9";
-  RequestHandlerProtocol2["HTTP_1_0"] = "http/1.0";
-  RequestHandlerProtocol2["TDS_8_0"] = "tds/8.0";
-  return RequestHandlerProtocol2;
-})(RequestHandlerProtocol || {});
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 6435:
 /***/ ((module) => {
 
@@ -22412,7 +19992,7 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 
 // src/getSmithyContext.ts
-var import_types = __nccwpck_require__(3804);
+var import_types = __nccwpck_require__(690);
 var getSmithyContext = /* @__PURE__ */ __name((context) => context[import_types.SMITHY_CONTEXT_KEY] || (context[import_types.SMITHY_CONTEXT_KEY] = {}), "getSmithyContext");
 
 // src/normalizeProvider.ts
@@ -22422,151 +20002,6 @@ var normalizeProvider = /* @__PURE__ */ __name((input) => {
   const promisified = Promise.resolve(input);
   return () => promisified;
 }, "normalizeProvider");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 3804:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  AlgorithmId: () => AlgorithmId,
-  EndpointURLScheme: () => EndpointURLScheme,
-  FieldPosition: () => FieldPosition,
-  HttpApiKeyAuthLocation: () => HttpApiKeyAuthLocation,
-  HttpAuthLocation: () => HttpAuthLocation,
-  IniSectionType: () => IniSectionType,
-  RequestHandlerProtocol: () => RequestHandlerProtocol,
-  SMITHY_CONTEXT_KEY: () => SMITHY_CONTEXT_KEY,
-  getDefaultClientConfiguration: () => getDefaultClientConfiguration,
-  resolveDefaultRuntimeConfig: () => resolveDefaultRuntimeConfig
-});
-module.exports = __toCommonJS(src_exports);
-
-// src/auth/auth.ts
-var HttpAuthLocation = /* @__PURE__ */ ((HttpAuthLocation2) => {
-  HttpAuthLocation2["HEADER"] = "header";
-  HttpAuthLocation2["QUERY"] = "query";
-  return HttpAuthLocation2;
-})(HttpAuthLocation || {});
-
-// src/auth/HttpApiKeyAuth.ts
-var HttpApiKeyAuthLocation = /* @__PURE__ */ ((HttpApiKeyAuthLocation2) => {
-  HttpApiKeyAuthLocation2["HEADER"] = "header";
-  HttpApiKeyAuthLocation2["QUERY"] = "query";
-  return HttpApiKeyAuthLocation2;
-})(HttpApiKeyAuthLocation || {});
-
-// src/endpoint.ts
-var EndpointURLScheme = /* @__PURE__ */ ((EndpointURLScheme2) => {
-  EndpointURLScheme2["HTTP"] = "http";
-  EndpointURLScheme2["HTTPS"] = "https";
-  return EndpointURLScheme2;
-})(EndpointURLScheme || {});
-
-// src/extensions/checksum.ts
-var AlgorithmId = /* @__PURE__ */ ((AlgorithmId2) => {
-  AlgorithmId2["MD5"] = "md5";
-  AlgorithmId2["CRC32"] = "crc32";
-  AlgorithmId2["CRC32C"] = "crc32c";
-  AlgorithmId2["SHA1"] = "sha1";
-  AlgorithmId2["SHA256"] = "sha256";
-  return AlgorithmId2;
-})(AlgorithmId || {});
-var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  const checksumAlgorithms = [];
-  if (runtimeConfig.sha256 !== void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "sha256" /* SHA256 */,
-      checksumConstructor: () => runtimeConfig.sha256
-    });
-  }
-  if (runtimeConfig.md5 != void 0) {
-    checksumAlgorithms.push({
-      algorithmId: () => "md5" /* MD5 */,
-      checksumConstructor: () => runtimeConfig.md5
-    });
-  }
-  return {
-    _checksumAlgorithms: checksumAlgorithms,
-    addChecksumAlgorithm(algo) {
-      this._checksumAlgorithms.push(algo);
-    },
-    checksumAlgorithms() {
-      return this._checksumAlgorithms;
-    }
-  };
-}, "getChecksumConfiguration");
-var resolveChecksumRuntimeConfig = /* @__PURE__ */ __name((clientConfig) => {
-  const runtimeConfig = {};
-  clientConfig.checksumAlgorithms().forEach((checksumAlgorithm) => {
-    runtimeConfig[checksumAlgorithm.algorithmId()] = checksumAlgorithm.checksumConstructor();
-  });
-  return runtimeConfig;
-}, "resolveChecksumRuntimeConfig");
-
-// src/extensions/defaultClientConfiguration.ts
-var getDefaultClientConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
-  return {
-    ...getChecksumConfiguration(runtimeConfig)
-  };
-}, "getDefaultClientConfiguration");
-var resolveDefaultRuntimeConfig = /* @__PURE__ */ __name((config) => {
-  return {
-    ...resolveChecksumRuntimeConfig(config)
-  };
-}, "resolveDefaultRuntimeConfig");
-
-// src/http.ts
-var FieldPosition = /* @__PURE__ */ ((FieldPosition2) => {
-  FieldPosition2[FieldPosition2["HEADER"] = 0] = "HEADER";
-  FieldPosition2[FieldPosition2["TRAILER"] = 1] = "TRAILER";
-  return FieldPosition2;
-})(FieldPosition || {});
-
-// src/middleware.ts
-var SMITHY_CONTEXT_KEY = "__smithy_context";
-
-// src/profile.ts
-var IniSectionType = /* @__PURE__ */ ((IniSectionType2) => {
-  IniSectionType2["PROFILE"] = "profile";
-  IniSectionType2["SSO_SESSION"] = "sso-session";
-  IniSectionType2["SERVICES"] = "services";
-  return IniSectionType2;
-})(IniSectionType || {});
-
-// src/transfer.ts
-var RequestHandlerProtocol = /* @__PURE__ */ ((RequestHandlerProtocol2) => {
-  RequestHandlerProtocol2["HTTP_0_9"] = "http/0.9";
-  RequestHandlerProtocol2["HTTP_1_0"] = "http/1.0";
-  RequestHandlerProtocol2["TDS_8_0"] = "tds/8.0";
-  return RequestHandlerProtocol2;
-})(RequestHandlerProtocol || {});
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);

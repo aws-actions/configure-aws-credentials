@@ -2,6 +2,7 @@ name: Dependabot auto-approve
 on: pull_request
 permissions:
   pull-requests: write
+  id-token: write
 jobs:
   dependabot:
     runs-on: ubuntu-latest
@@ -18,7 +19,6 @@ jobs:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
-          role-session-name: SecretsManagerFetch
       - name: Get bot user token
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
         with:
