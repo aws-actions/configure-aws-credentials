@@ -19,7 +19,7 @@ jobs:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
-          role-session-name: SecretsManagerFetch
+          role-session-name: DependabotSMFetch
       - name: Get bot user token
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
         with:
