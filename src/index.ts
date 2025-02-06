@@ -10,6 +10,7 @@ import {
   retryAndBackoff,
   unsetCredentials,
   verifyKeys,
+  areCredentialsValid
 } from './helpers';
 
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
@@ -60,6 +61,7 @@ export async function run() {
     const specialCharacterWorkaroundInput =
       core.getInput('special-characters-workaround', { required: false }) || 'false';
     const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
+    const useExistingCredentials = core.getInput('use-existing-credentials', { required: false}) || 'false';
     let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
     switch (true) {
       case specialCharacterWorkaround:
@@ -74,6 +76,8 @@ export async function run() {
     for (const managedSessionPolicy of managedSessionPoliciesInput) {
       managedSessionPolicies.push({ arn: managedSessionPolicy });
     }
+
+
 
     // Logic to decide whether to attempt to use OIDC or not
     const useGitHubOIDCProvider = () => {
