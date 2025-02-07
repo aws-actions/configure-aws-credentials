@@ -120,7 +120,6 @@ export async function run() {
 
     //if the user wants to attempt to use existing credentials, check if we have some already
     if (useExistingCredentials === 'true') {
-      core.info('I set the use-existing-credentials value to true!');
       const validCredentials = await areCredentialsValid(credentialsClient);
       if (validCredentials) {
         core.info('Pre-existing credentials are valid. No need to generate new ones.');

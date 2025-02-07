@@ -299,5 +299,23 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
+    it('re-uses existing credentials if they are valid', {}, async () => {
+      vi.clearAllMocks();
+      mockedSTSClient.reset();
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY_NO_CREDS });
+      await run();
+      expect(core.info).toHaveBeenCalledWith('No valid credentials exist. Running as normal.')
+
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      await run();
+      expect(core.info).toHaveBeenLastCalledWith('Pre-existing credentials are valid. No need to generate new ones.')
+    })
   });
 });
