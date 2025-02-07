@@ -116,6 +116,7 @@ See [action.yml](./action.yml) for more detail.
 | disable-retry             | Disabled retry/backoff logic for assume role calls. By default, retries are enabled.              |    No    |
 | retry-max-attempts        | Limits the number of retry attempts before giving up. Defaults to 12.                             |    No    |
 | special-characters-workaround | Uncommonly, some environments cannot tolerate special characters in a secret key. This option will retry fetching credentials until the secret access key does not contain special characters. This option overrides disable-retry and retry-max-attempts. | No |
+| use-existing-credentials  | When set, the action will attempt to use existing credentials instead of fetching new credentials. Defaults to false. | No |
 
 #### Credential Lifetime
 The default session duration is **1 hour**.
