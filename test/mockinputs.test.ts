@@ -28,10 +28,9 @@ const inputs = {
     'aws-region': 'fake-region-1',
   },
   USE_EXISTING_CREDENTIALS_INPUTS: {
-    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
     'aws-region': 'fake-region-1',
-    'special-characters-workaround': 'true',
     'use-existing-credentials': 'true',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
   }
 };
 
@@ -61,9 +60,6 @@ const outputs = {
   GET_CALLER_IDENTITY: {
     Account: '111111111111',
     Arn: 'arn:aws:iam::111111111111:role/MY-ROLE',
-  },
-  GET_CALLER_IDENTITY_NO_CREDS: {
-
   },
   FAKE_STS_ACCESS_KEY_ID: 'STSAWSACCESSKEYID',
   FAKE_STS_SECRET_ACCESS_KEY: 'STSAWSSECRETACCESSKEY',

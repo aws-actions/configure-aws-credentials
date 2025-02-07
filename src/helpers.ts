@@ -147,10 +147,13 @@ export function isDefined<T>(i: T | undefined | null): i is T {
 
 export async function areCredentialsValid(credentialsClient: CredentialsClient) {
   const client = credentialsClient.stsClient;
-  const identity = await client.send(new GetCallerIdentityCommand({}));
-  const accountId = identity.Account;
-  if (!accountId) {
+  try {
+    const identity = await client.send(new GetCallerIdentityCommand({}));
+    if (identity.Account) {
+      return true;
+    }
+    return false;
+  } catch (_) {
     return false;
   }
-  return true;
 }

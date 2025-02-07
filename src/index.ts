@@ -61,7 +61,8 @@ export async function run() {
     const specialCharacterWorkaroundInput =
       core.getInput('special-characters-workaround', { required: false }) || 'false';
     const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
-    const useExistingCredentials = core.getInput('use-existing-credentials', { required: false }) || 'false';
+    const useExistingCredentialsInput = core.getInput('use-existing-credentials', { required: false }) || 'false';
+    const useExistingCredentials = useExistingCredentialsInput.toLowerCase() === 'true';
     let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
     switch (true) {
       case specialCharacterWorkaround:
@@ -119,13 +120,13 @@ export async function run() {
     let webIdentityToken: string;
 
     //if the user wants to attempt to use existing credentials, check if we have some already
-    if (useExistingCredentials === 'true') {
+    if (useExistingCredentials) {
       const validCredentials = await areCredentialsValid(credentialsClient);
       if (validCredentials) {
-        core.info('Pre-existing credentials are valid. No need to generate new ones.');
+        core.notice('Pre-existing credentials are valid. No need to generate new ones.');
         return;
       }
-      core.info('No valid credentials exist. Running as normal.');
+      core.notice('No valid credentials exist. Running as normal.');
     }
 
     // If OIDC is being used, generate token
