@@ -27,6 +27,11 @@ const inputs = {
     'role-chaining': 'true',
     'aws-region': 'fake-region-1',
   },
+  USE_EXISTING_CREDENTIALS_INPUTS: {
+    'aws-region': 'fake-region-1',
+    'use-existing-credentials': 'true',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+  }
 };
 
 const envs = {

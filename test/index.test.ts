@@ -27,6 +27,7 @@ describe('Configure AWS Credentials', {}, () => {
     vi.spyOn(core, 'setOutput').mockImplementation((_n, _v) => {});
     vi.spyOn(core, 'debug').mockImplementation((_m) => {});
     vi.spyOn(core, 'info').mockImplementation((_m) => {});
+    vi.spyOn(core, 'notice').mockImplementation((_m) => {});
     // Remove any existing environment variables before each test to prevent the
     // SDK from picking them up
     process.env = { ...mocks.envs };
@@ -299,5 +300,17 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
+    it('gets new creds if told to reuse existing but they\'re invalid', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).rejects();
+      await run();
+      expect(core.notice).toHaveBeenCalledWith('No valid credentials exist. Running as normal.')
+    });
+    it('doesn\'t get new creds if there are already valid ones and we said use them', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves(mocks.outputs.GET_CALLER_IDENTITY);
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    })
   });
 });

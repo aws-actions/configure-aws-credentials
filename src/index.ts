@@ -3,6 +3,7 @@ import type { AssumeRoleCommandOutput } from '@aws-sdk/client-sts';
 import { CredentialsClient } from './CredentialsClient';
 import { assumeRole } from './assumeRole';
 import {
+  areCredentialsValid,
   errorMessage,
   exportAccountId,
   exportCredentials,
@@ -60,6 +61,8 @@ export async function run() {
     const specialCharacterWorkaroundInput =
       core.getInput('special-characters-workaround', { required: false }) || 'false';
     const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
+    const useExistingCredentialsInput = core.getInput('use-existing-credentials', { required: false }) || 'false';
+    const useExistingCredentials = useExistingCredentialsInput.toLowerCase() === 'true';
     let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
     switch (true) {
       case specialCharacterWorkaround:
@@ -115,6 +118,16 @@ export async function run() {
     const credentialsClient = new CredentialsClient({ region, proxyServer });
     let sourceAccountId: string;
     let webIdentityToken: string;
+
+    //if the user wants to attempt to use existing credentials, check if we have some already
+    if (useExistingCredentials) {
+      const validCredentials = await areCredentialsValid(credentialsClient);
+      if (validCredentials) {
+        core.notice('Pre-existing credentials are valid. No need to generate new ones.');
+        return;
+      }
+      core.notice('No valid credentials exist. Running as normal.');
+    }
 
     // If OIDC is being used, generate token
     // Else, export credentials provided as input
