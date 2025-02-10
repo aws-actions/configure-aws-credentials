@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.3...v4.1.0) (2025-02-08)
+
+
+### Features
+
+* idempotent fetch ([#1289](https://github.com/aws-actions/configure-aws-credentials/issues/1289)) ([eb70354](https://github.com/aws-actions/configure-aws-credentials/commit/eb70354fb423a380b6e4ab4b9f15d2ee9ffae911))
+
+
+### Bug Fixes
+
+* build failure due to tests ([#1283](https://github.com/aws-actions/configure-aws-credentials/issues/1283)) ([134d71e](https://github.com/aws-actions/configure-aws-credentials/commit/134d71efe0ecbe9ad6965f2f766c0cae63a7685f))
+* Dependabot autoapprove ([#1284](https://github.com/aws-actions/configure-aws-credentials/issues/1284)) ([b9ee51d](https://github.com/aws-actions/configure-aws-credentials/commit/b9ee51dc600fe38c892e24f60ca26476e0e0b6de))
+* Dependabot autoapprove id-token write permission ([#1285](https://github.com/aws-actions/configure-aws-credentials/issues/1285)) ([f0af89b](https://github.com/aws-actions/configure-aws-credentials/commit/f0af89b102390dcf10ce402195d74a98f24861f3))
+* typo ([#1281](https://github.com/aws-actions/configure-aws-credentials/issues/1281)) ([39fd91c](https://github.com/aws-actions/configure-aws-credentials/commit/39fd91c08ed8bf770034de4e62662503e8007d76))
+
 ## [4.0.3](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.2...v4.0.3) (2025-01-27)
 
 
