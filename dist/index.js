@@ -275,6 +275,7 @@ exports.verifyKeys = verifyKeys;
 exports.retryAndBackoff = retryAndBackoff;
 exports.errorMessage = errorMessage;
 exports.isDefined = isDefined;
+exports.areCredentialsValid = areCredentialsValid;
 const core = __importStar(__nccwpck_require__(7484));
 const client_sts_1 = __nccwpck_require__(1695);
 const MAX_TAG_VALUE_LENGTH = 256;
@@ -399,6 +400,19 @@ function isDefined(i) {
     return i !== undefined && i !== null;
 }
 /* c8 ignore stop */
+async function areCredentialsValid(credentialsClient) {
+    const client = credentialsClient.stsClient;
+    try {
+        const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
+        if (identity.Account) {
+            return true;
+        }
+        return false;
+    }
+    catch (_) {
+        return false;
+    }
+}
 //# sourceMappingURL=helpers.js.map
 
 /***/ }),
@@ -492,6 +506,8 @@ async function run() {
         let disableRetry = disableRetryInput.toLowerCase() === 'true';
         const specialCharacterWorkaroundInput = core.getInput('special-characters-workaround', { required: false }) || 'false';
         const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
+        const useExistingCredentialsInput = core.getInput('use-existing-credentials', { required: false }) || 'false';
+        const useExistingCredentials = useExistingCredentialsInput.toLowerCase() === 'true';
         let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
         switch (true) {
             case specialCharacterWorkaround:
@@ -537,6 +553,15 @@ async function run() {
         const credentialsClient = new CredentialsClient_1.CredentialsClient({ region, proxyServer });
         let sourceAccountId;
         let webIdentityToken;
+        //if the user wants to attempt to use existing credentials, check if we have some already
+        if (useExistingCredentials) {
+            const validCredentials = await (0, helpers_1.areCredentialsValid)(credentialsClient);
+            if (validCredentials) {
+                core.notice('Pre-existing credentials are valid. No need to generate new ones.');
+                return;
+            }
+            core.notice('No valid credentials exist. Running as normal.');
+        }
         // If OIDC is being used, generate token
         // Else, export credentials provided as input
         if (useGitHubOIDCProvider()) {

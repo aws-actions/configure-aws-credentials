@@ -46279,6 +46279,7 @@ exports.verifyKeys = verifyKeys;
 exports.retryAndBackoff = retryAndBackoff;
 exports.errorMessage = errorMessage;
 exports.isDefined = isDefined;
+exports.areCredentialsValid = areCredentialsValid;
 const core = __importStar(__nccwpck_require__(7484));
 const client_sts_1 = __nccwpck_require__(1695);
 const MAX_TAG_VALUE_LENGTH = 256;
@@ -46403,6 +46404,19 @@ function isDefined(i) {
     return i !== undefined && i !== null;
 }
 /* c8 ignore stop */
+async function areCredentialsValid(credentialsClient) {
+    const client = credentialsClient.stsClient;
+    try {
+        const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
+        if (identity.Account) {
+            return true;
+        }
+        return false;
+    }
+    catch (_) {
+        return false;
+    }
+}
 
 
 /***/ }),

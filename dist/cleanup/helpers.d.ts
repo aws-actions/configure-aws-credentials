@@ -13,4 +13,5 @@ export declare function verifyKeys(creds: Partial<Credentials> | undefined): boo
 export declare function retryAndBackoff<T>(fn: () => Promise<T>, isRetryable: boolean, maxRetries?: number, retries?: number, base?: number): Promise<T>;
 export declare function errorMessage(error: unknown): string;
 export declare function isDefined<T>(i: T | undefined | null): i is T;
+export declare function areCredentialsValid(credentialsClient: CredentialsClient): Promise<boolean>;
 export {};
