@@ -357,6 +357,7 @@ Resources:
       Url: https://token.actions.githubusercontent.com
       ClientIdList: 
         - sts.amazonaws.com
+        - !Ref OIDCAudience
       ThumbprintList:
         - ffffffffffffffffffffffffffffffffffffffff
 
