@@ -9,7 +9,7 @@ for AWS API calls.
 
 ## Overview
 API calls to AWS need to be signed with credential information, so when you use
-one of the AWS SDKs or an AWS tool, you must provide it with AWS credentials and
+one of the AWS SDKs or an AWS tool, you must provide it with AWS credentials 
 and AWS region. One way to do that in GitHub Actions is to use a repository
 secret with IAM credentials, but this doesn't follow [AWS security
 guidelines](https://docs.aws.amazon.com/IAM/latest/UserGuide/security-creds.html)
