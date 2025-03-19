@@ -243,6 +243,43 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Custom Tags', {}, () => {
+    beforeEach(() => {
+      mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+    });
+
+    it('handles JSON string custom tags', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_JSON_INPUTS));
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input).toMatchObject({
+        Tags: expect.arrayContaining([
+          { Key: 'Environment', Value: 'Production' },
+          { Key: 'Team', Value: 'DevOps' }
+        ])
+      });
+    });
+
+    it('handles object custom tags', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_OBJECT_INPUTS));
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input).toMatchObject({
+        Tags: expect.arrayContaining([
+          { Key: 'Environment', Value: 'Production' },
+          { Key: 'Team', Value: 'DevOps' }
+        ])
+      });
+    });
+  });
+
   describe('Odd inputs', {}, () => {
     it('fails when github env vars are missing', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));

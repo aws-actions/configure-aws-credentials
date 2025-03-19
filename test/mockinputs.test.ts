@@ -6,6 +6,20 @@ const inputs = {
     'aws-region': 'fake-region-1',
     'special-characters-workaround': 'true',
   },
+  CUSTOM_TAGS_JSON_INPUTS: {
+    'aws-access-key-id': 'MYAWSACCESSKEYID',
+    'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'custom-tags': '{"Environment": "Production", "Team": "DevOps"}',
+  },
+  CUSTOM_TAGS_OBJECT_INPUTS: {
+    'aws-access-key-id': 'MYAWSACCESSKEYID',
+    'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'custom-tags': { Environment: 'Production', Team: 'DevOps' },
+  },
   IAM_USER_INPUTS: {
     'aws-access-key-id': 'MYAWSACCESSKEYID',
     'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',

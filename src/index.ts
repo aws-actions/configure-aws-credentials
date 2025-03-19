@@ -45,6 +45,14 @@ export async function run() {
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const proxyServer = core.getInput('http-proxy', { required: false });
+    const customTagsInput = core.getInput('custom-tags', { required: false });
+    // Transform input into AWS tag format, accepting either JSON string or object
+    const customTags = customTagsInput
+      ? (typeof customTagsInput === 'string' && customTagsInput.trim().startsWith('{')
+          ? Object.entries(JSON.parse(customTagsInput))
+          : Object.entries(customTagsInput)
+        ).map(([Key, Value]) => ({ Key, Value: String(Value) }))
+      : [];
     const inlineSessionPolicy = core.getInput('inline-session-policy', {
       required: false,
     });
@@ -184,6 +192,7 @@ export async function run() {
               webIdentityToken,
               inlineSessionPolicy,
               managedSessionPolicies,
+              customTags,
             });
           },
           !disableRetry,
