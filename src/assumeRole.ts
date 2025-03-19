@@ -78,6 +78,7 @@ export interface assumeRoleParams {
   webIdentityToken?: string;
   inlineSessionPolicy?: string;
   managedSessionPolicies?: { arn: string }[];
+  customTags?: { Key: string; Value: string }[];
 }
 
 export async function assumeRole(params: assumeRoleParams) {
@@ -94,6 +95,7 @@ export async function assumeRole(params: assumeRoleParams) {
     webIdentityToken,
     inlineSessionPolicy,
     managedSessionPolicies,
+    customTags,
   } = { ...params };
 
   // Load GitHub environment variables
@@ -110,6 +112,7 @@ export async function assumeRole(params: assumeRoleParams) {
     { Key: 'Action', Value: GITHUB_ACTION },
     { Key: 'Actor', Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
     { Key: 'Commit', Value: GITHUB_SHA },
+    ...(customTags || []),
   ];
   if (process.env.GITHUB_REF) {
     tagArray.push({
