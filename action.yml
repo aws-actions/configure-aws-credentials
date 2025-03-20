@@ -101,15 +101,7 @@ inputs:
     required: false
     description: A global timeout in seconds for the action. When the timeout is reached, the action immediately exits. The default is to run without a timeout.
   custom-tags:
-    description: >-
-      Additional tags to apply to the assumed role session. Must be a JSON object provided using toJSON.
-      Examples:
-        # Inline object:
-        custom-tags: "${{ toJSON({ 'Environment': 'Production', 'Team': 'DevOps' }) }}"
-        # Using a variable:
-        custom-tags: "${{ toJSON(vars.AWS_TAGS) }}"
-        # With secrets:
-        custom-tags: "${{ toJSON({ 'Team': secrets.TEAM_NAME }) }}"
+    description: Additional tags to apply to the assumed role session. Must be a JSON object provided as a string.
     required: false
 
 outputs:
