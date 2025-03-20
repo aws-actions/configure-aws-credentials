@@ -1,4 +1,3 @@
-
 name: '"Configure AWS Credentials" Action for GitHub Actions'
 description: Configures AWS credentials for use in subsequent steps in a GitHub Action workflow
 runs:
@@ -75,6 +74,12 @@ inputs:
     required: false
   use-existing-credentials:
     description: When enabled, this option will check if there are already valid credentials in the environment. If there are, new credentials will not be fetched. If there are not, the action will run as normal.
+  custom-tags:
+    description: >-
+      Additional tags to apply to the assumed role session. Must be a JSON object provided using toJSON.
+      Example: custom-tags: ${{ toJSON({ Environment: 'Production', Team: 'DevOps' }) }}
+      You can include secrets: custom-tags: ${{ toJSON({ Team: secrets.TEAM_NAME }) }}
+    required: false
 outputs:
   aws-account-id:
     description: The AWS account ID for the provided credentials

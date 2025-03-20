@@ -18,7 +18,7 @@ const inputs = {
     'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
     'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
     'aws-region': 'fake-region-1',
-    'custom-tags': { Environment: 'Production', Team: 'DevOps' },
+    'custom-tags': JSON.stringify({ Environment: 'Production', Team: 'DevOps' }),
   },
   IAM_USER_INPUTS: {
     'aws-access-key-id': 'MYAWSACCESSKEYID',
