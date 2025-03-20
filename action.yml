@@ -77,8 +77,13 @@ inputs:
   custom-tags:
     description: >-
       Additional tags to apply to the assumed role session. Must be a JSON object provided using toJSON.
-      Example: custom-tags: ${{ toJSON({ Environment: 'Production', Team: 'DevOps' }) }}
-      You can include secrets: custom-tags: ${{ toJSON({ Team: secrets.TEAM_NAME }) }}
+      Examples:
+        # Inline object:
+        custom-tags: "${{ toJSON({ 'Environment': 'Production', 'Team': 'DevOps' }) }}"
+        # Using a variable:
+        custom-tags: "${{ toJSON(vars.AWS_TAGS) }}"
+        # With secrets:
+        custom-tags: "${{ toJSON({ 'Team': secrets.TEAM_NAME }) }}"
     required: false
 outputs:
   aws-account-id:
