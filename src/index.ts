@@ -46,9 +46,23 @@ export async function run() {
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const proxyServer = core.getInput('http-proxy', { required: false });
     const customTagsInput = core.getInput('custom-tags', { required: false });
-    const customTags = customTagsInput
-      ? Object.entries(JSON.parse(customTagsInput)).map(([Key, Value]) => ({ Key, Value: String(Value) }))
-      : [];
+    let customTags: { Key: string; Value: string }[] = [];
+    if (customTagsInput) {
+      try {
+        const parsed = JSON.parse(customTagsInput);
+        if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null) {
+          throw new Error('custom-tags must be a JSON object');
+        }
+        customTags = Object.entries(parsed).map(([Key, Value]) => {
+          if (typeof Key !== 'string' || /^\d+$/.test(Key)) {
+            throw new Error('custom-tags keys must be strings and cannot be numeric');
+          }
+          return { Key, Value: String(Value) };
+        });
+      } catch (error) {
+        throw new Error(`Invalid custom-tags: ${errorMessage(error)}`);
+      }
+    }
     const inlineSessionPolicy = core.getInput('inline-session-policy', {
       required: false,
     });
