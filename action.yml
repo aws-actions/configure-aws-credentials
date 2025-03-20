@@ -75,15 +75,7 @@ inputs:
   use-existing-credentials:
     description: When enabled, this option will check if there are already valid credentials in the environment. If there are, new credentials will not be fetched. If there are not, the action will run as normal.
   custom-tags:
-    description: >-
-      Additional tags to apply to the assumed role session. Must be a JSON object provided using toJSON.
-      Examples:
-        # Inline object:
-        custom-tags: "${{ toJSON({ 'Environment': 'Production', 'Team': 'DevOps' }) }}"
-        # Using a variable:
-        custom-tags: "${{ toJSON(vars.AWS_TAGS) }}"
-        # With secrets:
-        custom-tags: "${{ toJSON({ 'Team': secrets.TEAM_NAME }) }}"
+    description: Additional tags to apply to the assumed role session. Must be a JSON object provided as a string.
     required: false
 outputs:
   aws-account-id:
