@@ -13,6 +13,27 @@ const inputs = {
     'aws-region': 'fake-region-1',
     'custom-tags': '{"Environment": "Production", "Team": "DevOps"}',
   },
+  CUSTOM_TAGS_INVALID_JSON_INPUTS: {
+    'aws-access-key-id': 'MYAWSACCESSKEYID',
+    'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'custom-tags': 'not a json',
+  },
+  CUSTOM_TAGS_ARRAY_INPUTS: {
+    'aws-access-key-id': 'MYAWSACCESSKEYID',
+    'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'custom-tags': '["not", "an", "object"]',
+  },
+  CUSTOM_TAGS_NUMERIC_KEYS_INPUTS: {
+    'aws-access-key-id': 'MYAWSACCESSKEYID',
+    'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'custom-tags': '{"1": "numeric keys not allowed"}',
+  },
   CUSTOM_TAGS_OBJECT_INPUTS: {
     'aws-access-key-id': 'MYAWSACCESSKEYID',
     'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
