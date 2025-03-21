@@ -295,8 +295,14 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
       expect(mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input).toMatchObject({
         Tags: expect.arrayContaining([
+          { Key: 'GitHub', Value: 'Actions' },
+          { Key: 'Repository', Value: 'MY-REPOSITORY-NAME' },
+          { Key: 'Workflow', Value: 'MY-WORKFLOW-ID' },
+          { Key: 'Action', Value: 'MY-ACTION-NAME' },
+          { Key: 'Actor', Value: 'MY-USERNAME_bot_' },
+          { Key: 'Commit', Value: 'MY-COMMIT-ID' },
           { Key: 'Environment', Value: 'Production' },
-          { Key: 'Team', Value: 'DevOps' }
+          { Key: 'Team', Value: 'DevOps' },
         ])
       });
     });
