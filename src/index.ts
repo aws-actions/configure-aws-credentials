@@ -49,6 +49,7 @@ export async function run() {
     let customTags: { Key: string; Value: string }[] = [];
     if (customTagsInput) {
       try {
+        core.debug(`Received custom-tags input: ${customTagsInput}`);
         const parsed = JSON.parse(customTagsInput);
         if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null) {
           throw new Error('custom-tags must be a JSON object');
@@ -59,7 +60,9 @@ export async function run() {
           }
           return { Key, Value: String(Value) };
         });
+        core.debug(`Parsed custom tags: ${JSON.stringify(customTags)}`);
       } catch (error) {
+        core.error(`Failed to parse custom-tags: ${errorMessage(error)}`);
         throw new Error(`Invalid custom-tags: ${errorMessage(error)}`);
       }
     }

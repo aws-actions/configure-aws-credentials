@@ -121,7 +121,8 @@ export async function assumeRole(params: assumeRoleParams) {
   if (!tags) {
     core.debug('Role session tagging has been skipped.');
   } else {
-    core.debug(`${tags.length} role session tags are being used.`);
+    core.debug(`${tags.length} role session tags are being used:`);
+    core.debug(JSON.stringify(tags, null, 2));
   }
 
   // Calculate role ARN from name and account ID (currently only supports `aws` partition)
