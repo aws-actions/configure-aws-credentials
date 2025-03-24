@@ -14,7 +14,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
   });
   it('can sleep', {}, async () => {
     const sleep = helpers.defaultSleep(10);
-    await expect(Promise.race([sleep, new Promise((_, reject) => setTimeout(reject, 20))])).resolves.toBe(undefined);
+    expect(Promise.race([sleep, new Promise((_, reject) => setTimeout(reject, 20))])).resolves.toBe(undefined);
   });
   it('removes special characters from workflow names', {}, () => {
     expect(helpers.sanitizeGitHubVariables('sdf234@#$%$^&*()_+{}|:"<>?')).toEqual('sdf234@__________+___:____');
