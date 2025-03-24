@@ -185,7 +185,6 @@ async function assumeRole(params) {
     }
     if (customTags) {
         try {
-            console.log(customTags);
             const parsed = JSON.parse(customTags);
             // Then do the mapping
             const newTags = Object.entries(parsed).map(([Key, Value]) => ({
@@ -193,10 +192,9 @@ async function assumeRole(params) {
                 Value: String(Value),
             }));
             tagArray.push(...newTags);
-            core.debug(`Parsed custom tags: ${JSON.stringify(newTags)}`);
         }
-        catch (error) {
-            throw new Error(`Invalid custom-tags: ${(0, helpers_1.errorMessage)(error)}`);
+        catch {
+            throw new Error('Invalid custom-tags, json is not valid');
         }
     }
     const tags = roleSkipSessionTagging ? undefined : tagArray;
@@ -205,7 +203,6 @@ async function assumeRole(params) {
     }
     else {
         core.debug(`${tags.length} role session tags are being used:`);
-        core.debug(JSON.stringify(tags, null, 2));
     }
     // Calculate role ARN from name and account ID (currently only supports `aws` partition)
     let roleArn = roleToAssume;
