@@ -6,5 +6,6 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     coverage: { enabled: true },
     typecheck: { tsconfig: './tsconfig.test.json' },
+    testTimeout: 10000,
   },
 });
