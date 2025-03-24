@@ -76,7 +76,7 @@ export interface assumeRoleParams {
   webIdentityToken?: string;
   inlineSessionPolicy?: string;
   managedSessionPolicies?: { arn: string }[];
-  customTags?: { Key: string; Value: string }[];
+  customTags?: string;
 }
 
 export async function assumeRole(params: assumeRoleParams) {
@@ -109,14 +109,34 @@ export async function assumeRole(params: assumeRoleParams) {
     { Key: 'Action', Value: GITHUB_ACTION },
     { Key: 'Actor', Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
     { Key: 'Commit', Value: GITHUB_SHA },
-    ...(customTags || []),
   ];
+
   if (process.env.GITHUB_REF) {
     tagArray.push({
       Key: 'Branch',
       Value: sanitizeGitHubVariables(process.env.GITHUB_REF),
     });
   }
+
+  if (customTags) {
+    try {
+      console.log(customTags);
+      const parsed = JSON.parse(customTags);
+
+      // Then do the mapping
+      const newTags = Object.entries(parsed).map(([Key, Value]) => ({
+        Key,
+        Value: String(Value),
+      }));
+
+      tagArray.push(...newTags);
+
+      core.debug(`Parsed custom tags: ${JSON.stringify(newTags)}`);
+    } catch (error) {
+      throw new Error(`Invalid custom-tags: ${errorMessage(error)}`);
+    }
+  }
+
   const tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!tags) {
     core.debug('Role session tagging has been skipped.');

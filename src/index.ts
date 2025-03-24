@@ -45,27 +45,8 @@ export async function run() {
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const proxyServer = core.getInput('http-proxy', { required: false });
-    const customTagsInput = core.getInput('custom-tags', { required: false });
-    let customTags: { Key: string; Value: string }[] = [];
-    if (customTagsInput) {
-      try {
-        core.debug(`Received custom-tags input: ${customTagsInput}`);
-        const parsed = JSON.parse(customTagsInput);
-        if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null) {
-          throw new Error('custom-tags must be a JSON object');
-        }
-        customTags = Object.entries(parsed).map(([Key, Value]) => {
-          if (typeof Key !== 'string' || /^\d+$/.test(Key)) {
-            throw new Error('custom-tags keys must be strings and cannot be numeric');
-          }
-          return { Key, Value: String(Value) };
-        });
-        core.debug(`Parsed custom tags: ${JSON.stringify(customTags)}`);
-      } catch (error) {
-        core.error(`Failed to parse custom-tags: ${errorMessage(error)}`);
-        throw new Error(`Invalid custom-tags: ${errorMessage(error)}`);
-      }
-    }
+    const customTags = core.getInput('custom-tags', { required: false });
+
     const inlineSessionPolicy = core.getInput('inline-session-policy', {
       required: false,
     });
