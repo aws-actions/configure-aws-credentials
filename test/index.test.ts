@@ -269,20 +269,35 @@ describe('Configure AWS Credentials', {}, () => {
 
     it.skip('rejects invalid JSON in custom tags', async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_INVALID_JSON_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' });
       await run();
       expect(core.setFailed).toHaveBeenCalledWith('Invalid custom-tags: Unexpected token o in JSON at position 1');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     });
 
     it.skip('rejects array in custom tags', async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_ARRAY_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' });
       await run();
       expect(core.setFailed).toHaveBeenCalledWith('Invalid custom-tags: custom-tags must be a JSON object');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     });
 
     it.skip('rejects numeric keys in custom tags', async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_NUMERIC_KEYS_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' });
       await run();
       expect(core.setFailed).toHaveBeenCalledWith('Invalid custom-tags: custom-tags keys must be strings and cannot be numeric');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     });
 
     it('handles object custom tags', async () => {
