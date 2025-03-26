@@ -279,15 +279,14 @@ describe('Configure AWS Credentials', {}, () => {
   });
 
   describe('Odd inputs', {}, () => {
-    it('fails when github env vars are missing', async () => {
+    it('fails when github env vars are missing', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       delete process.env.GITHUB_REPOSITORY;
       delete process.env.GITHUB_SHA;
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
-
-    it('does not fail if GITHUB_REF is missing', async () => {
+    it('does not fail if GITHUB_REF is missing', {},async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
@@ -298,22 +297,19 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).not.toHaveBeenCalled();
     });
-
-    it('fails with an invalid region', async () => {
+    it('fails with an invalid region', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ 'aws-region': '$|<1B1D1 701L37' }));
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
-
-    it('fails if access key id is provided without secret access key', async () => {
+    it('fails if access key id is provided without secret access key', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-secret-access-key': '' }),
       );
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
-
-    it('handles improper retry-max-attempts input', async () => {
+    it('handles improper retry-max-attempts input', {}, async () => {
       // This should mean we retry one time
       vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
@@ -333,22 +329,19 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
-
-    it('fails if doing OIDC without the ACTIONS_ID_TOKEN_REQUEST_TOKEN', async () => {
+    it('fails if doing OIDC without the ACTIONS_ID_TOKEN_REQUEST_TOKEN', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
       delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
-
-    it('gets new creds if told to reuse existing but they\'re invalid', async () => {
+    it('gets new creds if told to reuse existing but they\'re invalid', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).rejects();
       await run();
       expect(core.notice).toHaveBeenCalledWith('No valid credentials exist. Running as normal.')
     });
-
-    it('doesn\'t get new creds if there are already valid ones and we said use them', async () => {
+    it('doesn\'t get new creds if there are already valid ones and we said use them', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolves(mocks.outputs.GET_CALLER_IDENTITY);
       await run();
