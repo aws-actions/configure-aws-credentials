@@ -109,6 +109,7 @@ See [action.yml](./action.yml) for more detail.
 | role-external-id          | The external ID of the role to assume. Only needed if your role requires it.                      |    No    |
 | role-session-name         | Defaults to "GitHubActions", but may be changed if required.                                      |    No    |
 | role-skip-session-tagging | Skips session tagging if set.                                                                     |    No    |
+| transitive-tag-keys       | Define a list of transitive tag keys to pass when assuming a role.                                |    No    |
 | inline-session-policy     | You may further restrict the assumed role policy by defining an inline policy here.               |    No    |
 | managed-session-policies  | You may further restrict the assumed role policy by specifying a managed policy here.             |    No    |
 | output-credentials        | When set, outputs fetched credentials as action step output. Defaults to false.                   |    No    |
@@ -165,6 +166,18 @@ You can skip this session tagging by providing
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-skip-session-tagging: true
+```
+
+To forward session tags to subsequent sessions in a role chain, you can use the 
+`transitive-tag-keys` input to specify the keys of the tags to be passed. Eg.
+```yaml
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        transitive-tag-keys:
+          Repository
+          Workflow
+          Action
+          Actor
 ```
 
 ### Session policies

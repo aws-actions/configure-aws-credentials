@@ -44,6 +44,7 @@ export async function run() {
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
+    const transitiveTagKeys = core.getMultilineInput('transitive-tag-keys', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', {
       required: false,
@@ -180,6 +181,7 @@ export async function run() {
               roleDuration,
               roleSessionName,
               roleSkipSessionTagging,
+              transitiveTagKeys,
               webIdentityTokenFile,
               webIdentityToken,
               inlineSessionPolicy,
