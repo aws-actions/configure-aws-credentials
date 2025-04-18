@@ -243,6 +243,41 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Custom Tags', {}, () => {
+    beforeEach(() => {
+      mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+    });
+    it('rejects invalid JSON in custom tags', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_INVALID_JSON_INPUTS));
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith('Invalid custom-tags, json is not valid');
+      //expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    });
+    it('handles object custom tags', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_OBJECT_INPUTS));
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input).toMatchObject({
+        Tags: expect.arrayContaining([
+          { Key: 'GitHub', Value: 'Actions' },
+          { Key: 'Repository', Value: 'MY-REPOSITORY-NAME' },
+          { Key: 'Workflow', Value: 'MY-WORKFLOW-ID' },
+          { Key: 'Action', Value: 'MY-ACTION-NAME' },
+          { Key: 'Actor', Value: 'MY-USERNAME_bot_' },
+          { Key: 'Commit', Value: 'MY-COMMIT-ID' },
+          { Key: 'Environment', Value: 'Production' },
+          { Key: 'Team', Value: 'DevOps' },
+        ])
+      });
+    });
+  });
+
   describe('Odd inputs', {}, () => {
     it('fails when github env vars are missing', {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
@@ -251,7 +286,7 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
-    it('does not fail if GITHUB_REF is missing', {}, async () => {
+    it('does not fail if GITHUB_REF is missing', {},async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
@@ -311,6 +346,7 @@ describe('Configure AWS Credentials', {}, () => {
       mockedSTSClient.on(GetCallerIdentityCommand).resolves(mocks.outputs.GET_CALLER_IDENTITY);
       await run();
       expect(core.setFailed).not.toHaveBeenCalled();
-    })
+    });
   });
 });
+
