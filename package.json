@@ -6,7 +6,7 @@
     "build": "tsc",
     "lint": "biome check --error-on-warnings ./src",
     "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && cpy dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
-    "test": "npm run lint && vitest run"
+    "test": "npm run lint && vitest run && npm run build"
   },
   "author": {
     "name": "Amazon.com, Inc. or its affiliates",

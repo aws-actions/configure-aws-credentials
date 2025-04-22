@@ -1,8 +1,12 @@
 name: Dependabot auto-approve
-on: pull_request
+on: 
+  pull_request:
+  workflow_dispatch:
+
 permissions:
   pull-requests: write
   id-token: write
+  contents: read
 jobs:
   dependabot:
     runs-on: ubuntu-latest
@@ -17,7 +21,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
-          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
+          role-to-assume: arn:aws:iam::206735643321:role/ConfigureAwsCredentialsPackageRole
           role-duration-seconds: 900
       - name: Get bot user token
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
