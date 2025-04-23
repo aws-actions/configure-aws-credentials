@@ -105,7 +105,7 @@ See [action.yml](./action.yml) for more detail.
 | audience                  | The JWT audience when using OIDC. Used in non-default AWS partitions, like China regions.         |    No    |
 | http-proxy                | An HTTP proxy to use for API calls.                                                               |    No    |
 | mask-aws-account-id       | AWS account IDs are not considered secret. Setting this will hide account IDs from output anyway. |    No    |
-| role-duration-seconds     | The assumed role duration in seconds, if assuming a role. Defaults to 1 hour.                     |    No    |
+| role-duration-seconds     | The assumed role duration in seconds, if assuming a role. Defaults to 1 hour (3600 seconds). Acceptable values range from 15 minutes (900 seconds) to 12 hours (43200 seconds). |    No    |
 | role-external-id          | The external ID of the role to assume. Only needed if your role requires it.                      |    No    |
 | role-session-name         | Defaults to "GitHubActions", but may be changed if required.                                      |    No    |
 | role-skip-session-tagging | Skips session tagging if set.                                                                     |    No    |
