@@ -131,7 +131,13 @@ with the `role-external-id` input
 
 #### Session tagging and name
 The default session name is "GitHubActions", and you can modify it by specifying
-the desired name in `role-session-name`. The session will be tagged with the
+the desired name in `role-session-name`.
+
+_Note: you might find it helpful to set the `role-session-name` to `${{ github.run_id }}` 
+so as to clarify in audit logs which AWS actions were performed by which workflow 
+run._
+
+The session will be tagged with the
 following tags: (Refer to [GitHub's documentation for `GITHUB_` environment
 variable definitions](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
 
