@@ -111,7 +111,7 @@ See [action.yml](./action.yml) for more detail.
 | role-skip-session-tagging | Skips session tagging if set.                                                                     |    No    |
 | inline-session-policy     | You may further restrict the assumed role policy by defining an inline policy here.               |    No    |
 | managed-session-policies  | You may further restrict the assumed role policy by specifying a managed policy here.             |    No    |
-| output-credentials        | When set, outputs fetched credentials as action step output. Defaults to false.                   |    No    |
+| output-credentials        | When set, outputs fetched credentials as action step output. (Outputs access-key-id, secret-access-key, session-token, and expiration). Defaults to false.                   |    No    |
 | unset-current-credentials | When set, attempts to unset any existing credentials in your action runner.                       |    No    |
 | disable-retry             | Disabled retry/backoff logic for assume role calls. By default, retries are enabled.              |    No    |
 | retry-max-attempts        | Limits the number of retry attempts before giving up. Defaults to 12.                             |    No    |
