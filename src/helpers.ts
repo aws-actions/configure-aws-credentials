@@ -38,6 +38,9 @@ export function exportCredentials(creds?: Partial<Credentials>, outputCredential
     if (creds?.SessionToken) {
       core.setOutput('aws-session-token', creds.SessionToken);
     }
+    if (creds?.Expiration) {
+      core.setOutput('aws-expiration', creds.Expiration);
+    }
   }
 }
 
