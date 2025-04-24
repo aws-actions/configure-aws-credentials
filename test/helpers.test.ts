@@ -27,8 +27,8 @@ describe('Configure AWS Credentials helpers', {}, () => {
     vi.spyOn(core, 'setOutput').mockImplementation(() => {});
     vi.spyOn(core, 'setSecret').mockImplementation(() => {});
     vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
-    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test' }, true);
-    expect(core.setOutput).toHaveBeenCalledTimes(3);
+    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) }, true);
+    expect(core.setOutput).toHaveBeenCalledTimes(4);
     expect(core.setSecret).toHaveBeenCalledTimes(3);
     expect(core.exportVariable).toHaveBeenCalledTimes(3);
   });
