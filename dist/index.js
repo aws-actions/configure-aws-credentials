@@ -263,6 +263,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.translateEnvVariables = translateEnvVariables;
 exports.exportCredentials = exportCredentials;
 exports.unsetCredentials = unsetCredentials;
 exports.exportRegion = exportRegion;
@@ -281,6 +282,37 @@ const client_sts_1 = __nccwpck_require__(1695);
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
+function translateEnvVariables() {
+    const envVars = [
+        'AWS_REGION',
+        'ROLE_TO_ASSUME',
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY',
+        'AWS_SESSION_TOKEN',
+        'WEB_IDENTITY_TOKEN_FILE',
+        'ROLE_CHAINING',
+        'AUDIENCE',
+        'HTTP_PROXY',
+        'MASK_AWS_ACCOUNT_ID',
+        'ROLE_DURATION_SECONDS',
+        'ROLE_EXTERNAL_ID',
+        'ROLE_SESSION_NAME',
+        'ROLE_SKIP_SESSION_TAGGING',
+        'INLINE_SESSION_POLICY',
+        'MANAGED_SESSION_POLICIES',
+        'OUTPUT_CREDENTIALS',
+        'UNSET_CURRENT_CREDENTIALS',
+        'DISABLE_RETRY',
+        'RETRY_MAX_ATTEMPTS',
+        'SPECIAL_CHARACTERS_WORKAROUND',
+        'USE_EXISTING_CREDENTIALS',
+    ];
+    for (const envVar of envVars) {
+        if (process.env[envVar]) {
+            process.env[`INPUT_${envVar.replace(/_/g, '-')}`] = process.env[envVar];
+        }
+    }
+}
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
 function exportCredentials(creds, outputCredentials) {
@@ -469,6 +501,7 @@ const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
 async function run() {
     try {
+        (0, helpers_1.translateEnvVariables)();
         // Get inputs
         const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
         const SecretAccessKey = core.getInput('aws-secret-access-key', {
