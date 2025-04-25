@@ -1,5 +1,6 @@
 import type { Credentials } from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
+export declare function translateEnvVariables(): void;
 export declare function exportCredentials(creds?: Partial<Credentials>, outputCredentials?: boolean): void;
 export declare function unsetCredentials(): void;
 export declare function exportRegion(region: string): void;
