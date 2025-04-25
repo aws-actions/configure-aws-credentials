@@ -9,6 +9,7 @@ import {
   exportCredentials,
   exportRegion,
   retryAndBackoff,
+  translateEnvVariables,
   unsetCredentials,
   verifyKeys,
 } from './helpers';
@@ -19,6 +20,7 @@ const REGION_REGEX = /^[a-z0-9-]+$/g;
 
 export async function run() {
   try {
+    translateEnvVariables();
     // Get inputs
     const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
     const SecretAccessKey = core.getInput('aws-secret-access-key', {
