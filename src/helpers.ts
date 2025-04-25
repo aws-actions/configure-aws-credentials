@@ -11,9 +11,6 @@ export function translateEnvVariables() {
   const envVars = [
     'AWS_REGION',
     'ROLE_TO_ASSUME',
-    'AWS_ACCESS_KEY_ID',
-    'AWS_SECRET_ACCESS_KEY',
-    'AWS_SESSION_TOKEN',
     'WEB_IDENTITY_TOKEN_FILE',
     'ROLE_CHAINING',
     'AUDIENCE',
