@@ -7,6 +7,36 @@ const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
 
+export function translateEnvVariables() {
+  const envVars = [
+    'AWS_REGION',
+    'ROLE_TO_ASSUME',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'AWS_SESSION_TOKEN',
+    'WEB_IDENTITY_TOKEN_FILE',
+    'ROLE_CHAINING',
+    'AUDIENCE',
+    'HTTP_PROXY',
+    'MASK_AWS_ACCOUNT_ID',
+    'ROLE_DURATION_SECONDS',
+    'ROLE_EXTERNAL_ID',
+    'ROLE_SESSION_NAME',
+    'ROLE_SKIP_SESSION_TAGGING',
+    'INLINE_SESSION_POLICY',
+    'MANAGED_SESSION_POLICIES',
+    'OUTPUT_CREDENTIALS',
+    'UNSET_CURRENT_CREDENTIALS',
+    'DISABLE_RETRY',
+    'RETRY_MAX_ATTEMPTS',
+    'SPECIAL_CHARACTERS_WORKAROUND',
+    'USE_EXISTING_CREDENTIALS',
+  ];
+  for (const envVar of envVars) {
+    process.env[`INPUT_${envVar.replace(/_/g, '-').toUpperCase()}`] = process.env[envVar] || '';
+  }
+}
+
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
 export function exportCredentials(creds?: Partial<Credentials>, outputCredentials?: boolean) {

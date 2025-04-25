@@ -11,6 +11,7 @@ import {
   retryAndBackoff,
   unsetCredentials,
   verifyKeys,
+  translateEnvVariables,
 } from './helpers';
 
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
@@ -19,6 +20,7 @@ const REGION_REGEX = /^[a-z0-9-]+$/g;
 
 export async function run() {
   try {
+    translateEnvVariables();
     // Get inputs
     const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
     const SecretAccessKey = core.getInput('aws-secret-access-key', {
