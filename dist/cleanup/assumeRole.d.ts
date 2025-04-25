@@ -13,5 +13,6 @@ export interface assumeRoleParams {
     managedSessionPolicies?: {
         arn: string;
     }[];
+    customTags?: string;
 }
 export declare function assumeRole(params: assumeRoleParams): Promise<import("@aws-sdk/client-sts").AssumeRoleCommandOutput>;

@@ -76,6 +76,7 @@ export interface assumeRoleParams {
   webIdentityToken?: string;
   inlineSessionPolicy?: string;
   managedSessionPolicies?: { arn: string }[];
+  customTags?: string;
 }
 
 export async function assumeRole(params: assumeRoleParams) {
@@ -91,6 +92,7 @@ export async function assumeRole(params: assumeRoleParams) {
     webIdentityToken,
     inlineSessionPolicy,
     managedSessionPolicies,
+    customTags,
   } = { ...params };
 
   // Load GitHub environment variables
@@ -108,17 +110,35 @@ export async function assumeRole(params: assumeRoleParams) {
     { Key: 'Actor', Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
     { Key: 'Commit', Value: GITHUB_SHA },
   ];
+
   if (process.env.GITHUB_REF) {
     tagArray.push({
       Key: 'Branch',
       Value: sanitizeGitHubVariables(process.env.GITHUB_REF),
     });
   }
+
+  if (customTags) {
+    try {
+      const parsed = JSON.parse(customTags);
+
+      // Then do the mapping
+      const newTags = Object.entries(parsed).map(([Key, Value]) => ({
+        Key,
+        Value: String(Value),
+      }));
+
+      tagArray.push(...newTags);
+    } catch {
+      throw new Error('Invalid custom-tags, json is not valid');
+    }
+  }
+
   const tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!tags) {
     core.debug('Role session tagging has been skipped.');
   } else {
-    core.debug(`${tags.length} role session tags are being used.`);
+    core.debug(`${tags.length} role session tags are being used:`);
   }
 
   // Calculate role ARN from name and account ID (currently only supports `aws` partition)

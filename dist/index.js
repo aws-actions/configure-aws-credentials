@@ -162,7 +162,7 @@ async function assumeRoleWithCredentials(params, client) {
     }
 }
 async function assumeRole(params) {
-    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies, } = { ...params };
+    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies, customTags, } = { ...params };
     // Load GitHub environment variables
     const { GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA, GITHUB_WORKSPACE } = process.env;
     if (!GITHUB_REPOSITORY || !GITHUB_WORKFLOW || !GITHUB_ACTION || !GITHUB_ACTOR || !GITHUB_SHA || !GITHUB_WORKSPACE) {
@@ -183,12 +183,26 @@ async function assumeRole(params) {
             Value: (0, helpers_1.sanitizeGitHubVariables)(process.env.GITHUB_REF),
         });
     }
+    if (customTags) {
+        try {
+            const parsed = JSON.parse(customTags);
+            // Then do the mapping
+            const newTags = Object.entries(parsed).map(([Key, Value]) => ({
+                Key,
+                Value: String(Value),
+            }));
+            tagArray.push(...newTags);
+        }
+        catch {
+            throw new Error('Invalid custom-tags, json is not valid');
+        }
+    }
     const tags = roleSkipSessionTagging ? undefined : tagArray;
     if (!tags) {
         core.debug('Role session tagging has been skipped.');
     }
     else {
-        core.debug(`${tags.length} role session tags are being used.`);
+        core.debug(`${tags.length} role session tags are being used:`);
     }
     // Calculate role ARN from name and account ID (currently only supports `aws` partition)
     let roleArn = roleToAssume;
@@ -494,6 +508,7 @@ async function run() {
         const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
         const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
         const proxyServer = core.getInput('http-proxy', { required: false });
+        const customTags = core.getInput('custom-tags', { required: false });
         const inlineSessionPolicy = core.getInput('inline-session-policy', {
             required: false,
         });
@@ -616,6 +631,7 @@ async function run() {
                         webIdentityToken,
                         inlineSessionPolicy,
                         managedSessionPolicies,
+                        customTags,
                     });
                 }, !disableRetry, maxRetries);
             } while (specialCharacterWorkaround && !(0, helpers_1.verifyKeys)(roleCredentials.Credentials));
