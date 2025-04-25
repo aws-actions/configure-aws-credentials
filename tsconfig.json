@@ -13,7 +13,7 @@
     "module": "CommonJS",
     "resolveJsonModule": true,
     "outDir": "build",
-    "declaration": true,
+    "declaration": false,
     "newLine": "lf",
     "noEmitOnError": true,
     "sourceMap": true,
