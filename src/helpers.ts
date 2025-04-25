@@ -33,7 +33,9 @@ export function translateEnvVariables() {
     'USE_EXISTING_CREDENTIALS',
   ];
   for (const envVar of envVars) {
-    process.env[`INPUT_${envVar.replace(/_/g, '-').toUpperCase()}`] = process.env[envVar] || '';
+    if (process.env[envVar]) {
+      process.env[`INPUT_${envVar.replace(/_/g, '-')}`] = process.env[envVar];
+    }
   }
 }
 
