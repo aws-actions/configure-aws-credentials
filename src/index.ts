@@ -9,9 +9,9 @@ import {
   exportCredentials,
   exportRegion,
   retryAndBackoff,
+  translateEnvVariables,
   unsetCredentials,
   verifyKeys,
-  translateEnvVariables,
 } from './helpers';
 
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
