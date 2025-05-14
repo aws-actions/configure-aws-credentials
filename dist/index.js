@@ -306,7 +306,8 @@ function translateEnvVariables() {
     ];
     for (const envVar of envVars) {
         if (process.env[envVar]) {
-            process.env[`INPUT_${envVar.replace(/_/g, '-')}`] = process.env[envVar];
+            const inputKey = `INPUT_${envVar.replace(/_/g, '-')}`;
+            process.env[inputKey] = process.env[inputKey] || process.env[envVar];
         }
     }
 }
