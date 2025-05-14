@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.2.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.0...v4.2.1) (2025-05-14)
+
+
+### Bug Fixes
+
+* ensure explicit inputs take precedence over environment variables ([e56e6c4](https://github.com/aws-actions/configure-aws-credentials/commit/e56e6c4038915cd5a7238a671fe97f44c98a40b0))
+* prioritize explicit inputs over environment variables ([df9c8fe](https://github.com/aws-actions/configure-aws-credentials/commit/df9c8fed6b364f0d1fb0e6e03a0ec26f1ea4e3fc))
+
 ## [4.2.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.1.0...v4.2.0) (2025-05-06)
 
 
