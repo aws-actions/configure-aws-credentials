@@ -1,7 +1,7 @@
 {
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "scripts": {
     "build": "tsc",
     "lint": "biome check --error-on-warnings ./src",
@@ -14,10 +14,10 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.515.0",
+    "@aws-sdk/credential-provider-env": "^3.808.0",
     "@biomejs/biome": "1.9.4",
     "@smithy/property-provider": "^4.0.1",
-    "@types/node": "^22.15.11",
+    "@types/node": "^22.15.17",
     "@vercel/ncc": "^0.38.3",
     "@vitest/coverage-v8": "^3.1.2",
     "aws-sdk-client-mock": "^4.1.0",
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
-    "@aws-sdk/client-sts": "^3.803.0",
+    "@aws-sdk/client-sts": "^3.808.0",
     "@smithy/node-http-handler": "^4.0.1",
     "https-proxy-agent": "^5.0.1"
   },
