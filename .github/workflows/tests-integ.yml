@@ -72,6 +72,9 @@ jobs:
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
           role-session-name: IntegAccessKeysAssumeRole
           role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
+          transitive-tag-keys: 
+            Actor
+            Repository
   integ-access-keys-env:
     strategy:
       fail-fast: false
@@ -93,6 +96,7 @@ jobs:
           role-to-assume: ${{ secrets.SECRETS_AWS_ROLE_TO_ASSUME }}
           role-session-name: IntegAccessKeysAssumeRole
           role-external-id: ${{ secrets.SECRETS_AWS_ROLE_EXTERNAL_ID }}
+          transitive-tag-keys: Repository
   integ-iam-user:
     strategy:
       fail-fast: false
