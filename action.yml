@@ -52,6 +52,9 @@ inputs:
   role-skip-session-tagging:
     description: Skip session tagging during role assumption
     required: false
+  transitive-tag-keys:
+    description: Define a list of transitive tag keys to pass when assuming a role
+    required: false
   inline-session-policy:
     description: Define an inline session policy to use when assuming a role
     required: false
