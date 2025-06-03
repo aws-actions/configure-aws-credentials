@@ -84,3 +84,5 @@ outputs:
     description: The AWS secret access key for the provided credentials
   aws-session-token:
     description: The AWS session token for the provided credentials
+  aws-expiration:
+    description: The AWS expiration time for the provided credentials
