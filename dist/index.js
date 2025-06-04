@@ -55,6 +55,7 @@ class CredentialsClient {
         }
     }
     async loadCredentials() {
+        (0, core_1.info)('trying to load credentials');
         const client = new client_sts_1.STSClient({
             requestHandler: this.requestHandler ? this.requestHandler : undefined,
         });
@@ -667,7 +668,9 @@ async function run() {
             if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
                 await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
             }
+            core.info(`validated credentials`);
             await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
+            core.info(`exported account id`);
         }
         else {
             core.info('Proceeding with IAM user credentials');
