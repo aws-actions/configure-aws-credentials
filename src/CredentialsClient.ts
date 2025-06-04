@@ -63,7 +63,6 @@ export class CredentialsClient {
   }
 
   private async loadCredentials() {
-    info('trying to load credentials');
     const client = new STSClient({
       requestHandler: this.requestHandler ? this.requestHandler : undefined,
     });
