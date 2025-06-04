@@ -12355,8 +12355,15 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/submodules/protocols/index.ts
 var protocols_exports = {};
 __export(protocols_exports, {
+  FromStringShapeDeserializer: () => FromStringShapeDeserializer,
+  HttpBindingProtocol: () => HttpBindingProtocol,
+  HttpInterceptingShapeDeserializer: () => HttpInterceptingShapeDeserializer,
+  HttpInterceptingShapeSerializer: () => HttpInterceptingShapeSerializer,
   RequestBuilder: () => RequestBuilder,
+  RpcProtocol: () => RpcProtocol,
+  ToStringShapeSerializer: () => ToStringShapeSerializer,
   collectBody: () => collectBody,
+  determineTimestampFormat: () => determineTimestampFormat,
   extendedEncodeURIComponent: () => extendedEncodeURIComponent,
   requestBuilder: () => requestBuilder,
   resolvedPath: () => resolvedPath
@@ -12383,8 +12390,418 @@ function extendedEncodeURIComponent(str) {
   });
 }
 
-// src/submodules/protocols/requestBuilder.ts
+// src/submodules/protocols/HttpBindingProtocol.ts
+var import_schema2 = __nccwpck_require__(6890);
+var import_protocol_http2 = __nccwpck_require__(2356);
+
+// src/submodules/protocols/HttpProtocol.ts
+var import_schema = __nccwpck_require__(6890);
+var import_serde = __nccwpck_require__(2430);
 var import_protocol_http = __nccwpck_require__(2356);
+var import_util_stream2 = __nccwpck_require__(4252);
+var HttpProtocol = class {
+  constructor(options) {
+    this.options = options;
+  }
+  getRequestType() {
+    return import_protocol_http.HttpRequest;
+  }
+  getResponseType() {
+    return import_protocol_http.HttpResponse;
+  }
+  setSerdeContext(serdeContext) {
+    this.serdeContext = serdeContext;
+    this.serializer.setSerdeContext(serdeContext);
+    this.deserializer.setSerdeContext(serdeContext);
+    if (this.getPayloadCodec()) {
+      this.getPayloadCodec().setSerdeContext(serdeContext);
+    }
+  }
+  updateServiceEndpoint(request, endpoint) {
+    if ("url" in endpoint) {
+      request.protocol = endpoint.url.protocol;
+      request.hostname = endpoint.url.hostname;
+      request.port = endpoint.url.port ? Number(endpoint.url.port) : void 0;
+      request.path = endpoint.url.pathname;
+      request.fragment = endpoint.url.hash || void 0;
+      request.username = endpoint.url.username || void 0;
+      request.password = endpoint.url.password || void 0;
+      for (const [k, v] of endpoint.url.searchParams.entries()) {
+        if (!request.query) {
+          request.query = {};
+        }
+        request.query[k] = v;
+      }
+      return request;
+    } else {
+      request.protocol = endpoint.protocol;
+      request.hostname = endpoint.hostname;
+      request.port = endpoint.port ? Number(endpoint.port) : void 0;
+      request.path = endpoint.path;
+      request.query = {
+        ...endpoint.query
+      };
+      return request;
+    }
+  }
+  setHostPrefix(request, operationSchema, input) {
+    const operationNs = import_schema.NormalizedSchema.of(operationSchema);
+    const inputNs = import_schema.NormalizedSchema.of(operationSchema.input);
+    if (operationNs.getMergedTraits().endpoint) {
+      let hostPrefix = operationNs.getMergedTraits().endpoint?.[0];
+      if (typeof hostPrefix === "string") {
+        const hostLabelInputs = [...inputNs.structIterator()].filter(
+          ([, member]) => member.getMergedTraits().hostLabel
+        );
+        for (const [name] of hostLabelInputs) {
+          const replacement = input[name];
+          if (typeof replacement !== "string") {
+            throw new Error(`@smithy/core/schema - ${name} in input must be a string as hostLabel.`);
+          }
+          hostPrefix = hostPrefix.replace(`{${name}}`, replacement);
+        }
+        request.hostname = hostPrefix + request.hostname;
+      }
+    }
+  }
+  deserializeMetadata(output) {
+    return {
+      httpStatusCode: output.statusCode,
+      requestId: output.headers["x-amzn-requestid"] ?? output.headers["x-amzn-request-id"] ?? output.headers["x-amz-request-id"],
+      extendedRequestId: output.headers["x-amz-id-2"],
+      cfId: output.headers["x-amz-cf-id"]
+    };
+  }
+  async deserializeHttpMessage(schema, context, response, headerBindings, dataObject) {
+    const deserializer = this.deserializer;
+    const ns = import_schema.NormalizedSchema.of(schema);
+    const nonHttpBindingMembers = [];
+    for (const [memberName, memberSchema] of ns.structIterator()) {
+      const memberTraits = memberSchema.getMemberTraits();
+      if (memberTraits.httpPayload) {
+        const isStreaming = memberSchema.isStreaming();
+        if (isStreaming) {
+          const isEventStream = memberSchema.isStructSchema();
+          if (isEventStream) {
+            const context2 = this.serdeContext;
+            if (!context2.eventStreamMarshaller) {
+              throw new Error("@smithy/core - HttpProtocol: eventStreamMarshaller missing in serdeContext.");
+            }
+            const memberSchemas = memberSchema.getMemberSchemas();
+            dataObject[memberName] = context2.eventStreamMarshaller.deserialize(response.body, async (event) => {
+              const unionMember = Object.keys(event).find((key) => {
+                return key !== "__type";
+              }) ?? "";
+              if (unionMember in memberSchemas) {
+                const eventStreamSchema = memberSchemas[unionMember];
+                return {
+                  [unionMember]: await deserializer.read(eventStreamSchema, event[unionMember].body)
+                };
+              } else {
+                return {
+                  $unknown: event
+                };
+              }
+            });
+          } else {
+            dataObject[memberName] = (0, import_util_stream2.sdkStreamMixin)(response.body);
+          }
+        } else if (response.body) {
+          const bytes = await collectBody(response.body, context);
+          if (bytes.byteLength > 0) {
+            dataObject[memberName] = await deserializer.read(memberSchema, bytes);
+          }
+        }
+      } else if (memberTraits.httpHeader) {
+        const key = String(memberTraits.httpHeader).toLowerCase();
+        const value = response.headers[key];
+        if (null != value) {
+          if (memberSchema.isListSchema()) {
+            const headerListValueSchema = memberSchema.getValueSchema();
+            let sections;
+            if (headerListValueSchema.isTimestampSchema() && headerListValueSchema.getSchema() === import_schema.SCHEMA.TIMESTAMP_DEFAULT) {
+              sections = (0, import_serde.splitEvery)(value, ",", 2);
+            } else {
+              sections = (0, import_serde.splitHeader)(value);
+            }
+            const list = [];
+            for (const section of sections) {
+              list.push(await deserializer.read([headerListValueSchema, { httpHeader: key }], section.trim()));
+            }
+            dataObject[memberName] = list;
+          } else {
+            dataObject[memberName] = await deserializer.read(memberSchema, value);
+          }
+        }
+      } else if (memberTraits.httpPrefixHeaders !== void 0) {
+        dataObject[memberName] = {};
+        for (const [header, value] of Object.entries(response.headers)) {
+          if (!headerBindings.has(header) && header.startsWith(memberTraits.httpPrefixHeaders)) {
+            dataObject[memberName][header.slice(memberTraits.httpPrefixHeaders.length)] = await deserializer.read(
+              [memberSchema.getValueSchema(), { httpHeader: header }],
+              value
+            );
+          }
+        }
+      } else if (memberTraits.httpResponseCode) {
+        dataObject[memberName] = response.statusCode;
+      } else {
+        nonHttpBindingMembers.push(memberName);
+      }
+    }
+    return nonHttpBindingMembers;
+  }
+};
+
+// src/submodules/protocols/HttpBindingProtocol.ts
+var HttpBindingProtocol = class extends HttpProtocol {
+  async serializeRequest(operationSchema, input, context) {
+    const serializer = this.serializer;
+    const query = {};
+    const headers = {};
+    const endpoint = await context.endpoint();
+    const ns = import_schema2.NormalizedSchema.of(operationSchema?.input);
+    const schema = ns.getSchema();
+    let hasNonHttpBindingMember = false;
+    let payload;
+    const request = new import_protocol_http2.HttpRequest({
+      protocol: "",
+      hostname: "",
+      port: void 0,
+      path: "",
+      fragment: void 0,
+      query,
+      headers,
+      body: void 0
+    });
+    if (endpoint) {
+      this.updateServiceEndpoint(request, endpoint);
+      this.setHostPrefix(request, operationSchema, input);
+      const opTraits = import_schema2.NormalizedSchema.translateTraits(operationSchema.traits);
+      if (opTraits.http) {
+        request.method = opTraits.http[0];
+        const [path, search] = opTraits.http[1].split("?");
+        if (request.path == "/") {
+          request.path = path;
+        } else {
+          request.path += path;
+        }
+        const traitSearchParams = new URLSearchParams(search ?? "");
+        Object.assign(query, Object.fromEntries(traitSearchParams));
+      }
+    }
+    const _input = {
+      ...input
+    };
+    for (const memberName of Object.keys(_input)) {
+      const memberNs = ns.getMemberSchema(memberName);
+      if (memberNs === void 0) {
+        continue;
+      }
+      const memberTraits = memberNs.getMergedTraits();
+      const inputMember = _input[memberName];
+      if (memberTraits.httpPayload) {
+        const isStreaming = memberNs.isStreaming();
+        if (isStreaming) {
+          const isEventStream = memberNs.isStructSchema();
+          if (isEventStream) {
+            throw new Error("serialization of event streams is not yet implemented");
+          } else {
+            payload = inputMember;
+          }
+        } else {
+          serializer.write(memberNs, inputMember);
+          payload = serializer.flush();
+        }
+      } else if (memberTraits.httpLabel) {
+        serializer.write(memberNs, inputMember);
+        const replacement = serializer.flush();
+        if (request.path.includes(`{${memberName}+}`)) {
+          request.path = request.path.replace(
+            `{${memberName}+}`,
+            replacement.split("/").map(extendedEncodeURIComponent).join("/")
+          );
+        } else if (request.path.includes(`{${memberName}}`)) {
+          request.path = request.path.replace(`{${memberName}}`, extendedEncodeURIComponent(replacement));
+        }
+        delete _input[memberName];
+      } else if (memberTraits.httpHeader) {
+        serializer.write(memberNs, inputMember);
+        headers[memberTraits.httpHeader.toLowerCase()] = String(serializer.flush());
+        delete _input[memberName];
+      } else if (typeof memberTraits.httpPrefixHeaders === "string") {
+        for (const [key, val] of Object.entries(inputMember)) {
+          const amalgam = memberTraits.httpPrefixHeaders + key;
+          serializer.write([memberNs.getValueSchema(), { httpHeader: amalgam }], val);
+          headers[amalgam.toLowerCase()] = serializer.flush();
+        }
+        delete _input[memberName];
+      } else if (memberTraits.httpQuery || memberTraits.httpQueryParams) {
+        this.serializeQuery(memberNs, inputMember, query);
+        delete _input[memberName];
+      } else {
+        hasNonHttpBindingMember = true;
+      }
+    }
+    if (hasNonHttpBindingMember && input) {
+      serializer.write(schema, _input);
+      payload = serializer.flush();
+    }
+    request.headers = headers;
+    request.query = query;
+    request.body = payload;
+    return request;
+  }
+  serializeQuery(ns, data, query) {
+    const serializer = this.serializer;
+    const traits = ns.getMergedTraits();
+    if (traits.httpQueryParams) {
+      for (const [key, val] of Object.entries(data)) {
+        if (!(key in query)) {
+          this.serializeQuery(
+            import_schema2.NormalizedSchema.of([
+              ns.getValueSchema(),
+              {
+                // We pass on the traits to the sub-schema
+                // because we are still in the process of serializing the map itself.
+                ...traits,
+                httpQuery: key,
+                httpQueryParams: void 0
+              }
+            ]),
+            val,
+            query
+          );
+        }
+      }
+      return;
+    }
+    if (ns.isListSchema()) {
+      const sparse = !!ns.getMergedTraits().sparse;
+      const buffer = [];
+      for (const item of data) {
+        serializer.write([ns.getValueSchema(), traits], item);
+        const serializable = serializer.flush();
+        if (sparse || serializable !== void 0) {
+          buffer.push(serializable);
+        }
+      }
+      query[traits.httpQuery] = buffer;
+    } else {
+      serializer.write([ns, traits], data);
+      query[traits.httpQuery] = serializer.flush();
+    }
+  }
+  async deserializeResponse(operationSchema, context, response) {
+    const deserializer = this.deserializer;
+    const ns = import_schema2.NormalizedSchema.of(operationSchema.output);
+    const dataObject = {};
+    if (response.statusCode >= 300) {
+      const bytes = await collectBody(response.body, context);
+      if (bytes.byteLength > 0) {
+        Object.assign(dataObject, await deserializer.read(import_schema2.SCHEMA.DOCUMENT, bytes));
+      }
+      await this.handleError(operationSchema, context, response, dataObject, this.deserializeMetadata(response));
+      throw new Error("@smithy/core/protocols - HTTP Protocol error handler failed to throw.");
+    }
+    for (const header in response.headers) {
+      const value = response.headers[header];
+      delete response.headers[header];
+      response.headers[header.toLowerCase()] = value;
+    }
+    const headerBindings = new Set(
+      Object.values(ns.getMemberSchemas()).map((schema) => {
+        return schema.getMergedTraits().httpHeader;
+      }).filter(Boolean)
+    );
+    const nonHttpBindingMembers = await this.deserializeHttpMessage(ns, context, response, headerBindings, dataObject);
+    if (nonHttpBindingMembers.length) {
+      const bytes = await collectBody(response.body, context);
+      if (bytes.byteLength > 0) {
+        const dataFromBody = await deserializer.read(ns, bytes);
+        for (const member of nonHttpBindingMembers) {
+          dataObject[member] = dataFromBody[member];
+        }
+      }
+    }
+    const output = {
+      $metadata: this.deserializeMetadata(response),
+      ...dataObject
+    };
+    return output;
+  }
+};
+
+// src/submodules/protocols/RpcProtocol.ts
+var import_schema3 = __nccwpck_require__(6890);
+var import_protocol_http3 = __nccwpck_require__(2356);
+var RpcProtocol = class extends HttpProtocol {
+  async serializeRequest(operationSchema, input, context) {
+    const serializer = this.serializer;
+    const query = {};
+    const headers = {};
+    const endpoint = await context.endpoint();
+    const ns = import_schema3.NormalizedSchema.of(operationSchema?.input);
+    const schema = ns.getSchema();
+    let payload;
+    const request = new import_protocol_http3.HttpRequest({
+      protocol: "",
+      hostname: "",
+      port: void 0,
+      path: "/",
+      fragment: void 0,
+      query,
+      headers,
+      body: void 0
+    });
+    if (endpoint) {
+      this.updateServiceEndpoint(request, endpoint);
+      this.setHostPrefix(request, operationSchema, input);
+    }
+    const _input = {
+      ...input
+    };
+    if (input) {
+      serializer.write(schema, _input);
+      payload = serializer.flush();
+    }
+    request.headers = headers;
+    request.query = query;
+    request.body = payload;
+    request.method = "POST";
+    return request;
+  }
+  async deserializeResponse(operationSchema, context, response) {
+    const deserializer = this.deserializer;
+    const ns = import_schema3.NormalizedSchema.of(operationSchema.output);
+    const dataObject = {};
+    if (response.statusCode >= 300) {
+      const bytes2 = await collectBody(response.body, context);
+      if (bytes2.byteLength > 0) {
+        Object.assign(dataObject, await deserializer.read(import_schema3.SCHEMA.DOCUMENT, bytes2));
+      }
+      await this.handleError(operationSchema, context, response, dataObject, this.deserializeMetadata(response));
+      throw new Error("@smithy/core/protocols - RPC Protocol error handler failed to throw.");
+    }
+    for (const header in response.headers) {
+      const value = response.headers[header];
+      delete response.headers[header];
+      response.headers[header.toLowerCase()] = value;
+    }
+    const bytes = await collectBody(response.body, context);
+    if (bytes.byteLength > 0) {
+      Object.assign(dataObject, await deserializer.read(ns, bytes));
+    }
+    const output = {
+      $metadata: this.deserializeMetadata(response),
+      ...dataObject
+    };
+    return output;
+  }
+};
+
+// src/submodules/protocols/requestBuilder.ts
+var import_protocol_http4 = __nccwpck_require__(2356);
 
 // src/submodules/protocols/resolve-path.ts
 var resolvedPath = (resolvedPath2, input, memberName, labelValueProvider, uriLabel, isGreedyLabel) => {
@@ -12425,7 +12842,7 @@ var RequestBuilder = class {
     for (const resolvePath of this.resolvePathStack) {
       resolvePath(this.path);
     }
-    return new import_protocol_http.HttpRequest({
+    return new import_protocol_http4.HttpRequest({
       protocol,
       hostname: this.hostname || hostname,
       port,
@@ -12490,6 +12907,1004 @@ var RequestBuilder = class {
     return this;
   }
 };
+
+// src/submodules/protocols/serde/FromStringShapeDeserializer.ts
+var import_schema5 = __nccwpck_require__(6890);
+var import_serde2 = __nccwpck_require__(2430);
+var import_util_base64 = __nccwpck_require__(8385);
+var import_util_utf8 = __nccwpck_require__(1577);
+
+// src/submodules/protocols/serde/determineTimestampFormat.ts
+var import_schema4 = __nccwpck_require__(6890);
+function determineTimestampFormat(ns, settings) {
+  if (settings.timestampFormat.useTrait) {
+    if (ns.isTimestampSchema() && (ns.getSchema() === import_schema4.SCHEMA.TIMESTAMP_DATE_TIME || ns.getSchema() === import_schema4.SCHEMA.TIMESTAMP_HTTP_DATE || ns.getSchema() === import_schema4.SCHEMA.TIMESTAMP_EPOCH_SECONDS)) {
+      return ns.getSchema();
+    }
+  }
+  const { httpLabel, httpPrefixHeaders, httpHeader, httpQuery } = ns.getMergedTraits();
+  const bindingFormat = settings.httpBindings ? typeof httpPrefixHeaders === "string" || Boolean(httpHeader) ? import_schema4.SCHEMA.TIMESTAMP_HTTP_DATE : Boolean(httpQuery) || Boolean(httpLabel) ? import_schema4.SCHEMA.TIMESTAMP_DATE_TIME : void 0 : void 0;
+  return bindingFormat ?? settings.timestampFormat.default;
+}
+
+// src/submodules/protocols/serde/FromStringShapeDeserializer.ts
+var FromStringShapeDeserializer = class {
+  constructor(settings) {
+    this.settings = settings;
+  }
+  setSerdeContext(serdeContext) {
+    this.serdeContext = serdeContext;
+  }
+  read(_schema, data) {
+    const ns = import_schema5.NormalizedSchema.of(_schema);
+    if (ns.isListSchema()) {
+      return (0, import_serde2.splitHeader)(data).map((item) => this.read(ns.getValueSchema(), item));
+    }
+    if (ns.isBlobSchema()) {
+      return (this.serdeContext?.base64Decoder ?? import_util_base64.fromBase64)(data);
+    }
+    if (ns.isTimestampSchema()) {
+      const format = determineTimestampFormat(ns, this.settings);
+      switch (format) {
+        case import_schema5.SCHEMA.TIMESTAMP_DATE_TIME:
+          return (0, import_serde2.parseRfc3339DateTimeWithOffset)(data);
+        case import_schema5.SCHEMA.TIMESTAMP_HTTP_DATE:
+          return (0, import_serde2.parseRfc7231DateTime)(data);
+        case import_schema5.SCHEMA.TIMESTAMP_EPOCH_SECONDS:
+          return (0, import_serde2.parseEpochTimestamp)(data);
+        default:
+          console.warn("Missing timestamp format, parsing value with Date constructor:", data);
+          return new Date(data);
+      }
+    }
+    if (ns.isStringSchema()) {
+      const mediaType = ns.getMergedTraits().mediaType;
+      let intermediateValue = data;
+      if (mediaType) {
+        if (ns.getMergedTraits().httpHeader) {
+          intermediateValue = this.base64ToUtf8(intermediateValue);
+        }
+        const isJson = mediaType === "application/json" || mediaType.endsWith("+json");
+        if (isJson) {
+          intermediateValue = import_serde2.LazyJsonString.from(intermediateValue);
+        }
+        return intermediateValue;
+      }
+    }
+    switch (true) {
+      case ns.isNumericSchema():
+        return Number(data);
+      case ns.isBigIntegerSchema():
+        return BigInt(data);
+      case ns.isBigDecimalSchema():
+        return new import_serde2.NumericValue(data, "bigDecimal");
+      case ns.isBooleanSchema():
+        return String(data).toLowerCase() === "true";
+    }
+    return data;
+  }
+  base64ToUtf8(base64String) {
+    return (this.serdeContext?.utf8Encoder ?? import_util_utf8.toUtf8)((this.serdeContext?.base64Decoder ?? import_util_base64.fromBase64)(base64String));
+  }
+};
+
+// src/submodules/protocols/serde/HttpInterceptingShapeDeserializer.ts
+var import_schema6 = __nccwpck_require__(6890);
+var import_util_utf82 = __nccwpck_require__(1577);
+var HttpInterceptingShapeDeserializer = class {
+  constructor(codecDeserializer, codecSettings) {
+    this.codecDeserializer = codecDeserializer;
+    this.stringDeserializer = new FromStringShapeDeserializer(codecSettings);
+  }
+  setSerdeContext(serdeContext) {
+    this.stringDeserializer.setSerdeContext(serdeContext);
+    this.codecDeserializer.setSerdeContext(serdeContext);
+    this.serdeContext = serdeContext;
+  }
+  read(schema, data) {
+    const ns = import_schema6.NormalizedSchema.of(schema);
+    const traits = ns.getMergedTraits();
+    const toString = this.serdeContext?.utf8Encoder ?? import_util_utf82.toUtf8;
+    if (traits.httpHeader || traits.httpResponseCode) {
+      return this.stringDeserializer.read(ns, toString(data));
+    }
+    if (traits.httpPayload) {
+      if (ns.isBlobSchema()) {
+        const toBytes = this.serdeContext?.utf8Decoder ?? import_util_utf82.fromUtf8;
+        if (typeof data === "string") {
+          return toBytes(data);
+        }
+        return data;
+      } else if (ns.isStringSchema()) {
+        if ("byteLength" in data) {
+          return toString(data);
+        }
+        return data;
+      }
+    }
+    return this.codecDeserializer.read(ns, data);
+  }
+};
+
+// src/submodules/protocols/serde/HttpInterceptingShapeSerializer.ts
+var import_schema8 = __nccwpck_require__(6890);
+
+// src/submodules/protocols/serde/ToStringShapeSerializer.ts
+var import_schema7 = __nccwpck_require__(6890);
+var import_serde3 = __nccwpck_require__(2430);
+var import_util_base642 = __nccwpck_require__(8385);
+var ToStringShapeSerializer = class {
+  constructor(settings) {
+    this.settings = settings;
+    this.stringBuffer = "";
+    this.serdeContext = void 0;
+  }
+  setSerdeContext(serdeContext) {
+    this.serdeContext = serdeContext;
+  }
+  write(schema, value) {
+    const ns = import_schema7.NormalizedSchema.of(schema);
+    switch (typeof value) {
+      case "object":
+        if (value === null) {
+          this.stringBuffer = "null";
+          return;
+        }
+        if (ns.isTimestampSchema()) {
+          if (!(value instanceof Date)) {
+            throw new Error(
+              `@smithy/core/protocols - received non-Date value ${value} when schema expected Date in ${ns.getName(true)}`
+            );
+          }
+          const format = determineTimestampFormat(ns, this.settings);
+          switch (format) {
+            case import_schema7.SCHEMA.TIMESTAMP_DATE_TIME:
+              this.stringBuffer = value.toISOString().replace(".000Z", "Z");
+              break;
+            case import_schema7.SCHEMA.TIMESTAMP_HTTP_DATE:
+              this.stringBuffer = (0, import_serde3.dateToUtcString)(value);
+              break;
+            case import_schema7.SCHEMA.TIMESTAMP_EPOCH_SECONDS:
+              this.stringBuffer = String(value.getTime() / 1e3);
+              break;
+            default:
+              console.warn("Missing timestamp format, using epoch seconds", value);
+              this.stringBuffer = String(value.getTime() / 1e3);
+          }
+          return;
+        }
+        if (ns.isBlobSchema() && "byteLength" in value) {
+          this.stringBuffer = (this.serdeContext?.base64Encoder ?? import_util_base642.toBase64)(value);
+          return;
+        }
+        if (ns.isListSchema() && Array.isArray(value)) {
+          let buffer = "";
+          for (const item of value) {
+            this.write([ns.getValueSchema(), ns.getMergedTraits()], item);
+            const headerItem = this.flush();
+            const serialized = ns.getValueSchema().isTimestampSchema() ? headerItem : (0, import_serde3.quoteHeader)(headerItem);
+            if (buffer !== "") {
+              buffer += ", ";
+            }
+            buffer += serialized;
+          }
+          this.stringBuffer = buffer;
+          return;
+        }
+        this.stringBuffer = JSON.stringify(value, null, 2);
+        break;
+      case "string":
+        const mediaType = ns.getMergedTraits().mediaType;
+        let intermediateValue = value;
+        if (mediaType) {
+          const isJson = mediaType === "application/json" || mediaType.endsWith("+json");
+          if (isJson) {
+            intermediateValue = import_serde3.LazyJsonString.from(intermediateValue);
+          }
+          if (ns.getMergedTraits().httpHeader) {
+            this.stringBuffer = (this.serdeContext?.base64Encoder ?? import_util_base642.toBase64)(intermediateValue.toString());
+            return;
+          }
+        }
+        this.stringBuffer = value;
+        break;
+      default:
+        this.stringBuffer = String(value);
+    }
+  }
+  flush() {
+    const buffer = this.stringBuffer;
+    this.stringBuffer = "";
+    return buffer;
+  }
+};
+
+// src/submodules/protocols/serde/HttpInterceptingShapeSerializer.ts
+var HttpInterceptingShapeSerializer = class {
+  constructor(codecSerializer, codecSettings, stringSerializer = new ToStringShapeSerializer(codecSettings)) {
+    this.codecSerializer = codecSerializer;
+    this.stringSerializer = stringSerializer;
+  }
+  setSerdeContext(serdeContext) {
+    this.codecSerializer.setSerdeContext(serdeContext);
+    this.stringSerializer.setSerdeContext(serdeContext);
+  }
+  write(schema, value) {
+    const ns = import_schema8.NormalizedSchema.of(schema);
+    const traits = ns.getMergedTraits();
+    if (traits.httpHeader || traits.httpLabel || traits.httpQuery) {
+      this.stringSerializer.write(ns, value);
+      this.buffer = this.stringSerializer.flush();
+      return;
+    }
+    return this.codecSerializer.write(ns, value);
+  }
+  flush() {
+    if (this.buffer !== void 0) {
+      const buffer = this.buffer;
+      this.buffer = void 0;
+      return buffer;
+    }
+    return this.codecSerializer.flush();
+  }
+};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 6890:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/submodules/schema/index.ts
+var schema_exports = {};
+__export(schema_exports, {
+  ErrorSchema: () => ErrorSchema,
+  ListSchema: () => ListSchema,
+  MapSchema: () => MapSchema,
+  NormalizedSchema: () => NormalizedSchema,
+  OperationSchema: () => OperationSchema,
+  SCHEMA: () => SCHEMA,
+  Schema: () => Schema,
+  SimpleSchema: () => SimpleSchema,
+  StructureSchema: () => StructureSchema,
+  TypeRegistry: () => TypeRegistry,
+  deref: () => deref,
+  deserializerMiddlewareOption: () => deserializerMiddlewareOption,
+  error: () => error,
+  getSchemaSerdePlugin: () => getSchemaSerdePlugin,
+  list: () => list,
+  map: () => map,
+  op: () => op,
+  serializerMiddlewareOption: () => serializerMiddlewareOption,
+  sim: () => sim,
+  struct: () => struct
+});
+module.exports = __toCommonJS(schema_exports);
+
+// src/submodules/schema/deref.ts
+var deref = (schemaRef) => {
+  if (typeof schemaRef === "function") {
+    return schemaRef();
+  }
+  return schemaRef;
+};
+
+// src/submodules/schema/middleware/schemaDeserializationMiddleware.ts
+var import_protocol_http = __nccwpck_require__(2356);
+var import_util_middleware = __nccwpck_require__(6324);
+var schemaDeserializationMiddleware = (config) => (next, context) => async (args) => {
+  const { response } = await next(args);
+  const { operationSchema } = (0, import_util_middleware.getSmithyContext)(context);
+  try {
+    const parsed = await config.protocol.deserializeResponse(
+      operationSchema,
+      {
+        ...config,
+        ...context
+      },
+      response
+    );
+    return {
+      response,
+      output: parsed
+    };
+  } catch (error2) {
+    Object.defineProperty(error2, "$response", {
+      value: response
+    });
+    if (!("$metadata" in error2)) {
+      const hint = `Deserialization error: to see the raw response, inspect the hidden field {error}.$response on this object.`;
+      try {
+        error2.message += "\n  " + hint;
+      } catch (e) {
+        if (!context.logger || context.logger?.constructor?.name === "NoOpLogger") {
+          console.warn(hint);
+        } else {
+          context.logger?.warn?.(hint);
+        }
+      }
+      if (typeof error2.$responseBodyText !== "undefined") {
+        if (error2.$response) {
+          error2.$response.body = error2.$responseBodyText;
+        }
+      }
+      try {
+        if (import_protocol_http.HttpResponse.isInstance(response)) {
+          const { headers = {} } = response;
+          const headerEntries = Object.entries(headers);
+          error2.$metadata = {
+            httpStatusCode: response.statusCode,
+            requestId: findHeader(/^x-[\w-]+-request-?id$/, headerEntries),
+            extendedRequestId: findHeader(/^x-[\w-]+-id-2$/, headerEntries),
+            cfId: findHeader(/^x-[\w-]+-cf-id$/, headerEntries)
+          };
+        }
+      } catch (e) {
+      }
+    }
+    throw error2;
+  }
+};
+var findHeader = (pattern, headers) => {
+  return (headers.find(([k]) => {
+    return k.match(pattern);
+  }) || [void 0, void 0])[1];
+};
+
+// src/submodules/schema/middleware/schemaSerializationMiddleware.ts
+var import_util_middleware2 = __nccwpck_require__(6324);
+var schemaSerializationMiddleware = (config) => (next, context) => async (args) => {
+  const { operationSchema } = (0, import_util_middleware2.getSmithyContext)(context);
+  const endpoint = context.endpointV2?.url && config.urlParser ? async () => config.urlParser(context.endpointV2.url) : config.endpoint;
+  const request = await config.protocol.serializeRequest(operationSchema, args.input, {
+    ...config,
+    ...context,
+    endpoint
+  });
+  return next({
+    ...args,
+    request
+  });
+};
+
+// src/submodules/schema/middleware/getSchemaSerdePlugin.ts
+var deserializerMiddlewareOption = {
+  name: "deserializerMiddleware",
+  step: "deserialize",
+  tags: ["DESERIALIZER"],
+  override: true
+};
+var serializerMiddlewareOption = {
+  name: "serializerMiddleware",
+  step: "serialize",
+  tags: ["SERIALIZER"],
+  override: true
+};
+function getSchemaSerdePlugin(config) {
+  return {
+    applyToStack: (commandStack) => {
+      commandStack.add(schemaSerializationMiddleware(config), serializerMiddlewareOption);
+      commandStack.add(schemaDeserializationMiddleware(config), deserializerMiddlewareOption);
+      config.protocol.setSerdeContext(config);
+    }
+  };
+}
+
+// src/submodules/schema/TypeRegistry.ts
+var TypeRegistry = class _TypeRegistry {
+  constructor(namespace, schemas = /* @__PURE__ */ new Map()) {
+    this.namespace = namespace;
+    this.schemas = schemas;
+  }
+  static {
+    this.registries = /* @__PURE__ */ new Map();
+  }
+  /**
+   * @param namespace - specifier.
+   * @returns the schema for that namespace, creating it if necessary.
+   */
+  static for(namespace) {
+    if (!_TypeRegistry.registries.has(namespace)) {
+      _TypeRegistry.registries.set(namespace, new _TypeRegistry(namespace));
+    }
+    return _TypeRegistry.registries.get(namespace);
+  }
+  /**
+   * Adds the given schema to a type registry with the same namespace.
+   *
+   * @param shapeId - to be registered.
+   * @param schema - to be registered.
+   */
+  register(shapeId, schema) {
+    const qualifiedName = this.normalizeShapeId(shapeId);
+    const registry = _TypeRegistry.for(this.getNamespace(shapeId));
+    registry.schemas.set(qualifiedName, schema);
+  }
+  /**
+   * @param shapeId - query.
+   * @returns the schema.
+   */
+  getSchema(shapeId) {
+    const id = this.normalizeShapeId(shapeId);
+    if (!this.schemas.has(id)) {
+      throw new Error(`@smithy/core/schema - schema not found for ${id}`);
+    }
+    return this.schemas.get(id);
+  }
+  /**
+   * The smithy-typescript code generator generates a synthetic (i.e. unmodeled) base exception,
+   * because generated SDKs before the introduction of schemas have the notion of a ServiceBaseException, which
+   * is unique per service/model.
+   *
+   * This is generated under a unique prefix that is combined with the service namespace, and this
+   * method is used to retrieve it.
+   *
+   * The base exception synthetic schema is used when an error is returned by a service, but we cannot
+   * determine what existing schema to use to deserialize it.
+   *
+   * @returns the synthetic base exception of the service namespace associated with this registry instance.
+   */
+  getBaseException() {
+    for (const [id, schema] of this.schemas.entries()) {
+      if (id.startsWith("smithyts.client.synthetic.") && id.endsWith("ServiceException")) {
+        return schema;
+      }
+    }
+    return void 0;
+  }
+  /**
+   * @param predicate - criterion.
+   * @returns a schema in this registry matching the predicate.
+   */
+  find(predicate) {
+    return [...this.schemas.values()].find(predicate);
+  }
+  /**
+   * Unloads the current TypeRegistry.
+   */
+  destroy() {
+    _TypeRegistry.registries.delete(this.namespace);
+    this.schemas.clear();
+  }
+  normalizeShapeId(shapeId) {
+    if (shapeId.includes("#")) {
+      return shapeId;
+    }
+    return this.namespace + "#" + shapeId;
+  }
+  getNamespace(shapeId) {
+    return this.normalizeShapeId(shapeId).split("#")[0];
+  }
+};
+
+// src/submodules/schema/schemas/Schema.ts
+var Schema = class {
+  constructor(name, traits) {
+    this.name = name;
+    this.traits = traits;
+  }
+};
+
+// src/submodules/schema/schemas/ListSchema.ts
+var ListSchema = class extends Schema {
+  constructor(name, traits, valueSchema) {
+    super(name, traits);
+    this.name = name;
+    this.traits = traits;
+    this.valueSchema = valueSchema;
+  }
+};
+function list(namespace, name, traits = {}, valueSchema) {
+  const schema = new ListSchema(
+    namespace + "#" + name,
+    traits,
+    typeof valueSchema === "function" ? valueSchema() : valueSchema
+  );
+  TypeRegistry.for(namespace).register(name, schema);
+  return schema;
+}
+
+// src/submodules/schema/schemas/MapSchema.ts
+var MapSchema = class extends Schema {
+  constructor(name, traits, keySchema, valueSchema) {
+    super(name, traits);
+    this.name = name;
+    this.traits = traits;
+    this.keySchema = keySchema;
+    this.valueSchema = valueSchema;
+  }
+};
+function map(namespace, name, traits = {}, keySchema, valueSchema) {
+  const schema = new MapSchema(
+    namespace + "#" + name,
+    traits,
+    keySchema,
+    typeof valueSchema === "function" ? valueSchema() : valueSchema
+  );
+  TypeRegistry.for(namespace).register(name, schema);
+  return schema;
+}
+
+// src/submodules/schema/schemas/OperationSchema.ts
+var OperationSchema = class extends Schema {
+  constructor(name, traits, input, output) {
+    super(name, traits);
+    this.name = name;
+    this.traits = traits;
+    this.input = input;
+    this.output = output;
+  }
+};
+function op(namespace, name, traits = {}, input, output) {
+  const schema = new OperationSchema(namespace + "#" + name, traits, input, output);
+  TypeRegistry.for(namespace).register(name, schema);
+  return schema;
+}
+
+// src/submodules/schema/schemas/StructureSchema.ts
+var StructureSchema = class extends Schema {
+  constructor(name, traits, memberNames, memberList) {
+    super(name, traits);
+    this.name = name;
+    this.traits = traits;
+    this.memberNames = memberNames;
+    this.memberList = memberList;
+    this.members = {};
+    for (let i = 0; i < memberNames.length; ++i) {
+      this.members[memberNames[i]] = Array.isArray(memberList[i]) ? memberList[i] : [memberList[i], 0];
+    }
+  }
+};
+function struct(namespace, name, traits, memberNames, memberList) {
+  const schema = new StructureSchema(namespace + "#" + name, traits, memberNames, memberList);
+  TypeRegistry.for(namespace).register(name, schema);
+  return schema;
+}
+
+// src/submodules/schema/schemas/ErrorSchema.ts
+var ErrorSchema = class extends StructureSchema {
+  constructor(name, traits, memberNames, memberList, ctor) {
+    super(name, traits, memberNames, memberList);
+    this.name = name;
+    this.traits = traits;
+    this.memberNames = memberNames;
+    this.memberList = memberList;
+    this.ctor = ctor;
+  }
+};
+function error(namespace, name, traits = {}, memberNames, memberList, ctor) {
+  const schema = new ErrorSchema(namespace + "#" + name, traits, memberNames, memberList, ctor);
+  TypeRegistry.for(namespace).register(name, schema);
+  return schema;
+}
+
+// src/submodules/schema/schemas/sentinels.ts
+var SCHEMA = {
+  BLOB: 21,
+  // 21
+  STREAMING_BLOB: 42,
+  // 42
+  BOOLEAN: 2,
+  // 2
+  STRING: 0,
+  // 0
+  NUMERIC: 1,
+  // 1
+  BIG_INTEGER: 17,
+  // 17
+  BIG_DECIMAL: 19,
+  // 19
+  DOCUMENT: 15,
+  // 15
+  TIMESTAMP_DEFAULT: 4,
+  // 4
+  TIMESTAMP_DATE_TIME: 5,
+  // 5
+  TIMESTAMP_HTTP_DATE: 6,
+  // 6
+  TIMESTAMP_EPOCH_SECONDS: 7,
+  // 7
+  LIST_MODIFIER: 64,
+  // 64
+  MAP_MODIFIER: 128
+  // 128
+};
+
+// src/submodules/schema/schemas/SimpleSchema.ts
+var SimpleSchema = class extends Schema {
+  constructor(name, schemaRef, traits) {
+    super(name, traits);
+    this.name = name;
+    this.schemaRef = schemaRef;
+    this.traits = traits;
+  }
+};
+function sim(namespace, name, schemaRef, traits) {
+  const schema = new SimpleSchema(namespace + "#" + name, schemaRef, traits);
+  TypeRegistry.for(namespace).register(name, schema);
+  return schema;
+}
+
+// src/submodules/schema/schemas/NormalizedSchema.ts
+var NormalizedSchema = class _NormalizedSchema {
+  /**
+   * @param ref - a polymorphic SchemaRef to be dereferenced/normalized.
+   * @param memberName - optional memberName if this NormalizedSchema should be considered a member schema.
+   */
+  constructor(ref, memberName) {
+    this.ref = ref;
+    this.memberName = memberName;
+    const traitStack = [];
+    let _ref = ref;
+    let schema = ref;
+    this._isMemberSchema = false;
+    while (Array.isArray(_ref)) {
+      traitStack.push(_ref[1]);
+      _ref = _ref[0];
+      schema = deref(_ref);
+      this._isMemberSchema = true;
+    }
+    if (traitStack.length > 0) {
+      this.memberTraits = {};
+      for (let i = traitStack.length - 1; i >= 0; --i) {
+        const traitSet = traitStack[i];
+        Object.assign(this.memberTraits, _NormalizedSchema.translateTraits(traitSet));
+      }
+    } else {
+      this.memberTraits = 0;
+    }
+    if (schema instanceof _NormalizedSchema) {
+      this.name = schema.name;
+      this.traits = schema.traits;
+      this._isMemberSchema = schema._isMemberSchema;
+      this.schema = schema.schema;
+      this.memberTraits = Object.assign({}, schema.getMemberTraits(), this.getMemberTraits());
+      this.normalizedTraits = void 0;
+      this.ref = schema.ref;
+      this.memberName = memberName ?? schema.memberName;
+      return;
+    }
+    this.schema = deref(schema);
+    if (this.schema && typeof this.schema === "object") {
+      this.traits = this.schema?.traits ?? {};
+    } else {
+      this.traits = 0;
+    }
+    this.name = (typeof this.schema === "object" ? this.schema?.name : void 0) ?? this.memberName ?? this.getSchemaName();
+    if (this._isMemberSchema && !memberName) {
+      throw new Error(
+        `@smithy/core/schema - NormalizedSchema member schema ${this.getName(true)} must initialize with memberName argument.`
+      );
+    }
+  }
+  /**
+   * Static constructor that attempts to avoid wrapping a NormalizedSchema within another.
+   */
+  static of(ref, memberName) {
+    if (ref instanceof _NormalizedSchema) {
+      return ref;
+    }
+    return new _NormalizedSchema(ref, memberName);
+  }
+  /**
+   * @param indicator - numeric indicator for preset trait combination.
+   * @returns equivalent trait object.
+   */
+  static translateTraits(indicator) {
+    if (typeof indicator === "object") {
+      return indicator;
+    }
+    indicator = indicator | 0;
+    const traits = {};
+    if ((indicator & 1) === 1) {
+      traits.httpLabel = 1;
+    }
+    if ((indicator >> 1 & 1) === 1) {
+      traits.idempotent = 1;
+    }
+    if ((indicator >> 2 & 1) === 1) {
+      traits.idempotencyToken = 1;
+    }
+    if ((indicator >> 3 & 1) === 1) {
+      traits.sensitive = 1;
+    }
+    if ((indicator >> 4 & 1) === 1) {
+      traits.httpPayload = 1;
+    }
+    if ((indicator >> 5 & 1) === 1) {
+      traits.httpResponseCode = 1;
+    }
+    if ((indicator >> 6 & 1) === 1) {
+      traits.httpQueryParams = 1;
+    }
+    return traits;
+  }
+  /**
+   * Creates a normalized member schema from the given schema and member name.
+   */
+  static memberFrom(memberSchema, memberName) {
+    if (memberSchema instanceof _NormalizedSchema) {
+      memberSchema.memberName = memberName;
+      memberSchema._isMemberSchema = true;
+      return memberSchema;
+    }
+    return new _NormalizedSchema(memberSchema, memberName);
+  }
+  /**
+   * @returns the underlying non-normalized schema.
+   */
+  getSchema() {
+    if (this.schema instanceof _NormalizedSchema) {
+      return this.schema = this.schema.getSchema();
+    }
+    if (this.schema instanceof SimpleSchema) {
+      return deref(this.schema.schemaRef);
+    }
+    return deref(this.schema);
+  }
+  /**
+   * @param withNamespace - qualifies the name.
+   * @returns e.g. `MyShape` or `com.namespace#MyShape`.
+   */
+  getName(withNamespace = false) {
+    if (!withNamespace) {
+      if (this.name && this.name.includes("#")) {
+        return this.name.split("#")[1];
+      }
+    }
+    return this.name || void 0;
+  }
+  /**
+   * @returns the member name if the schema is a member schema.
+   * @throws Error when the schema isn't a member schema.
+   */
+  getMemberName() {
+    if (!this.isMemberSchema()) {
+      throw new Error(`@smithy/core/schema - cannot get member name on non-member schema: ${this.getName(true)}`);
+    }
+    return this.memberName;
+  }
+  isMemberSchema() {
+    return this._isMemberSchema;
+  }
+  isUnitSchema() {
+    return this.getSchema() === "unit";
+  }
+  /**
+   * boolean methods on this class help control flow in shape serialization and deserialization.
+   */
+  isListSchema() {
+    const inner = this.getSchema();
+    if (typeof inner === "number") {
+      return inner >= SCHEMA.LIST_MODIFIER && inner < SCHEMA.MAP_MODIFIER;
+    }
+    return inner instanceof ListSchema;
+  }
+  isMapSchema() {
+    const inner = this.getSchema();
+    if (typeof inner === "number") {
+      return inner >= SCHEMA.MAP_MODIFIER && inner <= 255;
+    }
+    return inner instanceof MapSchema;
+  }
+  isDocumentSchema() {
+    return this.getSchema() === SCHEMA.DOCUMENT;
+  }
+  isStructSchema() {
+    const inner = this.getSchema();
+    return inner !== null && typeof inner === "object" && "members" in inner || inner instanceof StructureSchema;
+  }
+  isBlobSchema() {
+    return this.getSchema() === SCHEMA.BLOB || this.getSchema() === SCHEMA.STREAMING_BLOB;
+  }
+  isTimestampSchema() {
+    const schema = this.getSchema();
+    return typeof schema === "number" && schema >= SCHEMA.TIMESTAMP_DEFAULT && schema <= SCHEMA.TIMESTAMP_EPOCH_SECONDS;
+  }
+  isStringSchema() {
+    return this.getSchema() === SCHEMA.STRING;
+  }
+  isBooleanSchema() {
+    return this.getSchema() === SCHEMA.BOOLEAN;
+  }
+  isNumericSchema() {
+    return this.getSchema() === SCHEMA.NUMERIC;
+  }
+  isBigIntegerSchema() {
+    return this.getSchema() === SCHEMA.BIG_INTEGER;
+  }
+  isBigDecimalSchema() {
+    return this.getSchema() === SCHEMA.BIG_DECIMAL;
+  }
+  isStreaming() {
+    const streaming = !!this.getMergedTraits().streaming;
+    if (streaming) {
+      return true;
+    }
+    return this.getSchema() === SCHEMA.STREAMING_BLOB;
+  }
+  /**
+   * @returns own traits merged with member traits, where member traits of the same trait key take priority.
+   * This method is cached.
+   */
+  getMergedTraits() {
+    if (this.normalizedTraits) {
+      return this.normalizedTraits;
+    }
+    this.normalizedTraits = {
+      ...this.getOwnTraits(),
+      ...this.getMemberTraits()
+    };
+    return this.normalizedTraits;
+  }
+  /**
+   * @returns only the member traits. If the schema is not a member, this returns empty.
+   */
+  getMemberTraits() {
+    return _NormalizedSchema.translateTraits(this.memberTraits);
+  }
+  /**
+   * @returns only the traits inherent to the shape or member target shape if this schema is a member.
+   * If there are any member traits they are excluded.
+   */
+  getOwnTraits() {
+    return _NormalizedSchema.translateTraits(this.traits);
+  }
+  /**
+   * @returns the map's key's schema. Returns a dummy Document schema if this schema is a Document.
+   *
+   * @throws Error if the schema is not a Map or Document.
+   */
+  getKeySchema() {
+    if (this.isDocumentSchema()) {
+      return _NormalizedSchema.memberFrom([SCHEMA.DOCUMENT, 0], "key");
+    }
+    if (!this.isMapSchema()) {
+      throw new Error(`@smithy/core/schema - cannot get key schema for non-map schema: ${this.getName(true)}`);
+    }
+    const schema = this.getSchema();
+    if (typeof schema === "number") {
+      return _NormalizedSchema.memberFrom([63 & schema, 0], "key");
+    }
+    return _NormalizedSchema.memberFrom([schema.keySchema, 0], "key");
+  }
+  /**
+   * @returns the schema of the map's value or list's member.
+   * Returns a dummy Document schema if this schema is a Document.
+   *
+   * @throws Error if the schema is not a Map, List, nor Document.
+   */
+  getValueSchema() {
+    const schema = this.getSchema();
+    if (typeof schema === "number") {
+      if (this.isMapSchema()) {
+        return _NormalizedSchema.memberFrom([63 & schema, 0], "value");
+      } else if (this.isListSchema()) {
+        return _NormalizedSchema.memberFrom([63 & schema, 0], "member");
+      }
+    }
+    if (schema && typeof schema === "object") {
+      if (this.isStructSchema()) {
+        throw new Error(`cannot call getValueSchema() with StructureSchema ${this.getName(true)}`);
+      }
+      const collection = schema;
+      if ("valueSchema" in collection) {
+        if (this.isMapSchema()) {
+          return _NormalizedSchema.memberFrom([collection.valueSchema, 0], "value");
+        } else if (this.isListSchema()) {
+          return _NormalizedSchema.memberFrom([collection.valueSchema, 0], "member");
+        }
+      }
+    }
+    if (this.isDocumentSchema()) {
+      return _NormalizedSchema.memberFrom([SCHEMA.DOCUMENT, 0], "value");
+    }
+    throw new Error(`@smithy/core/schema - the schema ${this.getName(true)} does not have a value member.`);
+  }
+  /**
+   * @returns the NormalizedSchema for the given member name. The returned instance will return true for `isMemberSchema()`
+   * and will have the member name given.
+   * @param member - which member to retrieve and wrap.
+   *
+   * @throws Error if member does not exist or the schema is neither a document nor structure.
+   * Note that errors are assumed to be structures and unions are considered structures for these purposes.
+   */
+  getMemberSchema(member) {
+    if (this.isStructSchema()) {
+      const struct2 = this.getSchema();
+      if (!(member in struct2.members)) {
+        throw new Error(
+          `@smithy/core/schema - the schema ${this.getName(true)} does not have a member with name=${member}.`
+        );
+      }
+      return _NormalizedSchema.memberFrom(struct2.members[member], member);
+    }
+    if (this.isDocumentSchema()) {
+      return _NormalizedSchema.memberFrom([SCHEMA.DOCUMENT, 0], member);
+    }
+    throw new Error(`@smithy/core/schema - the schema ${this.getName(true)} does not have members.`);
+  }
+  /**
+   * This can be used for checking the members as a hashmap.
+   * Prefer the structIterator method for iteration.
+   *
+   * This does NOT return list and map members, it is only for structures.
+   *
+   * @returns a map of member names to member schemas (normalized).
+   */
+  getMemberSchemas() {
+    const { schema } = this;
+    const struct2 = schema;
+    if (!struct2 || typeof struct2 !== "object") {
+      return {};
+    }
+    if ("members" in struct2) {
+      const buffer = {};
+      for (const member of struct2.memberNames) {
+        buffer[member] = this.getMemberSchema(member);
+      }
+      return buffer;
+    }
+    return {};
+  }
+  /**
+   * Allows iteration over members of a structure schema.
+   * Each yield is a pair of the member name and member schema.
+   *
+   * This avoids the overhead of calling Object.entries(ns.getMemberSchemas()).
+   */
+  *structIterator() {
+    if (!this.isStructSchema()) {
+      throw new Error("@smithy/core/schema - cannot acquire structIterator on non-struct schema.");
+    }
+    const struct2 = this.getSchema();
+    for (let i = 0; i < struct2.memberNames.length; ++i) {
+      yield [struct2.memberNames[i], _NormalizedSchema.memberFrom([struct2.memberList[i], 0], struct2.memberNames[i])];
+    }
+  }
+  /**
+   * @returns a last-resort human-readable name for the schema if it has no other identifiers.
+   */
+  getSchemaName() {
+    const schema = this.getSchema();
+    if (typeof schema === "number") {
+      const _schema = 63 & schema;
+      const container = 192 & schema;
+      const type = Object.entries(SCHEMA).find(([, value]) => {
+        return value === _schema;
+      })?.[0] ?? "Unknown";
+      switch (container) {
+        case SCHEMA.MAP_MODIFIER:
+          return `${type}Map`;
+        case SCHEMA.LIST_MODIFIER:
+          return `${type}List`;
+        case 0:
+          return type;
+      }
+    }
+    return "Unknown";
+  }
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 
@@ -12497,7 +13912,7 @@ var RequestBuilder = class {
 /***/ }),
 
 /***/ 2430:
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -12522,6 +13937,7 @@ var serde_exports = {};
 __export(serde_exports, {
   LazyJsonString: () => LazyJsonString,
   NumericValue: () => NumericValue,
+  copyDocumentWithTransform: () => copyDocumentWithTransform,
   dateToUtcString: () => dateToUtcString,
   expectBoolean: () => expectBoolean,
   expectByte: () => expectByte,
@@ -12559,6 +13975,59 @@ __export(serde_exports, {
   strictParseShort: () => strictParseShort
 });
 module.exports = __toCommonJS(serde_exports);
+
+// src/submodules/serde/copyDocumentWithTransform.ts
+var import_schema = __nccwpck_require__(6890);
+var copyDocumentWithTransform = (source, schemaRef, transform = (_) => _) => {
+  const ns = import_schema.NormalizedSchema.of(schemaRef);
+  switch (typeof source) {
+    case "undefined":
+    case "boolean":
+    case "number":
+    case "string":
+    case "bigint":
+    case "symbol":
+      return transform(source, ns);
+    case "function":
+    case "object":
+      if (source === null) {
+        return transform(null, ns);
+      }
+      if (Array.isArray(source)) {
+        const newArray = new Array(source.length);
+        let i = 0;
+        for (const item of source) {
+          newArray[i++] = copyDocumentWithTransform(item, ns.getValueSchema(), transform);
+        }
+        return transform(newArray, ns);
+      }
+      if ("byteLength" in source) {
+        const newBytes = new Uint8Array(source.byteLength);
+        newBytes.set(source, 0);
+        return transform(newBytes, ns);
+      }
+      if (source instanceof Date) {
+        return transform(source, ns);
+      }
+      const newObject = {};
+      if (ns.isMapSchema()) {
+        for (const key of Object.keys(source)) {
+          newObject[key] = copyDocumentWithTransform(source[key], ns.getValueSchema(), transform);
+        }
+      } else if (ns.isStructSchema()) {
+        for (const [key, memberSchema] of ns.structIterator()) {
+          newObject[key] = copyDocumentWithTransform(source[key], memberSchema, transform);
+        }
+      } else if (ns.isDocumentSchema()) {
+        for (const key of Object.keys(source)) {
+          newObject[key] = copyDocumentWithTransform(source[key], ns.getValueSchema(), transform);
+        }
+      }
+      return transform(newObject, ns);
+    default:
+      return transform(source, ns);
+  }
+};
 
 // src/submodules/serde/parse-utils.ts
 var parseBoolean = (value) => {
@@ -13013,12 +14482,65 @@ var stripLeadingZeroes = (value) => {
   return value.slice(idx);
 };
 
+// src/submodules/serde/lazy-json.ts
+var LazyJsonString = function LazyJsonString2(val) {
+  const str = Object.assign(new String(val), {
+    deserializeJSON() {
+      return JSON.parse(String(val));
+    },
+    toString() {
+      return String(val);
+    },
+    toJSON() {
+      return String(val);
+    }
+  });
+  return str;
+};
+LazyJsonString.from = (object) => {
+  if (object && typeof object === "object" && (object instanceof LazyJsonString || "deserializeJSON" in object)) {
+    return object;
+  } else if (typeof object === "string" || Object.getPrototypeOf(object) === String.prototype) {
+    return LazyJsonString(String(object));
+  }
+  return LazyJsonString(JSON.stringify(object));
+};
+LazyJsonString.fromObject = LazyJsonString.from;
+
 // src/submodules/serde/quote-header.ts
 function quoteHeader(part) {
   if (part.includes(",") || part.includes('"')) {
     part = `"${part.replace(/"/g, '\\"')}"`;
   }
   return part;
+}
+
+// src/submodules/serde/split-every.ts
+function splitEvery(value, delimiter, numDelimiters) {
+  if (numDelimiters <= 0 || !Number.isInteger(numDelimiters)) {
+    throw new Error("Invalid number of delimiters (" + numDelimiters + ") for splitEvery.");
+  }
+  const segments = value.split(delimiter);
+  if (numDelimiters === 1) {
+    return segments;
+  }
+  const compoundSegments = [];
+  let currentSegment = "";
+  for (let i = 0; i < segments.length; i++) {
+    if (currentSegment === "") {
+      currentSegment = segments[i];
+    } else {
+      currentSegment += delimiter + segments[i];
+    }
+    if ((i + 1) % numDelimiters === 0) {
+      compoundSegments.push(currentSegment);
+      currentSegment = "";
+    }
+  }
+  if (currentSegment !== "") {
+    compoundSegments.push(currentSegment);
+  }
+  return compoundSegments;
 }
 
 // src/submodules/serde/split-header.ts
@@ -13069,59 +14591,6 @@ var NumericValue = class {
 };
 function nv(string) {
   return new NumericValue(string, "bigDecimal");
-}
-
-// src/submodules/serde/lazy-json.ts
-var LazyJsonString = function LazyJsonString2(val) {
-  const str = Object.assign(new String(val), {
-    deserializeJSON() {
-      return JSON.parse(String(val));
-    },
-    toString() {
-      return String(val);
-    },
-    toJSON() {
-      return String(val);
-    }
-  });
-  return str;
-};
-LazyJsonString.from = (object) => {
-  if (object && typeof object === "object" && (object instanceof LazyJsonString || "deserializeJSON" in object)) {
-    return object;
-  } else if (typeof object === "string" || Object.getPrototypeOf(object) === String.prototype) {
-    return LazyJsonString(String(object));
-  }
-  return LazyJsonString(JSON.stringify(object));
-};
-LazyJsonString.fromObject = LazyJsonString.from;
-
-// src/submodules/serde/split-every.ts
-function splitEvery(value, delimiter, numDelimiters) {
-  if (numDelimiters <= 0 || !Number.isInteger(numDelimiters)) {
-    throw new Error("Invalid number of delimiters (" + numDelimiters + ") for splitEvery.");
-  }
-  const segments = value.split(delimiter);
-  if (numDelimiters === 1) {
-    return segments;
-  }
-  const compoundSegments = [];
-  let currentSegment = "";
-  for (let i = 0; i < segments.length; i++) {
-    if (currentSegment === "") {
-      currentSegment = segments[i];
-    } else {
-      currentSegment += delimiter + segments[i];
-    }
-    if ((i + 1) % numDelimiters === 0) {
-      compoundSegments.push(currentSegment);
-      currentSegment = "";
-    }
-  }
-  if (currentSegment !== "") {
-    compoundSegments.push(currentSegment);
-  }
-  return compoundSegments;
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
@@ -18002,6 +19471,14 @@ var ClassBuilder = class {
     return this;
   }
   /**
+   * Sets input/output schema for the operation.
+   */
+  sc(operation) {
+    this._operationSchema = operation;
+    this._smithyContext.operationSchema = operation;
+    return this;
+  }
+  /**
    * @returns a Command class with the classBuilder properties.
    */
   build() {
@@ -18025,6 +19502,7 @@ var ClassBuilder = class {
         this.deserialize = closure._deserializer;
         this.input = input ?? {};
         closure._init(this);
+        this.schema = closure._operationSchema;
       }
       static {
         __name(this, "CommandRef");
@@ -48855,7 +50333,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.817.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.816.0","@aws-sdk/middleware-host-header":"3.804.0","@aws-sdk/middleware-logger":"3.804.0","@aws-sdk/middleware-recursion-detection":"3.804.0","@aws-sdk/middleware-user-agent":"3.816.0","@aws-sdk/region-config-resolver":"3.808.0","@aws-sdk/types":"3.804.0","@aws-sdk/util-endpoints":"3.808.0","@aws-sdk/util-user-agent-browser":"3.804.0","@aws-sdk/util-user-agent-node":"3.816.0","@smithy/config-resolver":"^4.1.2","@smithy/core":"^3.3.3","@smithy/fetch-http-handler":"^5.0.2","@smithy/hash-node":"^4.0.2","@smithy/invalid-dependency":"^4.0.2","@smithy/middleware-content-length":"^4.0.2","@smithy/middleware-endpoint":"^4.1.6","@smithy/middleware-retry":"^4.1.7","@smithy/middleware-serde":"^4.0.5","@smithy/middleware-stack":"^4.0.2","@smithy/node-config-provider":"^4.1.1","@smithy/node-http-handler":"^4.0.4","@smithy/protocol-http":"^5.1.0","@smithy/smithy-client":"^4.2.6","@smithy/types":"^4.2.0","@smithy/url-parser":"^4.0.2","@smithy/util-base64":"^4.0.0","@smithy/util-body-length-browser":"^4.0.0","@smithy/util-body-length-node":"^4.0.0","@smithy/util-defaults-mode-browser":"^4.0.14","@smithy/util-defaults-mode-node":"^4.0.14","@smithy/util-endpoints":"^3.0.4","@smithy/util-middleware":"^4.0.2","@smithy/util-retry":"^4.0.3","@smithy/util-utf8":"^4.0.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.821.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.821.0","@aws-sdk/middleware-host-header":"3.821.0","@aws-sdk/middleware-logger":"3.821.0","@aws-sdk/middleware-recursion-detection":"3.821.0","@aws-sdk/middleware-user-agent":"3.821.0","@aws-sdk/region-config-resolver":"3.821.0","@aws-sdk/types":"3.821.0","@aws-sdk/util-endpoints":"3.821.0","@aws-sdk/util-user-agent-browser":"3.821.0","@aws-sdk/util-user-agent-node":"3.821.0","@smithy/config-resolver":"^4.1.4","@smithy/core":"^3.5.1","@smithy/fetch-http-handler":"^5.0.4","@smithy/hash-node":"^4.0.4","@smithy/invalid-dependency":"^4.0.4","@smithy/middleware-content-length":"^4.0.4","@smithy/middleware-endpoint":"^4.1.9","@smithy/middleware-retry":"^4.1.10","@smithy/middleware-serde":"^4.0.8","@smithy/middleware-stack":"^4.0.4","@smithy/node-config-provider":"^4.1.3","@smithy/node-http-handler":"^4.0.6","@smithy/protocol-http":"^5.1.2","@smithy/smithy-client":"^4.4.1","@smithy/types":"^4.3.1","@smithy/url-parser":"^4.0.4","@smithy/util-base64":"^4.0.0","@smithy/util-body-length-browser":"^4.0.0","@smithy/util-body-length-node":"^4.0.0","@smithy/util-defaults-mode-browser":"^4.0.17","@smithy/util-defaults-mode-node":"^4.0.17","@smithy/util-endpoints":"^3.0.6","@smithy/util-middleware":"^4.0.4","@smithy/util-retry":"^4.0.5","@smithy/util-utf8":"^4.0.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
 
 /***/ }),
 
@@ -48863,7 +50341,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","descrip
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.817.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.816.0","@aws-sdk/credential-provider-node":"3.817.0","@aws-sdk/middleware-host-header":"3.804.0","@aws-sdk/middleware-logger":"3.804.0","@aws-sdk/middleware-recursion-detection":"3.804.0","@aws-sdk/middleware-user-agent":"3.816.0","@aws-sdk/region-config-resolver":"3.808.0","@aws-sdk/types":"3.804.0","@aws-sdk/util-endpoints":"3.808.0","@aws-sdk/util-user-agent-browser":"3.804.0","@aws-sdk/util-user-agent-node":"3.816.0","@smithy/config-resolver":"^4.1.2","@smithy/core":"^3.3.3","@smithy/fetch-http-handler":"^5.0.2","@smithy/hash-node":"^4.0.2","@smithy/invalid-dependency":"^4.0.2","@smithy/middleware-content-length":"^4.0.2","@smithy/middleware-endpoint":"^4.1.6","@smithy/middleware-retry":"^4.1.7","@smithy/middleware-serde":"^4.0.5","@smithy/middleware-stack":"^4.0.2","@smithy/node-config-provider":"^4.1.1","@smithy/node-http-handler":"^4.0.4","@smithy/protocol-http":"^5.1.0","@smithy/smithy-client":"^4.2.6","@smithy/types":"^4.2.0","@smithy/url-parser":"^4.0.2","@smithy/util-base64":"^4.0.0","@smithy/util-body-length-browser":"^4.0.0","@smithy/util-body-length-node":"^4.0.0","@smithy/util-defaults-mode-browser":"^4.0.14","@smithy/util-defaults-mode-node":"^4.0.14","@smithy/util-endpoints":"^3.0.4","@smithy/util-middleware":"^4.0.2","@smithy/util-retry":"^4.0.3","@smithy/util-utf8":"^4.0.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.821.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.821.0","@aws-sdk/credential-provider-node":"3.821.0","@aws-sdk/middleware-host-header":"3.821.0","@aws-sdk/middleware-logger":"3.821.0","@aws-sdk/middleware-recursion-detection":"3.821.0","@aws-sdk/middleware-user-agent":"3.821.0","@aws-sdk/region-config-resolver":"3.821.0","@aws-sdk/types":"3.821.0","@aws-sdk/util-endpoints":"3.821.0","@aws-sdk/util-user-agent-browser":"3.821.0","@aws-sdk/util-user-agent-node":"3.821.0","@smithy/config-resolver":"^4.1.4","@smithy/core":"^3.5.1","@smithy/fetch-http-handler":"^5.0.4","@smithy/hash-node":"^4.0.4","@smithy/invalid-dependency":"^4.0.4","@smithy/middleware-content-length":"^4.0.4","@smithy/middleware-endpoint":"^4.1.9","@smithy/middleware-retry":"^4.1.10","@smithy/middleware-serde":"^4.0.8","@smithy/middleware-stack":"^4.0.4","@smithy/node-config-provider":"^4.1.3","@smithy/node-http-handler":"^4.0.6","@smithy/protocol-http":"^5.1.2","@smithy/smithy-client":"^4.4.1","@smithy/types":"^4.3.1","@smithy/url-parser":"^4.0.4","@smithy/util-base64":"^4.0.0","@smithy/util-body-length-browser":"^4.0.0","@smithy/util-body-length-node":"^4.0.0","@smithy/util-defaults-mode-browser":"^4.0.17","@smithy/util-defaults-mode-node":"^4.0.17","@smithy/util-endpoints":"^3.0.6","@smithy/util-middleware":"^4.0.4","@smithy/util-retry":"^4.0.5","@smithy/util-utf8":"^4.0.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ }),
 
@@ -48871,7 +50349,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","descrip
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.817.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.816.0","@aws-sdk/middleware-host-header":"3.804.0","@aws-sdk/middleware-logger":"3.804.0","@aws-sdk/middleware-recursion-detection":"3.804.0","@aws-sdk/middleware-user-agent":"3.816.0","@aws-sdk/region-config-resolver":"3.808.0","@aws-sdk/types":"3.804.0","@aws-sdk/util-endpoints":"3.808.0","@aws-sdk/util-user-agent-browser":"3.804.0","@aws-sdk/util-user-agent-node":"3.816.0","@smithy/config-resolver":"^4.1.2","@smithy/core":"^3.3.3","@smithy/fetch-http-handler":"^5.0.2","@smithy/hash-node":"^4.0.2","@smithy/invalid-dependency":"^4.0.2","@smithy/middleware-content-length":"^4.0.2","@smithy/middleware-endpoint":"^4.1.6","@smithy/middleware-retry":"^4.1.7","@smithy/middleware-serde":"^4.0.5","@smithy/middleware-stack":"^4.0.2","@smithy/node-config-provider":"^4.1.1","@smithy/node-http-handler":"^4.0.4","@smithy/protocol-http":"^5.1.0","@smithy/smithy-client":"^4.2.6","@smithy/types":"^4.2.0","@smithy/url-parser":"^4.0.2","@smithy/util-base64":"^4.0.0","@smithy/util-body-length-browser":"^4.0.0","@smithy/util-body-length-node":"^4.0.0","@smithy/util-defaults-mode-browser":"^4.0.14","@smithy/util-defaults-mode-node":"^4.0.14","@smithy/util-endpoints":"^3.0.4","@smithy/util-middleware":"^4.0.2","@smithy/util-retry":"^4.0.3","@smithy/util-utf8":"^4.0.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"}}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.821.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.821.0","@aws-sdk/middleware-host-header":"3.821.0","@aws-sdk/middleware-logger":"3.821.0","@aws-sdk/middleware-recursion-detection":"3.821.0","@aws-sdk/middleware-user-agent":"3.821.0","@aws-sdk/region-config-resolver":"3.821.0","@aws-sdk/types":"3.821.0","@aws-sdk/util-endpoints":"3.821.0","@aws-sdk/util-user-agent-browser":"3.821.0","@aws-sdk/util-user-agent-node":"3.821.0","@smithy/config-resolver":"^4.1.4","@smithy/core":"^3.5.1","@smithy/fetch-http-handler":"^5.0.4","@smithy/hash-node":"^4.0.4","@smithy/invalid-dependency":"^4.0.4","@smithy/middleware-content-length":"^4.0.4","@smithy/middleware-endpoint":"^4.1.9","@smithy/middleware-retry":"^4.1.10","@smithy/middleware-serde":"^4.0.8","@smithy/middleware-stack":"^4.0.4","@smithy/node-config-provider":"^4.1.3","@smithy/node-http-handler":"^4.0.6","@smithy/protocol-http":"^5.1.2","@smithy/smithy-client":"^4.4.1","@smithy/types":"^4.3.1","@smithy/url-parser":"^4.0.4","@smithy/util-base64":"^4.0.0","@smithy/util-body-length-browser":"^4.0.0","@smithy/util-body-length-node":"^4.0.0","@smithy/util-defaults-mode-browser":"^4.0.17","@smithy/util-defaults-mode-node":"^4.0.17","@smithy/util-endpoints":"^3.0.6","@smithy/util-middleware":"^4.0.4","@smithy/util-retry":"^4.0.5","@smithy/util-utf8":"^4.0.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"}}}');
 
 /***/ })
 
