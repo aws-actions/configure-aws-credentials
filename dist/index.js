@@ -55,7 +55,6 @@ class CredentialsClient {
         }
     }
     async loadCredentials() {
-        (0, core_1.info)('trying to load credentials');
         const client = new client_sts_1.STSClient({
             requestHandler: this.requestHandler ? this.requestHandler : undefined,
         });
@@ -366,9 +365,7 @@ function exportRegion(region, outputEnvCredentials) {
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
     const client = credentialsClient.stsClient;
-    core.info('trying to get account id');
     const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
-    core.info('got account id');
     const accountId = identity.Account;
     if (!accountId) {
         throw new Error('Could not get Account ID from STS. Did you set credentials?');
@@ -670,9 +667,9 @@ async function run() {
             if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
                 await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
             }
-            core.info(`validated credentials`);
-            await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
-            core.info(`exported account id`);
+            if (outputEnvCredentials) {
+                await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
+            }
         }
         else {
             core.info('Proceeding with IAM user credentials');
