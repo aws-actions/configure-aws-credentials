@@ -205,9 +205,9 @@ export async function run() {
       if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
         await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
       }
-      core.info(`validated credentials`);
-      await exportAccountId(credentialsClient, maskAccountId);
-      core.info(`exported account id`);
+      if (outputEnvCredentials) {
+        await exportAccountId(credentialsClient, maskAccountId);
+      }
     } else {
       core.info('Proceeding with IAM user credentials');
     }

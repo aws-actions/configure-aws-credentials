@@ -46372,9 +46372,7 @@ function exportRegion(region, outputEnvCredentials) {
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
     const client = credentialsClient.stsClient;
-    core.info('trying to get account id');
     const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
-    core.info('got account id');
     const accountId = identity.Account;
     if (!accountId) {
         throw new Error('Could not get Account ID from STS. Did you set credentials?');
