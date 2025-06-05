@@ -314,17 +314,23 @@ function translateEnvVariables() {
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
 function exportCredentials(creds, outputCredentials, outputEnvCredentials) {
+    if (creds?.AccessKeyId) {
+        core.setSecret(creds.AccessKeyId);
+    }
+    if (creds?.SecretAccessKey) {
+        core.setSecret(creds.SecretAccessKey);
+    }
+    if (creds?.SessionToken) {
+        core.setSecret(creds.SessionToken);
+    }
     if (outputEnvCredentials) {
         if (creds?.AccessKeyId) {
-            core.setSecret(creds.AccessKeyId);
             core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
         }
         if (creds?.SecretAccessKey) {
-            core.setSecret(creds.SecretAccessKey);
             core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
         }
         if (creds?.SessionToken) {
-            core.setSecret(creds.SessionToken);
             core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
         }
         else if (process.env.AWS_SESSION_TOKEN) {
