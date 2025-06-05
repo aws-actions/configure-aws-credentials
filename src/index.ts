@@ -56,6 +56,8 @@ export async function run() {
     const roleChaining = roleChainingInput.toLowerCase() === 'true';
     const outputCredentialsInput = core.getInput('output-credentials', { required: false }) || 'false';
     const outputCredentials = outputCredentialsInput.toLowerCase() === 'true';
+    const outputEnvCredentialsInput = core.getInput('output-env-credentials', { required: false }) || 'true';
+    const outputEnvCredentials = outputEnvCredentialsInput.toLowerCase() === 'true';
     const unsetCurrentCredentialsInput = core.getInput('unset-current-credentials', { required: false }) || 'false';
     const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
     const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
@@ -108,13 +110,13 @@ export async function run() {
     };
 
     if (unsetCurrentCredentials) {
-      unsetCredentials();
+      unsetCredentials(outputEnvCredentials);
     }
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
-    exportRegion(region);
+    exportRegion(region, outputEnvCredentials);
 
     // Instantiate credentials client
     const credentialsClient = new CredentialsClient({ region, proxyServer });
@@ -153,7 +155,7 @@ export async function run() {
       // Plus, in the assume role case, if the AssumeRole call fails, we want
       // the source credentials to already be masked as secrets
       // in any error messages.
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken });
+      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials();
@@ -193,7 +195,7 @@ export async function run() {
         );
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-      exportCredentials(roleCredentials.Credentials, outputCredentials);
+      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
@@ -201,7 +203,9 @@ export async function run() {
       if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
         await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
       }
-      await exportAccountId(credentialsClient, maskAccountId);
+      if (outputEnvCredentials) {
+        await exportAccountId(credentialsClient, maskAccountId);
+      }
     } else {
       core.info('Proceeding with IAM user credentials');
     }
