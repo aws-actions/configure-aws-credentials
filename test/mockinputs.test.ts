@@ -31,6 +31,17 @@ const inputs = {
     'aws-region': 'fake-region-1',
     'use-existing-credentials': 'true',
     'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+  },
+  NO_ENV_CREDS_INPUTS: {
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'output-env-credentials': 'false'
+  },
+  STEP_BUT_NO_ENV_INPUTS: {
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'output-env-credentials': 'false',
+    'output-credentials': 'true',
   }
 };
 

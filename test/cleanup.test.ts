@@ -45,4 +45,9 @@ describe('Configure AWS Credentials cleanup', {}, () => {
     cleanup();
     expect(core.setFailed).toHaveBeenCalled();
   });
+  it(`doesn't export credentials as empty env variables if asked not to`, {}, () => {
+    vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
+    cleanup();
+    expect(core.exportVariable).toHaveBeenCalledTimes(0);
+  })
 });
