@@ -54,7 +54,7 @@ export function exportCredentials(
 
   if (creds?.SessionToken) {
     core.setSecret(creds.SessionToken);
-  } 
+  }
 
   if (outputEnvCredentials) {
     if (creds?.AccessKeyId) {
