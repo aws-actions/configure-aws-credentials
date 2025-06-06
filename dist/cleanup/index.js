@@ -48186,19 +48186,22 @@ const helpers_1 = __nccwpck_require__(1302);
  * with any other jobs.
  */
 function cleanup() {
-    try {
-        // The GitHub Actions toolkit does not have an option to completely unset
-        // environment variables, so we overwrite the current value with an empty
-        // string. The AWS CLI and AWS SDKs will behave correctly: they treat an
-        // empty string value as if the environment variable does not exist.
-        core.exportVariable('AWS_ACCESS_KEY_ID', '');
-        core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
-        core.exportVariable('AWS_SESSION_TOKEN', '');
-        core.exportVariable('AWS_DEFAULT_REGION', '');
-        core.exportVariable('AWS_REGION', '');
-    }
-    catch (error) {
-        core.setFailed((0, helpers_1.errorMessage)(error));
+    const outputEnvCredentialsInput = core.getInput('output-env-credentials', { required: false }) || 'true';
+    if (outputEnvCredentialsInput === 'true') {
+        try {
+            // The GitHub Actions toolkit does not have an option to completely unset
+            // environment variables, so we overwrite the current value with an empty
+            // string. The AWS CLI and AWS SDKs will behave correctly: they treat an
+            // empty string value as if the environment variable does not exist.
+            core.exportVariable('AWS_ACCESS_KEY_ID', '');
+            core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
+            core.exportVariable('AWS_SESSION_TOKEN', '');
+            core.exportVariable('AWS_DEFAULT_REGION', '');
+            core.exportVariable('AWS_REGION', '');
+        }
+        catch (error) {
+            core.setFailed((0, helpers_1.errorMessage)(error));
+        }
     }
 }
 /* c8 ignore start */
@@ -48303,22 +48306,30 @@ function translateEnvVariables() {
 }
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
-function exportCredentials(creds, outputCredentials) {
+function exportCredentials(creds, outputCredentials, outputEnvCredentials) {
     if (creds?.AccessKeyId) {
         core.setSecret(creds.AccessKeyId);
-        core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
     }
     if (creds?.SecretAccessKey) {
         core.setSecret(creds.SecretAccessKey);
-        core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
     }
     if (creds?.SessionToken) {
         core.setSecret(creds.SessionToken);
-        core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
     }
-    else if (process.env.AWS_SESSION_TOKEN) {
-        // clear session token from previous credentials action
-        core.exportVariable('AWS_SESSION_TOKEN', '');
+    if (outputEnvCredentials) {
+        if (creds?.AccessKeyId) {
+            core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
+        }
+        if (creds?.SecretAccessKey) {
+            core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
+        }
+        if (creds?.SessionToken) {
+            core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
+        }
+        else if (process.env.AWS_SESSION_TOKEN) {
+            // clear session token from previous credentials action
+            core.exportVariable('AWS_SESSION_TOKEN', '');
+        }
     }
     if (outputCredentials) {
         if (creds?.AccessKeyId) {
@@ -48335,16 +48346,20 @@ function exportCredentials(creds, outputCredentials) {
         }
     }
 }
-function unsetCredentials() {
-    core.exportVariable('AWS_ACCESS_KEY_ID', '');
-    core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
-    core.exportVariable('AWS_SESSION_TOKEN', '');
-    core.exportVariable('AWS_REGION', '');
-    core.exportVariable('AWS_DEFAULT_REGION', '');
+function unsetCredentials(outputEnvCredentials) {
+    if (outputEnvCredentials) {
+        core.exportVariable('AWS_ACCESS_KEY_ID', '');
+        core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
+        core.exportVariable('AWS_SESSION_TOKEN', '');
+        core.exportVariable('AWS_REGION', '');
+        core.exportVariable('AWS_DEFAULT_REGION', '');
+    }
 }
-function exportRegion(region) {
-    core.exportVariable('AWS_DEFAULT_REGION', region);
-    core.exportVariable('AWS_REGION', region);
+function exportRegion(region, outputEnvCredentials) {
+    if (outputEnvCredentials) {
+        core.exportVariable('AWS_DEFAULT_REGION', region);
+        core.exportVariable('AWS_REGION', region);
+    }
 }
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {

@@ -312,5 +312,26 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).not.toHaveBeenCalled();
     })
+    it('doesn\'t export credentials as environment variables if told not to', {}, async () => {
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.exportVariable).toHaveBeenCalledTimes(0);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    })
+    it('can export creds as step outputs without exporting as env variables', {}, async () => {
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.STEP_BUT_NO_ENV_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.exportVariable).toHaveBeenCalledTimes(0);
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    })
   });
 });

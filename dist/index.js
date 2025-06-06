@@ -313,22 +313,30 @@ function translateEnvVariables() {
 }
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
-function exportCredentials(creds, outputCredentials) {
+function exportCredentials(creds, outputCredentials, outputEnvCredentials) {
     if (creds?.AccessKeyId) {
         core.setSecret(creds.AccessKeyId);
-        core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
     }
     if (creds?.SecretAccessKey) {
         core.setSecret(creds.SecretAccessKey);
-        core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
     }
     if (creds?.SessionToken) {
         core.setSecret(creds.SessionToken);
-        core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
     }
-    else if (process.env.AWS_SESSION_TOKEN) {
-        // clear session token from previous credentials action
-        core.exportVariable('AWS_SESSION_TOKEN', '');
+    if (outputEnvCredentials) {
+        if (creds?.AccessKeyId) {
+            core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
+        }
+        if (creds?.SecretAccessKey) {
+            core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
+        }
+        if (creds?.SessionToken) {
+            core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
+        }
+        else if (process.env.AWS_SESSION_TOKEN) {
+            // clear session token from previous credentials action
+            core.exportVariable('AWS_SESSION_TOKEN', '');
+        }
     }
     if (outputCredentials) {
         if (creds?.AccessKeyId) {
@@ -345,16 +353,20 @@ function exportCredentials(creds, outputCredentials) {
         }
     }
 }
-function unsetCredentials() {
-    core.exportVariable('AWS_ACCESS_KEY_ID', '');
-    core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
-    core.exportVariable('AWS_SESSION_TOKEN', '');
-    core.exportVariable('AWS_REGION', '');
-    core.exportVariable('AWS_DEFAULT_REGION', '');
+function unsetCredentials(outputEnvCredentials) {
+    if (outputEnvCredentials) {
+        core.exportVariable('AWS_ACCESS_KEY_ID', '');
+        core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
+        core.exportVariable('AWS_SESSION_TOKEN', '');
+        core.exportVariable('AWS_REGION', '');
+        core.exportVariable('AWS_DEFAULT_REGION', '');
+    }
 }
-function exportRegion(region) {
-    core.exportVariable('AWS_DEFAULT_REGION', region);
-    core.exportVariable('AWS_REGION', region);
+function exportRegion(region, outputEnvCredentials) {
+    if (outputEnvCredentials) {
+        core.exportVariable('AWS_DEFAULT_REGION', region);
+        core.exportVariable('AWS_REGION', region);
+    }
 }
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
@@ -534,6 +546,8 @@ async function run() {
         const roleChaining = roleChainingInput.toLowerCase() === 'true';
         const outputCredentialsInput = core.getInput('output-credentials', { required: false }) || 'false';
         const outputCredentials = outputCredentialsInput.toLowerCase() === 'true';
+        const outputEnvCredentialsInput = core.getInput('output-env-credentials', { required: false }) || 'true';
+        const outputEnvCredentials = outputEnvCredentialsInput.toLowerCase() === 'true';
         const unsetCurrentCredentialsInput = core.getInput('unset-current-credentials', { required: false }) || 'false';
         const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
         const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
@@ -577,12 +591,12 @@ async function run() {
                 !roleChaining);
         };
         if (unsetCurrentCredentials) {
-            (0, helpers_1.unsetCredentials)();
+            (0, helpers_1.unsetCredentials)(outputEnvCredentials);
         }
         if (!region.match(REGION_REGEX)) {
             throw new Error(`Region is not valid: ${region}`);
         }
-        (0, helpers_1.exportRegion)(region);
+        (0, helpers_1.exportRegion)(region, outputEnvCredentials);
         // Instantiate credentials client
         const credentialsClient = new CredentialsClient_1.CredentialsClient({ region, proxyServer });
         let sourceAccountId;
@@ -616,7 +630,7 @@ async function run() {
             // Plus, in the assume role case, if the AssumeRole call fails, we want
             // the source credentials to already be masked as secrets
             // in any error messages.
-            (0, helpers_1.exportCredentials)({ AccessKeyId, SecretAccessKey, SessionToken });
+            (0, helpers_1.exportCredentials)({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
         }
         else if (!webIdentityTokenFile && !roleChaining) {
             // Proceed only if credentials can be picked up
@@ -651,7 +665,7 @@ async function run() {
                 }, !disableRetry, maxRetries);
             } while (specialCharacterWorkaround && !(0, helpers_1.verifyKeys)(roleCredentials.Credentials));
             core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-            (0, helpers_1.exportCredentials)(roleCredentials.Credentials, outputCredentials);
+            (0, helpers_1.exportCredentials)(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
             // We need to validate the credentials in 2 of our use-cases
             // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
             //  is set to `true` then we are NOT in a self-hosted runner.
@@ -659,7 +673,9 @@ async function run() {
             if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
                 await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
             }
-            await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
+            if (outputEnvCredentials) {
+                await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
+            }
         }
         else {
             core.info('Proceeding with IAM user credentials');
