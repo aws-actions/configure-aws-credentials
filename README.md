@@ -296,7 +296,7 @@ You can specify the audience through the `audience` input:
       uses: aws-actions/configure-aws-credentials@v4.1.0
       with:
         audience: sts.amazonaws.com.cn
-        aws-region: us-east-3
+        aws-region: cn-northwest-1
         role-to-assume: arn:aws-cn:iam::123456789100:role/my-github-actions-role
 ```
 
