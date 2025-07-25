@@ -32,7 +32,7 @@
           with:
             parse-json-secrets: true
             secret-ids: |
-              OSDS,arn:aws:secretsmanager:us-west-2:206735643321:secret:github-aws-sdk-osds-automation-gebs9n
+              ${{ secrets.OSDS_PACKAGING_ROLE }}
 
         - name: Run release-please
           uses: googleapis/release-please-action@v4
