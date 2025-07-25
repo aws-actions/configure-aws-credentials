@@ -1,5 +1,5 @@
 name: Dependabot auto-approve
-on: 
+on:
   pull_request:
   workflow_dispatch:
 
@@ -21,14 +21,14 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
-          role-to-assume: arn:aws:iam::206735643321:role/ConfigureAwsCredentialsPackageRole
+          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
       - name: Get bot user token
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
         with:
           parse-json-secrets: true
           secret-ids: |
-            OSDS,arn:aws:secretsmanager:us-west-2:206735643321:secret:github-aws-sdk-osds-automation-gebs9n
+            ${{ secrets.OSDS_PACKAGING_ROLE }}
       - name: Approve PR if not already approved
         run: |
           gh pr checkout "$PR_URL"
