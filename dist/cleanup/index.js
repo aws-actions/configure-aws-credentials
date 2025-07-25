@@ -8143,82 +8143,6 @@ var AwsRestXmlProtocol = class extends import_protocols6.HttpBindingProtocol {
 
 /***/ }),
 
-/***/ 5606:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
-  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
-  ENV_EXPIRATION: () => ENV_EXPIRATION,
-  ENV_KEY: () => ENV_KEY,
-  ENV_SECRET: () => ENV_SECRET,
-  ENV_SESSION: () => ENV_SESSION,
-  fromEnv: () => fromEnv
-});
-module.exports = __toCommonJS(index_exports);
-
-// src/fromEnv.ts
-var import_client = __nccwpck_require__(5152);
-var import_property_provider = __nccwpck_require__(1238);
-var ENV_KEY = "AWS_ACCESS_KEY_ID";
-var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
-var ENV_SESSION = "AWS_SESSION_TOKEN";
-var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
-var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
-var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
-var fromEnv = /* @__PURE__ */ __name((init) => async () => {
-  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
-  const accessKeyId = process.env[ENV_KEY];
-  const secretAccessKey = process.env[ENV_SECRET];
-  const sessionToken = process.env[ENV_SESSION];
-  const expiry = process.env[ENV_EXPIRATION];
-  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
-  const accountId = process.env[ENV_ACCOUNT_ID];
-  if (accessKeyId && secretAccessKey) {
-    const credentials = {
-      accessKeyId,
-      secretAccessKey,
-      ...sessionToken && { sessionToken },
-      ...expiry && { expiration: new Date(expiry) },
-      ...credentialScope && { credentialScope },
-      ...accountId && { accountId }
-    };
-    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
-    return credentials;
-  }
-  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
-}, "fromEnv");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 1509:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -8518,7 +8442,7 @@ var resolveCredentialSource = /* @__PURE__ */ __name((credentialSource, profileN
     }, "Ec2InstanceMetadata"),
     Environment: /* @__PURE__ */ __name(async (options) => {
       logger?.debug("@aws-sdk/credential-provider-ini - credential_source is Environment");
-      const { fromEnv } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(5606)));
+      const { fromEnv } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(7121)));
       return async () => fromEnv(options)().then(setNamedProvider);
     }, "Environment")
   };
@@ -8730,6 +8654,82 @@ var fromIni = /* @__PURE__ */ __name((_init = {}) => async ({ callerClientConfig
 
 /***/ }),
 
+/***/ 7121:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.ts
+var index_exports = {};
+__export(index_exports, {
+  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
+  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
+  ENV_EXPIRATION: () => ENV_EXPIRATION,
+  ENV_KEY: () => ENV_KEY,
+  ENV_SECRET: () => ENV_SECRET,
+  ENV_SESSION: () => ENV_SESSION,
+  fromEnv: () => fromEnv
+});
+module.exports = __toCommonJS(index_exports);
+
+// src/fromEnv.ts
+var import_client = __nccwpck_require__(5152);
+var import_property_provider = __nccwpck_require__(1238);
+var ENV_KEY = "AWS_ACCESS_KEY_ID";
+var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+var ENV_SESSION = "AWS_SESSION_TOKEN";
+var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+var fromEnv = /* @__PURE__ */ __name((init) => async () => {
+  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+  const accessKeyId = process.env[ENV_KEY];
+  const secretAccessKey = process.env[ENV_SECRET];
+  const sessionToken = process.env[ENV_SESSION];
+  const expiry = process.env[ENV_EXPIRATION];
+  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+  const accountId = process.env[ENV_ACCOUNT_ID];
+  if (accessKeyId && secretAccessKey) {
+    const credentials = {
+      accessKeyId,
+      secretAccessKey,
+      ...sessionToken && { sessionToken },
+      ...expiry && { expiration: new Date(expiry) },
+      ...credentialScope && { credentialScope },
+      ...accountId && { accountId }
+    };
+    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
+    return credentials;
+  }
+  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+}, "fromEnv");
+// Annotate the CommonJS export names for ESM import in node:
+
+0 && (0);
+
+
+
+/***/ }),
+
 /***/ 5861:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -8774,7 +8774,7 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 
 // src/defaultProvider.ts
-var import_credential_provider_env = __nccwpck_require__(5606);
+var import_credential_provider_env = __nccwpck_require__(6153);
 
 var import_shared_ini_file_loader = __nccwpck_require__(4964);
 
@@ -8873,6 +8873,82 @@ var defaultProvider = /* @__PURE__ */ __name((init = {}) => (0, import_property_
 ), "defaultProvider");
 var credentialsWillNeedRefresh = /* @__PURE__ */ __name((credentials) => credentials?.expiration !== void 0, "credentialsWillNeedRefresh");
 var credentialsTreatedAsExpired = /* @__PURE__ */ __name((credentials) => credentials?.expiration !== void 0 && credentials.expiration.getTime() - Date.now() < 3e5, "credentialsTreatedAsExpired");
+// Annotate the CommonJS export names for ESM import in node:
+
+0 && (0);
+
+
+
+/***/ }),
+
+/***/ 6153:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.ts
+var index_exports = {};
+__export(index_exports, {
+  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
+  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
+  ENV_EXPIRATION: () => ENV_EXPIRATION,
+  ENV_KEY: () => ENV_KEY,
+  ENV_SECRET: () => ENV_SECRET,
+  ENV_SESSION: () => ENV_SESSION,
+  fromEnv: () => fromEnv
+});
+module.exports = __toCommonJS(index_exports);
+
+// src/fromEnv.ts
+var import_client = __nccwpck_require__(5152);
+var import_property_provider = __nccwpck_require__(1238);
+var ENV_KEY = "AWS_ACCESS_KEY_ID";
+var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+var ENV_SESSION = "AWS_SESSION_TOKEN";
+var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+var fromEnv = /* @__PURE__ */ __name((init) => async () => {
+  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+  const accessKeyId = process.env[ENV_KEY];
+  const secretAccessKey = process.env[ENV_SECRET];
+  const sessionToken = process.env[ENV_SESSION];
+  const expiry = process.env[ENV_EXPIRATION];
+  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+  const accountId = process.env[ENV_ACCOUNT_ID];
+  if (accessKeyId && secretAccessKey) {
+    const credentials = {
+      accessKeyId,
+      secretAccessKey,
+      ...sessionToken && { sessionToken },
+      ...expiry && { expiration: new Date(expiry) },
+      ...credentialScope && { credentialScope },
+      ...accountId && { accountId }
+    };
+    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
+    return credentials;
+  }
+  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+}, "fromEnv");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -14225,7 +14301,10 @@ var HttpProtocol = class {
 
 // src/submodules/protocols/HttpBindingProtocol.ts
 var HttpBindingProtocol = class extends HttpProtocol {
-  async serializeRequest(operationSchema, input, context) {
+  async serializeRequest(operationSchema, _input, context) {
+    const input = {
+      ..._input ?? {}
+    };
     const serializer = this.serializer;
     const query = {};
     const headers = {};
@@ -14260,16 +14339,12 @@ var HttpBindingProtocol = class extends HttpProtocol {
         Object.assign(query, Object.fromEntries(traitSearchParams));
       }
     }
-    const _input = {
-      ...input
-    };
-    for (const memberName of Object.keys(_input)) {
-      const memberNs = ns.getMemberSchema(memberName);
-      if (memberNs === void 0) {
+    for (const [memberName, memberNs] of ns.structIterator()) {
+      const memberTraits = memberNs.getMergedTraits() ?? {};
+      const inputMemberValue = input[memberName];
+      if (inputMemberValue == null) {
         continue;
       }
-      const memberTraits = memberNs.getMergedTraits();
-      const inputMember = _input[memberName];
       if (memberTraits.httpPayload) {
         const isStreaming = memberNs.isStreaming();
         if (isStreaming) {
@@ -14277,14 +14352,15 @@ var HttpBindingProtocol = class extends HttpProtocol {
           if (isEventStream) {
             throw new Error("serialization of event streams is not yet implemented");
           } else {
-            payload = inputMember;
+            payload = inputMemberValue;
           }
         } else {
-          serializer.write(memberNs, inputMember);
+          serializer.write(memberNs, inputMemberValue);
           payload = serializer.flush();
         }
+        delete input[memberName];
       } else if (memberTraits.httpLabel) {
-        serializer.write(memberNs, inputMember);
+        serializer.write(memberNs, inputMemberValue);
         const replacement = serializer.flush();
         if (request.path.includes(`{${memberName}+}`)) {
           request.path = request.path.replace(
@@ -14294,27 +14370,27 @@ var HttpBindingProtocol = class extends HttpProtocol {
         } else if (request.path.includes(`{${memberName}}`)) {
           request.path = request.path.replace(`{${memberName}}`, extendedEncodeURIComponent(replacement));
         }
-        delete _input[memberName];
+        delete input[memberName];
       } else if (memberTraits.httpHeader) {
-        serializer.write(memberNs, inputMember);
+        serializer.write(memberNs, inputMemberValue);
         headers[memberTraits.httpHeader.toLowerCase()] = String(serializer.flush());
-        delete _input[memberName];
+        delete input[memberName];
       } else if (typeof memberTraits.httpPrefixHeaders === "string") {
-        for (const [key, val] of Object.entries(inputMember)) {
+        for (const [key, val] of Object.entries(inputMemberValue)) {
           const amalgam = memberTraits.httpPrefixHeaders + key;
           serializer.write([memberNs.getValueSchema(), { httpHeader: amalgam }], val);
           headers[amalgam.toLowerCase()] = serializer.flush();
         }
-        delete _input[memberName];
+        delete input[memberName];
       } else if (memberTraits.httpQuery || memberTraits.httpQueryParams) {
-        this.serializeQuery(memberNs, inputMember, query);
-        delete _input[memberName];
+        this.serializeQuery(memberNs, inputMemberValue, query);
+        delete input[memberName];
       } else {
         hasNonHttpBindingMember = true;
       }
     }
     if (hasNonHttpBindingMember && input) {
-      serializer.write(schema, _input);
+      serializer.write(schema, input);
       payload = serializer.flush();
     }
     request.headers = headers;
@@ -15071,12 +15147,24 @@ var Schema = class {
 };
 
 // src/submodules/schema/schemas/ListSchema.ts
-var ListSchema = class extends Schema {
+var ListSchema = class _ListSchema extends Schema {
   constructor(name, traits, valueSchema) {
     super(name, traits);
     this.name = name;
     this.traits = traits;
     this.valueSchema = valueSchema;
+    this.symbol = _ListSchema.symbol;
+  }
+  static {
+    this.symbol = Symbol.for("@smithy/core/schema::ListSchema");
+  }
+  static [Symbol.hasInstance](lhs) {
+    const isPrototype = _ListSchema.prototype.isPrototypeOf(lhs);
+    if (!isPrototype && typeof lhs === "object" && lhs !== null) {
+      const list2 = lhs;
+      return list2.symbol === _ListSchema.symbol;
+    }
+    return isPrototype;
   }
 };
 function list(namespace, name, traits = {}, valueSchema) {
@@ -15090,13 +15178,25 @@ function list(namespace, name, traits = {}, valueSchema) {
 }
 
 // src/submodules/schema/schemas/MapSchema.ts
-var MapSchema = class extends Schema {
+var MapSchema = class _MapSchema extends Schema {
   constructor(name, traits, keySchema, valueSchema) {
     super(name, traits);
     this.name = name;
     this.traits = traits;
     this.keySchema = keySchema;
     this.valueSchema = valueSchema;
+    this.symbol = _MapSchema.symbol;
+  }
+  static {
+    this.symbol = Symbol.for("@smithy/core/schema::MapSchema");
+  }
+  static [Symbol.hasInstance](lhs) {
+    const isPrototype = _MapSchema.prototype.isPrototypeOf(lhs);
+    if (!isPrototype && typeof lhs === "object" && lhs !== null) {
+      const map2 = lhs;
+      return map2.symbol === _MapSchema.symbol;
+    }
+    return isPrototype;
   }
 };
 function map(namespace, name, traits = {}, keySchema, valueSchema) {
@@ -15127,17 +15227,29 @@ function op(namespace, name, traits = {}, input, output) {
 }
 
 // src/submodules/schema/schemas/StructureSchema.ts
-var StructureSchema = class extends Schema {
+var StructureSchema = class _StructureSchema extends Schema {
   constructor(name, traits, memberNames, memberList) {
     super(name, traits);
     this.name = name;
     this.traits = traits;
     this.memberNames = memberNames;
     this.memberList = memberList;
+    this.symbol = _StructureSchema.symbol;
     this.members = {};
     for (let i = 0; i < memberNames.length; ++i) {
       this.members[memberNames[i]] = Array.isArray(memberList[i]) ? memberList[i] : [memberList[i], 0];
     }
+  }
+  static {
+    this.symbol = Symbol.for("@smithy/core/schema::StructureSchema");
+  }
+  static [Symbol.hasInstance](lhs) {
+    const isPrototype = _StructureSchema.prototype.isPrototypeOf(lhs);
+    if (!isPrototype && typeof lhs === "object" && lhs !== null) {
+      const struct2 = lhs;
+      return struct2.symbol === _StructureSchema.symbol;
+    }
+    return isPrototype;
   }
 };
 function struct(namespace, name, traits, memberNames, memberList) {
@@ -15147,7 +15259,7 @@ function struct(namespace, name, traits, memberNames, memberList) {
 }
 
 // src/submodules/schema/schemas/ErrorSchema.ts
-var ErrorSchema = class extends StructureSchema {
+var ErrorSchema = class _ErrorSchema extends StructureSchema {
   constructor(name, traits, memberNames, memberList, ctor) {
     super(name, traits, memberNames, memberList);
     this.name = name;
@@ -15155,6 +15267,18 @@ var ErrorSchema = class extends StructureSchema {
     this.memberNames = memberNames;
     this.memberList = memberList;
     this.ctor = ctor;
+    this.symbol = _ErrorSchema.symbol;
+  }
+  static {
+    this.symbol = Symbol.for("@smithy/core/schema::ErrorSchema");
+  }
+  static [Symbol.hasInstance](lhs) {
+    const isPrototype = _ErrorSchema.prototype.isPrototypeOf(lhs);
+    if (!isPrototype && typeof lhs === "object" && lhs !== null) {
+      const err = lhs;
+      return err.symbol === _ErrorSchema.symbol;
+    }
+    return isPrototype;
   }
 };
 function error(namespace, name, traits = {}, memberNames, memberList, ctor) {
@@ -15196,12 +15320,24 @@ var SCHEMA = {
 };
 
 // src/submodules/schema/schemas/SimpleSchema.ts
-var SimpleSchema = class extends Schema {
+var SimpleSchema = class _SimpleSchema extends Schema {
   constructor(name, schemaRef, traits) {
     super(name, traits);
     this.name = name;
     this.schemaRef = schemaRef;
     this.traits = traits;
+    this.symbol = _SimpleSchema.symbol;
+  }
+  static {
+    this.symbol = Symbol.for("@smithy/core/schema::SimpleSchema");
+  }
+  static [Symbol.hasInstance](lhs) {
+    const isPrototype = _SimpleSchema.prototype.isPrototypeOf(lhs);
+    if (!isPrototype && typeof lhs === "object" && lhs !== null) {
+      const sim2 = lhs;
+      return sim2.symbol === _SimpleSchema.symbol;
+    }
+    return isPrototype;
   }
 };
 function sim(namespace, name, schemaRef, traits) {
@@ -15219,6 +15355,7 @@ var NormalizedSchema = class _NormalizedSchema {
   constructor(ref, memberName) {
     this.ref = ref;
     this.memberName = memberName;
+    this.symbol = _NormalizedSchema.symbol;
     const traitStack = [];
     let _ref = ref;
     let schema = ref;
@@ -15258,9 +15395,22 @@ var NormalizedSchema = class _NormalizedSchema {
     this.name = (typeof this.schema === "object" ? this.schema?.name : void 0) ?? this.memberName ?? this.getSchemaName();
     if (this._isMemberSchema && !memberName) {
       throw new Error(
-        `@smithy/core/schema - NormalizedSchema member schema ${this.getName(true)} must initialize with memberName argument.`
+        `@smithy/core/schema - NormalizedSchema member schema ${this.getName(
+          true
+        )} must initialize with memberName argument.`
       );
     }
+  }
+  static {
+    this.symbol = Symbol.for("@smithy/core/schema::NormalizedSchema");
+  }
+  static [Symbol.hasInstance](lhs) {
+    const isPrototype = _NormalizedSchema.prototype.isPrototypeOf(lhs);
+    if (!isPrototype && typeof lhs === "object" && lhs !== null) {
+      const ns = lhs;
+      return ns.symbol === _NormalizedSchema.symbol;
+    }
+    return isPrototype;
   }
   /**
    * Static constructor that attempts to avoid wrapping a NormalizedSchema within another.
@@ -16826,11 +16976,11 @@ var FetchHttpHandler = class _FetchHttpHandler {
   }
   destroy() {
   }
-  async handle(request, { abortSignal } = {}) {
+  async handle(request, { abortSignal, requestTimeout: requestTimeout2 } = {}) {
     if (!this.config) {
       this.config = await this.configProvider;
     }
-    const requestTimeoutInMs = this.config.requestTimeout;
+    const requestTimeoutInMs = requestTimeout2 ?? this.config.requestTimeout;
     const keepAlive = this.config.keepAlive === true;
     const credentials = this.config.credentials;
     if (abortSignal?.aborted) {
@@ -17340,6 +17490,9 @@ var createConfigValueProvider = /* @__PURE__ */ __name((configKey, canonicalEndp
   }
   if (configKey === "endpoint" || canonicalEndpointParamKey === "endpoint") {
     return async () => {
+      if (config.isCustomEndpoint === false) {
+        return void 0;
+      }
       const endpoint = await configProvider();
       if (endpoint && typeof endpoint === "object") {
         if ("url" in endpoint) {
@@ -17373,7 +17526,7 @@ var toEndpointV1 = /* @__PURE__ */ __name((endpoint) => {
 
 // src/adaptors/getEndpointFromInstructions.ts
 var getEndpointFromInstructions = /* @__PURE__ */ __name(async (commandInput, instructionsSupplier, clientConfig, context) => {
-  if (!clientConfig.endpoint) {
+  if (!clientConfig.isCustomEndpoint) {
     let endpointFromConfig;
     if (clientConfig.serviceConfiguredEndpoint) {
       endpointFromConfig = await clientConfig.serviceConfiguredEndpoint();
@@ -17430,7 +17583,7 @@ var endpointMiddleware = /* @__PURE__ */ __name(({
   instructions
 }) => {
   return (next, context) => async (args) => {
-    if (config.endpoint) {
+    if (config.isCustomEndpoint) {
       (0, import_core.setFeature)(context, "ENDPOINT_OVERRIDE", "N");
     }
     const endpoint = await getEndpointFromInstructions(
