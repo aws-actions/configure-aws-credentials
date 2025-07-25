@@ -18826,7 +18826,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
     this.config?.httpAgent?.destroy();
     this.config?.httpsAgent?.destroy();
   }
-  async handle(request, { abortSignal } = {}) {
+  async handle(request, { abortSignal, requestTimeout } = {}) {
     if (!this.config) {
       this.config = await this.configProvider;
     }
@@ -18927,8 +18927,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           abortSignal.onabort = onAbort;
         }
       }
+      const effectiveRequestTimeout = requestTimeout ?? this.config.requestTimeout;
       timeouts.push(setConnectionTimeout(req, reject, this.config.connectionTimeout));
-      timeouts.push(setSocketTimeout(req, reject, this.config.requestTimeout));
+      timeouts.push(setSocketTimeout(req, reject, effectiveRequestTimeout));
       const httpAgent = nodeHttpsOptions.agent;
       if (typeof httpAgent === "object" && "keepAlive" in httpAgent) {
         timeouts.push(
@@ -18940,7 +18941,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           })
         );
       }
-      writeRequestBodyPromise = writeRequestBody(req, request, this.config.requestTimeout).catch((e) => {
+      writeRequestBodyPromise = writeRequestBody(req, request, effectiveRequestTimeout).catch((e) => {
         timeouts.forEach(timing.clearTimeout);
         return _reject(e);
       });
@@ -19129,7 +19130,7 @@ var NodeHttp2Handler = class _NodeHttp2Handler {
   destroy() {
     this.connectionManager.destroy();
   }
-  async handle(request, { abortSignal } = {}) {
+  async handle(request, { abortSignal, requestTimeout } = {}) {
     if (!this.config) {
       this.config = await this.configProvider;
       this.connectionManager.setDisableConcurrentStreams(this.config.disableConcurrentStreams || false);
@@ -19137,7 +19138,8 @@ var NodeHttp2Handler = class _NodeHttp2Handler {
         this.connectionManager.setMaxConcurrentStreams(this.config.maxConcurrentStreams);
       }
     }
-    const { requestTimeout, disableConcurrentStreams } = this.config;
+    const { requestTimeout: configRequestTimeout, disableConcurrentStreams } = this.config;
+    const effectiveRequestTimeout = requestTimeout ?? configRequestTimeout;
     return new Promise((_resolve, _reject) => {
       let fulfilled = false;
       let writeRequestBodyPromise = void 0;
@@ -19203,10 +19205,10 @@ var NodeHttp2Handler = class _NodeHttp2Handler {
           this.connectionManager.deleteSession(authority, session);
         }
       });
-      if (requestTimeout) {
-        req.setTimeout(requestTimeout, () => {
+      if (effectiveRequestTimeout) {
+        req.setTimeout(effectiveRequestTimeout, () => {
           req.close();
-          const timeoutError = new Error(`Stream timed out because of no activity for ${requestTimeout} ms`);
+          const timeoutError = new Error(`Stream timed out because of no activity for ${effectiveRequestTimeout} ms`);
           timeoutError.name = "TimeoutError";
           rejectWithDestroy(timeoutError);
         });
@@ -19244,7 +19246,7 @@ var NodeHttp2Handler = class _NodeHttp2Handler {
           rejectWithDestroy(new Error("Unexpected error: http2 request did not get a response"));
         }
       });
-      writeRequestBodyPromise = writeRequestBody(req, request, requestTimeout);
+      writeRequestBodyPromise = writeRequestBody(req, request, effectiveRequestTimeout);
     });
   }
   updateHttpClientConfig(key, value) {
