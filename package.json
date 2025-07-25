@@ -17,7 +17,7 @@
     "@aws-sdk/credential-provider-env": "^3.844.0",
     "@biomejs/biome": "1.9.4",
     "@smithy/property-provider": "^4.0.3",
-    "@types/node": "^24.0.3",
+    "@types/node": "^24.1.0",
     "@vercel/ncc": "^0.38.3",
     "@vitest/coverage-v8": "^3.1.2",
     "aws-sdk-client-mock": "^4.1.0",
