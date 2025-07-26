@@ -70,6 +70,7 @@ export interface assumeRoleParams {
   roleDuration: number;
   roleSessionName: string;
   roleSkipSessionTagging?: boolean;
+  transitiveTagKeys?: string[];
   sourceAccountId?: string;
   roleExternalId?: string;
   webIdentityTokenFile?: string;
@@ -87,6 +88,7 @@ export async function assumeRole(params: assumeRoleParams) {
     roleDuration,
     roleSessionName,
     roleSkipSessionTagging,
+    transitiveTagKeys,
     webIdentityTokenFile,
     webIdentityToken,
     inlineSessionPolicy,
@@ -121,6 +123,8 @@ export async function assumeRole(params: assumeRoleParams) {
     core.debug(`${tags.length} role session tags are being used.`);
   }
 
+  const transitiveTagKeysArray = transitiveTagKeys?.filter((key) => tags?.some((tag) => tag.Key === key));
+
   // Calculate role ARN from name and account ID (currently only supports `aws` partition)
   let roleArn = roleToAssume;
   if (!roleArn.startsWith('arn:aws')) {
@@ -137,6 +141,7 @@ export async function assumeRole(params: assumeRoleParams) {
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDuration,
     Tags: tags ? tags : undefined,
+    TransitiveTagKeys: transitiveTagKeysArray,
     ExternalId: roleExternalId ? roleExternalId : undefined,
     Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
     PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
