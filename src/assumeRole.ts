@@ -1,6 +1,6 @@
-import assert from 'assert';
-import fs from 'fs';
-import path from 'path';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
 import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, STSClient, Tag } from '@aws-sdk/client-sts';
 import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
@@ -15,7 +15,7 @@ async function assumeRoleWithOIDC(params: AssumeRoleCommandInput, client: STSCli
       new AssumeRoleWithWebIdentityCommand({
         ...params,
         WebIdentityToken: webIdentityToken,
-      })
+      }),
     );
     return creds;
   } catch (error) {
@@ -27,10 +27,10 @@ async function assumeRoleWithWebIdentityTokenFile(
   params: AssumeRoleCommandInput,
   client: STSClient,
   webIdentityTokenFile: string,
-  workspace: string
+  workspace: string,
 ) {
   core.debug(
-    'webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.'
+    'webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.',
   );
   const webIdentityTokenFilePath = path.isAbsolute(webIdentityTokenFile)
     ? webIdentityTokenFile
@@ -46,7 +46,7 @@ async function assumeRoleWithWebIdentityTokenFile(
       new AssumeRoleWithWebIdentityCommand({
         ...params,
         WebIdentityToken: webIdentityToken,
-      })
+      }),
     );
     return creds;
   } catch (error) {
@@ -75,7 +75,7 @@ export interface assumeRoleParams {
   webIdentityTokenFile?: string;
   webIdentityToken?: string;
   inlineSessionPolicy?: string;
-  managedSessionPolicies?: any[];
+  managedSessionPolicies?: { arn: string }[];
 }
 
 export async function assumeRole(params: assumeRoleParams) {
@@ -108,8 +108,11 @@ export async function assumeRole(params: assumeRoleParams) {
     { Key: 'Actor', Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
     { Key: 'Commit', Value: GITHUB_SHA },
   ];
-  if (process.env['GITHUB_REF']) {
-    tagArray.push({ Key: 'Branch', Value: sanitizeGitHubVariables(process.env['GITHUB_REF']) });
+  if (process.env.GITHUB_REF) {
+    tagArray.push({
+      Key: 'Branch',
+      Value: sanitizeGitHubVariables(process.env.GITHUB_REF),
+    });
   }
   const tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!tags) {
@@ -123,7 +126,7 @@ export async function assumeRole(params: assumeRoleParams) {
   if (!roleArn.startsWith('arn:aws')) {
     assert(
       isDefined(sourceAccountId),
-      'Source Account ID is needed if the Role Name is provided and not the Role Arn.'
+      'Source Account ID is needed if the Role Name is provided and not the Role Arn.',
     );
     roleArn = `arn:aws:iam::${sourceAccountId}:role/${roleArn}`;
   }
@@ -139,6 +142,7 @@ export async function assumeRole(params: assumeRoleParams) {
     PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
   };
   const keys = Object.keys(commonAssumeRoleParams) as Array<keyof typeof commonAssumeRoleParams>;
+  // biome-ignore lint/complexity/noForEach: Legacy code
   keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
 
   // Instantiate STS client
@@ -147,14 +151,14 @@ export async function assumeRole(params: assumeRoleParams) {
   // Assume role using one of three methods
   if (!!webIdentityToken) {
     return assumeRoleWithOIDC(commonAssumeRoleParams, stsClient, webIdentityToken);
-  } else if (!!webIdentityTokenFile) {
+  }
+  if (!!webIdentityTokenFile) {
     return assumeRoleWithWebIdentityTokenFile(
       commonAssumeRoleParams,
       stsClient,
       webIdentityTokenFile,
-      GITHUB_WORKSPACE
+      GITHUB_WORKSPACE,
     );
-  } else {
-    return assumeRoleWithCredentials(commonAssumeRoleParams, stsClient);
   }
+  return assumeRoleWithCredentials(commonAssumeRoleParams, stsClient);
 }

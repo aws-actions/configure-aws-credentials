@@ -1,11 +1,12 @@
 {
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
+  "version": "4.2.1",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
-    "lint": "eslint .",
-    "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && copyup -E dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
-    "test": "npm run lint && jest --verbose"
+    "build": "tsc",
+    "lint": "biome check --error-on-warnings ./src",
+    "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && cpy dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
+    "test": "npm run lint && vitest run && npm run build"
   },
   "author": {
     "name": "Amazon.com, Inc. or its affiliates",
@@ -13,36 +14,26 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.515.0",
-    "@smithy/property-provider": "^3.1.3",
-    "@jest/globals": "^29.7.0",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^22",
-    "@typescript-eslint/eslint-plugin": "<=5.62.0",
-    "@typescript-eslint/parser": "<=5.62.0",
-    "@vercel/ncc": "^0.38.1",
-    "aws-sdk-client-mock": "^4.0.1",
-    "copyfiles": "^2.4.1",
-    "del-cli": "^5.1.0",
-    "eslint": "^8",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-import-resolver-node": "^0.3.6",
-    "eslint-import-resolver-typescript": "^3.6.1",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-prettier": "^5.2.1",
-    "jest": "^29.7.0",
-    "jest-junit": "^16",
+    "@aws-sdk/credential-provider-env": "^3.844.0",
+    "@biomejs/biome": "1.9.4",
+    "@smithy/property-provider": "^4.0.3",
+    "@types/node": "^24.0.3",
+    "@vercel/ncc": "^0.38.3",
+    "@vitest/coverage-v8": "^3.1.2",
+    "aws-sdk-client-mock": "^4.1.0",
+    "cpy-cli": "^5.0.0",
+    "del-cli": "^6.0.0",
     "json-schema": "^0.4.0",
-    "prettier": "^3.3.3",
-    "standard-version": "^9",
-    "ts-jest": "^29.2.4",
-    "typescript": "^5.5.4"
+    "memfs": "^4.17.2",
+    "standard-version": "^9.5.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
   },
   "dependencies": {
-    "@actions/core": "^1.10.1",
-    "@aws-sdk/client-sts": "^3",
-    "@smithy/node-http-handler": "^3.1.4",
-    "https-proxy-agent": "^5.0.0"
+    "@actions/core": "^1.11.1",
+    "@aws-sdk/client-sts": "^3.840.0",
+    "@smithy/node-http-handler": "^4.1.0",
+    "https-proxy-agent": "^5.0.1"
   },
   "keywords": [
     "aws",
@@ -55,7 +46,6 @@
   "main": "build/index.js",
   "license": "MIT",
   "homepage": "https://github.com/aws-actions/configure-aws-credentials",
-  "version": "0.0.0",
   "bugs": {
     "url": "https://github.com/aws-actions/configure-aws-credentials/issues"
   },

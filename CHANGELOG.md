@@ -2,6 +2,63 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.2.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.0...v4.2.1) (2025-05-14)
+
+
+### Bug Fixes
+
+* ensure explicit inputs take precedence over environment variables ([e56e6c4](https://github.com/aws-actions/configure-aws-credentials/commit/e56e6c4038915cd5a7238a671fe97f44c98a40b0))
+* prioritize explicit inputs over environment variables ([df9c8fe](https://github.com/aws-actions/configure-aws-credentials/commit/df9c8fed6b364f0d1fb0e6e03a0ec26f1ea4e3fc))
+
+## [4.2.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.1.0...v4.2.0) (2025-05-06)
+
+
+### Features
+
+* add Expiration field to Outputs ([a4f3267](https://github.com/aws-actions/configure-aws-credentials/commit/a4f326760c1c1bf49ab86051c658d6501816b930))
+* Document role-duration-seconds range ([5a0cf01](https://github.com/aws-actions/configure-aws-credentials/commit/5a0cf0167f837dfa7af7d951ba6a78a38dc2b79e))
+* support action inputs as environment variables ([#1338](https://github.com/aws-actions/configure-aws-credentials/issues/1338)) ([2c168ad](https://github.com/aws-actions/configure-aws-credentials/commit/2c168adcae62d67531ba83842723c8f30695116a))
+
+
+### Bug Fixes
+
+* make sure action builds, also fix dependabot autoapprove ([c401b8a](https://github.com/aws-actions/configure-aws-credentials/commit/c401b8a98c5067672f52e0387cdd87d54acfe1fd))
+* role chaning on mulitple runs ([#1340](https://github.com/aws-actions/configure-aws-credentials/issues/1340)) ([9e38641](https://github.com/aws-actions/configure-aws-credentials/commit/9e386419117a9edd458297e4f1822a5df7506a03))
+
+## [4.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.3...v4.1.0) (2025-02-08)
+
+
+### Features
+
+* idempotent fetch ([#1289](https://github.com/aws-actions/configure-aws-credentials/issues/1289)) ([eb70354](https://github.com/aws-actions/configure-aws-credentials/commit/eb70354fb423a380b6e4ab4b9f15d2ee9ffae911))
+
+
+### Bug Fixes
+
+* build failure due to tests ([#1283](https://github.com/aws-actions/configure-aws-credentials/issues/1283)) ([134d71e](https://github.com/aws-actions/configure-aws-credentials/commit/134d71efe0ecbe9ad6965f2f766c0cae63a7685f))
+* Dependabot autoapprove ([#1284](https://github.com/aws-actions/configure-aws-credentials/issues/1284)) ([b9ee51d](https://github.com/aws-actions/configure-aws-credentials/commit/b9ee51dc600fe38c892e24f60ca26476e0e0b6de))
+* Dependabot autoapprove id-token write permission ([#1285](https://github.com/aws-actions/configure-aws-credentials/issues/1285)) ([f0af89b](https://github.com/aws-actions/configure-aws-credentials/commit/f0af89b102390dcf10ce402195d74a98f24861f3))
+* typo ([#1281](https://github.com/aws-actions/configure-aws-credentials/issues/1281)) ([39fd91c](https://github.com/aws-actions/configure-aws-credentials/commit/39fd91c08ed8bf770034de4e62662503e8007d76))
+
+## [4.0.3](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.2...v4.0.3) (2025-01-27)
+
+
+### Features
+
+* added release-please action config ([0f88004](https://github.com/aws-actions/configure-aws-credentials/commit/0f88004d9c27e0bdbbc254b3f7c8053cb38f04d7))
+
+
+### Bug Fixes
+
+* add id-token permission to automerge ([97834a4](https://github.com/aws-actions/configure-aws-credentials/commit/97834a484a5ab3c40fa9e2eb40fcf8041105a573))
+* cpy syntax on npm package ([#1195](https://github.com/aws-actions/configure-aws-credentials/issues/1195)) ([83b5a56](https://github.com/aws-actions/configure-aws-credentials/commit/83b5a565471214aec459e234bef606339fe07111))
+* force push packaged files to main ([bfd2185](https://github.com/aws-actions/configure-aws-credentials/commit/bfd218503eb87938c29603a551e19c6b594f5fe5))
+
+
+### Miscellaneous Chores
+
+* release 4.0.3 ([ca00fd4](https://github.com/aws-actions/configure-aws-credentials/commit/ca00fd4d3842ad58c3c21ebfe69defa1f0e7bdc4))
+
 ## [4.0.2](https://github.com/aws-actions/configure-aws-credentials/compare/v4.0.1...v4.0.2) (2024-02-09)
 
 * Revert 4.0.1 to remove warning

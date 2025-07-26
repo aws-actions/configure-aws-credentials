@@ -61,6 +61,10 @@ inputs:
   output-credentials:
     description: Whether to set credentials as step output
     required: false
+  output-env-credentials:
+    description: Whether to export credentials as environment variables. If you set this to false, you probably want to use output-credentials.
+    required: false
+    default: true
   unset-current-credentials:
     description: Whether to unset the existing credentials in your runner. May be useful if you run this action multiple times in the same job
     required: false
@@ -73,6 +77,8 @@ inputs:
   special-characters-workaround:
     description: Some environments do not support special characters in AWS_SECRET_ACCESS_KEY. This option will retry fetching credentials until the secret access key does not contain special characters. This option overrides disable-retry and retry-max-attempts. This option is disabled by default
     required: false
+  use-existing-credentials:
+    description: When enabled, this option will check if there are already valid credentials in the environment. If there are, new credentials will not be fetched. If there are not, the action will run as normal.
 outputs:
   aws-account-id:
     description: The AWS account ID for the provided credentials
@@ -82,3 +88,5 @@ outputs:
     description: The AWS secret access key for the provided credentials
   aws-session-token:
     description: The AWS session token for the provided credentials
+  aws-expiration:
+    description: The expiration time for the provided credentials

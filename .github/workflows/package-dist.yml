@@ -39,7 +39,7 @@ jobs:
         with:
           parse-json-secrets: true
           secret-ids: |
-            OSDS,arn:aws:secretsmanager:us-west-2:206735643321:secret:github-aws-sdk-osds-automation-gebs9n
+            ${{ secrets.OSDS_PACKAGING_ROLE }}
       - name: Commit
         run: |
           echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}"
@@ -48,4 +48,4 @@ jobs:
           git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
           git add dist
           git commit -m "chore: Update dist" || echo "No changes to commit"
-          git push origin
+          git push --force origin

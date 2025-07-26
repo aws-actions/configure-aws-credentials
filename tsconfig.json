@@ -7,14 +7,13 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "module": "CommonJS",
     "resolveJsonModule": true,
     "outDir": "build",
-    "declaration": true,
+    "declaration": false,
     "newLine": "lf",
     "noEmitOnError": true,
     "sourceMap": true,
@@ -23,12 +22,14 @@
     "lib": [ "ES2020" ],
     "target": "ES2020",
     "noErrorTruncation": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "rootDir": "src",
   },
   "include": [
-    "src/**/*.ts",
+    "src/**/*.ts"
+  ],
+  "exclude": [
     "test/**/*.ts"
   ],
-  "exclude": [],
 }
 
