@@ -1,6 +1,6 @@
 Configure AWS Credentials
 =========================
-Autenticate to AWS in GitHub Actions! Works especially well with [AWS Secrets
+Authenticate to AWS in GitHub Actions! Works especially well with [AWS Secrets
 Manager](https://github.com/aws-actions/aws-secretsmanager-get-secrets).
 
 Quick Start (OIDC, recommended)
