@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup } from '../src/cleanup';
 import * as core from '@actions/core';
-import { mockClient } from 'aws-sdk-client-mock';
 import { STSClient } from '@aws-sdk/client-sts';
+import { mockClient } from 'aws-sdk-client-mock';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup } from '../src/cleanup';
 import mocks from './mockinputs.test';
 
 const mockedSTSClient = mockClient(STSClient);
@@ -49,5 +49,5 @@ describe('Configure AWS Credentials cleanup', {}, () => {
     vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
     cleanup();
     expect(core.exportVariable).toHaveBeenCalledTimes(0);
-  })
+  });
 });
