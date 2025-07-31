@@ -207,7 +207,6 @@ async function assumeRole(params) {
         PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
     };
     const keys = Object.keys(commonAssumeRoleParams);
-    // biome-ignore lint/complexity/noForEach: Legacy code
     keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
     // Instantiate STS client
     const stsClient = credentialsClient.stsClient;
@@ -429,7 +428,6 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
         }
         // It's retryable, so sleep and retry.
         await sleep(Math.random() * (2 ** retries * base));
-        // biome-ignore lint/style/noParameterAssign: This is a loop variable
         retries += 1;
         if (retries >= maxRetries) {
             throw err;
@@ -503,8 +501,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const core = __importStar(__nccwpck_require__(7484));
-const CredentialsClient_1 = __nccwpck_require__(8234);
 const assumeRole_1 = __nccwpck_require__(6993);
+const CredentialsClient_1 = __nccwpck_require__(8234);
 const helpers_1 = __nccwpck_require__(2918);
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
 const ROLE_SESSION_NAME = 'GitHubActions';
