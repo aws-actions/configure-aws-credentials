@@ -27,7 +27,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
     vi.spyOn(core, 'setOutput').mockImplementation(() => {});
     vi.spyOn(core, 'setSecret').mockImplementation(() => {});
     vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
-    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) }, true);
+    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) }, true, true);
     expect(core.setOutput).toHaveBeenCalledTimes(4);
     expect(core.setSecret).toHaveBeenCalledTimes(3);
     expect(core.exportVariable).toHaveBeenCalledTimes(3);
@@ -41,5 +41,16 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(process.env.AWS_REGION).toBeUndefined;
     expect(process.env.AWS_DEFAULT_REGION).toBeUndefined;
     process.env = env;
+  });
+  it(`won't output credentials to env if told not to`, {}, () => {
+    vi.spyOn(core, 'setOutput').mockImplementation(() => {});
+    vi.spyOn(core, 'setSecret').mockImplementation(() => {});
+    vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
+    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) }, true, false);
+    helpers.unsetCredentials(false);
+    helpers.exportRegion('fake-test-region', false);
+    expect(core.setOutput).toHaveBeenCalledTimes(4);
+    expect(core.setSecret).toHaveBeenCalledTimes(3);
+    expect(core.exportVariable).toHaveBeenCalledTimes(0);
   });
 });
