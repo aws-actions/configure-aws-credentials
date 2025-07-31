@@ -21,7 +21,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
-          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.CONFIGUREAWSCREDENTIALSPACKAGEROLEARN }}
           role-duration-seconds: 900
       - name: Get bot user token
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
