@@ -1,17 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as core from '@actions/core';
 import {
   AssumeRoleCommand,
   AssumeRoleWithWebIdentityCommand,
   GetCallerIdentityCommand,
   STSClient,
 } from '@aws-sdk/client-sts';
-import { fs, vol } from 'memfs';
-import * as core from '@actions/core';
-import mocks from './mockinputs.test';
 import { mockClient } from 'aws-sdk-client-mock';
-import { run } from '../src/index';
+import { fs, vol } from 'memfs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialsClient } from '../src/CredentialsClient';
-import { before } from 'node:test';
+import { run } from '../src/index';
+import mocks from './mockinputs.test';
 
 const mockedSTSClient = mockClient(STSClient);
 
@@ -300,19 +299,19 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
-    it('gets new creds if told to reuse existing but they\'re invalid', {}, async () => {
+    it("gets new creds if told to reuse existing but they're invalid", {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).rejects();
       await run();
-      expect(core.notice).toHaveBeenCalledWith('No valid credentials exist. Running as normal.')
+      expect(core.notice).toHaveBeenCalledWith('No valid credentials exist. Running as normal.');
     });
-    it('doesn\'t get new creds if there are already valid ones and we said use them', {}, async () => {
+    it("doesn't get new creds if there are already valid ones and we said use them", {}, async () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolves(mocks.outputs.GET_CALLER_IDENTITY);
       await run();
       expect(core.setFailed).not.toHaveBeenCalled();
-    })
-    it('doesn\'t export credentials as environment variables if told not to', {}, async () => {
+    });
+    it("doesn't export credentials as environment variables if told not to", {}, async () => {
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
       vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
@@ -321,7 +320,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setSecret).toHaveBeenCalledTimes(3);
       expect(core.exportVariable).toHaveBeenCalledTimes(0);
       expect(core.setFailed).not.toHaveBeenCalled();
-    })
+    });
     it('can export creds as step outputs without exporting as env variables', {}, async () => {
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.STEP_BUT_NO_ENV_INPUTS));
@@ -332,6 +331,6 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.exportVariable).toHaveBeenCalledTimes(0);
       expect(core.setOutput).toHaveBeenCalledTimes(4);
       expect(core.setFailed).not.toHaveBeenCalled();
-    })
+    });
   });
 });
