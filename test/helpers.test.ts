@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import * as helpers from '../src/helpers';
+import { beforeEach } from 'node:test';
 import * as core from '@actions/core';
-import { before, beforeEach } from 'node:test';
+import { describe, expect, it, vi } from 'vitest';
+import * as helpers from '../src/helpers';
 
 describe('Configure AWS Credentials helpers', {}, () => {
   beforeEach(() => {
@@ -27,7 +27,11 @@ describe('Configure AWS Credentials helpers', {}, () => {
     vi.spyOn(core, 'setOutput').mockImplementation(() => {});
     vi.spyOn(core, 'setSecret').mockImplementation(() => {});
     vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
-    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) }, true, true);
+    helpers.exportCredentials(
+      { AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) },
+      true,
+      true,
+    );
     expect(core.setOutput).toHaveBeenCalledTimes(4);
     expect(core.setSecret).toHaveBeenCalledTimes(3);
     expect(core.exportVariable).toHaveBeenCalledTimes(3);
@@ -46,7 +50,11 @@ describe('Configure AWS Credentials helpers', {}, () => {
     vi.spyOn(core, 'setOutput').mockImplementation(() => {});
     vi.spyOn(core, 'setSecret').mockImplementation(() => {});
     vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
-    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) }, true, false);
+    helpers.exportCredentials(
+      { AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) },
+      true,
+      false,
+    );
     helpers.unsetCredentials(false);
     helpers.exportRegion('fake-test-region', false);
     expect(core.setOutput).toHaveBeenCalledTimes(4);

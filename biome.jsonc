@@ -4,18 +4,18 @@
     "lineWidth": 120,
     "indentWidth": 2,
     "lineEnding": "lf",
-    "enabled": true,
+    "enabled": true
   },
   "linter": {
     "enabled": true,
     "rules": {
       "performance": {
-        "noDelete": "off",
+        "noDelete": "off"
       },
       "complexity": {
-        "noExtraBooleanCast": "off",
+        "noExtraBooleanCast": "off"
       }
-    },
+    }
   },
   "javascript": {
     "formatter": {
@@ -23,12 +23,12 @@
       "jsxQuoteStyle": "double",
       "quoteStyle": "single",
       "bracketSpacing": true,
-      "arrowParentheses": "always",
-    },
+      "arrowParentheses": "always"
+    }
   },
   "json": {
     "formatter": {
-      "trailingCommas": "all",
-    },
-  },
+      "trailingCommas": "none"
+    }
+  }
 }
