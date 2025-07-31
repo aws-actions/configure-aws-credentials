@@ -1,2 +1,2 @@
-const { fs } = require('memfs')
-module.exports = fs
+const { fs } = require('memfs');
+module.exports = fs;

@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import type { AssumeRoleCommandOutput } from '@aws-sdk/client-sts';
-import { CredentialsClient } from './CredentialsClient';
 import { assumeRole } from './assumeRole';
+import { CredentialsClient } from './CredentialsClient';
 import {
   areCredentialsValid,
   errorMessage,
