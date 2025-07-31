@@ -48178,7 +48178,6 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
         }
         // It's retryable, so sleep and retry.
         await sleep(Math.random() * (2 ** retries * base));
-        // biome-ignore lint/style/noParameterAssign: This is a loop variable
         retries += 1;
         if (retries >= maxRetries) {
             throw err;
