@@ -333,4 +333,81 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
+
+  describe('HTTP Proxy Configuration', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+    });
+
+    it('configures proxy from http-proxy input', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://proxy.example.com:8080'
+        })
+      );
+      
+      await run();
+      
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('configures proxy from HTTP_PROXY environment variable', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      process.env.HTTP_PROXY = 'http://proxy.example.com:8080';
+      
+      await run();
+      
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('configures proxy from HTTPS_PROXY environment variable', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      process.env.HTTPS_PROXY = 'https://proxy.example.com:8080';
+      
+      await run();
+      
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('prioritizes http-proxy input over environment variables', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      process.env.HTTP_PROXY = 'http://env-proxy.example.com:8080';
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://input-proxy.example.com:8080'
+        })
+      );
+      
+      await run();
+      
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('properly configures proxy agent in STS client', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://proxy.example.com:8080'
+        })
+      );
+      
+      await run();
+      
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+  });
 });
