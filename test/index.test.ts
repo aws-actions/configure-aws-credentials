@@ -47,7 +47,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
       expect(core.info).toHaveBeenCalledTimes(2);
       expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
-      expect(core.setOutput).toHaveBeenCalledOnce();
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
@@ -71,7 +71,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
       expect(core.info).toHaveBeenCalledTimes(3);
       expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
-      expect(core.setOutput).toHaveBeenCalledOnce();
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
@@ -106,7 +106,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setSecret).toHaveBeenCalledWith('MYAWSSECRETACCESSKEY');
       expect(core.setSecret).toHaveBeenCalledTimes(2);
       expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
-      expect(core.setOutput).toHaveBeenCalledOnce();
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
       expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
       expect(core.info).toHaveBeenCalledOnce();
       expect(core.setFailed).not.toHaveBeenCalled();
@@ -140,7 +140,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setSecret).toHaveBeenCalledWith('MYAWSSECRETACCESSKEY');
       expect(core.setSecret).toHaveBeenCalledTimes(5);
       expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
-      expect(core.setOutput).toHaveBeenCalledTimes(2);
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
       expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
       expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
       expect(core.info).toHaveBeenCalledTimes(2);
@@ -173,7 +173,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
       expect(core.setSecret).toHaveBeenCalledTimes(3);
       expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
-      expect(core.setOutput).toHaveBeenCalledTimes(1);
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
       expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
@@ -204,7 +204,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
       expect(core.setSecret).toHaveBeenCalledTimes(3);
       expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
-      expect(core.setOutput).toHaveBeenCalledTimes(2);
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
       expect(core.setFailed).not.toHaveBeenCalled();
     });
     it('exports environment variables from inputs', {}, async () => {
@@ -237,7 +237,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
       expect(core.setSecret).toHaveBeenCalledTimes(6);
       expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
-      expect(core.setOutput).toHaveBeenCalledTimes(2);
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
       expect(core.setFailed).not.toHaveBeenCalled();
     });
   });

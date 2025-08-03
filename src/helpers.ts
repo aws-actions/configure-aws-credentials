@@ -113,13 +113,16 @@ export async function exportAccountId(credentialsClient: CredentialsClient, mask
   const client = credentialsClient.stsClient;
   const identity = await client.send(new GetCallerIdentityCommand({}));
   const accountId = identity.Account;
-  if (!accountId) {
-    throw new Error('Could not get Account ID from STS. Did you set credentials?');
+  const arn = identity.Arn;
+  if (!accountId || !arn) {
+    throw new Error('Could not get Account ID or ARN from STS. Did you set credentials?');
   }
   if (maskAccountId) {
     core.setSecret(accountId);
+    core.setSecret(arn);
   }
   core.setOutput('aws-account-id', accountId);
+  core.setOutput('authenticated-arn', arn);
   return accountId;
 }
 
