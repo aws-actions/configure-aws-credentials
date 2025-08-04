@@ -144,7 +144,7 @@ See [action.yml](./action.yml) for more detail.
 | transitive-tag-keys       | Define a list of transitive tag keys to pass when assuming a role.                                |    No    |
 | inline-session-policy     | You may further restrict the assumed role policy by defining an inline policy here.               |    No    |
 | managed-session-policies  | You may further restrict the assumed role policy by specifying a managed policy here.             |    No    |
-| output-credentials        | When set, outputs fetched credentials as action step output. (Outputs aws-access-key-id, aws-secret-access-key, aws-session-token, aws-account-id, and aws-expiration). Defaults to false.                   |    No    |
+| output-credentials        | When set, outputs fetched credentials as action step output. (Outputs aws-access-key-id, aws-secret-access-key, aws-session-token, aws-account-id, authenticated-arn, and aws-expiration). Defaults to false.                   |    No    |
 | output-env-credentials       | When set, outputs fetched credentials as environment variables (AWS_REGION, AWS_DEFAULT_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN). Defaults to true. Set to false if you need to avoid setting/changing env variables. You'd probably want to use output-credentials if you disable this. (NOTE: Setting to false will prevent the aws-account-id from being exported as a step output). |    No    |
 | unset-current-credentials | When set, attempts to unset any existing credentials in your action runner.                       |    No    |
 | disable-retry             | Disabled retry/backoff logic for assume role calls. By default, retries are enabled.              |    No    |
@@ -179,7 +179,7 @@ this action will always consider the `HTTP_PROXY` environment variable.
 
 Manually configured proxy:
 ```yaml
-uses: aws-actions/configure-aws-credentials@v4.2.1
+uses: aws-actions/configure-aws-credentials@v4.3.0
 with:
   aws-region: us-east-2
   role-to-assume: my-github-actions-role
@@ -262,13 +262,13 @@ line.
 <summary>Inline session policy examples</summary>
 
 ```yaml
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
          inline-session-policy: '{"Version":"2012-10-17","Statement":[{"Sid":"Stmt1","Effect":"Allow","Action":"s3:List*","Resource":"*"}]}'
 ```
 Or we can have a nicely formatted JSON as well:
 ```yaml
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
          inline-session-policy: >-
           {
@@ -294,13 +294,13 @@ the role.
 <summary>Managed session policy examples</summary>
 
 ```yaml
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
          managed-session-policies: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
 ```
 And we can pass multiple managed policies likes this:
 ```yaml
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
          managed-session-policies: |
           arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
@@ -338,7 +338,7 @@ You can specify the audience through the `audience` input:
 
 ```yaml
     - name: Configure AWS Credentials for China region audience
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
         audience: sts.amazonaws.com.cn
         aws-region: cn-northwest-1
@@ -412,7 +412,7 @@ Examples
 ### AssumeRoleWithWebIdentity
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -426,13 +426,13 @@ environment variable and use it to assume the role
 ### AssumeRole with role previously assumed by action in same workflow
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
         role-session-name: MySessionName
     - name: Configure other AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::987654321000:role/my-second-role
@@ -447,7 +447,7 @@ role, `arn:aws:iam::987654321000:role/my-second-role`.
 ### AssumeRole with static IAM credentials in repository secrets
 ```yaml
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -466,7 +466,7 @@ name, like `role-to-assume: my-github-actions-role`.
 ```yaml
     - name: Configure AWS Credentials 1
       id: creds
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
         aws-region: us-east-2
         role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -475,7 +475,7 @@ name, like `role-to-assume: my-github-actions-role`.
       run: |
         aws sts get-caller-identity
     - name: Configure AWS Credentials 2
-      uses: aws-actions/configure-aws-credentials@v4.2.1
+      uses: aws-actions/configure-aws-credentials@v4.3.0
       with:
         aws-region: us-east-2
         aws-access-key-id: ${{ steps.creds.outputs.aws-access-key-id }}
