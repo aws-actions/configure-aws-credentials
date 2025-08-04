@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.1...v4.3.0) (2025-08-04)
+
+
+### Features
+
+* depenency update and feature cleanup ([#1414](https://github.com/aws-actions/configure-aws-credentials/issues/1414)) ([59489ba](https://github.com/aws-actions/configure-aws-credentials/commit/59489ba544930000b7b67412c167f5fe816568cf)), closes [#1062](https://github.com/aws-actions/configure-aws-credentials/issues/1062) [#1191](https://github.com/aws-actions/configure-aws-credentials/issues/1191)
+* Optional environment variable output ([c3b3ce6](https://github.com/aws-actions/configure-aws-credentials/commit/c3b3ce61b02510937ff02916a4eb153874bc5085))
+
+
+### Bug Fixes
+
+* **docs:** readme samples versioning ([5b3c895](https://github.com/aws-actions/configure-aws-credentials/commit/5b3c89504689ea1ea2b6000b23a6a2aac463662a))
+* the wrong example region for China partition in README ([37fe9a7](https://github.com/aws-actions/configure-aws-credentials/commit/37fe9a740bcb30ee8cccd96feb90666c937311f2))
+
 ## [4.2.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.0...v4.2.1) (2025-05-14)
 
 
