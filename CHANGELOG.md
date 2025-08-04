@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.0...v4.3.0) (2025-08-04)
+
+
+### Bug Fixes
+
+* properly set proxy environment variable ([cbea708](https://github.com/aws-actions/configure-aws-credentials/commit/cbea70821e4ab985ad3be0e5a93390523e257cde))
+
+
+### Miscellaneous Chores
+
+* release 4.3.0 ([3f7c218](https://github.com/aws-actions/configure-aws-credentials/commit/3f7c2187213bafaa1ea60a850b27082cbf55dda0))
+
 ## [4.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.1...v4.3.0) (2025-08-04)
 
 
