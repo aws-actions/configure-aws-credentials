@@ -30,7 +30,8 @@ export function translateEnvVariables() {
     'USE_EXISTING_CREDENTIALS',
   ];
   // Treat HTTPS_PROXY as HTTP_PROXY. Precedence is HTTPS_PROXY > HTTP_PROXY
-  process.env.HTTP_PROXY = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || undefined;
+  if (process.env.HTTPS_PROXY) process.env.HTTP_PROXY = process.env.HTTPS_PROXY;
+
   for (const envVar of envVars) {
     if (process.env[envVar]) {
       const inputKey = `INPUT_${envVar.replace(/_/g, '-')}`;
