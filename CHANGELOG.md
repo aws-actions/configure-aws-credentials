@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.0...v4.3.1) (2025-08-04)
+
+
+### Bug Fixes
+
+* update readme to 4.3.1 ([#1424](https://github.com/aws-actions/configure-aws-credentials/issues/1424)) ([be2e7ad](https://github.com/aws-actions/configure-aws-credentials/commit/be2e7ad815e27b890489a89ce2717b0f9e26b56e))
+
 ## [4.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.1...v4.3.0) (2025-08-04)
 
 
