@@ -2,18 +2,6 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [4.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.0...v4.3.0) (2025-08-04)
-
-
-### Bug Fixes
-
-* properly set proxy environment variable ([cbea708](https://github.com/aws-actions/configure-aws-credentials/commit/cbea70821e4ab985ad3be0e5a93390523e257cde))
-
-
-### Miscellaneous Chores
-
-* release 4.3.0 ([3f7c218](https://github.com/aws-actions/configure-aws-credentials/commit/3f7c2187213bafaa1ea60a850b27082cbf55dda0))
-
 ## [4.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.1...v4.3.0) (2025-08-04)
 
 
@@ -27,6 +15,12 @@ All notable changes to this project will be documented in this file. See [standa
 
 * **docs:** readme samples versioning ([5b3c895](https://github.com/aws-actions/configure-aws-credentials/commit/5b3c89504689ea1ea2b6000b23a6a2aac463662a))
 * the wrong example region for China partition in README ([37fe9a7](https://github.com/aws-actions/configure-aws-credentials/commit/37fe9a740bcb30ee8cccd96feb90666c937311f2))
+* properly set proxy environment variable ([cbea708](https://github.com/aws-actions/configure-aws-credentials/commit/cbea70821e4ab985ad3be0e5a93390523e257cde))
+
+
+### Miscellaneous Chores
+
+* release 4.3.0 ([3f7c218](https://github.com/aws-actions/configure-aws-credentials/commit/3f7c2187213bafaa1ea60a850b27082cbf55dda0))
 
 ## [4.2.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.2.0...v4.2.1) (2025-05-14)
 
