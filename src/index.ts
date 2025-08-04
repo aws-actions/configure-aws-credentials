@@ -47,7 +47,7 @@ export async function run() {
     const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
     const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
     const transitiveTagKeys = core.getMultilineInput('transitive-tag-keys', { required: false });
-    const proxyServer = core.getInput('http-proxy', { required: false });
+    const proxyServer = core.getInput('http-proxy', { required: false }) || process.env.HTTP_PROXY;
     const inlineSessionPolicy = core.getInput('inline-session-policy', {
       required: false,
     });
