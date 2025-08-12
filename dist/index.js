@@ -8847,82 +8847,6 @@ var AwsRestXmlProtocol = class extends import_protocols6.HttpBindingProtocol {
 
 /***/ }),
 
-/***/ 5606:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
-  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
-  ENV_EXPIRATION: () => ENV_EXPIRATION,
-  ENV_KEY: () => ENV_KEY,
-  ENV_SECRET: () => ENV_SECRET,
-  ENV_SESSION: () => ENV_SESSION,
-  fromEnv: () => fromEnv
-});
-module.exports = __toCommonJS(index_exports);
-
-// src/fromEnv.ts
-var import_client = __nccwpck_require__(5152);
-var import_property_provider = __nccwpck_require__(1238);
-var ENV_KEY = "AWS_ACCESS_KEY_ID";
-var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
-var ENV_SESSION = "AWS_SESSION_TOKEN";
-var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
-var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
-var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
-var fromEnv = /* @__PURE__ */ __name((init) => async () => {
-  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
-  const accessKeyId = process.env[ENV_KEY];
-  const secretAccessKey = process.env[ENV_SECRET];
-  const sessionToken = process.env[ENV_SESSION];
-  const expiry = process.env[ENV_EXPIRATION];
-  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
-  const accountId = process.env[ENV_ACCOUNT_ID];
-  if (accessKeyId && secretAccessKey) {
-    const credentials = {
-      accessKeyId,
-      secretAccessKey,
-      ...sessionToken && { sessionToken },
-      ...expiry && { expiration: new Date(expiry) },
-      ...credentialScope && { credentialScope },
-      ...accountId && { accountId }
-    };
-    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
-    return credentials;
-  }
-  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
-}, "fromEnv");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 1509:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -9222,7 +9146,7 @@ var resolveCredentialSource = /* @__PURE__ */ __name((credentialSource, profileN
     }, "Ec2InstanceMetadata"),
     Environment: /* @__PURE__ */ __name(async (options) => {
       logger?.debug("@aws-sdk/credential-provider-ini - credential_source is Environment");
-      const { fromEnv } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(5606)));
+      const { fromEnv } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(7121)));
       return async () => fromEnv(options)().then(setNamedProvider);
     }, "Environment")
   };
@@ -9434,6 +9358,82 @@ var fromIni = /* @__PURE__ */ __name((_init = {}) => async ({ callerClientConfig
 
 /***/ }),
 
+/***/ 7121:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.ts
+var index_exports = {};
+__export(index_exports, {
+  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
+  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
+  ENV_EXPIRATION: () => ENV_EXPIRATION,
+  ENV_KEY: () => ENV_KEY,
+  ENV_SECRET: () => ENV_SECRET,
+  ENV_SESSION: () => ENV_SESSION,
+  fromEnv: () => fromEnv
+});
+module.exports = __toCommonJS(index_exports);
+
+// src/fromEnv.ts
+var import_client = __nccwpck_require__(5152);
+var import_property_provider = __nccwpck_require__(1238);
+var ENV_KEY = "AWS_ACCESS_KEY_ID";
+var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+var ENV_SESSION = "AWS_SESSION_TOKEN";
+var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+var fromEnv = /* @__PURE__ */ __name((init) => async () => {
+  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+  const accessKeyId = process.env[ENV_KEY];
+  const secretAccessKey = process.env[ENV_SECRET];
+  const sessionToken = process.env[ENV_SESSION];
+  const expiry = process.env[ENV_EXPIRATION];
+  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+  const accountId = process.env[ENV_ACCOUNT_ID];
+  if (accessKeyId && secretAccessKey) {
+    const credentials = {
+      accessKeyId,
+      secretAccessKey,
+      ...sessionToken && { sessionToken },
+      ...expiry && { expiration: new Date(expiry) },
+      ...credentialScope && { credentialScope },
+      ...accountId && { accountId }
+    };
+    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
+    return credentials;
+  }
+  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+}, "fromEnv");
+// Annotate the CommonJS export names for ESM import in node:
+
+0 && (0);
+
+
+
+/***/ }),
+
 /***/ 5861:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -9478,7 +9478,7 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 
 // src/defaultProvider.ts
-var import_credential_provider_env = __nccwpck_require__(5606);
+var import_credential_provider_env = __nccwpck_require__(6153);
 
 var import_shared_ini_file_loader = __nccwpck_require__(4964);
 
@@ -9577,6 +9577,82 @@ var defaultProvider = /* @__PURE__ */ __name((init = {}) => (0, import_property_
 ), "defaultProvider");
 var credentialsWillNeedRefresh = /* @__PURE__ */ __name((credentials) => credentials?.expiration !== void 0, "credentialsWillNeedRefresh");
 var credentialsTreatedAsExpired = /* @__PURE__ */ __name((credentials) => credentials?.expiration !== void 0 && credentials.expiration.getTime() - Date.now() < 3e5, "credentialsTreatedAsExpired");
+// Annotate the CommonJS export names for ESM import in node:
+
+0 && (0);
+
+
+
+/***/ }),
+
+/***/ 6153:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.ts
+var index_exports = {};
+__export(index_exports, {
+  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
+  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
+  ENV_EXPIRATION: () => ENV_EXPIRATION,
+  ENV_KEY: () => ENV_KEY,
+  ENV_SECRET: () => ENV_SECRET,
+  ENV_SESSION: () => ENV_SESSION,
+  fromEnv: () => fromEnv
+});
+module.exports = __toCommonJS(index_exports);
+
+// src/fromEnv.ts
+var import_client = __nccwpck_require__(5152);
+var import_property_provider = __nccwpck_require__(1238);
+var ENV_KEY = "AWS_ACCESS_KEY_ID";
+var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+var ENV_SESSION = "AWS_SESSION_TOKEN";
+var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+var fromEnv = /* @__PURE__ */ __name((init) => async () => {
+  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+  const accessKeyId = process.env[ENV_KEY];
+  const secretAccessKey = process.env[ENV_SECRET];
+  const sessionToken = process.env[ENV_SESSION];
+  const expiry = process.env[ENV_EXPIRATION];
+  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+  const accountId = process.env[ENV_ACCOUNT_ID];
+  if (accessKeyId && secretAccessKey) {
+    const credentials = {
+      accessKeyId,
+      secretAccessKey,
+      ...sessionToken && { sessionToken },
+      ...expiry && { expiration: new Date(expiry) },
+      ...credentialScope && { credentialScope },
+      ...accountId && { accountId }
+    };
+    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
+    return credentials;
+  }
+  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+}, "fromEnv");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -14788,13 +14864,13 @@ function extendedEncodeURIComponent(str) {
 
 // src/submodules/protocols/HttpBindingProtocol.ts
 var import_schema2 = __nccwpck_require__(6890);
+var import_serde = __nccwpck_require__(2430);
 var import_protocol_http2 = __nccwpck_require__(2356);
+var import_util_stream2 = __nccwpck_require__(4252);
 
 // src/submodules/protocols/HttpProtocol.ts
 var import_schema = __nccwpck_require__(6890);
-var import_serde = __nccwpck_require__(2430);
 var import_protocol_http = __nccwpck_require__(2356);
-var import_util_stream2 = __nccwpck_require__(4252);
 var HttpProtocol = class {
   constructor(options) {
     this.options = options;
@@ -14869,89 +14945,7 @@ var HttpProtocol = class {
     };
   }
   async deserializeHttpMessage(schema, context, response, arg4, arg5) {
-    let dataObject;
-    if (arg4 instanceof Set) {
-      dataObject = arg5;
-    } else {
-      dataObject = arg4;
-    }
-    const deserializer = this.deserializer;
-    const ns = import_schema.NormalizedSchema.of(schema);
-    const nonHttpBindingMembers = [];
-    for (const [memberName, memberSchema] of ns.structIterator()) {
-      const memberTraits = memberSchema.getMemberTraits();
-      if (memberTraits.httpPayload) {
-        const isStreaming = memberSchema.isStreaming();
-        if (isStreaming) {
-          const isEventStream = memberSchema.isStructSchema();
-          if (isEventStream) {
-            const context2 = this.serdeContext;
-            if (!context2.eventStreamMarshaller) {
-              throw new Error("@smithy/core - HttpProtocol: eventStreamMarshaller missing in serdeContext.");
-            }
-            const memberSchemas = memberSchema.getMemberSchemas();
-            dataObject[memberName] = context2.eventStreamMarshaller.deserialize(response.body, async (event) => {
-              const unionMember = Object.keys(event).find((key) => {
-                return key !== "__type";
-              }) ?? "";
-              if (unionMember in memberSchemas) {
-                const eventStreamSchema = memberSchemas[unionMember];
-                return {
-                  [unionMember]: await deserializer.read(eventStreamSchema, event[unionMember].body)
-                };
-              } else {
-                return {
-                  $unknown: event
-                };
-              }
-            });
-          } else {
-            dataObject[memberName] = (0, import_util_stream2.sdkStreamMixin)(response.body);
-          }
-        } else if (response.body) {
-          const bytes = await collectBody(response.body, context);
-          if (bytes.byteLength > 0) {
-            dataObject[memberName] = await deserializer.read(memberSchema, bytes);
-          }
-        }
-      } else if (memberTraits.httpHeader) {
-        const key = String(memberTraits.httpHeader).toLowerCase();
-        const value = response.headers[key];
-        if (null != value) {
-          if (memberSchema.isListSchema()) {
-            const headerListValueSchema = memberSchema.getValueSchema();
-            let sections;
-            if (headerListValueSchema.isTimestampSchema() && headerListValueSchema.getSchema() === import_schema.SCHEMA.TIMESTAMP_DEFAULT) {
-              sections = (0, import_serde.splitEvery)(value, ",", 2);
-            } else {
-              sections = (0, import_serde.splitHeader)(value);
-            }
-            const list = [];
-            for (const section of sections) {
-              list.push(await deserializer.read([headerListValueSchema, { httpHeader: key }], section.trim()));
-            }
-            dataObject[memberName] = list;
-          } else {
-            dataObject[memberName] = await deserializer.read(memberSchema, value);
-          }
-        }
-      } else if (memberTraits.httpPrefixHeaders !== void 0) {
-        dataObject[memberName] = {};
-        for (const [header, value] of Object.entries(response.headers)) {
-          if (header.startsWith(memberTraits.httpPrefixHeaders)) {
-            dataObject[memberName][header.slice(memberTraits.httpPrefixHeaders.length)] = await deserializer.read(
-              [memberSchema.getValueSchema(), { httpHeader: header }],
-              value
-            );
-          }
-        }
-      } else if (memberTraits.httpResponseCode) {
-        dataObject[memberName] = response.statusCode;
-      } else {
-        nonHttpBindingMembers.push(memberName);
-      }
-    }
-    return nonHttpBindingMembers;
+    return [];
   }
 };
 
@@ -15126,6 +15120,91 @@ var HttpBindingProtocol = class extends HttpProtocol {
       ...dataObject
     };
     return output;
+  }
+  async deserializeHttpMessage(schema, context, response, arg4, arg5) {
+    let dataObject;
+    if (arg4 instanceof Set) {
+      dataObject = arg5;
+    } else {
+      dataObject = arg4;
+    }
+    const deserializer = this.deserializer;
+    const ns = import_schema2.NormalizedSchema.of(schema);
+    const nonHttpBindingMembers = [];
+    for (const [memberName, memberSchema] of ns.structIterator()) {
+      const memberTraits = memberSchema.getMemberTraits();
+      if (memberTraits.httpPayload) {
+        const isStreaming = memberSchema.isStreaming();
+        if (isStreaming) {
+          const isEventStream = memberSchema.isStructSchema();
+          if (isEventStream) {
+            const context2 = this.serdeContext;
+            if (!context2.eventStreamMarshaller) {
+              throw new Error("@smithy/core - HttpProtocol: eventStreamMarshaller missing in serdeContext.");
+            }
+            const memberSchemas = memberSchema.getMemberSchemas();
+            dataObject[memberName] = context2.eventStreamMarshaller.deserialize(response.body, async (event) => {
+              const unionMember = Object.keys(event).find((key) => {
+                return key !== "__type";
+              }) ?? "";
+              if (unionMember in memberSchemas) {
+                const eventStreamSchema = memberSchemas[unionMember];
+                return {
+                  [unionMember]: await deserializer.read(eventStreamSchema, event[unionMember].body)
+                };
+              } else {
+                return {
+                  $unknown: event
+                };
+              }
+            });
+          } else {
+            dataObject[memberName] = (0, import_util_stream2.sdkStreamMixin)(response.body);
+          }
+        } else if (response.body) {
+          const bytes = await collectBody(response.body, context);
+          if (bytes.byteLength > 0) {
+            dataObject[memberName] = await deserializer.read(memberSchema, bytes);
+          }
+        }
+      } else if (memberTraits.httpHeader) {
+        const key = String(memberTraits.httpHeader).toLowerCase();
+        const value = response.headers[key];
+        if (null != value) {
+          if (memberSchema.isListSchema()) {
+            const headerListValueSchema = memberSchema.getValueSchema();
+            let sections;
+            if (headerListValueSchema.isTimestampSchema() && headerListValueSchema.getSchema() === import_schema2.SCHEMA.TIMESTAMP_DEFAULT) {
+              sections = (0, import_serde.splitEvery)(value, ",", 2);
+            } else {
+              sections = (0, import_serde.splitHeader)(value);
+            }
+            const list = [];
+            for (const section of sections) {
+              list.push(await deserializer.read([headerListValueSchema, { httpHeader: key }], section.trim()));
+            }
+            dataObject[memberName] = list;
+          } else {
+            dataObject[memberName] = await deserializer.read(memberSchema, value);
+          }
+        }
+      } else if (memberTraits.httpPrefixHeaders !== void 0) {
+        dataObject[memberName] = {};
+        for (const [header, value] of Object.entries(response.headers)) {
+          if (header.startsWith(memberTraits.httpPrefixHeaders)) {
+            dataObject[memberName][header.slice(memberTraits.httpPrefixHeaders.length)] = await deserializer.read(
+              [memberSchema.getValueSchema(), { httpHeader: header }],
+              value
+            );
+          }
+        }
+      } else if (memberTraits.httpResponseCode) {
+        dataObject[memberName] = response.statusCode;
+      } else {
+        nonHttpBindingMembers.push(memberName);
+      }
+    }
+    return nonHttpBindingMembers;
   }
 };
 
@@ -16215,6 +16294,18 @@ var NormalizedSchema = class _NormalizedSchema {
     return this.getSchema() === SCHEMA.STREAMING_BLOB;
   }
   /**
+   * This is a shortcut to avoid calling `getMergedTraits().idempotencyToken` on every string.
+   * @returns whether the schema has the idempotencyToken trait.
+   */
+  isIdempotencyToken() {
+    if (typeof this.traits === "number") {
+      return (this.traits & 4) === 4;
+    } else if (typeof this.traits === "object") {
+      return !!this.traits.idempotencyToken;
+    }
+    return false;
+  }
+  /**
    * @returns own traits merged with member traits, where member traits of the same trait key take priority.
    * This method is cached.
    */
@@ -16425,6 +16516,7 @@ __export(serde_exports, {
   expectShort: () => expectShort,
   expectString: () => expectString,
   expectUnion: () => expectUnion,
+  generateIdempotencyToken: () => import_uuid.v4,
   handleFloat: () => handleFloat,
   limitedParseDouble: () => limitedParseDouble,
   limitedParseFloat: () => limitedParseFloat,
@@ -16451,57 +16543,7 @@ __export(serde_exports, {
 module.exports = __toCommonJS(serde_exports);
 
 // src/submodules/serde/copyDocumentWithTransform.ts
-var import_schema = __nccwpck_require__(6890);
-var copyDocumentWithTransform = (source, schemaRef, transform = (_) => _) => {
-  const ns = import_schema.NormalizedSchema.of(schemaRef);
-  switch (typeof source) {
-    case "undefined":
-    case "boolean":
-    case "number":
-    case "string":
-    case "bigint":
-    case "symbol":
-      return transform(source, ns);
-    case "function":
-    case "object":
-      if (source === null) {
-        return transform(null, ns);
-      }
-      if (Array.isArray(source)) {
-        const newArray = new Array(source.length);
-        let i = 0;
-        for (const item of source) {
-          newArray[i++] = copyDocumentWithTransform(item, ns.getValueSchema(), transform);
-        }
-        return transform(newArray, ns);
-      }
-      if ("byteLength" in source) {
-        const newBytes = new Uint8Array(source.byteLength);
-        newBytes.set(source, 0);
-        return transform(newBytes, ns);
-      }
-      if (source instanceof Date) {
-        return transform(source, ns);
-      }
-      const newObject = {};
-      if (ns.isMapSchema()) {
-        for (const key of Object.keys(source)) {
-          newObject[key] = copyDocumentWithTransform(source[key], ns.getValueSchema(), transform);
-        }
-      } else if (ns.isStructSchema()) {
-        for (const [key, memberSchema] of ns.structIterator()) {
-          newObject[key] = copyDocumentWithTransform(source[key], memberSchema, transform);
-        }
-      } else if (ns.isDocumentSchema()) {
-        for (const key of Object.keys(source)) {
-          newObject[key] = copyDocumentWithTransform(source[key], ns.getValueSchema(), transform);
-        }
-      }
-      return transform(newObject, ns);
-    default:
-      return transform(source, ns);
-  }
-};
+var copyDocumentWithTransform = (source, schemaRef, transform = (_) => _) => source;
 
 // src/submodules/serde/parse-utils.ts
 var parseBoolean = (value) => {
@@ -16955,6 +16997,9 @@ var stripLeadingZeroes = (value) => {
   }
   return value.slice(idx);
 };
+
+// src/submodules/serde/generateIdempotencyToken.ts
+var import_uuid = __nccwpck_require__(2048);
 
 // src/submodules/serde/lazy-json.ts
 var LazyJsonString = function LazyJsonString2(val) {
