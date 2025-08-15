@@ -1,7 +1,11 @@
-name: Run integration tests
+name: Run post-release integration test
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dist/**'  
   workflow_dispatch:
 
 jobs:
@@ -16,17 +20,12 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - name: Package
-        run: |
-          npm ci
-          npm run package
       - name: Integation tests
         uses: ./
         with:
           aws-region: us-west-2
-          role-to-assume: arn:aws:iam::206735643321:role/CAWSC-integ-role
+          role-to-assume: ${{ secrets.CAWSC_integ_role }}
           role-session-name: IntegTestCAWSC
       - name: Get caller identity
         run: |
