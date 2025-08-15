@@ -1,0 +1,33 @@
+name: Run integration tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  package_and_test:
+    name: Package dist files
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+          persist-credentials: false
+      - name: Package
+        run: |
+          npm ci
+          npm run package
+      - name: Integation tests
+        uses: ./
+        with:
+          aws-region: us-west-2
+          role-to-assume: arn:aws:iam::206735643321:role/CAWSC-integ-role
+          role-session-name: IntegTestCAWSC
+      - name: Get caller identity
+        run: |
+          aws sts get-caller-identity
