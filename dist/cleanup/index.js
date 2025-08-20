@@ -47959,8 +47959,8 @@ const helpers_1 = __nccwpck_require__(1302);
  * with any other jobs.
  */
 function cleanup() {
-    const outputEnvCredentialsInput = core.getInput('output-env-credentials', { required: false }) || 'true';
-    if (outputEnvCredentialsInput === 'true') {
+    // Only attempt to change environment variables if we changed them in the first place
+    if ((0, helpers_1.getBooleanInput)('output-env-credentials', { required: false, default: true })) {
         try {
             // The GitHub Actions toolkit does not have an option to completely unset
             // environment variables, so we overwrite the current value with an empty
@@ -48043,6 +48043,7 @@ exports.retryAndBackoff = retryAndBackoff;
 exports.errorMessage = errorMessage;
 exports.isDefined = isDefined;
 exports.areCredentialsValid = areCredentialsValid;
+exports.getBooleanInput = getBooleanInput;
 const core = __importStar(__nccwpck_require__(7484));
 const client_sts_1 = __nccwpck_require__(1695);
 const MAX_TAG_VALUE_LENGTH = 256;
@@ -48228,6 +48229,35 @@ async function areCredentialsValid(credentialsClient) {
     catch (_) {
         return false;
     }
+}
+/**
+ * Like core.getBooleanInput, but respects the required option.
+ *
+ * From https://github.com/actions/toolkit/blob/6876e2a664ec02908178087905b9155e9892a437/packages/core/src/core.ts
+ *
+ * Gets the input value of the boolean type in the YAML 1.2 "core schema" specification.
+ * Support boolean input list: `true | True | TRUE | false | False | FALSE` .
+ * The return value is also in boolean type.
+ * ref: https://yaml.org/spec/1.2/spec.html#id2804923
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See core.InputOptions. Also supports optional 'default' if the input is not set
+ * @returns   boolean
+ */
+function getBooleanInput(name, options) {
+    const trueValue = ['true', 'True', 'TRUE'];
+    const falseValue = ['false', 'False', 'FALSE'];
+    const optionsWithoutDefault = { ...options };
+    delete optionsWithoutDefault.default;
+    const val = core.getInput(name, optionsWithoutDefault);
+    if (trueValue.includes(val))
+        return true;
+    if (falseValue.includes(val))
+        return false;
+    if (val === '')
+        return options?.default ?? false;
+    throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
+        `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 }
 
 
