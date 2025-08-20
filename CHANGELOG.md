@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/configure-aws-credentials-v4.3.1...configure-aws-credentials-v5.0.0) (2025-08-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* Cleanup input handling. Changes invalid boolean input behavior (see #1445)
+
+### Features
+
+* Cleanup input handling. Changes invalid boolean input behavior (see [#1445](https://github.com/aws-actions/configure-aws-credentials/issues/1445)) ([74b3e27](https://github.com/aws-actions/configure-aws-credentials/commit/74b3e27aa80db064b5bb8c04b22fc607e817acf7))
+
 ## [4.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.0...v4.3.1) (2025-08-04)
 
 
