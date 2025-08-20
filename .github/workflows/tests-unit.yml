@@ -2,6 +2,8 @@ on:
   [pull_request]
 
 name: Run unit tests
+permissions:
+  contents: read
 
 jobs:
   unit-test:
@@ -14,13 +16,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: "Checkout repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Setup node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: 20
       - name: "Install dependencies"
-        uses: bahmutov/npm-install@v1
+        run: npm ci
       - name: "Run tests"
         run: npm run test --if-present
   lint:
