@@ -12,6 +12,10 @@
       "performance": {
         "noDelete": "off"
       },
+      "correctness": {
+        // Specifying a radix disables interpretation of 0x as a number (needed for backwards compat)
+        "useParseIntRadix": "off"
+      },
       "complexity": {
         "noExtraBooleanCast": "off"
       }
