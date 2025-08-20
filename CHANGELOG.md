@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/configure-aws-credentials-v4.3.1...configure-aws-credentials-v4.3.1) (2025-08-20)
+
+
+### Features
+
+* add Expiration field to Outputs ([a4f3267](https://github.com/aws-actions/configure-aws-credentials/commit/a4f326760c1c1bf49ab86051c658d6501816b930))
+* added release-please action config ([d700acb](https://github.com/aws-actions/configure-aws-credentials/commit/d700acbb229a5b41fbbc706f78f3748714d04321))
+* added release-please action config ([0f88004](https://github.com/aws-actions/configure-aws-credentials/commit/0f88004d9c27e0bdbbc254b3f7c8053cb38f04d7))
+* depenency update and feature cleanup ([#1414](https://github.com/aws-actions/configure-aws-credentials/issues/1414)) ([59489ba](https://github.com/aws-actions/configure-aws-credentials/commit/59489ba544930000b7b67412c167f5fe816568cf)), closes [#1062](https://github.com/aws-actions/configure-aws-credentials/issues/1062) [#1191](https://github.com/aws-actions/configure-aws-credentials/issues/1191)
+* Document role-duration-seconds range ([5a0cf01](https://github.com/aws-actions/configure-aws-credentials/commit/5a0cf0167f837dfa7af7d951ba6a78a38dc2b79e))
+* idempotent fetch ([#1289](https://github.com/aws-actions/configure-aws-credentials/issues/1289)) ([eb70354](https://github.com/aws-actions/configure-aws-credentials/commit/eb70354fb423a380b6e4ab4b9f15d2ee9ffae911))
+* Optional environment variable output ([c3b3ce6](https://github.com/aws-actions/configure-aws-credentials/commit/c3b3ce61b02510937ff02916a4eb153874bc5085))
+* Recommending using OIDC ([#871](https://github.com/aws-actions/configure-aws-credentials/issues/871)) ([f31c158](https://github.com/aws-actions/configure-aws-credentials/commit/f31c158843c04af3700f86f1261c834b59834d5d))
+* support action inputs as environment variables ([#1338](https://github.com/aws-actions/configure-aws-credentials/issues/1338)) ([2c168ad](https://github.com/aws-actions/configure-aws-credentials/commit/2c168adcae62d67531ba83842723c8f30695116a))
+
+
+### Bug Fixes
+
+* build failure due to tests ([#1283](https://github.com/aws-actions/configure-aws-credentials/issues/1283)) ([134d71e](https://github.com/aws-actions/configure-aws-credentials/commit/134d71efe0ecbe9ad6965f2f766c0cae63a7685f))
+* cpy syntax on npm package ([#1195](https://github.com/aws-actions/configure-aws-credentials/issues/1195)) ([83b5a56](https://github.com/aws-actions/configure-aws-credentials/commit/83b5a565471214aec459e234bef606339fe07111))
+* **docs:** readme samples versioning ([5b3c895](https://github.com/aws-actions/configure-aws-credentials/commit/5b3c89504689ea1ea2b6000b23a6a2aac463662a))
+* ensure explicit inputs take precedence over environment variables ([e56e6c4](https://github.com/aws-actions/configure-aws-credentials/commit/e56e6c4038915cd5a7238a671fe97f44c98a40b0))
+* Fix NEWS in README ([fd194ec](https://github.com/aws-actions/configure-aws-credentials/commit/fd194eccd114567abd43c715d81c256fdee4c327))
+* fix typo ([6478abc](https://github.com/aws-actions/configure-aws-credentials/commit/6478abc3728c7b7e444a4551b3a5f4cf18db7607))
+* make sure action builds, also fix dependabot autoapprove ([c401b8a](https://github.com/aws-actions/configure-aws-credentials/commit/c401b8a98c5067672f52e0387cdd87d54acfe1fd))
+* prioritize explicit inputs over environment variables ([df9c8fe](https://github.com/aws-actions/configure-aws-credentials/commit/df9c8fed6b364f0d1fb0e6e03a0ec26f1ea4e3fc))
+* properly set proxy environment variable ([cbea708](https://github.com/aws-actions/configure-aws-credentials/commit/cbea70821e4ab985ad3be0e5a93390523e257cde))
+* role chaning on mulitple runs ([#1340](https://github.com/aws-actions/configure-aws-credentials/issues/1340)) ([9e38641](https://github.com/aws-actions/configure-aws-credentials/commit/9e386419117a9edd458297e4f1822a5df7506a03))
+* the wrong example region for China partition in README ([37fe9a7](https://github.com/aws-actions/configure-aws-credentials/commit/37fe9a740bcb30ee8cccd96feb90666c937311f2))
+* update readme to 4.3.1 ([#1424](https://github.com/aws-actions/configure-aws-credentials/issues/1424)) ([be2e7ad](https://github.com/aws-actions/configure-aws-credentials/commit/be2e7ad815e27b890489a89ce2717b0f9e26b56e))
+* Update README.md ([44cffa5](https://github.com/aws-actions/configure-aws-credentials/commit/44cffa5fa878ed8ce061db437824b5c390c71b63))
+* validation logic throwing unwanted errors ([#818](https://github.com/aws-actions/configure-aws-credentials/issues/818)) ([d78f55b](https://github.com/aws-actions/configure-aws-credentials/commit/d78f55b1db65186cb251a8504ae9527af06fc5fd))
+
 ## [4.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.0...v4.3.1) (2025-08-04)
 
 
