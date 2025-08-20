@@ -207,7 +207,11 @@ async function assumeRole(params) {
         PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
     };
     const keys = Object.keys(commonAssumeRoleParams);
-    keys.forEach((k) => commonAssumeRoleParams[k] === undefined && delete commonAssumeRoleParams[k]);
+    keys.forEach((k) => {
+        if (commonAssumeRoleParams[k] === undefined) {
+            delete commonAssumeRoleParams[k];
+        }
+    });
     // Instantiate STS client
     const stsClient = credentialsClient.stsClient;
     // Assume role using one of three methods
