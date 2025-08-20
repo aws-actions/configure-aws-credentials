@@ -8,6 +8,7 @@ import {
   exportAccountId,
   exportCredentials,
   exportRegion,
+  getBooleanInput,
   retryAndBackoff,
   translateEnvVariables,
   unsetCredentials,
@@ -22,64 +23,41 @@ export async function run() {
   try {
     translateEnvVariables();
     // Get inputs
+    // Undefined inputs are empty strings ( or empty arrays)
     const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
-    const SecretAccessKey = core.getInput('aws-secret-access-key', {
-      required: false,
-    });
-    const sessionTokenInput = core.getInput('aws-session-token', {
-      required: false,
-    });
+    const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
+    const sessionTokenInput = core.getInput('aws-session-token', { required: false });
     const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
     const region = core.getInput('aws-region', { required: true });
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
-    const maskAccountIdInput = core.getInput('mask-aws-account-id', { required: false }) || 'false';
-    const maskAccountId = maskAccountIdInput.toLowerCase() === 'true';
-    const roleExternalId = core.getInput('role-external-id', {
-      required: false,
-    });
-    const webIdentityTokenFile = core.getInput('web-identity-token-file', {
-      required: false,
-    });
+    const maskAccountId = getBooleanInput('mask-aws-account-id', { required: false });
+    const roleExternalId = core.getInput('role-external-id', { required: false });
+    const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const roleDuration =
       Number.parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-    const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
-    const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
+    const roleSkipSessionTagging = getBooleanInput('role-skip-session-tagging', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false }) || process.env.HTTP_PROXY;
-    const inlineSessionPolicy = core.getInput('inline-session-policy', {
-      required: false,
+    const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
+    const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false }).map((p) => {
+      return { arn: p };
     });
-    const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
-    const managedSessionPolicies: { arn: string }[] = [];
-    const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
-    const roleChaining = roleChainingInput.toLowerCase() === 'true';
-    const outputCredentialsInput = core.getInput('output-credentials', { required: false }) || 'false';
-    const outputCredentials = outputCredentialsInput.toLowerCase() === 'true';
-    const outputEnvCredentialsInput = core.getInput('output-env-credentials', { required: false }) || 'true';
-    const outputEnvCredentials = outputEnvCredentialsInput.toLowerCase() === 'true';
-    const unsetCurrentCredentialsInput = core.getInput('unset-current-credentials', { required: false }) || 'false';
-    const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
-    const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
-    let disableRetry = disableRetryInput.toLowerCase() === 'true';
-    const specialCharacterWorkaroundInput =
-      core.getInput('special-characters-workaround', { required: false }) || 'false';
-    const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
-    const useExistingCredentialsInput = core.getInput('use-existing-credentials', { required: false }) || 'false';
-    const useExistingCredentials = useExistingCredentialsInput.toLowerCase() === 'true';
+    const roleChaining = getBooleanInput('role-chaining', { required: false });
+    const outputCredentials = getBooleanInput('output-credentials', { required: false });
+    const outputEnvCredentials = getBooleanInput('output-env-credentials', { required: false, default: true });
+    const unsetCurrentCredentials = getBooleanInput('unset-current-credentials', { required: false });
+    let disableRetry = getBooleanInput('disable-retry', { required: false });
+    const specialCharacterWorkaround = getBooleanInput('special-characters-workaround', { required: false });
+    const useExistingCredentials = core.getInput('use-existing-credentials', { required: false });
     let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
-    switch (true) {
-      case specialCharacterWorkaround:
-        // 😳
-        disableRetry = false;
-        maxRetries = 12;
-        break;
-      case maxRetries < 1:
-        maxRetries = 1;
-        break;
-    }
-    for (const managedSessionPolicy of managedSessionPoliciesInput) {
-      managedSessionPolicies.push({ arn: managedSessionPolicy });
+
+    if (specialCharacterWorkaround) {
+      // 😳
+      disableRetry = false;
+      maxRetries = 12;
+    } else if (maxRetries < 1) {
+      maxRetries = 1;
     }
 
     // Logic to decide whether to attempt to use OIDC or not
