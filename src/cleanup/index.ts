@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { errorMessage } from '../helpers';
+import { errorMessage, getBooleanInput } from '../helpers';
 
 /**
  * When the GitHub Actions job is done, clean up any environment variables that
@@ -13,8 +13,8 @@ import { errorMessage } from '../helpers';
  */
 
 export function cleanup() {
-  const outputEnvCredentialsInput = core.getInput('output-env-credentials', { required: false }) || 'true';
-  if (outputEnvCredentialsInput === 'true') {
+  // Only attempt to change environment variables if we changed them in the first place
+  if (getBooleanInput('output-env-credentials', { required: false, default: true })) {
     try {
       // The GitHub Actions toolkit does not have an option to completely unset
       // environment variables, so we overwrite the current value with an empty
@@ -30,6 +30,7 @@ export function cleanup() {
     }
   }
 }
+
 /* c8 ignore start */
 if (require.main === module) {
   try {
