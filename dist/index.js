@@ -280,6 +280,7 @@ exports.retryAndBackoff = retryAndBackoff;
 exports.errorMessage = errorMessage;
 exports.isDefined = isDefined;
 exports.areCredentialsValid = areCredentialsValid;
+exports.getBooleanInput = getBooleanInput;
 const core = __importStar(__nccwpck_require__(7484));
 const client_sts_1 = __nccwpck_require__(1695);
 const MAX_TAG_VALUE_LENGTH = 256;
@@ -466,6 +467,35 @@ async function areCredentialsValid(credentialsClient) {
         return false;
     }
 }
+/**
+ * Like core.getBooleanInput, but respects the required option.
+ *
+ * From https://github.com/actions/toolkit/blob/6876e2a664ec02908178087905b9155e9892a437/packages/core/src/core.ts
+ *
+ * Gets the input value of the boolean type in the YAML 1.2 "core schema" specification.
+ * Support boolean input list: `true | True | TRUE | false | False | FALSE` .
+ * The return value is also in boolean type.
+ * ref: https://yaml.org/spec/1.2/spec.html#id2804923
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See core.InputOptions. Also supports optional 'default' if the input is not set
+ * @returns   boolean
+ */
+function getBooleanInput(name, options) {
+    const trueValue = ['true', 'True', 'TRUE'];
+    const falseValue = ['false', 'False', 'FALSE'];
+    const optionsWithoutDefault = { ...options };
+    delete optionsWithoutDefault.default;
+    const val = core.getInput(name, optionsWithoutDefault);
+    if (trueValue.includes(val))
+        return true;
+    if (falseValue.includes(val))
+        return false;
+    if (val === '')
+        return options?.default ?? false;
+    throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
+        `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
+}
 //# sourceMappingURL=helpers.js.map
 
 /***/ }),
@@ -521,62 +551,40 @@ async function run() {
     try {
         (0, helpers_1.translateEnvVariables)();
         // Get inputs
+        // Undefined inputs are empty strings ( or empty arrays)
         const AccessKeyId = core.getInput('aws-access-key-id', { required: false });
-        const SecretAccessKey = core.getInput('aws-secret-access-key', {
-            required: false,
-        });
-        const sessionTokenInput = core.getInput('aws-session-token', {
-            required: false,
-        });
+        const SecretAccessKey = core.getInput('aws-secret-access-key', { required: false });
+        const sessionTokenInput = core.getInput('aws-session-token', { required: false });
         const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
         const region = core.getInput('aws-region', { required: true });
         const roleToAssume = core.getInput('role-to-assume', { required: false });
         const audience = core.getInput('audience', { required: false });
-        const maskAccountIdInput = core.getInput('mask-aws-account-id', { required: false }) || 'false';
-        const maskAccountId = maskAccountIdInput.toLowerCase() === 'true';
-        const roleExternalId = core.getInput('role-external-id', {
-            required: false,
-        });
-        const webIdentityTokenFile = core.getInput('web-identity-token-file', {
-            required: false,
-        });
+        const maskAccountId = (0, helpers_1.getBooleanInput)('mask-aws-account-id', { required: false });
+        const roleExternalId = core.getInput('role-external-id', { required: false });
+        const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
         const roleDuration = Number.parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
         const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
-        const roleSkipSessionTaggingInput = core.getInput('role-skip-session-tagging', { required: false }) || 'false';
-        const roleSkipSessionTagging = roleSkipSessionTaggingInput.toLowerCase() === 'true';
+        const roleSkipSessionTagging = (0, helpers_1.getBooleanInput)('role-skip-session-tagging', { required: false });
         const proxyServer = core.getInput('http-proxy', { required: false }) || process.env.HTTP_PROXY;
-        const inlineSessionPolicy = core.getInput('inline-session-policy', {
-            required: false,
+        const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
+        const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false }).map((p) => {
+            return { arn: p };
         });
-        const managedSessionPoliciesInput = core.getMultilineInput('managed-session-policies', { required: false });
-        const managedSessionPolicies = [];
-        const roleChainingInput = core.getInput('role-chaining', { required: false }) || 'false';
-        const roleChaining = roleChainingInput.toLowerCase() === 'true';
-        const outputCredentialsInput = core.getInput('output-credentials', { required: false }) || 'false';
-        const outputCredentials = outputCredentialsInput.toLowerCase() === 'true';
-        const outputEnvCredentialsInput = core.getInput('output-env-credentials', { required: false }) || 'true';
-        const outputEnvCredentials = outputEnvCredentialsInput.toLowerCase() === 'true';
-        const unsetCurrentCredentialsInput = core.getInput('unset-current-credentials', { required: false }) || 'false';
-        const unsetCurrentCredentials = unsetCurrentCredentialsInput.toLowerCase() === 'true';
-        const disableRetryInput = core.getInput('disable-retry', { required: false }) || 'false';
-        let disableRetry = disableRetryInput.toLowerCase() === 'true';
-        const specialCharacterWorkaroundInput = core.getInput('special-characters-workaround', { required: false }) || 'false';
-        const specialCharacterWorkaround = specialCharacterWorkaroundInput.toLowerCase() === 'true';
-        const useExistingCredentialsInput = core.getInput('use-existing-credentials', { required: false }) || 'false';
-        const useExistingCredentials = useExistingCredentialsInput.toLowerCase() === 'true';
+        const roleChaining = (0, helpers_1.getBooleanInput)('role-chaining', { required: false });
+        const outputCredentials = (0, helpers_1.getBooleanInput)('output-credentials', { required: false });
+        const outputEnvCredentials = (0, helpers_1.getBooleanInput)('output-env-credentials', { required: false, default: true });
+        const unsetCurrentCredentials = (0, helpers_1.getBooleanInput)('unset-current-credentials', { required: false });
+        let disableRetry = (0, helpers_1.getBooleanInput)('disable-retry', { required: false });
+        const specialCharacterWorkaround = (0, helpers_1.getBooleanInput)('special-characters-workaround', { required: false });
+        const useExistingCredentials = core.getInput('use-existing-credentials', { required: false });
         let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
-        switch (true) {
-            case specialCharacterWorkaround:
-                // 😳
-                disableRetry = false;
-                maxRetries = 12;
-                break;
-            case maxRetries < 1:
-                maxRetries = 1;
-                break;
+        if (specialCharacterWorkaround) {
+            // 😳
+            disableRetry = false;
+            maxRetries = 12;
         }
-        for (const managedSessionPolicy of managedSessionPoliciesInput) {
-            managedSessionPolicies.push({ arn: managedSessionPolicy });
+        else if (maxRetries < 1) {
+            maxRetries = 1;
         }
         // Logic to decide whether to attempt to use OIDC or not
         const useGitHubOIDCProvider = () => {
