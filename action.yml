@@ -79,6 +79,10 @@ inputs:
     required: false
   use-existing-credentials:
     description: When enabled, this option will check if there are already valid credentials in the environment. If there are, new credentials will not be fetched. If there are not, the action will run as normal.
+  force-skip-oidc:
+    required: false
+    description: When enabled, this option will skip using GitHub OIDC provider even if the id-token permission is set. This is sometimes useful when using IAM instance credentials.
+
 outputs:
   aws-account-id:
     description: The AWS account ID for the provided credentials
