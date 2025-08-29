@@ -1,0 +1,193 @@
+name: Run pre-release integ tests
+on: 
+    pull_request_target:
+permissions:
+    contents: read
+
+jobs:
+  oidc:
+    if: ${{ github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials' }}
+    permissions: 
+        id-token: write
+    strategy: 
+        fail-fast: false
+        matrix:
+            os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: OIDC login test
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+            persist-credentials: false
+      - name: Configure AWS credentials
+        uses: ./
+        with:
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.OIDC_integ_role }}
+      - name: Get Caller Identity
+        run: |
+            aws sts get-caller-identity
+
+  #can cut this test out if it's not necessary
+  static_assumeRole:
+    if: ${{ github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials' }}
+    strategy: 
+        fail-fast: false
+        matrix:
+            os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: Static IAM creds test
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+            persist-credentials: false
+      - name: Configure AWS credentials
+        uses: ./
+        with:
+            aws-region: us-west-2
+            aws-access-key-id: ${{ secrets.STATIC_ak_id }}
+            aws-secret-access-key: ${{ secrets.STATIC_secret_ak }}
+            role-to-assume: ${{ secrets.STATIC_role }}
+      - name: Get Caller Identity
+        run: |
+          aws sts get-caller-identity
+
+  role_chaining:
+    if: ${{ github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials' }}
+    permissions: 
+        id-token: write
+    strategy: 
+        fail-fast: false
+        matrix:
+            os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: Existing Creds + Role Chaining test
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+            persist-credentials: false    
+      - name: Configure AWS credentials
+        uses: ./
+        with:
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.ROLE_chaining_1 }}
+      - name: Get Caller Identity
+        run: |
+          aws sts get-caller-identity
+      - name: assume second role
+        uses: ./
+        with:
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.ROLE_chaining_2 }}
+            role-chaining: true
+      - name: get caller identity
+        run: |
+          aws sts get-caller-identity
+
+  inline_policy:
+    if: ${{ github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials' }}
+    permissions: 
+        id-token: write
+    strategy: 
+        fail-fast: false
+        matrix:
+            os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: Inline Policy Test
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+            persist-credentials: false  
+      - name: get creds w scoped down policy
+        uses: ./
+        with: 
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.INLINE_policy_role }}
+            inline-session-policy: '{"Version":"2012-10-17","Statement":[{"Sid":"Stmt1","Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"}]}'
+    
+      #NOTE: This step should succeed. The role should have permission only to list all buckets.
+      - name: list buckets
+        run: |
+          aws s3 ls
+
+      #NOTE: This step should fail. we don't want the role to have permission to see the bucket contents.    
+      - name: try to list bucket contents
+        id: bucketContentsStep
+        continue-on-error: true
+        run: |
+          aws s3 ls s3://cawsc-integ-tests-bucket
+
+      #But the test fails if we could list the bucket contents.
+      - name: fail if we can list bucket contents
+        if: steps.bucketContentsStep.outcome == 'success'
+        run: exit 1
+
+  http-proxy:
+    if: ${{ github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials' }}
+    permissions:
+        id-token: write
+    runs-on: ubuntu-latest
+    name: HTTP Proxy Test
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+            persist-credentials: false  
+      - name: install tinyproxy
+        run: |
+          sudo apt-get update
+          sudo apt-get install tinyproxy
+      - name: start tinyproxy
+        run: sudo tinyproxy -c tinyproxy.conf
+      - name: Configure AWS credentials
+        continue-on-error: true
+        uses: ./
+        with:
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.OIDC_integ_role }}
+            http-proxy: http://127.0.0.1:9999
+            retry-max-attempts: 4
+      - name: checkout logs 
+        run: sudo cat integ_proxy_log.txt
+      - name: check logs to see if successful call
+        run: sudo grep -q "Request" integ_proxy_log.txt && echo "PROXY_CALL_LOGGED=1" >> $GITHUB_ENV || echo "PROXY_CALL_LOGGED=0" >> $GITHUB_ENV
+      - name: fail job if bad call 
+        if: ${{ env.PROXY_CALL_LOGGED != 1 }}
+        run: exit 1
+
+  token-file:
+    if: ${{ github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials' }}
+    permissions:
+        id-token: write
+    strategy: 
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: Token File Test
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+            persist-credentials: false
+      - name: fetch token and write to file
+        run: node fetch-token.js
+      - name: get creds with that file
+        uses: ./
+        with:
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.OIDC_integ_role }}
+            web-identity-token-file: integ_token.txt
+            retry-max-attempts: 4
+      - name: check creds
+        run: aws sts get-caller-identity
