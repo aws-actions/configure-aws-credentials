@@ -145,9 +145,9 @@ jobs:
       - name: install tinyproxy
         run: |
           sudo apt-get update
-          sudo apt-get install tinyproxy
+          sudo apt-get -y install tinyproxy
       - name: start tinyproxy
-        run: sudo tinyproxy -c tinyproxy.conf
+        run: tinyproxy -c .github/integ_tests/tinyproxy.conf
       - name: Configure AWS credentials
         continue-on-error: true
         uses: ./
@@ -157,9 +157,9 @@ jobs:
             http-proxy: http://127.0.0.1:9999
             retry-max-attempts: 4
       - name: checkout logs 
-        run: sudo cat integ_proxy_log.txt
+        run: cat integ_proxy_log.txt
       - name: check logs to see if successful call
-        run: sudo grep -q "Request" integ_proxy_log.txt && echo "PROXY_CALL_LOGGED=1" >> $GITHUB_ENV || echo "PROXY_CALL_LOGGED=0" >> $GITHUB_ENV
+        run: grep -q "Request" integ_proxy_log.txt && echo "PROXY_CALL_LOGGED=1" >> $GITHUB_ENV || echo "PROXY_CALL_LOGGED=0" >> $GITHUB_ENV
       - name: fail job if bad call 
         if: ${{ env.PROXY_CALL_LOGGED != 1 }}
         run: exit 1
@@ -181,13 +181,13 @@ jobs:
             fetch-depth: 0
             persist-credentials: false
       - name: fetch token and write to file
-        run: node fetch-token.js
+        run: node .github/integ_tests/fetch-token.js
       - name: get creds with that file
         uses: ./
         with:
             aws-region: us-west-2
             role-to-assume: ${{ secrets.OIDC_integ_role }}
-            web-identity-token-file: integ_token.txt
+            web-identity-token-file: .github/integ_tests/integ_token.txt
             retry-max-attempts: 4
       - name: check creds
         run: aws sts get-caller-identity
