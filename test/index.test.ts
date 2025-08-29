@@ -334,6 +334,156 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Account ID Validation', {}, () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockedSTSClient.reset();
+    });
+
+    it('succeeds when account ID matches allowed list', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'allowed-account-ids': '111111111111'
+      }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
+    });
+
+    it('succeeds with multiple allowed account IDs when account matches', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'allowed-account-ids': '999999999999,111111111111,222222222222'
+      }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('fails when account ID does not match allowed list', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'allowed-account-ids': '999999999999'
+      }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999'
+      );
+    });
+
+    it('fails when account ID does not match any in multiple allowed accounts', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'allowed-account-ids': '999999999999,888888888888'
+      }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999, 888888888888'
+      );
+    });
+
+    it('works with assume role when account ID matches', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_ASSUMEROLE_INPUTS,
+        'allowed-account-ids': '111111111111'
+      }));
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+      
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+    });
+
+    it('works with OIDC when account ID matches', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.GH_OIDC_INPUTS,
+        'allowed-account-ids': '111111111111'
+      }));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+    });
+
+    it('handles GetCallerIdentity API failure gracefully', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'allowed-account-ids': '111111111111'
+      }));
+      mockedSTSClient.on(GetCallerIdentityCommand).rejects(new Error('API Error'));
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith('Could not validate account ID of credentials: API Error');
+    });
+
+    it('ignores validation when allowed-account-ids is empty', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'allowed-account-ids': ''
+      }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
+    });
+
+    it('handles whitespace in allowed-account-ids input', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'allowed-account-ids': ' 111111111111 , 222222222222 '
+      }));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('HTTP Proxy Configuration', {}, () => {
     beforeEach(() => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));

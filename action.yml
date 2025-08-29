@@ -78,7 +78,12 @@ inputs:
     description: Some environments do not support special characters in AWS_SECRET_ACCESS_KEY. This option will retry fetching credentials until the secret access key does not contain special characters. This option overrides disable-retry and retry-max-attempts. This option is disabled by default
     required: false
   use-existing-credentials:
+    required: false
     description: When enabled, this option will check if there are already valid credentials in the environment. If there are, new credentials will not be fetched. If there are not, the action will run as normal.
+  allowed-account-ids:
+    required: false
+    description: An option comma-delimited list of expected AWS account IDs. The action will fail if we receive credentials for the wrong account.
+
 outputs:
   aws-account-id:
     description: The AWS account ID for the provided credentials
