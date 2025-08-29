@@ -115,15 +115,13 @@ jobs:
     
       #NOTE: This step should succeed. The role should have permission only to list all buckets.
       - name: list buckets
-        run: |
-          aws s3 ls
+        run: aws s3 ls > /dev/null
 
       #NOTE: This step should fail. we don't want the role to have permission to see the bucket contents.    
       - name: try to list bucket contents
         id: bucketContentsStep
         continue-on-error: true
-        run: |
-          aws s3 ls s3://cawsc-integ-tests-bucket
+        run: aws s3 ls s3://cawsc-integ-tests-bucket > /dev/null
 
       #But the test fails if we could list the bucket contents.
       - name: fail if we can list bucket contents
