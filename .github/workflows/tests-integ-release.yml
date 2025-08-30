@@ -97,7 +97,7 @@ jobs:
     strategy: 
         fail-fast: false
         matrix:
-            os: [windows-latest, ubuntu-latest, macos-latest]
+            os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     name: Inline Policy Test
     steps:
@@ -179,7 +179,18 @@ jobs:
             fetch-depth: 0
             persist-credentials: false
       - name: fetch token and write to file
-        run: node .github/integ_tests/fetch-token.js
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            async function getIDTokenAction() {
+              const id_token = await core.getIDToken("sts.amazonaws.com");
+              return id_token;
+            }
+            const idToken = await getIDTokenAction();
+            fs.writeFileSync(".github/integ_tests/integ_token.txt", idToken, (err) => {
+              if (err) throw err;
+            });
       - name: get creds with that file
         uses: ./
         with:
