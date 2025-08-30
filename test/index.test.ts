@@ -334,6 +334,135 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Force Skip OIDC', {}, () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockedSTSClient.reset();
+    });
+
+    it('skips OIDC when force-skip-oidc is true with IAM credentials', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_ASSUMEROLE_INPUTS,
+        'force-skip-oidc': 'true'
+      }));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('skips OIDC when force-skip-oidc is true with web identity token file', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.WEBIDENTITY_TOKEN_FILE_INPUTS,
+        'force-skip-oidc': 'true'
+      }));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      vi.mock('node:fs');
+      vol.reset();
+      fs.mkdirSync('/home/github', { recursive: true });
+      fs.writeFileSync('/home/github/file.txt', 'test-token');
+      
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with web identity token file');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('fails when force-skip-oidc is true but no alternative credentials provided', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+        'aws-region': 'fake-region-1',
+        'force-skip-oidc': 'true'
+      }));
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id' or 'web-identity-token-file' must be set"
+      );
+    });
+
+    it('allows force-skip-oidc without role-to-assume', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.IAM_USER_INPUTS,
+        'force-skip-oidc': 'true'
+      }));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('uses OIDC when force-skip-oidc is false (default behavior)', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.GH_OIDC_INPUTS,
+        'force-skip-oidc': 'false'
+      }));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      
+      await run();
+      expect(core.getIDToken).toHaveBeenCalledWith('');
+      expect(core.info).toHaveBeenCalledWith('Assuming role with OIDC');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('uses OIDC when force-skip-oidc is not set (default behavior)', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      
+      await run();
+      expect(core.getIDToken).toHaveBeenCalledWith('');
+      expect(core.info).toHaveBeenCalledWith('Assuming role with OIDC');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('works with role chaining when force-skip-oidc is true', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({
+        ...mocks.EXISTING_ROLE_INPUTS,
+        'force-skip-oidc': 'true',
+        'aws-access-key-id': 'MYAWSACCESSKEYID',
+        'aws-secret-access-key': 'MYAWSSECRETACCESSKEY'
+      }));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('HTTP Proxy Configuration', {}, () => {
     beforeEach(() => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));

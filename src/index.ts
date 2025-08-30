@@ -51,6 +51,13 @@ export async function run() {
     const specialCharacterWorkaround = getBooleanInput('special-characters-workaround', { required: false });
     const useExistingCredentials = core.getInput('use-existing-credentials', { required: false });
     let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
+    const forceSkipOidc = getBooleanInput('force-skip-oidc', { required: false });
+
+    if (forceSkipOidc && roleToAssume && !AccessKeyId && !webIdentityTokenFile) {
+      throw new Error(
+        "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id' or 'web-identity-token-file' must be set",
+      );
+    }
 
     if (specialCharacterWorkaround) {
       // 😳
@@ -62,6 +69,7 @@ export async function run() {
 
     // Logic to decide whether to attempt to use OIDC or not
     const useGitHubOIDCProvider = () => {
+      if (forceSkipOidc) return false;
       // The `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variable is set when the `id-token` permission is granted.
       // This is necessary to authenticate with OIDC, but not strictly set just for OIDC. If it is not set and all other
       // checks pass, it is likely but not guaranteed that the user needs but lacks this permission in their workflow.
