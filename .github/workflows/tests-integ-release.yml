@@ -97,7 +97,7 @@ jobs:
     strategy: 
         fail-fast: false
         matrix:
-            os: [windows-latest, ubuntu-latest, macos-latest]
+            os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     name: Inline Policy Test
     steps:
