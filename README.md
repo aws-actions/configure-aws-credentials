@@ -150,6 +150,7 @@ See [action.yml](./action.yml) for more detail.
 | retry-max-attempts        | Limits the number of retry attempts before giving up. Defaults to 12.                             |    No    |
 | special-characters-workaround | Uncommonly, some environments cannot tolerate special characters in a secret key. This option will retry fetching credentials until the secret access key does not contain special characters. This option overrides disable-retry and retry-max-attempts. | No |
 | use-existing-credentials  | When set, the action will check if existing credentials are valid and exit if they are. Defaults to false. |    No    |
+| allowed-account-ids       | A comma-delimited list of expected AWS account IDs. The action will fail if we receive credentials for the wrong account. |    No    |
 </details>
 
 #### Adjust the retry mechanism
