@@ -36,7 +36,7 @@ class CredentialsClient {
         }
         return this._stsClient;
     }
-    async validateCredentials(expectedAccessKeyId, roleChaining) {
+    async validateCredentials(expectedAccessKeyId, roleChaining, expectedAccountIds) {
         let credentials;
         try {
             credentials = await this.loadCredentials();
@@ -47,10 +47,22 @@ class CredentialsClient {
         catch (error) {
             throw new Error(`Credentials could not be loaded, please check your action inputs: ${(0, helpers_1.errorMessage)(error)}`);
         }
+        if (expectedAccountIds && expectedAccountIds.length > 0 && expectedAccountIds[0] !== '') {
+            let callerIdentity;
+            try {
+                callerIdentity = await (0, helpers_1.getCallerIdentity)(this.stsClient);
+            }
+            catch (error) {
+                throw new Error(`Could not validate account ID of credentials: ${(0, helpers_1.errorMessage)(error)}`);
+            }
+            if (!callerIdentity.Account || !expectedAccountIds.includes(callerIdentity.Account)) {
+                throw new Error(`The account ID of the provided credentials (${callerIdentity.Account ?? 'unknown'}) does not match any of the expected account IDs: ${expectedAccountIds.join(', ')}`);
+            }
+        }
         if (!roleChaining) {
             const actualAccessKeyId = credentials.accessKeyId;
             if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
-                throw new Error('Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action');
+                throw new Error('Credentials loaded by the SDK do not match the expected access key ID configured by the action');
             }
         }
     }
@@ -270,6 +282,7 @@ exports.translateEnvVariables = translateEnvVariables;
 exports.exportCredentials = exportCredentials;
 exports.unsetCredentials = unsetCredentials;
 exports.exportRegion = exportRegion;
+exports.getCallerIdentity = getCallerIdentity;
 exports.exportAccountId = exportAccountId;
 exports.sanitizeGitHubVariables = sanitizeGitHubVariables;
 exports.defaultSleep = defaultSleep;
@@ -375,15 +388,18 @@ function exportRegion(region, outputEnvCredentials) {
         core.exportVariable('AWS_REGION', region);
     }
 }
-// Obtains account ID from STS Client and sets it as output
-async function exportAccountId(credentialsClient, maskAccountId) {
-    const client = credentialsClient.stsClient;
+async function getCallerIdentity(client) {
     const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
-    const accountId = identity.Account;
-    const arn = identity.Arn;
-    if (!accountId || !arn) {
+    if (!identity.Account || !identity.Arn) {
         throw new Error('Could not get Account ID or ARN from STS. Did you set credentials?');
     }
+    return { Account: identity.Account, Arn: identity.Arn, UserId: identity.UserId };
+}
+// Obtains account ID from STS Client and sets it as output
+async function exportAccountId(credentialsClient, maskAccountId) {
+    const identity = await getCallerIdentity(credentialsClient.stsClient);
+    const accountId = identity.Account;
+    const arn = identity.Arn;
     if (maskAccountId) {
         core.setSecret(accountId);
         core.setSecret(arn);
@@ -578,6 +594,10 @@ async function run() {
         const specialCharacterWorkaround = (0, helpers_1.getBooleanInput)('special-characters-workaround', { required: false });
         const useExistingCredentials = core.getInput('use-existing-credentials', { required: false });
         let maxRetries = Number.parseInt(core.getInput('retry-max-attempts', { required: false })) || 12;
+        const expectedAccountIds = core
+            .getInput('allowed-account-ids', { required: false })
+            .split(',')
+            .map((s) => s.trim());
         const forceSkipOidc = (0, helpers_1.getBooleanInput)('force-skip-oidc', { required: false });
         if (forceSkipOidc && roleToAssume && !AccessKeyId && !webIdentityTokenFile) {
             throw new Error("If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id' or 'web-identity-token-file' must be set");
@@ -656,14 +676,14 @@ async function run() {
         }
         else if (!webIdentityTokenFile && !roleChaining) {
             // Proceed only if credentials can be picked up
-            await credentialsClient.validateCredentials();
+            await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
             sourceAccountId = await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
         }
         if (AccessKeyId || roleChaining) {
             // Validate that the SDK can actually pick up credentials.
             // This validates cases where this action is using existing environment credentials,
             // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
-            await credentialsClient.validateCredentials(AccessKeyId, roleChaining);
+            await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
             sourceAccountId = await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
         }
         // Get role credentials if configured to do so
@@ -693,7 +713,7 @@ async function run() {
             //  is set to `true` then we are NOT in a self-hosted runner.
             // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
             if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
-                await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId);
+                await credentialsClient.validateCredentials(roleCredentials.Credentials?.AccessKeyId, roleChaining, expectedAccountIds);
             }
             if (outputEnvCredentials) {
                 await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
