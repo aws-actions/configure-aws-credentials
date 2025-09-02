@@ -48109,6 +48109,7 @@ exports.translateEnvVariables = translateEnvVariables;
 exports.exportCredentials = exportCredentials;
 exports.unsetCredentials = unsetCredentials;
 exports.exportRegion = exportRegion;
+exports.getCallerIdentity = getCallerIdentity;
 exports.exportAccountId = exportAccountId;
 exports.sanitizeGitHubVariables = sanitizeGitHubVariables;
 exports.defaultSleep = defaultSleep;
@@ -48214,15 +48215,18 @@ function exportRegion(region, outputEnvCredentials) {
         core.exportVariable('AWS_REGION', region);
     }
 }
-// Obtains account ID from STS Client and sets it as output
-async function exportAccountId(credentialsClient, maskAccountId) {
-    const client = credentialsClient.stsClient;
+async function getCallerIdentity(client) {
     const identity = await client.send(new client_sts_1.GetCallerIdentityCommand({}));
-    const accountId = identity.Account;
-    const arn = identity.Arn;
-    if (!accountId || !arn) {
+    if (!identity.Account || !identity.Arn) {
         throw new Error('Could not get Account ID or ARN from STS. Did you set credentials?');
     }
+    return { Account: identity.Account, Arn: identity.Arn, UserId: identity.UserId };
+}
+// Obtains account ID from STS Client and sets it as output
+async function exportAccountId(credentialsClient, maskAccountId) {
+    const identity = await getCallerIdentity(credentialsClient.stsClient);
+    const accountId = identity.Account;
+    const arn = identity.Arn;
     if (maskAccountId) {
         core.setSecret(accountId);
         core.setSecret(arn);
