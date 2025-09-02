@@ -83,6 +83,9 @@ inputs:
   allowed-account-ids:
     required: false
     description: An option comma-delimited list of expected AWS account IDs. The action will fail if we receive credentials for the wrong account.
+  force-skip-oidc:
+    required: false
+    description: When enabled, this option will skip using GitHub OIDC provider even if the id-token permission is set. This is sometimes useful when using IAM instance credentials.
 
 outputs:
   aws-account-id:
