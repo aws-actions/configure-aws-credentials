@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.1...v5.0.0) (2025-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* Cleanup input handling. Changes invalid boolean input behavior (see #1445)
+
+### Features
+
+* add skip OIDC option ([#1458](https://github.com/aws-actions/configure-aws-credentials/issues/1458)) ([8c45f6b](https://github.com/aws-actions/configure-aws-credentials/commit/8c45f6b08196feb86cfdbe431541d5571d9ab2c2))
+* Cleanup input handling. Changes invalid boolean input behavior (see [#1445](https://github.com/aws-actions/configure-aws-credentials/issues/1445)) ([74b3e27](https://github.com/aws-actions/configure-aws-credentials/commit/74b3e27aa80db064b5bb8c04b22fc607e817acf7))
+* support account id allowlist ([#1456](https://github.com/aws-actions/configure-aws-credentials/issues/1456)) ([c4be498](https://github.com/aws-actions/configure-aws-credentials/commit/c4be498953fc1da2707a50ce4b761a53af3d02af))
+
 ## [4.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.0...v4.3.1) (2025-08-04)
 
 
