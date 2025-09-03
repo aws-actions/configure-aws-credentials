@@ -480,6 +480,13 @@ This example shows that you can reference the fetched credentials as outputs if
 the `aws-session-token` input in a situation where session tokens are fetched
 and passed to this action.
 
+Versioning
+----------
+Starting with version 5.0.0, this action uses semantic-style release tags and
+(immutable releases)[https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases].
+A floating version tag (vN) is also provided for convenience: this tag will
+move to the latest major vesion (vN -> vN.2.1, vM -> vM.0.0, etc.).
+
 License
 -------
 This code is made available under the MIT license.
