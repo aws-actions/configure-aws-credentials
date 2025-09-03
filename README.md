@@ -485,7 +485,7 @@ Versioning
 Starting with version 5.0.0, this action uses semantic-style release tags and
 (immutable releases)[https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases].
 A floating version tag (vN) is also provided for convenience: this tag will
-move to the latest major vesion (vN -> vN.2.1, vM -> vM.0.0, etc.).
+move to the latest major version (vN -> vN.2.1, vM -> vM.0.0, etc.).
 
 License
 -------
