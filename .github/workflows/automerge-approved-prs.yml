@@ -16,7 +16,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
-          role-to-assume: ${{ vars.AWS_PACKAGING_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
           role-duration-seconds: 900
           role-session-name: SecretsManagerFetch
       - name: Get bot user token
@@ -24,7 +24,7 @@ jobs:
         with:
           parse-json-secrets: true
           secret-ids: |
-            ${{ vars.OSDS_PACKAGING_ROLE }}
+            ${{ secrets.OSDS_PACKAGING_ROLE }}
       - name: Enable PR automerge
         run: gh pr merge --auto --squash "$PR_URL"
         env:
