@@ -19143,14 +19143,14 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
-var src_exports = {};
-__export(src_exports, {
+var index_exports = {};
+__export(index_exports, {
   DEFAULT_REQUEST_TIMEOUT: () => DEFAULT_REQUEST_TIMEOUT,
   NodeHttp2Handler: () => NodeHttp2Handler,
   NodeHttpHandler: () => NodeHttpHandler,
   streamCollector: () => streamCollector
 });
-module.exports = __toCommonJS(src_exports);
+module.exports = __toCommonJS(index_exports);
 
 // src/node-http-handler.ts
 var import_protocol_http = __nccwpck_require__(2356);
@@ -19173,8 +19173,8 @@ var getTransformedHeaders = /* @__PURE__ */ __name((headers) => {
 
 // src/timing.ts
 var timing = {
-  setTimeout: (cb, ms) => setTimeout(cb, ms),
-  clearTimeout: (timeoutId) => clearTimeout(timeoutId)
+  setTimeout: /* @__PURE__ */ __name((cb, ms) => setTimeout(cb, ms), "setTimeout"),
+  clearTimeout: /* @__PURE__ */ __name((timeoutId) => clearTimeout(timeoutId), "clearTimeout")
 };
 
 // src/set-connection-timeout.ts
@@ -20113,8 +20113,8 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
-var src_exports = {};
-__export(src_exports, {
+var index_exports = {};
+__export(index_exports, {
   Field: () => Field,
   Fields: () => Fields,
   HttpRequest: () => HttpRequest,
@@ -20124,7 +20124,7 @@ __export(src_exports, {
   isValidHostname: () => isValidHostname,
   resolveHttpHandlerRuntimeConfig: () => resolveHttpHandlerRuntimeConfig
 });
-module.exports = __toCommonJS(src_exports);
+module.exports = __toCommonJS(index_exports);
 
 // src/extensions/httpExtensionConfiguration.ts
 var getHttpHandlerExtensionConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
@@ -20330,8 +20330,7 @@ var HttpResponse = class {
     this.body = options.body;
   }
   static isInstance(response) {
-    if (!response)
-      return false;
+    if (!response) return false;
     const resp = response;
     return typeof resp.statusCode === "number" && typeof resp.headers === "object";
   }
@@ -20374,11 +20373,11 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
-var src_exports = {};
-__export(src_exports, {
+var index_exports = {};
+__export(index_exports, {
   buildQueryString: () => buildQueryString
 });
-module.exports = __toCommonJS(src_exports);
+module.exports = __toCommonJS(index_exports);
 var import_util_uri_escape = __nccwpck_require__(146);
 function buildQueryString(query) {
   const parts = [];
@@ -22269,8 +22268,8 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
-var src_exports = {};
-__export(src_exports, {
+var index_exports = {};
+__export(index_exports, {
   AlgorithmId: () => AlgorithmId,
   EndpointURLScheme: () => EndpointURLScheme,
   FieldPosition: () => FieldPosition,
@@ -22282,7 +22281,7 @@ __export(src_exports, {
   getDefaultClientConfiguration: () => getDefaultClientConfiguration,
   resolveDefaultRuntimeConfig: () => resolveDefaultRuntimeConfig
 });
-module.exports = __toCommonJS(src_exports);
+module.exports = __toCommonJS(index_exports);
 
 // src/auth/auth.ts
 var HttpAuthLocation = /* @__PURE__ */ ((HttpAuthLocation2) => {
@@ -22318,14 +22317,14 @@ var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
   const checksumAlgorithms = [];
   if (runtimeConfig.sha256 !== void 0) {
     checksumAlgorithms.push({
-      algorithmId: () => "sha256" /* SHA256 */,
-      checksumConstructor: () => runtimeConfig.sha256
+      algorithmId: /* @__PURE__ */ __name(() => "sha256" /* SHA256 */, "algorithmId"),
+      checksumConstructor: /* @__PURE__ */ __name(() => runtimeConfig.sha256, "checksumConstructor")
     });
   }
   if (runtimeConfig.md5 != void 0) {
     checksumAlgorithms.push({
-      algorithmId: () => "md5" /* MD5 */,
-      checksumConstructor: () => runtimeConfig.md5
+      algorithmId: /* @__PURE__ */ __name(() => "md5" /* MD5 */, "algorithmId"),
+      checksumConstructor: /* @__PURE__ */ __name(() => runtimeConfig.md5, "checksumConstructor")
     });
   }
   return {
@@ -24720,12 +24719,12 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
-var src_exports = {};
-__export(src_exports, {
+var index_exports = {};
+__export(index_exports, {
   escapeUri: () => escapeUri,
   escapeUriPath: () => escapeUriPath
 });
-module.exports = __toCommonJS(src_exports);
+module.exports = __toCommonJS(index_exports);
 
 // src/escape-uri.ts
 var escapeUri = /* @__PURE__ */ __name((uri) => (
