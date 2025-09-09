@@ -61,4 +61,39 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(core.setSecret).toHaveBeenCalledTimes(3);
     expect(core.exportVariable).toHaveBeenCalledTimes(0);
   });
+
+  it('verifies credentials without special characters', {}, () => {
+    expect(helpers.verifyKeys({ AccessKeyId: 'AKIATEST', SecretAccessKey: 'secretkey' })).toBe(true);
+    expect(helpers.verifyKeys({ AccessKeyId: 'AKIA!@#$', SecretAccessKey: 'secret' })).toBe(false);
+    expect(helpers.verifyKeys(undefined)).toBe(false);
+  });
+
+  it('translates environment variables', {}, () => {
+    process.env.AWS_REGION = 'us-east-1';
+    process.env.HTTPS_PROXY = 'https://proxy:8080';
+    helpers.translateEnvVariables();
+    expect(process.env['INPUT_AWS-REGION']).toBe('us-east-1');
+    expect(process.env.HTTP_PROXY).toBe('https://proxy:8080');
+  });
+
+  it('handles getBooleanInput correctly', {}, () => {
+    vi.spyOn(core, 'getInput').mockReturnValue('true');
+    expect(helpers.getBooleanInput('test')).toBe(true);
+    
+    vi.spyOn(core, 'getInput').mockReturnValue('false');
+    expect(helpers.getBooleanInput('test')).toBe(false);
+    
+    vi.spyOn(core, 'getInput').mockReturnValue('');
+    expect(helpers.getBooleanInput('test', { default: true })).toBe(true);
+    
+    vi.spyOn(core, 'getInput').mockReturnValue('invalid');
+    expect(() => helpers.getBooleanInput('test')).toThrow();
+  });
+
+  it('clears session token when not provided', {}, () => {
+    vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
+    process.env.AWS_SESSION_TOKEN = 'old-token';
+    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test' }, false, true);
+    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', '');
+  });
 });

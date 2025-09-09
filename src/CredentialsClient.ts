@@ -2,14 +2,16 @@ import { info } from '@actions/core';
 import { STSClient } from '@aws-sdk/client-sts';
 import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { ProxyAgent } from 'proxy-agent';
 import { errorMessage, getCallerIdentity } from './helpers';
+import { ProxyResolver } from './ProxyResolver';
 
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 
 export interface CredentialsClientProps {
   region?: string;
   proxyServer?: string;
+  noProxy?: string;
 }
 
 export class CredentialsClient {
@@ -21,10 +23,15 @@ export class CredentialsClient {
     this.region = props.region;
     if (props.proxyServer) {
       info('Configuring proxy handler for STS client');
-      const handler = new HttpsProxyAgent(props.proxyServer);
+      const getProxyForUrl = new ProxyResolver({
+        httpProxy: props.proxyServer,
+        httpsProxy: props.proxyServer,
+        noProxy: props.noProxy,
+      }).getProxyForUrl;
+      const handler = new ProxyAgent({ getProxyForUrl });
       this.requestHandler = new NodeHttpHandler({
-        httpAgent: handler,
         httpsAgent: handler,
+        httpAgent: handler,
       });
     }
   }
