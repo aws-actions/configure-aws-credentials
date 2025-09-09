@@ -28,6 +28,7 @@ export function translateEnvVariables() {
     'RETRY_MAX_ATTEMPTS',
     'SPECIAL_CHARACTERS_WORKAROUND',
     'USE_EXISTING_CREDENTIALS',
+    'NO_PROXY',
   ];
   // Treat HTTPS_PROXY as HTTP_PROXY. Precedence is HTTPS_PROXY > HTTP_PROXY
   if (process.env.HTTPS_PROXY) process.env.HTTP_PROXY = process.env.HTTPS_PROXY;

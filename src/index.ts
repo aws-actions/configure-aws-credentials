@@ -56,6 +56,7 @@ export async function run() {
       .split(',')
       .map((s) => s.trim());
     const forceSkipOidc = getBooleanInput('force-skip-oidc', { required: false });
+    const noProxy = core.getInput('no-proxy', { required: false });
 
     if (forceSkipOidc && roleToAssume && !AccessKeyId && !webIdentityTokenFile) {
       throw new Error(
@@ -109,7 +110,7 @@ export async function run() {
     exportRegion(region, outputEnvCredentials);
 
     // Instantiate credentials client
-    const credentialsClient = new CredentialsClient({ region, proxyServer });
+    const credentialsClient = new CredentialsClient({ region, proxyServer, noProxy });
     let sourceAccountId: string;
     let webIdentityToken: string;
 

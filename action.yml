@@ -37,6 +37,9 @@ inputs:
   http-proxy:
     description: Proxy to use for the AWS SDK agent
     required: false
+  no-proxy:
+    description: Hosts to skip for the proxy configuration
+    required: false
   mask-aws-account-id:
     description: Whether to mask the AWS account ID for these credentials as a secret value. By default the account ID will not be masked
     required: false
