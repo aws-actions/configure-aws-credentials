@@ -153,6 +153,7 @@ See [action.yml](./action.yml) for more detail.
 | use-existing-credentials  | When set, the action will check if existing credentials are valid and exit if they are. Defaults to false. |    No    |
 | allowed-account-ids       | A comma-delimited list of expected AWS account IDs. The action will fail if we receive credentials for the wrong account. |    No    |
 | force-skip-oidc           | When set, the action will skip using GitHub OIDC provider even if the id-token permission is set. |    No    |
+| action-timeout-s          | Global timeout for the action in seconds. If set to a value greater than 0, the action will fail if it takes longer than this time to complete. |    No    |
 </details>
 
 #### Adjust the retry mechanism

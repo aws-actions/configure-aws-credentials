@@ -92,6 +92,9 @@ inputs:
   force-skip-oidc:
     required: false
     description: When enabled, this option will skip using GitHub OIDC provider even if the id-token permission is set. This is sometimes useful when using IAM instance credentials.
+  action-timeout-s:
+    required: false
+    description: A global timeout in seconds for the action. When the timeout is reached, the action immediately exits. The default is to run without a timeout.
 
 outputs:
   aws-account-id:
