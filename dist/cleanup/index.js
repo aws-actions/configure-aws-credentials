@@ -49741,7 +49741,14 @@ async function getCallerIdentity(client) {
     if (!identity.Account || !identity.Arn) {
         throw new Error('Could not get Account ID or ARN from STS. Did you set credentials?');
     }
-    return { Account: identity.Account, Arn: identity.Arn, UserId: identity.UserId };
+    const result = {
+        Account: identity.Account,
+        Arn: identity.Arn,
+    };
+    if (identity.UserId !== undefined) {
+        result.UserId = identity.UserId;
+    }
+    return result;
 }
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
