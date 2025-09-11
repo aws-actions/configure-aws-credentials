@@ -17,14 +17,19 @@ const ProxyResolver_1 = __nccwpck_require__(3265);
 const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 class CredentialsClient {
     constructor(props) {
-        this.region = props.region;
+        if (props.region !== undefined) {
+            this.region = props.region;
+        }
         if (props.proxyServer) {
             (0, core_1.info)('Configuring proxy handler for STS client');
-            const getProxyForUrl = new ProxyResolver_1.ProxyResolver({
+            const proxyOptions = {
                 httpProxy: props.proxyServer,
                 httpsProxy: props.proxyServer,
-                noProxy: props.noProxy,
-            }).getProxyForUrl;
+            };
+            if (props.noProxy !== undefined) {
+                proxyOptions.noProxy = props.noProxy;
+            }
+            const getProxyForUrl = new ProxyResolver_1.ProxyResolver(proxyOptions).getProxyForUrl;
             const handler = new proxy_agent_1.ProxyAgent({ getProxyForUrl });
             this.requestHandler = new node_http_handler_1.NodeHttpHandler({
                 httpsAgent: handler,
@@ -34,11 +39,12 @@ class CredentialsClient {
     }
     get stsClient() {
         if (!this._stsClient) {
-            this._stsClient = new client_sts_1.STSClient({
-                region: this.region,
-                customUserAgent: USER_AGENT,
-                requestHandler: this.requestHandler ? this.requestHandler : undefined,
-            });
+            const config = { customUserAgent: USER_AGENT };
+            if (this.region !== undefined)
+                config.region = this.region;
+            if (this.requestHandler !== undefined)
+                config.requestHandler = this.requestHandler;
+            this._stsClient = new client_sts_1.STSClient(config);
         }
         return this._stsClient;
     }
@@ -73,9 +79,10 @@ class CredentialsClient {
         }
     }
     async loadCredentials() {
-        const client = new client_sts_1.STSClient({
-            requestHandler: this.requestHandler ? this.requestHandler : undefined,
-        });
+        const config = {};
+        if (this.requestHandler !== undefined)
+            config.requestHandler = this.requestHandler;
+        const client = new client_sts_1.STSClient(config);
         return client.config.credentials();
     }
 }
@@ -97,10 +104,11 @@ const DEFAULT_PORTS = {
 };
 class ProxyResolver {
     constructor(options) {
+        // This method matches the interface expected by 'proxy-agent'. It is an arrow function to bind 'this'.
+        this.getProxyForUrl = (url, _req) => {
+            return this.getProxyForUrlOptions(url, this.options);
+        };
         this.options = options;
-    }
-    getProxyForUrl(url, _req) {
-        return this.getProxyForUrlOptions(url, this.options);
     }
     getProxyForUrlOptions(url, options) {
         let parsedUrl;
@@ -471,7 +479,14 @@ async function getCallerIdentity(client) {
     if (!identity.Account || !identity.Arn) {
         throw new Error('Could not get Account ID or ARN from STS. Did you set credentials?');
     }
-    return { Account: identity.Account, Arn: identity.Arn, UserId: identity.UserId };
+    const result = {
+        Account: identity.Account,
+        Arn: identity.Arn,
+    };
+    if (identity.UserId !== undefined) {
+        result.UserId = identity.UserId;
+    }
+    return result;
 }
 // Obtains account ID from STS Client and sets it as output
 async function exportAccountId(credentialsClient, maskAccountId) {
@@ -724,7 +739,12 @@ async function run() {
         }
         (0, helpers_1.exportRegion)(region, outputEnvCredentials);
         // Instantiate credentials client
-        const credentialsClient = new CredentialsClient_1.CredentialsClient({ region, proxyServer, noProxy });
+        const clientProps = { region };
+        if (proxyServer)
+            clientProps.proxyServer = proxyServer;
+        if (noProxy)
+            clientProps.noProxy = noProxy;
+        const credentialsClient = new CredentialsClient_1.CredentialsClient(clientProps);
         let sourceAccountId;
         let webIdentityToken;
         //if the user wants to attempt to use existing credentials, check if we have some already
