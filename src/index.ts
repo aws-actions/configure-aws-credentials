@@ -57,6 +57,16 @@ export async function run() {
       .map((s) => s.trim());
     const forceSkipOidc = getBooleanInput('force-skip-oidc', { required: false });
     const noProxy = core.getInput('no-proxy', { required: false });
+    const globalTimeout = Number.parseInt(core.getInput('action-timeout-s', { required: false })) || 0;
+
+    let timeoutId: NodeJS.Timeout | undefined;
+    if (globalTimeout > 0) {
+      core.info(`Setting a global timeout of ${globalTimeout} seconds for the action`);
+      timeoutId = setTimeout(() => {
+        core.setFailed(`Action timed out after ${globalTimeout} seconds`);
+        process.exit(1);
+      }, globalTimeout * 1000);
+    }
 
     if (forceSkipOidc && roleToAssume && !AccessKeyId && !webIdentityTokenFile) {
       throw new Error(
@@ -122,6 +132,7 @@ export async function run() {
       const validCredentials = await areCredentialsValid(credentialsClient);
       if (validCredentials) {
         core.notice('Pre-existing credentials are valid. No need to generate new ones.');
+        if (timeoutId) clearTimeout(timeoutId);
         return;
       }
       core.notice('No valid credentials exist. Running as normal.');
@@ -207,11 +218,13 @@ export async function run() {
     } else {
       core.info('Proceeding with IAM user credentials');
     }
+
+    // Clear timeout on successful completion
+    if (timeoutId) clearTimeout(timeoutId);
   } catch (error) {
     core.setFailed(errorMessage(error));
 
     const showStackTrace = process.env.SHOW_STACK_TRACE;
-
     if (showStackTrace === 'true') {
       throw error;
     }

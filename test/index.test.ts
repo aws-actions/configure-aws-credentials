@@ -646,6 +646,86 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Global Timeout Configuration', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+    });
+
+    it('sets timeout when action-timeout-s is provided', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'action-timeout-s': '30',
+        }),
+      );
+
+      await run();
+
+      expect(infoSpy).toHaveBeenCalledWith('Setting a global timeout of 30 seconds for the action');
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
+      expect(clearTimeoutSpy).toHaveBeenCalledWith(expect.any(Object));
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('does not set timeout when action-timeout-s is 0', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'action-timeout-s': '0',
+        }),
+      );
+
+      await run();
+
+      expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining('Setting a global timeout'));
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('does not set timeout when action-timeout-s is not provided', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const infoSpy = vi.spyOn(core, 'info');
+
+      await run();
+
+      expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining('Setting a global timeout'));
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('timeout callback calls setFailed and exits process', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'action-timeout-s': '5',
+        }),
+      );
+
+      await run();
+
+      // Get the timeout callback function
+      const timeoutCallback = setTimeoutSpy.mock.calls[0][0] as () => void;
+      
+      // Execute the timeout callback
+      timeoutCallback();
+
+      expect(core.setFailed).toHaveBeenCalledWith('Action timed out after 5 seconds');
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+  });
+
   describe('HTTP Proxy Configuration', {}, () => {
     beforeEach(() => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
