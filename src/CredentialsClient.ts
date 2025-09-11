@@ -20,14 +20,19 @@ export class CredentialsClient {
   private readonly requestHandler?: NodeHttpHandler;
 
   constructor(props: CredentialsClientProps) {
-    this.region = props.region;
+    if (props.region !== undefined) {
+      this.region = props.region;
+    }
     if (props.proxyServer) {
       info('Configuring proxy handler for STS client');
-      const getProxyForUrl = new ProxyResolver({
+      const proxyOptions: { httpProxy: string; httpsProxy: string; noProxy?: string } = {
         httpProxy: props.proxyServer,
         httpsProxy: props.proxyServer,
-        noProxy: props.noProxy,
-      }).getProxyForUrl;
+      };
+      if (props.noProxy !== undefined) {
+        proxyOptions.noProxy = props.noProxy;
+      }
+      const getProxyForUrl = new ProxyResolver(proxyOptions).getProxyForUrl;
       const handler = new ProxyAgent({ getProxyForUrl });
       this.requestHandler = new NodeHttpHandler({
         httpsAgent: handler,
@@ -38,11 +43,14 @@ export class CredentialsClient {
 
   public get stsClient(): STSClient {
     if (!this._stsClient) {
-      this._stsClient = new STSClient({
-        region: this.region,
-        customUserAgent: USER_AGENT,
-        requestHandler: this.requestHandler ? this.requestHandler : undefined,
-      });
+      const config = { customUserAgent: USER_AGENT } as {
+        customUserAgent: string;
+        region?: string;
+        requestHandler?: NodeHttpHandler;
+      };
+      if (this.region !== undefined) config.region = this.region;
+      if (this.requestHandler !== undefined) config.requestHandler = this.requestHandler;
+      this._stsClient = new STSClient(config);
     }
     return this._stsClient;
   }
@@ -88,9 +96,9 @@ export class CredentialsClient {
   }
 
   private async loadCredentials() {
-    const client = new STSClient({
-      requestHandler: this.requestHandler ? this.requestHandler : undefined,
-    });
+    const config = {} as { requestHandler?: NodeHttpHandler };
+    if (this.requestHandler !== undefined) config.requestHandler = this.requestHandler;
+    const client = new STSClient(config);
     return client.config.credentials();
   }
 }
