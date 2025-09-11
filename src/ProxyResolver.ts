@@ -18,9 +18,10 @@ export class ProxyResolver {
     this.options = options;
   }
 
-  getProxyForUrl(url: string, _req: http.ClientRequest): string {
+  // This method matches the interface expected by 'proxy-agent'. It is an arrow function to bind 'this'.
+  public readonly getProxyForUrl = (url: string, _req: http.ClientRequest): string => {
     return this.getProxyForUrlOptions(url, this.options);
-  }
+  };
 
   private getProxyForUrlOptions(url: string | URL, options?: ProxyOptions): string {
     let parsedUrl: URL;
