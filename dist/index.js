@@ -529,15 +529,20 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
     }
     catch (err) {
         if (!isRetryable) {
+            core.debug(`retryAndBackoff: error is not retryable: ${errorMessage(err)}`);
             throw err;
         }
         // It's retryable, so sleep and retry.
-        await sleep(Math.random() * (2 ** retries * base));
-        retries += 1;
-        if (retries >= maxRetries) {
+        const delay = Math.random() * (2 ** retries * base);
+        const nextRetry = retries + 1;
+        core.debug(`retryAndBackoff: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
+            `Retrying after ${Math.floor(delay)}ms.`);
+        await sleep(delay);
+        if (nextRetry >= maxRetries) {
+            core.debug('retryAndBackoff: reached max retries; giving up.');
             throw err;
         }
-        return await retryAndBackoff(fn, isRetryable, maxRetries, retries, base);
+        return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base);
     }
 }
 /* c8 ignore start */
