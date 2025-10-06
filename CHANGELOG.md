@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v5.0.0...v5.1.0) (2025-10-06)
+
+
+### Features
+
+* Add global timeout support ([#1487](https://github.com/aws-actions/configure-aws-credentials/issues/1487)) ([1584b8b](https://github.com/aws-actions/configure-aws-credentials/commit/1584b8b0e2062557287c28fbe9b8920df434e866))
+* add no-proxy support ([#1482](https://github.com/aws-actions/configure-aws-credentials/issues/1482)) ([dde9b22](https://github.com/aws-actions/configure-aws-credentials/commit/dde9b22a8e889a0821997a21a2c5a38020ee8de3))
+* Improve debug logging in retry logic ([#1485](https://github.com/aws-actions/configure-aws-credentials/issues/1485)) ([97ef425](https://github.com/aws-actions/configure-aws-credentials/commit/97ef425d73aa532439f54f90d0e83101a186c5a6))
+
+
+### Bug Fixes
+
+* properly expose getProxyForUrl (introduced in [#1482](https://github.com/aws-actions/configure-aws-credentials/issues/1482)) ([#1486](https://github.com/aws-actions/configure-aws-credentials/issues/1486)) ([cea4298](https://github.com/aws-actions/configure-aws-credentials/commit/cea42985ac88b42678fbc84c18066a7f07f05176))
+
 ## [5.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v4.3.1...v5.0.0) (2025-09-03)
 
 
