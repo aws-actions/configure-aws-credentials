@@ -26,14 +26,14 @@
     "cpy-cli": "^6.0.0",
     "del-cli": "^6.0.0",
     "json-schema": "^0.4.0",
-    "memfs": "^4.39.0",
+    "memfs": "^4.47.0",
     "standard-version": "^9.5.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
-    "@aws-sdk/client-sts": "^3.888.0",
+    "@aws-sdk/client-sts": "^3.899.0",
     "@smithy/node-http-handler": "^4.2.0",
     "proxy-agent": "^6.5.0"
   },
