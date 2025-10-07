@@ -9197,6 +9197,82 @@ var AwsRestXmlProtocol = class extends import_protocols9.HttpBindingProtocol {
 
 /***/ }),
 
+/***/ 5606:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.ts
+var index_exports = {};
+__export(index_exports, {
+  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
+  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
+  ENV_EXPIRATION: () => ENV_EXPIRATION,
+  ENV_KEY: () => ENV_KEY,
+  ENV_SECRET: () => ENV_SECRET,
+  ENV_SESSION: () => ENV_SESSION,
+  fromEnv: () => fromEnv
+});
+module.exports = __toCommonJS(index_exports);
+
+// src/fromEnv.ts
+var import_client = __nccwpck_require__(5152);
+var import_property_provider = __nccwpck_require__(1238);
+var ENV_KEY = "AWS_ACCESS_KEY_ID";
+var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+var ENV_SESSION = "AWS_SESSION_TOKEN";
+var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+var fromEnv = /* @__PURE__ */ __name((init) => async () => {
+  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+  const accessKeyId = process.env[ENV_KEY];
+  const secretAccessKey = process.env[ENV_SECRET];
+  const sessionToken = process.env[ENV_SESSION];
+  const expiry = process.env[ENV_EXPIRATION];
+  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+  const accountId = process.env[ENV_ACCOUNT_ID];
+  if (accessKeyId && secretAccessKey) {
+    const credentials = {
+      accessKeyId,
+      secretAccessKey,
+      ...sessionToken && { sessionToken },
+      ...expiry && { expiration: new Date(expiry) },
+      ...credentialScope && { credentialScope },
+      ...accountId && { accountId }
+    };
+    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
+    return credentials;
+  }
+  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+}, "fromEnv");
+// Annotate the CommonJS export names for ESM import in node:
+
+0 && (0);
+
+
+
+/***/ }),
+
 /***/ 1509:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -9498,7 +9574,7 @@ var resolveCredentialSource = /* @__PURE__ */ __name((credentialSource, profileN
     }, "Ec2InstanceMetadata"),
     Environment: /* @__PURE__ */ __name(async (options) => {
       logger?.debug("@aws-sdk/credential-provider-ini - credential_source is Environment");
-      const { fromEnv } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(7121)));
+      const { fromEnv } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(5606)));
       return async () => fromEnv(options)().then(setNamedProvider);
     }, "Environment")
   };
@@ -9710,82 +9786,6 @@ var fromIni = /* @__PURE__ */ __name((_init = {}) => async ({ callerClientConfig
 
 /***/ }),
 
-/***/ 7121:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
-  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
-  ENV_EXPIRATION: () => ENV_EXPIRATION,
-  ENV_KEY: () => ENV_KEY,
-  ENV_SECRET: () => ENV_SECRET,
-  ENV_SESSION: () => ENV_SESSION,
-  fromEnv: () => fromEnv
-});
-module.exports = __toCommonJS(index_exports);
-
-// src/fromEnv.ts
-var import_client = __nccwpck_require__(5152);
-var import_property_provider = __nccwpck_require__(1238);
-var ENV_KEY = "AWS_ACCESS_KEY_ID";
-var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
-var ENV_SESSION = "AWS_SESSION_TOKEN";
-var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
-var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
-var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
-var fromEnv = /* @__PURE__ */ __name((init) => async () => {
-  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
-  const accessKeyId = process.env[ENV_KEY];
-  const secretAccessKey = process.env[ENV_SECRET];
-  const sessionToken = process.env[ENV_SESSION];
-  const expiry = process.env[ENV_EXPIRATION];
-  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
-  const accountId = process.env[ENV_ACCOUNT_ID];
-  if (accessKeyId && secretAccessKey) {
-    const credentials = {
-      accessKeyId,
-      secretAccessKey,
-      ...sessionToken && { sessionToken },
-      ...expiry && { expiration: new Date(expiry) },
-      ...credentialScope && { credentialScope },
-      ...accountId && { accountId }
-    };
-    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
-    return credentials;
-  }
-  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
-}, "fromEnv");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
 /***/ 5861:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -9830,7 +9830,7 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 
 // src/defaultProvider.ts
-var import_credential_provider_env = __nccwpck_require__(6153);
+var import_credential_provider_env = __nccwpck_require__(5606);
 
 var import_shared_ini_file_loader = __nccwpck_require__(4964);
 
@@ -9929,82 +9929,6 @@ var defaultProvider = /* @__PURE__ */ __name((init = {}) => (0, import_property_
 ), "defaultProvider");
 var credentialsWillNeedRefresh = /* @__PURE__ */ __name((credentials) => credentials?.expiration !== void 0, "credentialsWillNeedRefresh");
 var credentialsTreatedAsExpired = /* @__PURE__ */ __name((credentials) => credentials?.expiration !== void 0 && credentials.expiration.getTime() - Date.now() < 3e5, "credentialsTreatedAsExpired");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
-
-
-/***/ }),
-
-/***/ 6153:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  ENV_ACCOUNT_ID: () => ENV_ACCOUNT_ID,
-  ENV_CREDENTIAL_SCOPE: () => ENV_CREDENTIAL_SCOPE,
-  ENV_EXPIRATION: () => ENV_EXPIRATION,
-  ENV_KEY: () => ENV_KEY,
-  ENV_SECRET: () => ENV_SECRET,
-  ENV_SESSION: () => ENV_SESSION,
-  fromEnv: () => fromEnv
-});
-module.exports = __toCommonJS(index_exports);
-
-// src/fromEnv.ts
-var import_client = __nccwpck_require__(5152);
-var import_property_provider = __nccwpck_require__(1238);
-var ENV_KEY = "AWS_ACCESS_KEY_ID";
-var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
-var ENV_SESSION = "AWS_SESSION_TOKEN";
-var ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
-var ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
-var ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
-var fromEnv = /* @__PURE__ */ __name((init) => async () => {
-  init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
-  const accessKeyId = process.env[ENV_KEY];
-  const secretAccessKey = process.env[ENV_SECRET];
-  const sessionToken = process.env[ENV_SESSION];
-  const expiry = process.env[ENV_EXPIRATION];
-  const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
-  const accountId = process.env[ENV_ACCOUNT_ID];
-  if (accessKeyId && secretAccessKey) {
-    const credentials = {
-      accessKeyId,
-      secretAccessKey,
-      ...sessionToken && { sessionToken },
-      ...expiry && { expiration: new Date(expiry) },
-      ...credentialScope && { credentialScope },
-      ...accountId && { accountId }
-    };
-    (0, import_client.setCredentialFeature)(credentials, "CREDENTIALS_ENV_VARS", "g");
-    return credentials;
-  }
-  throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
-}, "fromEnv");
 // Annotate the CommonJS export names for ESM import in node:
 
 0 && (0);
@@ -14698,219 +14622,180 @@ exports.InvokeStore = instance;
 /***/ }),
 
 /***/ 9316:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  CONFIG_USE_DUALSTACK_ENDPOINT: () => CONFIG_USE_DUALSTACK_ENDPOINT,
-  CONFIG_USE_FIPS_ENDPOINT: () => CONFIG_USE_FIPS_ENDPOINT,
-  DEFAULT_USE_DUALSTACK_ENDPOINT: () => DEFAULT_USE_DUALSTACK_ENDPOINT,
-  DEFAULT_USE_FIPS_ENDPOINT: () => DEFAULT_USE_FIPS_ENDPOINT,
-  ENV_USE_DUALSTACK_ENDPOINT: () => ENV_USE_DUALSTACK_ENDPOINT,
-  ENV_USE_FIPS_ENDPOINT: () => ENV_USE_FIPS_ENDPOINT,
-  NODE_REGION_CONFIG_FILE_OPTIONS: () => NODE_REGION_CONFIG_FILE_OPTIONS,
-  NODE_REGION_CONFIG_OPTIONS: () => NODE_REGION_CONFIG_OPTIONS,
-  NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: () => NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS,
-  NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: () => NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS,
-  REGION_ENV_NAME: () => REGION_ENV_NAME,
-  REGION_INI_NAME: () => REGION_INI_NAME,
-  getRegionInfo: () => getRegionInfo,
-  resolveCustomEndpointsConfig: () => resolveCustomEndpointsConfig,
-  resolveEndpointsConfig: () => resolveEndpointsConfig,
-  resolveRegionConfig: () => resolveRegionConfig
-});
-module.exports = __toCommonJS(index_exports);
 
-// src/endpointsConfig/NodeUseDualstackEndpointConfigOptions.ts
-var import_util_config_provider = __nccwpck_require__(6716);
-var ENV_USE_DUALSTACK_ENDPOINT = "AWS_USE_DUALSTACK_ENDPOINT";
-var CONFIG_USE_DUALSTACK_ENDPOINT = "use_dualstack_endpoint";
-var DEFAULT_USE_DUALSTACK_ENDPOINT = false;
-var NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => (0, import_util_config_provider.booleanSelector)(env, ENV_USE_DUALSTACK_ENDPOINT, import_util_config_provider.SelectorType.ENV), "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => (0, import_util_config_provider.booleanSelector)(profile, CONFIG_USE_DUALSTACK_ENDPOINT, import_util_config_provider.SelectorType.CONFIG), "configFileSelector"),
-  default: false
+var utilConfigProvider = __nccwpck_require__(6716);
+var utilMiddleware = __nccwpck_require__(6324);
+
+const ENV_USE_DUALSTACK_ENDPOINT = "AWS_USE_DUALSTACK_ENDPOINT";
+const CONFIG_USE_DUALSTACK_ENDPOINT = "use_dualstack_endpoint";
+const DEFAULT_USE_DUALSTACK_ENDPOINT = false;
+const NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => utilConfigProvider.booleanSelector(env, ENV_USE_DUALSTACK_ENDPOINT, utilConfigProvider.SelectorType.ENV),
+    configFileSelector: (profile) => utilConfigProvider.booleanSelector(profile, CONFIG_USE_DUALSTACK_ENDPOINT, utilConfigProvider.SelectorType.CONFIG),
+    default: false,
 };
 
-// src/endpointsConfig/NodeUseFipsEndpointConfigOptions.ts
-
-var ENV_USE_FIPS_ENDPOINT = "AWS_USE_FIPS_ENDPOINT";
-var CONFIG_USE_FIPS_ENDPOINT = "use_fips_endpoint";
-var DEFAULT_USE_FIPS_ENDPOINT = false;
-var NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => (0, import_util_config_provider.booleanSelector)(env, ENV_USE_FIPS_ENDPOINT, import_util_config_provider.SelectorType.ENV), "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => (0, import_util_config_provider.booleanSelector)(profile, CONFIG_USE_FIPS_ENDPOINT, import_util_config_provider.SelectorType.CONFIG), "configFileSelector"),
-  default: false
+const ENV_USE_FIPS_ENDPOINT = "AWS_USE_FIPS_ENDPOINT";
+const CONFIG_USE_FIPS_ENDPOINT = "use_fips_endpoint";
+const DEFAULT_USE_FIPS_ENDPOINT = false;
+const NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => utilConfigProvider.booleanSelector(env, ENV_USE_FIPS_ENDPOINT, utilConfigProvider.SelectorType.ENV),
+    configFileSelector: (profile) => utilConfigProvider.booleanSelector(profile, CONFIG_USE_FIPS_ENDPOINT, utilConfigProvider.SelectorType.CONFIG),
+    default: false,
 };
 
-// src/endpointsConfig/resolveCustomEndpointsConfig.ts
-var import_util_middleware = __nccwpck_require__(6324);
-var resolveCustomEndpointsConfig = /* @__PURE__ */ __name((input) => {
-  const { tls, endpoint, urlParser, useDualstackEndpoint } = input;
-  return Object.assign(input, {
-    tls: tls ?? true,
-    endpoint: (0, import_util_middleware.normalizeProvider)(typeof endpoint === "string" ? urlParser(endpoint) : endpoint),
-    isCustomEndpoint: true,
-    useDualstackEndpoint: (0, import_util_middleware.normalizeProvider)(useDualstackEndpoint ?? false)
-  });
-}, "resolveCustomEndpointsConfig");
-
-// src/endpointsConfig/resolveEndpointsConfig.ts
-
-
-// src/endpointsConfig/utils/getEndpointFromRegion.ts
-var getEndpointFromRegion = /* @__PURE__ */ __name(async (input) => {
-  const { tls = true } = input;
-  const region = await input.region();
-  const dnsHostRegex = new RegExp(/^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])$/);
-  if (!dnsHostRegex.test(region)) {
-    throw new Error("Invalid region in client config");
-  }
-  const useDualstackEndpoint = await input.useDualstackEndpoint();
-  const useFipsEndpoint = await input.useFipsEndpoint();
-  const { hostname } = await input.regionInfoProvider(region, { useDualstackEndpoint, useFipsEndpoint }) ?? {};
-  if (!hostname) {
-    throw new Error("Cannot resolve hostname from client config");
-  }
-  return input.urlParser(`${tls ? "https:" : "http:"}//${hostname}`);
-}, "getEndpointFromRegion");
-
-// src/endpointsConfig/resolveEndpointsConfig.ts
-var resolveEndpointsConfig = /* @__PURE__ */ __name((input) => {
-  const useDualstackEndpoint = (0, import_util_middleware.normalizeProvider)(input.useDualstackEndpoint ?? false);
-  const { endpoint, useFipsEndpoint, urlParser, tls } = input;
-  return Object.assign(input, {
-    tls: tls ?? true,
-    endpoint: endpoint ? (0, import_util_middleware.normalizeProvider)(typeof endpoint === "string" ? urlParser(endpoint) : endpoint) : () => getEndpointFromRegion({ ...input, useDualstackEndpoint, useFipsEndpoint }),
-    isCustomEndpoint: !!endpoint,
-    useDualstackEndpoint
-  });
-}, "resolveEndpointsConfig");
-
-// src/regionConfig/config.ts
-var REGION_ENV_NAME = "AWS_REGION";
-var REGION_INI_NAME = "region";
-var NODE_REGION_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => env[REGION_ENV_NAME], "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => profile[REGION_INI_NAME], "configFileSelector"),
-  default: /* @__PURE__ */ __name(() => {
-    throw new Error("Region is missing");
-  }, "default")
-};
-var NODE_REGION_CONFIG_FILE_OPTIONS = {
-  preferredFile: "credentials"
+const resolveCustomEndpointsConfig = (input) => {
+    const { tls, endpoint, urlParser, useDualstackEndpoint } = input;
+    return Object.assign(input, {
+        tls: tls ?? true,
+        endpoint: utilMiddleware.normalizeProvider(typeof endpoint === "string" ? urlParser(endpoint) : endpoint),
+        isCustomEndpoint: true,
+        useDualstackEndpoint: utilMiddleware.normalizeProvider(useDualstackEndpoint ?? false),
+    });
 };
 
-// src/regionConfig/isFipsRegion.ts
-var isFipsRegion = /* @__PURE__ */ __name((region) => typeof region === "string" && (region.startsWith("fips-") || region.endsWith("-fips")), "isFipsRegion");
-
-// src/regionConfig/getRealRegion.ts
-var getRealRegion = /* @__PURE__ */ __name((region) => isFipsRegion(region) ? ["fips-aws-global", "aws-fips"].includes(region) ? "us-east-1" : region.replace(/fips-(dkr-|prod-)?|-fips/, "") : region, "getRealRegion");
-
-// src/regionConfig/resolveRegionConfig.ts
-var resolveRegionConfig = /* @__PURE__ */ __name((input) => {
-  const { region, useFipsEndpoint } = input;
-  if (!region) {
-    throw new Error("Region is missing");
-  }
-  return Object.assign(input, {
-    region: /* @__PURE__ */ __name(async () => {
-      if (typeof region === "string") {
-        return getRealRegion(region);
-      }
-      const providedRegion = await region();
-      return getRealRegion(providedRegion);
-    }, "region"),
-    useFipsEndpoint: /* @__PURE__ */ __name(async () => {
-      const providedRegion = typeof region === "string" ? region : await region();
-      if (isFipsRegion(providedRegion)) {
-        return true;
-      }
-      return typeof useFipsEndpoint !== "function" ? Promise.resolve(!!useFipsEndpoint) : useFipsEndpoint();
-    }, "useFipsEndpoint")
-  });
-}, "resolveRegionConfig");
-
-// src/regionInfo/getHostnameFromVariants.ts
-var getHostnameFromVariants = /* @__PURE__ */ __name((variants = [], { useFipsEndpoint, useDualstackEndpoint }) => variants.find(
-  ({ tags }) => useFipsEndpoint === tags.includes("fips") && useDualstackEndpoint === tags.includes("dualstack")
-)?.hostname, "getHostnameFromVariants");
-
-// src/regionInfo/getResolvedHostname.ts
-var getResolvedHostname = /* @__PURE__ */ __name((resolvedRegion, { regionHostname, partitionHostname }) => regionHostname ? regionHostname : partitionHostname ? partitionHostname.replace("{region}", resolvedRegion) : void 0, "getResolvedHostname");
-
-// src/regionInfo/getResolvedPartition.ts
-var getResolvedPartition = /* @__PURE__ */ __name((region, { partitionHash }) => Object.keys(partitionHash || {}).find((key) => partitionHash[key].regions.includes(region)) ?? "aws", "getResolvedPartition");
-
-// src/regionInfo/getResolvedSigningRegion.ts
-var getResolvedSigningRegion = /* @__PURE__ */ __name((hostname, { signingRegion, regionRegex, useFipsEndpoint }) => {
-  if (signingRegion) {
-    return signingRegion;
-  } else if (useFipsEndpoint) {
-    const regionRegexJs = regionRegex.replace("\\\\", "\\").replace(/^\^/g, "\\.").replace(/\$$/g, "\\.");
-    const regionRegexmatchArray = hostname.match(regionRegexJs);
-    if (regionRegexmatchArray) {
-      return regionRegexmatchArray[0].slice(1, -1);
+const getEndpointFromRegion = async (input) => {
+    const { tls = true } = input;
+    const region = await input.region();
+    const dnsHostRegex = new RegExp(/^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])$/);
+    if (!dnsHostRegex.test(region)) {
+        throw new Error("Invalid region in client config");
     }
-  }
-}, "getResolvedSigningRegion");
-
-// src/regionInfo/getRegionInfo.ts
-var getRegionInfo = /* @__PURE__ */ __name((region, {
-  useFipsEndpoint = false,
-  useDualstackEndpoint = false,
-  signingService,
-  regionHash,
-  partitionHash
-}) => {
-  const partition = getResolvedPartition(region, { partitionHash });
-  const resolvedRegion = region in regionHash ? region : partitionHash[partition]?.endpoint ?? region;
-  const hostnameOptions = { useFipsEndpoint, useDualstackEndpoint };
-  const regionHostname = getHostnameFromVariants(regionHash[resolvedRegion]?.variants, hostnameOptions);
-  const partitionHostname = getHostnameFromVariants(partitionHash[partition]?.variants, hostnameOptions);
-  const hostname = getResolvedHostname(resolvedRegion, { regionHostname, partitionHostname });
-  if (hostname === void 0) {
-    throw new Error(`Endpoint resolution failed for: ${{ resolvedRegion, useFipsEndpoint, useDualstackEndpoint }}`);
-  }
-  const signingRegion = getResolvedSigningRegion(hostname, {
-    signingRegion: regionHash[resolvedRegion]?.signingRegion,
-    regionRegex: partitionHash[partition].regionRegex,
-    useFipsEndpoint
-  });
-  return {
-    partition,
-    signingService,
-    hostname,
-    ...signingRegion && { signingRegion },
-    ...regionHash[resolvedRegion]?.signingService && {
-      signingService: regionHash[resolvedRegion].signingService
+    const useDualstackEndpoint = await input.useDualstackEndpoint();
+    const useFipsEndpoint = await input.useFipsEndpoint();
+    const { hostname } = (await input.regionInfoProvider(region, { useDualstackEndpoint, useFipsEndpoint })) ?? {};
+    if (!hostname) {
+        throw new Error("Cannot resolve hostname from client config");
     }
-  };
-}, "getRegionInfo");
-// Annotate the CommonJS export names for ESM import in node:
+    return input.urlParser(`${tls ? "https:" : "http:"}//${hostname}`);
+};
 
-0 && (0);
+const resolveEndpointsConfig = (input) => {
+    const useDualstackEndpoint = utilMiddleware.normalizeProvider(input.useDualstackEndpoint ?? false);
+    const { endpoint, useFipsEndpoint, urlParser, tls } = input;
+    return Object.assign(input, {
+        tls: tls ?? true,
+        endpoint: endpoint
+            ? utilMiddleware.normalizeProvider(typeof endpoint === "string" ? urlParser(endpoint) : endpoint)
+            : () => getEndpointFromRegion({ ...input, useDualstackEndpoint, useFipsEndpoint }),
+        isCustomEndpoint: !!endpoint,
+        useDualstackEndpoint,
+    });
+};
 
+const REGION_ENV_NAME = "AWS_REGION";
+const REGION_INI_NAME = "region";
+const NODE_REGION_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => env[REGION_ENV_NAME],
+    configFileSelector: (profile) => profile[REGION_INI_NAME],
+    default: () => {
+        throw new Error("Region is missing");
+    },
+};
+const NODE_REGION_CONFIG_FILE_OPTIONS = {
+    preferredFile: "credentials",
+};
+
+const isFipsRegion = (region) => typeof region === "string" && (region.startsWith("fips-") || region.endsWith("-fips"));
+
+const getRealRegion = (region) => isFipsRegion(region)
+    ? ["fips-aws-global", "aws-fips"].includes(region)
+        ? "us-east-1"
+        : region.replace(/fips-(dkr-|prod-)?|-fips/, "")
+    : region;
+
+const resolveRegionConfig = (input) => {
+    const { region, useFipsEndpoint } = input;
+    if (!region) {
+        throw new Error("Region is missing");
+    }
+    return Object.assign(input, {
+        region: async () => {
+            if (typeof region === "string") {
+                return getRealRegion(region);
+            }
+            const providedRegion = await region();
+            return getRealRegion(providedRegion);
+        },
+        useFipsEndpoint: async () => {
+            const providedRegion = typeof region === "string" ? region : await region();
+            if (isFipsRegion(providedRegion)) {
+                return true;
+            }
+            return typeof useFipsEndpoint !== "function" ? Promise.resolve(!!useFipsEndpoint) : useFipsEndpoint();
+        },
+    });
+};
+
+const getHostnameFromVariants = (variants = [], { useFipsEndpoint, useDualstackEndpoint }) => variants.find(({ tags }) => useFipsEndpoint === tags.includes("fips") && useDualstackEndpoint === tags.includes("dualstack"))?.hostname;
+
+const getResolvedHostname = (resolvedRegion, { regionHostname, partitionHostname }) => regionHostname
+    ? regionHostname
+    : partitionHostname
+        ? partitionHostname.replace("{region}", resolvedRegion)
+        : undefined;
+
+const getResolvedPartition = (region, { partitionHash }) => Object.keys(partitionHash || {}).find((key) => partitionHash[key].regions.includes(region)) ?? "aws";
+
+const getResolvedSigningRegion = (hostname, { signingRegion, regionRegex, useFipsEndpoint }) => {
+    if (signingRegion) {
+        return signingRegion;
+    }
+    else if (useFipsEndpoint) {
+        const regionRegexJs = regionRegex.replace("\\\\", "\\").replace(/^\^/g, "\\.").replace(/\$$/g, "\\.");
+        const regionRegexmatchArray = hostname.match(regionRegexJs);
+        if (regionRegexmatchArray) {
+            return regionRegexmatchArray[0].slice(1, -1);
+        }
+    }
+};
+
+const getRegionInfo = (region, { useFipsEndpoint = false, useDualstackEndpoint = false, signingService, regionHash, partitionHash, }) => {
+    const partition = getResolvedPartition(region, { partitionHash });
+    const resolvedRegion = region in regionHash ? region : partitionHash[partition]?.endpoint ?? region;
+    const hostnameOptions = { useFipsEndpoint, useDualstackEndpoint };
+    const regionHostname = getHostnameFromVariants(regionHash[resolvedRegion]?.variants, hostnameOptions);
+    const partitionHostname = getHostnameFromVariants(partitionHash[partition]?.variants, hostnameOptions);
+    const hostname = getResolvedHostname(resolvedRegion, { regionHostname, partitionHostname });
+    if (hostname === undefined) {
+        throw new Error(`Endpoint resolution failed for: ${{ resolvedRegion, useFipsEndpoint, useDualstackEndpoint }}`);
+    }
+    const signingRegion = getResolvedSigningRegion(hostname, {
+        signingRegion: regionHash[resolvedRegion]?.signingRegion,
+        regionRegex: partitionHash[partition].regionRegex,
+        useFipsEndpoint,
+    });
+    return {
+        partition,
+        signingService,
+        hostname,
+        ...(signingRegion && { signingRegion }),
+        ...(regionHash[resolvedRegion]?.signingService && {
+            signingService: regionHash[resolvedRegion].signingService,
+        }),
+    };
+};
+
+exports.CONFIG_USE_DUALSTACK_ENDPOINT = CONFIG_USE_DUALSTACK_ENDPOINT;
+exports.CONFIG_USE_FIPS_ENDPOINT = CONFIG_USE_FIPS_ENDPOINT;
+exports.DEFAULT_USE_DUALSTACK_ENDPOINT = DEFAULT_USE_DUALSTACK_ENDPOINT;
+exports.DEFAULT_USE_FIPS_ENDPOINT = DEFAULT_USE_FIPS_ENDPOINT;
+exports.ENV_USE_DUALSTACK_ENDPOINT = ENV_USE_DUALSTACK_ENDPOINT;
+exports.ENV_USE_FIPS_ENDPOINT = ENV_USE_FIPS_ENDPOINT;
+exports.NODE_REGION_CONFIG_FILE_OPTIONS = NODE_REGION_CONFIG_FILE_OPTIONS;
+exports.NODE_REGION_CONFIG_OPTIONS = NODE_REGION_CONFIG_OPTIONS;
+exports.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS = NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS;
+exports.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS = NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS;
+exports.REGION_ENV_NAME = REGION_ENV_NAME;
+exports.REGION_INI_NAME = REGION_INI_NAME;
+exports.getRegionInfo = getRegionInfo;
+exports.resolveCustomEndpointsConfig = resolveCustomEndpointsConfig;
+exports.resolveEndpointsConfig = resolveEndpointsConfig;
+exports.resolveRegionConfig = resolveRegionConfig;
 
 
 /***/ }),
@@ -18451,440 +18336,381 @@ exports.strictParseShort = strictParseShort;
 /***/ }),
 
 /***/ 566:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  DEFAULT_MAX_RETRIES: () => DEFAULT_MAX_RETRIES,
-  DEFAULT_TIMEOUT: () => DEFAULT_TIMEOUT,
-  ENV_CMDS_AUTH_TOKEN: () => ENV_CMDS_AUTH_TOKEN,
-  ENV_CMDS_FULL_URI: () => ENV_CMDS_FULL_URI,
-  ENV_CMDS_RELATIVE_URI: () => ENV_CMDS_RELATIVE_URI,
-  Endpoint: () => Endpoint,
-  fromContainerMetadata: () => fromContainerMetadata,
-  fromInstanceMetadata: () => fromInstanceMetadata,
-  getInstanceMetadataEndpoint: () => getInstanceMetadataEndpoint,
-  httpRequest: () => httpRequest,
-  providerConfigFromInit: () => providerConfigFromInit
-});
-module.exports = __toCommonJS(index_exports);
 
-// src/fromContainerMetadata.ts
+var propertyProvider = __nccwpck_require__(1238);
+var url = __nccwpck_require__(7016);
+var buffer = __nccwpck_require__(181);
+var http = __nccwpck_require__(8611);
+var nodeConfigProvider = __nccwpck_require__(5704);
+var urlParser = __nccwpck_require__(4494);
 
-var import_url = __nccwpck_require__(7016);
-
-// src/remoteProvider/httpRequest.ts
-var import_property_provider = __nccwpck_require__(1238);
-var import_buffer = __nccwpck_require__(181);
-var import_http = __nccwpck_require__(8611);
 function httpRequest(options) {
-  return new Promise((resolve, reject) => {
-    const req = (0, import_http.request)({
-      method: "GET",
-      ...options,
-      // Node.js http module doesn't accept hostname with square brackets
-      // Refs: https://github.com/nodejs/node/issues/39738
-      hostname: options.hostname?.replace(/^\[(.+)\]$/, "$1")
-    });
-    req.on("error", (err) => {
-      reject(Object.assign(new import_property_provider.ProviderError("Unable to connect to instance metadata service"), err));
-      req.destroy();
-    });
-    req.on("timeout", () => {
-      reject(new import_property_provider.ProviderError("TimeoutError from instance metadata service"));
-      req.destroy();
-    });
-    req.on("response", (res) => {
-      const { statusCode = 400 } = res;
-      if (statusCode < 200 || 300 <= statusCode) {
-        reject(
-          Object.assign(new import_property_provider.ProviderError("Error response received from instance metadata service"), { statusCode })
-        );
-        req.destroy();
-      }
-      const chunks = [];
-      res.on("data", (chunk) => {
-        chunks.push(chunk);
-      });
-      res.on("end", () => {
-        resolve(import_buffer.Buffer.concat(chunks));
-        req.destroy();
-      });
-    });
-    req.end();
-  });
-}
-__name(httpRequest, "httpRequest");
-
-// src/remoteProvider/ImdsCredentials.ts
-var isImdsCredentials = /* @__PURE__ */ __name((arg) => Boolean(arg) && typeof arg === "object" && typeof arg.AccessKeyId === "string" && typeof arg.SecretAccessKey === "string" && typeof arg.Token === "string" && typeof arg.Expiration === "string", "isImdsCredentials");
-var fromImdsCredentials = /* @__PURE__ */ __name((creds) => ({
-  accessKeyId: creds.AccessKeyId,
-  secretAccessKey: creds.SecretAccessKey,
-  sessionToken: creds.Token,
-  expiration: new Date(creds.Expiration),
-  ...creds.AccountId && { accountId: creds.AccountId }
-}), "fromImdsCredentials");
-
-// src/remoteProvider/RemoteProviderInit.ts
-var DEFAULT_TIMEOUT = 1e3;
-var DEFAULT_MAX_RETRIES = 0;
-var providerConfigFromInit = /* @__PURE__ */ __name(({
-  maxRetries = DEFAULT_MAX_RETRIES,
-  timeout = DEFAULT_TIMEOUT
-}) => ({ maxRetries, timeout }), "providerConfigFromInit");
-
-// src/remoteProvider/retry.ts
-var retry = /* @__PURE__ */ __name((toRetry, maxRetries) => {
-  let promise = toRetry();
-  for (let i = 0; i < maxRetries; i++) {
-    promise = promise.catch(toRetry);
-  }
-  return promise;
-}, "retry");
-
-// src/fromContainerMetadata.ts
-var ENV_CMDS_FULL_URI = "AWS_CONTAINER_CREDENTIALS_FULL_URI";
-var ENV_CMDS_RELATIVE_URI = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
-var ENV_CMDS_AUTH_TOKEN = "AWS_CONTAINER_AUTHORIZATION_TOKEN";
-var fromContainerMetadata = /* @__PURE__ */ __name((init = {}) => {
-  const { timeout, maxRetries } = providerConfigFromInit(init);
-  return () => retry(async () => {
-    const requestOptions = await getCmdsUri({ logger: init.logger });
-    const credsResponse = JSON.parse(await requestFromEcsImds(timeout, requestOptions));
-    if (!isImdsCredentials(credsResponse)) {
-      throw new import_property_provider.CredentialsProviderError("Invalid response received from instance metadata service.", {
-        logger: init.logger
-      });
-    }
-    return fromImdsCredentials(credsResponse);
-  }, maxRetries);
-}, "fromContainerMetadata");
-var requestFromEcsImds = /* @__PURE__ */ __name(async (timeout, options) => {
-  if (process.env[ENV_CMDS_AUTH_TOKEN]) {
-    options.headers = {
-      ...options.headers,
-      Authorization: process.env[ENV_CMDS_AUTH_TOKEN]
-    };
-  }
-  const buffer = await httpRequest({
-    ...options,
-    timeout
-  });
-  return buffer.toString();
-}, "requestFromEcsImds");
-var CMDS_IP = "169.254.170.2";
-var GREENGRASS_HOSTS = {
-  localhost: true,
-  "127.0.0.1": true
-};
-var GREENGRASS_PROTOCOLS = {
-  "http:": true,
-  "https:": true
-};
-var getCmdsUri = /* @__PURE__ */ __name(async ({ logger }) => {
-  if (process.env[ENV_CMDS_RELATIVE_URI]) {
-    return {
-      hostname: CMDS_IP,
-      path: process.env[ENV_CMDS_RELATIVE_URI]
-    };
-  }
-  if (process.env[ENV_CMDS_FULL_URI]) {
-    const parsed = (0, import_url.parse)(process.env[ENV_CMDS_FULL_URI]);
-    if (!parsed.hostname || !(parsed.hostname in GREENGRASS_HOSTS)) {
-      throw new import_property_provider.CredentialsProviderError(`${parsed.hostname} is not a valid container metadata service hostname`, {
-        tryNextLink: false,
-        logger
-      });
-    }
-    if (!parsed.protocol || !(parsed.protocol in GREENGRASS_PROTOCOLS)) {
-      throw new import_property_provider.CredentialsProviderError(`${parsed.protocol} is not a valid container metadata service protocol`, {
-        tryNextLink: false,
-        logger
-      });
-    }
-    return {
-      ...parsed,
-      port: parsed.port ? parseInt(parsed.port, 10) : void 0
-    };
-  }
-  throw new import_property_provider.CredentialsProviderError(
-    `The container metadata credential provider cannot be used unless the ${ENV_CMDS_RELATIVE_URI} or ${ENV_CMDS_FULL_URI} environment variable is set`,
-    {
-      tryNextLink: false,
-      logger
-    }
-  );
-}, "getCmdsUri");
-
-// src/fromInstanceMetadata.ts
-
-
-
-// src/error/InstanceMetadataV1FallbackError.ts
-
-var InstanceMetadataV1FallbackError = class _InstanceMetadataV1FallbackError extends import_property_provider.CredentialsProviderError {
-  constructor(message, tryNextLink = true) {
-    super(message, tryNextLink);
-    this.tryNextLink = tryNextLink;
-    this.name = "InstanceMetadataV1FallbackError";
-    Object.setPrototypeOf(this, _InstanceMetadataV1FallbackError.prototype);
-  }
-  static {
-    __name(this, "InstanceMetadataV1FallbackError");
-  }
-};
-
-// src/utils/getInstanceMetadataEndpoint.ts
-var import_node_config_provider = __nccwpck_require__(5704);
-var import_url_parser = __nccwpck_require__(4494);
-
-// src/config/Endpoint.ts
-var Endpoint = /* @__PURE__ */ ((Endpoint2) => {
-  Endpoint2["IPv4"] = "http://169.254.169.254";
-  Endpoint2["IPv6"] = "http://[fd00:ec2::254]";
-  return Endpoint2;
-})(Endpoint || {});
-
-// src/config/EndpointConfigOptions.ts
-var ENV_ENDPOINT_NAME = "AWS_EC2_METADATA_SERVICE_ENDPOINT";
-var CONFIG_ENDPOINT_NAME = "ec2_metadata_service_endpoint";
-var ENDPOINT_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => env[ENV_ENDPOINT_NAME], "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => profile[CONFIG_ENDPOINT_NAME], "configFileSelector"),
-  default: void 0
-};
-
-// src/config/EndpointMode.ts
-var EndpointMode = /* @__PURE__ */ ((EndpointMode2) => {
-  EndpointMode2["IPv4"] = "IPv4";
-  EndpointMode2["IPv6"] = "IPv6";
-  return EndpointMode2;
-})(EndpointMode || {});
-
-// src/config/EndpointModeConfigOptions.ts
-var ENV_ENDPOINT_MODE_NAME = "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE";
-var CONFIG_ENDPOINT_MODE_NAME = "ec2_metadata_service_endpoint_mode";
-var ENDPOINT_MODE_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => env[ENV_ENDPOINT_MODE_NAME], "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => profile[CONFIG_ENDPOINT_MODE_NAME], "configFileSelector"),
-  default: "IPv4" /* IPv4 */
-};
-
-// src/utils/getInstanceMetadataEndpoint.ts
-var getInstanceMetadataEndpoint = /* @__PURE__ */ __name(async () => (0, import_url_parser.parseUrl)(await getFromEndpointConfig() || await getFromEndpointModeConfig()), "getInstanceMetadataEndpoint");
-var getFromEndpointConfig = /* @__PURE__ */ __name(async () => (0, import_node_config_provider.loadConfig)(ENDPOINT_CONFIG_OPTIONS)(), "getFromEndpointConfig");
-var getFromEndpointModeConfig = /* @__PURE__ */ __name(async () => {
-  const endpointMode = await (0, import_node_config_provider.loadConfig)(ENDPOINT_MODE_CONFIG_OPTIONS)();
-  switch (endpointMode) {
-    case "IPv4" /* IPv4 */:
-      return "http://169.254.169.254" /* IPv4 */;
-    case "IPv6" /* IPv6 */:
-      return "http://[fd00:ec2::254]" /* IPv6 */;
-    default:
-      throw new Error(`Unsupported endpoint mode: ${endpointMode}. Select from ${Object.values(EndpointMode)}`);
-  }
-}, "getFromEndpointModeConfig");
-
-// src/utils/getExtendedInstanceMetadataCredentials.ts
-var STATIC_STABILITY_REFRESH_INTERVAL_SECONDS = 5 * 60;
-var STATIC_STABILITY_REFRESH_INTERVAL_JITTER_WINDOW_SECONDS = 5 * 60;
-var STATIC_STABILITY_DOC_URL = "https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html";
-var getExtendedInstanceMetadataCredentials = /* @__PURE__ */ __name((credentials, logger) => {
-  const refreshInterval = STATIC_STABILITY_REFRESH_INTERVAL_SECONDS + Math.floor(Math.random() * STATIC_STABILITY_REFRESH_INTERVAL_JITTER_WINDOW_SECONDS);
-  const newExpiration = new Date(Date.now() + refreshInterval * 1e3);
-  logger.warn(
-    `Attempting credential expiration extension due to a credential service availability issue. A refresh of these credentials will be attempted after ${new Date(newExpiration)}.
-For more information, please visit: ` + STATIC_STABILITY_DOC_URL
-  );
-  const originalExpiration = credentials.originalExpiration ?? credentials.expiration;
-  return {
-    ...credentials,
-    ...originalExpiration ? { originalExpiration } : {},
-    expiration: newExpiration
-  };
-}, "getExtendedInstanceMetadataCredentials");
-
-// src/utils/staticStabilityProvider.ts
-var staticStabilityProvider = /* @__PURE__ */ __name((provider, options = {}) => {
-  const logger = options?.logger || console;
-  let pastCredentials;
-  return async () => {
-    let credentials;
-    try {
-      credentials = await provider();
-      if (credentials.expiration && credentials.expiration.getTime() < Date.now()) {
-        credentials = getExtendedInstanceMetadataCredentials(credentials, logger);
-      }
-    } catch (e) {
-      if (pastCredentials) {
-        logger.warn("Credential renew failed: ", e);
-        credentials = getExtendedInstanceMetadataCredentials(pastCredentials, logger);
-      } else {
-        throw e;
-      }
-    }
-    pastCredentials = credentials;
-    return credentials;
-  };
-}, "staticStabilityProvider");
-
-// src/fromInstanceMetadata.ts
-var IMDS_PATH = "/latest/meta-data/iam/security-credentials/";
-var IMDS_TOKEN_PATH = "/latest/api/token";
-var AWS_EC2_METADATA_V1_DISABLED = "AWS_EC2_METADATA_V1_DISABLED";
-var PROFILE_AWS_EC2_METADATA_V1_DISABLED = "ec2_metadata_v1_disabled";
-var X_AWS_EC2_METADATA_TOKEN = "x-aws-ec2-metadata-token";
-var fromInstanceMetadata = /* @__PURE__ */ __name((init = {}) => staticStabilityProvider(getInstanceMetadataProvider(init), { logger: init.logger }), "fromInstanceMetadata");
-var getInstanceMetadataProvider = /* @__PURE__ */ __name((init = {}) => {
-  let disableFetchToken = false;
-  const { logger, profile } = init;
-  const { timeout, maxRetries } = providerConfigFromInit(init);
-  const getCredentials = /* @__PURE__ */ __name(async (maxRetries2, options) => {
-    const isImdsV1Fallback = disableFetchToken || options.headers?.[X_AWS_EC2_METADATA_TOKEN] == null;
-    if (isImdsV1Fallback) {
-      let fallbackBlockedFromProfile = false;
-      let fallbackBlockedFromProcessEnv = false;
-      const configValue = await (0, import_node_config_provider.loadConfig)(
-        {
-          environmentVariableSelector: /* @__PURE__ */ __name((env) => {
-            const envValue = env[AWS_EC2_METADATA_V1_DISABLED];
-            fallbackBlockedFromProcessEnv = !!envValue && envValue !== "false";
-            if (envValue === void 0) {
-              throw new import_property_provider.CredentialsProviderError(
-                `${AWS_EC2_METADATA_V1_DISABLED} not set in env, checking config file next.`,
-                { logger: init.logger }
-              );
+    return new Promise((resolve, reject) => {
+        const req = http.request({
+            method: "GET",
+            ...options,
+            hostname: options.hostname?.replace(/^\[(.+)\]$/, "$1"),
+        });
+        req.on("error", (err) => {
+            reject(Object.assign(new propertyProvider.ProviderError("Unable to connect to instance metadata service"), err));
+            req.destroy();
+        });
+        req.on("timeout", () => {
+            reject(new propertyProvider.ProviderError("TimeoutError from instance metadata service"));
+            req.destroy();
+        });
+        req.on("response", (res) => {
+            const { statusCode = 400 } = res;
+            if (statusCode < 200 || 300 <= statusCode) {
+                reject(Object.assign(new propertyProvider.ProviderError("Error response received from instance metadata service"), { statusCode }));
+                req.destroy();
             }
-            return fallbackBlockedFromProcessEnv;
-          }, "environmentVariableSelector"),
-          configFileSelector: /* @__PURE__ */ __name((profile2) => {
-            const profileValue = profile2[PROFILE_AWS_EC2_METADATA_V1_DISABLED];
-            fallbackBlockedFromProfile = !!profileValue && profileValue !== "false";
-            return fallbackBlockedFromProfile;
-          }, "configFileSelector"),
-          default: false
-        },
-        {
-          profile
-        }
-      )();
-      if (init.ec2MetadataV1Disabled || configValue) {
-        const causes = [];
-        if (init.ec2MetadataV1Disabled)
-          causes.push("credential provider initialization (runtime option ec2MetadataV1Disabled)");
-        if (fallbackBlockedFromProfile) causes.push(`config file profile (${PROFILE_AWS_EC2_METADATA_V1_DISABLED})`);
-        if (fallbackBlockedFromProcessEnv)
-          causes.push(`process environment variable (${AWS_EC2_METADATA_V1_DISABLED})`);
-        throw new InstanceMetadataV1FallbackError(
-          `AWS EC2 Metadata v1 fallback has been blocked by AWS SDK configuration in the following: [${causes.join(
-            ", "
-          )}].`
-        );
-      }
-    }
-    const imdsProfile = (await retry(async () => {
-      let profile2;
-      try {
-        profile2 = await getProfile(options);
-      } catch (err) {
-        if (err.statusCode === 401) {
-          disableFetchToken = false;
-        }
-        throw err;
-      }
-      return profile2;
-    }, maxRetries2)).trim();
-    return retry(async () => {
-      let creds;
-      try {
-        creds = await getCredentialsFromProfile(imdsProfile, options, init);
-      } catch (err) {
-        if (err.statusCode === 401) {
-          disableFetchToken = false;
-        }
-        throw err;
-      }
-      return creds;
-    }, maxRetries2);
-  }, "getCredentials");
-  return async () => {
-    const endpoint = await getInstanceMetadataEndpoint();
-    if (disableFetchToken) {
-      logger?.debug("AWS SDK Instance Metadata", "using v1 fallback (no token fetch)");
-      return getCredentials(maxRetries, { ...endpoint, timeout });
-    } else {
-      let token;
-      try {
-        token = (await getMetadataToken({ ...endpoint, timeout })).toString();
-      } catch (error) {
-        if (error?.statusCode === 400) {
-          throw Object.assign(error, {
-            message: "EC2 Metadata token request returned error"
-          });
-        } else if (error.message === "TimeoutError" || [403, 404, 405].includes(error.statusCode)) {
-          disableFetchToken = true;
-        }
-        logger?.debug("AWS SDK Instance Metadata", "using v1 fallback (initial)");
-        return getCredentials(maxRetries, { ...endpoint, timeout });
-      }
-      return getCredentials(maxRetries, {
-        ...endpoint,
-        headers: {
-          [X_AWS_EC2_METADATA_TOKEN]: token
-        },
-        timeout
-      });
-    }
-  };
-}, "getInstanceMetadataProvider");
-var getMetadataToken = /* @__PURE__ */ __name(async (options) => httpRequest({
-  ...options,
-  path: IMDS_TOKEN_PATH,
-  method: "PUT",
-  headers: {
-    "x-aws-ec2-metadata-token-ttl-seconds": "21600"
-  }
-}), "getMetadataToken");
-var getProfile = /* @__PURE__ */ __name(async (options) => (await httpRequest({ ...options, path: IMDS_PATH })).toString(), "getProfile");
-var getCredentialsFromProfile = /* @__PURE__ */ __name(async (profile, options, init) => {
-  const credentialsResponse = JSON.parse(
-    (await httpRequest({
-      ...options,
-      path: IMDS_PATH + profile
-    })).toString()
-  );
-  if (!isImdsCredentials(credentialsResponse)) {
-    throw new import_property_provider.CredentialsProviderError("Invalid response received from instance metadata service.", {
-      logger: init.logger
+            const chunks = [];
+            res.on("data", (chunk) => {
+                chunks.push(chunk);
+            });
+            res.on("end", () => {
+                resolve(buffer.Buffer.concat(chunks));
+                req.destroy();
+            });
+        });
+        req.end();
     });
-  }
-  return fromImdsCredentials(credentialsResponse);
-}, "getCredentialsFromProfile");
-// Annotate the CommonJS export names for ESM import in node:
+}
 
-0 && (0);
+const isImdsCredentials = (arg) => Boolean(arg) &&
+    typeof arg === "object" &&
+    typeof arg.AccessKeyId === "string" &&
+    typeof arg.SecretAccessKey === "string" &&
+    typeof arg.Token === "string" &&
+    typeof arg.Expiration === "string";
+const fromImdsCredentials = (creds) => ({
+    accessKeyId: creds.AccessKeyId,
+    secretAccessKey: creds.SecretAccessKey,
+    sessionToken: creds.Token,
+    expiration: new Date(creds.Expiration),
+    ...(creds.AccountId && { accountId: creds.AccountId }),
+});
 
+const DEFAULT_TIMEOUT = 1000;
+const DEFAULT_MAX_RETRIES = 0;
+const providerConfigFromInit = ({ maxRetries = DEFAULT_MAX_RETRIES, timeout = DEFAULT_TIMEOUT, }) => ({ maxRetries, timeout });
+
+const retry = (toRetry, maxRetries) => {
+    let promise = toRetry();
+    for (let i = 0; i < maxRetries; i++) {
+        promise = promise.catch(toRetry);
+    }
+    return promise;
+};
+
+const ENV_CMDS_FULL_URI = "AWS_CONTAINER_CREDENTIALS_FULL_URI";
+const ENV_CMDS_RELATIVE_URI = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
+const ENV_CMDS_AUTH_TOKEN = "AWS_CONTAINER_AUTHORIZATION_TOKEN";
+const fromContainerMetadata = (init = {}) => {
+    const { timeout, maxRetries } = providerConfigFromInit(init);
+    return () => retry(async () => {
+        const requestOptions = await getCmdsUri({ logger: init.logger });
+        const credsResponse = JSON.parse(await requestFromEcsImds(timeout, requestOptions));
+        if (!isImdsCredentials(credsResponse)) {
+            throw new propertyProvider.CredentialsProviderError("Invalid response received from instance metadata service.", {
+                logger: init.logger,
+            });
+        }
+        return fromImdsCredentials(credsResponse);
+    }, maxRetries);
+};
+const requestFromEcsImds = async (timeout, options) => {
+    if (process.env[ENV_CMDS_AUTH_TOKEN]) {
+        options.headers = {
+            ...options.headers,
+            Authorization: process.env[ENV_CMDS_AUTH_TOKEN],
+        };
+    }
+    const buffer = await httpRequest({
+        ...options,
+        timeout,
+    });
+    return buffer.toString();
+};
+const CMDS_IP = "169.254.170.2";
+const GREENGRASS_HOSTS = {
+    localhost: true,
+    "127.0.0.1": true,
+};
+const GREENGRASS_PROTOCOLS = {
+    "http:": true,
+    "https:": true,
+};
+const getCmdsUri = async ({ logger }) => {
+    if (process.env[ENV_CMDS_RELATIVE_URI]) {
+        return {
+            hostname: CMDS_IP,
+            path: process.env[ENV_CMDS_RELATIVE_URI],
+        };
+    }
+    if (process.env[ENV_CMDS_FULL_URI]) {
+        const parsed = url.parse(process.env[ENV_CMDS_FULL_URI]);
+        if (!parsed.hostname || !(parsed.hostname in GREENGRASS_HOSTS)) {
+            throw new propertyProvider.CredentialsProviderError(`${parsed.hostname} is not a valid container metadata service hostname`, {
+                tryNextLink: false,
+                logger,
+            });
+        }
+        if (!parsed.protocol || !(parsed.protocol in GREENGRASS_PROTOCOLS)) {
+            throw new propertyProvider.CredentialsProviderError(`${parsed.protocol} is not a valid container metadata service protocol`, {
+                tryNextLink: false,
+                logger,
+            });
+        }
+        return {
+            ...parsed,
+            port: parsed.port ? parseInt(parsed.port, 10) : undefined,
+        };
+    }
+    throw new propertyProvider.CredentialsProviderError("The container metadata credential provider cannot be used unless" +
+        ` the ${ENV_CMDS_RELATIVE_URI} or ${ENV_CMDS_FULL_URI} environment` +
+        " variable is set", {
+        tryNextLink: false,
+        logger,
+    });
+};
+
+class InstanceMetadataV1FallbackError extends propertyProvider.CredentialsProviderError {
+    tryNextLink;
+    name = "InstanceMetadataV1FallbackError";
+    constructor(message, tryNextLink = true) {
+        super(message, tryNextLink);
+        this.tryNextLink = tryNextLink;
+        Object.setPrototypeOf(this, InstanceMetadataV1FallbackError.prototype);
+    }
+}
+
+exports.Endpoint = void 0;
+(function (Endpoint) {
+    Endpoint["IPv4"] = "http://169.254.169.254";
+    Endpoint["IPv6"] = "http://[fd00:ec2::254]";
+})(exports.Endpoint || (exports.Endpoint = {}));
+
+const ENV_ENDPOINT_NAME = "AWS_EC2_METADATA_SERVICE_ENDPOINT";
+const CONFIG_ENDPOINT_NAME = "ec2_metadata_service_endpoint";
+const ENDPOINT_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => env[ENV_ENDPOINT_NAME],
+    configFileSelector: (profile) => profile[CONFIG_ENDPOINT_NAME],
+    default: undefined,
+};
+
+var EndpointMode;
+(function (EndpointMode) {
+    EndpointMode["IPv4"] = "IPv4";
+    EndpointMode["IPv6"] = "IPv6";
+})(EndpointMode || (EndpointMode = {}));
+
+const ENV_ENDPOINT_MODE_NAME = "AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE";
+const CONFIG_ENDPOINT_MODE_NAME = "ec2_metadata_service_endpoint_mode";
+const ENDPOINT_MODE_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => env[ENV_ENDPOINT_MODE_NAME],
+    configFileSelector: (profile) => profile[CONFIG_ENDPOINT_MODE_NAME],
+    default: EndpointMode.IPv4,
+};
+
+const getInstanceMetadataEndpoint = async () => urlParser.parseUrl((await getFromEndpointConfig()) || (await getFromEndpointModeConfig()));
+const getFromEndpointConfig = async () => nodeConfigProvider.loadConfig(ENDPOINT_CONFIG_OPTIONS)();
+const getFromEndpointModeConfig = async () => {
+    const endpointMode = await nodeConfigProvider.loadConfig(ENDPOINT_MODE_CONFIG_OPTIONS)();
+    switch (endpointMode) {
+        case EndpointMode.IPv4:
+            return exports.Endpoint.IPv4;
+        case EndpointMode.IPv6:
+            return exports.Endpoint.IPv6;
+        default:
+            throw new Error(`Unsupported endpoint mode: ${endpointMode}.` + ` Select from ${Object.values(EndpointMode)}`);
+    }
+};
+
+const STATIC_STABILITY_REFRESH_INTERVAL_SECONDS = 5 * 60;
+const STATIC_STABILITY_REFRESH_INTERVAL_JITTER_WINDOW_SECONDS = 5 * 60;
+const STATIC_STABILITY_DOC_URL = "https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html";
+const getExtendedInstanceMetadataCredentials = (credentials, logger) => {
+    const refreshInterval = STATIC_STABILITY_REFRESH_INTERVAL_SECONDS +
+        Math.floor(Math.random() * STATIC_STABILITY_REFRESH_INTERVAL_JITTER_WINDOW_SECONDS);
+    const newExpiration = new Date(Date.now() + refreshInterval * 1000);
+    logger.warn("Attempting credential expiration extension due to a credential service availability issue. A refresh of these " +
+        `credentials will be attempted after ${new Date(newExpiration)}.\nFor more information, please visit: ` +
+        STATIC_STABILITY_DOC_URL);
+    const originalExpiration = credentials.originalExpiration ?? credentials.expiration;
+    return {
+        ...credentials,
+        ...(originalExpiration ? { originalExpiration } : {}),
+        expiration: newExpiration,
+    };
+};
+
+const staticStabilityProvider = (provider, options = {}) => {
+    const logger = options?.logger || console;
+    let pastCredentials;
+    return async () => {
+        let credentials;
+        try {
+            credentials = await provider();
+            if (credentials.expiration && credentials.expiration.getTime() < Date.now()) {
+                credentials = getExtendedInstanceMetadataCredentials(credentials, logger);
+            }
+        }
+        catch (e) {
+            if (pastCredentials) {
+                logger.warn("Credential renew failed: ", e);
+                credentials = getExtendedInstanceMetadataCredentials(pastCredentials, logger);
+            }
+            else {
+                throw e;
+            }
+        }
+        pastCredentials = credentials;
+        return credentials;
+    };
+};
+
+const IMDS_PATH = "/latest/meta-data/iam/security-credentials/";
+const IMDS_TOKEN_PATH = "/latest/api/token";
+const AWS_EC2_METADATA_V1_DISABLED = "AWS_EC2_METADATA_V1_DISABLED";
+const PROFILE_AWS_EC2_METADATA_V1_DISABLED = "ec2_metadata_v1_disabled";
+const X_AWS_EC2_METADATA_TOKEN = "x-aws-ec2-metadata-token";
+const fromInstanceMetadata = (init = {}) => staticStabilityProvider(getInstanceMetadataProvider(init), { logger: init.logger });
+const getInstanceMetadataProvider = (init = {}) => {
+    let disableFetchToken = false;
+    const { logger, profile } = init;
+    const { timeout, maxRetries } = providerConfigFromInit(init);
+    const getCredentials = async (maxRetries, options) => {
+        const isImdsV1Fallback = disableFetchToken || options.headers?.[X_AWS_EC2_METADATA_TOKEN] == null;
+        if (isImdsV1Fallback) {
+            let fallbackBlockedFromProfile = false;
+            let fallbackBlockedFromProcessEnv = false;
+            const configValue = await nodeConfigProvider.loadConfig({
+                environmentVariableSelector: (env) => {
+                    const envValue = env[AWS_EC2_METADATA_V1_DISABLED];
+                    fallbackBlockedFromProcessEnv = !!envValue && envValue !== "false";
+                    if (envValue === undefined) {
+                        throw new propertyProvider.CredentialsProviderError(`${AWS_EC2_METADATA_V1_DISABLED} not set in env, checking config file next.`, { logger: init.logger });
+                    }
+                    return fallbackBlockedFromProcessEnv;
+                },
+                configFileSelector: (profile) => {
+                    const profileValue = profile[PROFILE_AWS_EC2_METADATA_V1_DISABLED];
+                    fallbackBlockedFromProfile = !!profileValue && profileValue !== "false";
+                    return fallbackBlockedFromProfile;
+                },
+                default: false,
+            }, {
+                profile,
+            })();
+            if (init.ec2MetadataV1Disabled || configValue) {
+                const causes = [];
+                if (init.ec2MetadataV1Disabled)
+                    causes.push("credential provider initialization (runtime option ec2MetadataV1Disabled)");
+                if (fallbackBlockedFromProfile)
+                    causes.push(`config file profile (${PROFILE_AWS_EC2_METADATA_V1_DISABLED})`);
+                if (fallbackBlockedFromProcessEnv)
+                    causes.push(`process environment variable (${AWS_EC2_METADATA_V1_DISABLED})`);
+                throw new InstanceMetadataV1FallbackError(`AWS EC2 Metadata v1 fallback has been blocked by AWS SDK configuration in the following: [${causes.join(", ")}].`);
+            }
+        }
+        const imdsProfile = (await retry(async () => {
+            let profile;
+            try {
+                profile = await getProfile(options);
+            }
+            catch (err) {
+                if (err.statusCode === 401) {
+                    disableFetchToken = false;
+                }
+                throw err;
+            }
+            return profile;
+        }, maxRetries)).trim();
+        return retry(async () => {
+            let creds;
+            try {
+                creds = await getCredentialsFromProfile(imdsProfile, options, init);
+            }
+            catch (err) {
+                if (err.statusCode === 401) {
+                    disableFetchToken = false;
+                }
+                throw err;
+            }
+            return creds;
+        }, maxRetries);
+    };
+    return async () => {
+        const endpoint = await getInstanceMetadataEndpoint();
+        if (disableFetchToken) {
+            logger?.debug("AWS SDK Instance Metadata", "using v1 fallback (no token fetch)");
+            return getCredentials(maxRetries, { ...endpoint, timeout });
+        }
+        else {
+            let token;
+            try {
+                token = (await getMetadataToken({ ...endpoint, timeout })).toString();
+            }
+            catch (error) {
+                if (error?.statusCode === 400) {
+                    throw Object.assign(error, {
+                        message: "EC2 Metadata token request returned error",
+                    });
+                }
+                else if (error.message === "TimeoutError" || [403, 404, 405].includes(error.statusCode)) {
+                    disableFetchToken = true;
+                }
+                logger?.debug("AWS SDK Instance Metadata", "using v1 fallback (initial)");
+                return getCredentials(maxRetries, { ...endpoint, timeout });
+            }
+            return getCredentials(maxRetries, {
+                ...endpoint,
+                headers: {
+                    [X_AWS_EC2_METADATA_TOKEN]: token,
+                },
+                timeout,
+            });
+        }
+    };
+};
+const getMetadataToken = async (options) => httpRequest({
+    ...options,
+    path: IMDS_TOKEN_PATH,
+    method: "PUT",
+    headers: {
+        "x-aws-ec2-metadata-token-ttl-seconds": "21600",
+    },
+});
+const getProfile = async (options) => (await httpRequest({ ...options, path: IMDS_PATH })).toString();
+const getCredentialsFromProfile = async (profile, options, init) => {
+    const credentialsResponse = JSON.parse((await httpRequest({
+        ...options,
+        path: IMDS_PATH + profile,
+    })).toString());
+    if (!isImdsCredentials(credentialsResponse)) {
+        throw new propertyProvider.CredentialsProviderError("Invalid response received from instance metadata service.", {
+            logger: init.logger,
+        });
+    }
+    return fromImdsCredentials(credentialsResponse);
+};
+
+exports.DEFAULT_MAX_RETRIES = DEFAULT_MAX_RETRIES;
+exports.DEFAULT_TIMEOUT = DEFAULT_TIMEOUT;
+exports.ENV_CMDS_AUTH_TOKEN = ENV_CMDS_AUTH_TOKEN;
+exports.ENV_CMDS_FULL_URI = ENV_CMDS_FULL_URI;
+exports.ENV_CMDS_RELATIVE_URI = ENV_CMDS_RELATIVE_URI;
+exports.fromContainerMetadata = fromContainerMetadata;
+exports.fromInstanceMetadata = fromInstanceMetadata;
+exports.getInstanceMetadataEndpoint = getInstanceMetadataEndpoint;
+exports.httpRequest = httpRequest;
+exports.providerConfigFromInit = providerConfigFromInit;
 
 
 /***/ }),
@@ -19114,73 +18940,51 @@ exports.streamCollector = streamCollector;
 /***/ }),
 
 /***/ 5092:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  Hash: () => Hash
-});
-module.exports = __toCommonJS(index_exports);
-var import_util_buffer_from = __nccwpck_require__(4151);
-var import_util_utf8 = __nccwpck_require__(1577);
-var import_buffer = __nccwpck_require__(181);
-var import_crypto = __nccwpck_require__(6982);
-var Hash = class {
-  static {
-    __name(this, "Hash");
-  }
-  constructor(algorithmIdentifier, secret) {
-    this.algorithmIdentifier = algorithmIdentifier;
-    this.secret = secret;
-    this.reset();
-  }
-  update(toHash, encoding) {
-    this.hash.update((0, import_util_utf8.toUint8Array)(castSourceData(toHash, encoding)));
-  }
-  digest() {
-    return Promise.resolve(this.hash.digest());
-  }
-  reset() {
-    this.hash = this.secret ? (0, import_crypto.createHmac)(this.algorithmIdentifier, castSourceData(this.secret)) : (0, import_crypto.createHash)(this.algorithmIdentifier);
-  }
-};
-function castSourceData(toCast, encoding) {
-  if (import_buffer.Buffer.isBuffer(toCast)) {
-    return toCast;
-  }
-  if (typeof toCast === "string") {
-    return (0, import_util_buffer_from.fromString)(toCast, encoding);
-  }
-  if (ArrayBuffer.isView(toCast)) {
-    return (0, import_util_buffer_from.fromArrayBuffer)(toCast.buffer, toCast.byteOffset, toCast.byteLength);
-  }
-  return (0, import_util_buffer_from.fromArrayBuffer)(toCast);
+
+var utilBufferFrom = __nccwpck_require__(4151);
+var utilUtf8 = __nccwpck_require__(1577);
+var buffer = __nccwpck_require__(181);
+var crypto = __nccwpck_require__(6982);
+
+class Hash {
+    algorithmIdentifier;
+    secret;
+    hash;
+    constructor(algorithmIdentifier, secret) {
+        this.algorithmIdentifier = algorithmIdentifier;
+        this.secret = secret;
+        this.reset();
+    }
+    update(toHash, encoding) {
+        this.hash.update(utilUtf8.toUint8Array(castSourceData(toHash, encoding)));
+    }
+    digest() {
+        return Promise.resolve(this.hash.digest());
+    }
+    reset() {
+        this.hash = this.secret
+            ? crypto.createHmac(this.algorithmIdentifier, castSourceData(this.secret))
+            : crypto.createHash(this.algorithmIdentifier);
+    }
 }
-__name(castSourceData, "castSourceData");
-// Annotate the CommonJS export names for ESM import in node:
+function castSourceData(toCast, encoding) {
+    if (buffer.Buffer.isBuffer(toCast)) {
+        return toCast;
+    }
+    if (typeof toCast === "string") {
+        return utilBufferFrom.fromString(toCast, encoding);
+    }
+    if (ArrayBuffer.isView(toCast)) {
+        return utilBufferFrom.fromArrayBuffer(toCast.buffer, toCast.byteOffset, toCast.byteLength);
+    }
+    return utilBufferFrom.fromArrayBuffer(toCast);
+}
 
-0 && (0);
-
+exports.Hash = Hash;
 
 
 /***/ }),
@@ -19200,75 +19004,55 @@ exports.isArrayBuffer = isArrayBuffer;
 /***/ }),
 
 /***/ 7212:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  contentLengthMiddleware: () => contentLengthMiddleware,
-  contentLengthMiddlewareOptions: () => contentLengthMiddlewareOptions,
-  getContentLengthPlugin: () => getContentLengthPlugin
-});
-module.exports = __toCommonJS(index_exports);
-var import_protocol_http = __nccwpck_require__(2356);
-var CONTENT_LENGTH_HEADER = "content-length";
+
+var protocolHttp = __nccwpck_require__(2356);
+
+const CONTENT_LENGTH_HEADER = "content-length";
 function contentLengthMiddleware(bodyLengthChecker) {
-  return (next) => async (args) => {
-    const request = args.request;
-    if (import_protocol_http.HttpRequest.isInstance(request)) {
-      const { body, headers } = request;
-      if (body && Object.keys(headers).map((str) => str.toLowerCase()).indexOf(CONTENT_LENGTH_HEADER) === -1) {
-        try {
-          const length = bodyLengthChecker(body);
-          request.headers = {
-            ...request.headers,
-            [CONTENT_LENGTH_HEADER]: String(length)
-          };
-        } catch (error) {
+    return (next) => async (args) => {
+        const request = args.request;
+        if (protocolHttp.HttpRequest.isInstance(request)) {
+            const { body, headers } = request;
+            if (body &&
+                Object.keys(headers)
+                    .map((str) => str.toLowerCase())
+                    .indexOf(CONTENT_LENGTH_HEADER) === -1) {
+                try {
+                    const length = bodyLengthChecker(body);
+                    request.headers = {
+                        ...request.headers,
+                        [CONTENT_LENGTH_HEADER]: String(length),
+                    };
+                }
+                catch (error) {
+                }
+            }
         }
-      }
-    }
-    return next({
-      ...args,
-      request
-    });
-  };
+        return next({
+            ...args,
+            request,
+        });
+    };
 }
-__name(contentLengthMiddleware, "contentLengthMiddleware");
-var contentLengthMiddlewareOptions = {
-  step: "build",
-  tags: ["SET_CONTENT_LENGTH", "CONTENT_LENGTH"],
-  name: "contentLengthMiddleware",
-  override: true
+const contentLengthMiddlewareOptions = {
+    step: "build",
+    tags: ["SET_CONTENT_LENGTH", "CONTENT_LENGTH"],
+    name: "contentLengthMiddleware",
+    override: true,
 };
-var getContentLengthPlugin = /* @__PURE__ */ __name((options) => ({
-  applyToStack: /* @__PURE__ */ __name((clientStack) => {
-    clientStack.add(contentLengthMiddleware(options.bodyLengthChecker), contentLengthMiddlewareOptions);
-  }, "applyToStack")
-}), "getContentLengthPlugin");
-// Annotate the CommonJS export names for ESM import in node:
+const getContentLengthPlugin = (options) => ({
+    applyToStack: (clientStack) => {
+        clientStack.add(contentLengthMiddleware(options.bodyLengthChecker), contentLengthMiddlewareOptions);
+    },
+});
 
-0 && (0);
-
+exports.contentLengthMiddleware = contentLengthMiddleware;
+exports.contentLengthMiddlewareOptions = contentLengthMiddlewareOptions;
+exports.getContentLengthPlugin = getContentLengthPlugin;
 
 
 /***/ }),
@@ -19580,400 +19364,367 @@ exports.toEndpointV1 = toEndpointV1;
 /***/ }),
 
 /***/ 9618:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  AdaptiveRetryStrategy: () => AdaptiveRetryStrategy,
-  CONFIG_MAX_ATTEMPTS: () => CONFIG_MAX_ATTEMPTS,
-  CONFIG_RETRY_MODE: () => CONFIG_RETRY_MODE,
-  ENV_MAX_ATTEMPTS: () => ENV_MAX_ATTEMPTS,
-  ENV_RETRY_MODE: () => ENV_RETRY_MODE,
-  NODE_MAX_ATTEMPT_CONFIG_OPTIONS: () => NODE_MAX_ATTEMPT_CONFIG_OPTIONS,
-  NODE_RETRY_MODE_CONFIG_OPTIONS: () => NODE_RETRY_MODE_CONFIG_OPTIONS,
-  StandardRetryStrategy: () => StandardRetryStrategy,
-  defaultDelayDecider: () => defaultDelayDecider,
-  defaultRetryDecider: () => defaultRetryDecider,
-  getOmitRetryHeadersPlugin: () => getOmitRetryHeadersPlugin,
-  getRetryAfterHint: () => getRetryAfterHint,
-  getRetryPlugin: () => getRetryPlugin,
-  omitRetryHeadersMiddleware: () => omitRetryHeadersMiddleware,
-  omitRetryHeadersMiddlewareOptions: () => omitRetryHeadersMiddlewareOptions,
-  resolveRetryConfig: () => resolveRetryConfig,
-  retryMiddleware: () => retryMiddleware,
-  retryMiddlewareOptions: () => retryMiddlewareOptions
-});
-module.exports = __toCommonJS(index_exports);
-
-// src/AdaptiveRetryStrategy.ts
+"use strict";
 
 
-// src/StandardRetryStrategy.ts
-var import_protocol_http = __nccwpck_require__(2356);
+var utilRetry = __nccwpck_require__(5518);
+var protocolHttp = __nccwpck_require__(2356);
+var serviceErrorClassification = __nccwpck_require__(2058);
+var uuid = __nccwpck_require__(266);
+var utilMiddleware = __nccwpck_require__(6324);
+var smithyClient = __nccwpck_require__(1411);
+var isStreamingPayload = __nccwpck_require__(9831);
 
-
-var import_uuid = __nccwpck_require__(266);
-
-// src/defaultRetryQuota.ts
-var import_util_retry = __nccwpck_require__(5518);
-var getDefaultRetryQuota = /* @__PURE__ */ __name((initialRetryTokens, options) => {
-  const MAX_CAPACITY = initialRetryTokens;
-  const noRetryIncrement = options?.noRetryIncrement ?? import_util_retry.NO_RETRY_INCREMENT;
-  const retryCost = options?.retryCost ?? import_util_retry.RETRY_COST;
-  const timeoutRetryCost = options?.timeoutRetryCost ?? import_util_retry.TIMEOUT_RETRY_COST;
-  let availableCapacity = initialRetryTokens;
-  const getCapacityAmount = /* @__PURE__ */ __name((error) => error.name === "TimeoutError" ? timeoutRetryCost : retryCost, "getCapacityAmount");
-  const hasRetryTokens = /* @__PURE__ */ __name((error) => getCapacityAmount(error) <= availableCapacity, "hasRetryTokens");
-  const retrieveRetryTokens = /* @__PURE__ */ __name((error) => {
-    if (!hasRetryTokens(error)) {
-      throw new Error("No retry token available");
-    }
-    const capacityAmount = getCapacityAmount(error);
-    availableCapacity -= capacityAmount;
-    return capacityAmount;
-  }, "retrieveRetryTokens");
-  const releaseRetryTokens = /* @__PURE__ */ __name((capacityReleaseAmount) => {
-    availableCapacity += capacityReleaseAmount ?? noRetryIncrement;
-    availableCapacity = Math.min(availableCapacity, MAX_CAPACITY);
-  }, "releaseRetryTokens");
-  return Object.freeze({
-    hasRetryTokens,
-    retrieveRetryTokens,
-    releaseRetryTokens
-  });
-}, "getDefaultRetryQuota");
-
-// src/delayDecider.ts
-
-var defaultDelayDecider = /* @__PURE__ */ __name((delayBase, attempts) => Math.floor(Math.min(import_util_retry.MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase)), "defaultDelayDecider");
-
-// src/retryDecider.ts
-var import_service_error_classification = __nccwpck_require__(2058);
-var defaultRetryDecider = /* @__PURE__ */ __name((error) => {
-  if (!error) {
-    return false;
-  }
-  return (0, import_service_error_classification.isRetryableByTrait)(error) || (0, import_service_error_classification.isClockSkewError)(error) || (0, import_service_error_classification.isThrottlingError)(error) || (0, import_service_error_classification.isTransientError)(error);
-}, "defaultRetryDecider");
-
-// src/util.ts
-var asSdkError = /* @__PURE__ */ __name((error) => {
-  if (error instanceof Error) return error;
-  if (error instanceof Object) return Object.assign(new Error(), error);
-  if (typeof error === "string") return new Error(error);
-  return new Error(`AWS SDK error wrapper for ${error}`);
-}, "asSdkError");
-
-// src/StandardRetryStrategy.ts
-var StandardRetryStrategy = class {
-  constructor(maxAttemptsProvider, options) {
-    this.maxAttemptsProvider = maxAttemptsProvider;
-    this.mode = import_util_retry.RETRY_MODES.STANDARD;
-    this.retryDecider = options?.retryDecider ?? defaultRetryDecider;
-    this.delayDecider = options?.delayDecider ?? defaultDelayDecider;
-    this.retryQuota = options?.retryQuota ?? getDefaultRetryQuota(import_util_retry.INITIAL_RETRY_TOKENS);
-  }
-  static {
-    __name(this, "StandardRetryStrategy");
-  }
-  shouldRetry(error, attempts, maxAttempts) {
-    return attempts < maxAttempts && this.retryDecider(error) && this.retryQuota.hasRetryTokens(error);
-  }
-  async getMaxAttempts() {
-    let maxAttempts;
-    try {
-      maxAttempts = await this.maxAttemptsProvider();
-    } catch (error) {
-      maxAttempts = import_util_retry.DEFAULT_MAX_ATTEMPTS;
-    }
-    return maxAttempts;
-  }
-  async retry(next, args, options) {
-    let retryTokenAmount;
-    let attempts = 0;
-    let totalDelay = 0;
-    const maxAttempts = await this.getMaxAttempts();
-    const { request } = args;
-    if (import_protocol_http.HttpRequest.isInstance(request)) {
-      request.headers[import_util_retry.INVOCATION_ID_HEADER] = (0, import_uuid.v4)();
-    }
-    while (true) {
-      try {
-        if (import_protocol_http.HttpRequest.isInstance(request)) {
-          request.headers[import_util_retry.REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
+const getDefaultRetryQuota = (initialRetryTokens, options) => {
+    const MAX_CAPACITY = initialRetryTokens;
+    const noRetryIncrement = utilRetry.NO_RETRY_INCREMENT;
+    const retryCost = utilRetry.RETRY_COST;
+    const timeoutRetryCost = utilRetry.TIMEOUT_RETRY_COST;
+    let availableCapacity = initialRetryTokens;
+    const getCapacityAmount = (error) => (error.name === "TimeoutError" ? timeoutRetryCost : retryCost);
+    const hasRetryTokens = (error) => getCapacityAmount(error) <= availableCapacity;
+    const retrieveRetryTokens = (error) => {
+        if (!hasRetryTokens(error)) {
+            throw new Error("No retry token available");
         }
-        if (options?.beforeRequest) {
-          await options.beforeRequest();
-        }
-        const { response, output } = await next(args);
-        if (options?.afterRequest) {
-          options.afterRequest(response);
-        }
-        this.retryQuota.releaseRetryTokens(retryTokenAmount);
-        output.$metadata.attempts = attempts + 1;
-        output.$metadata.totalRetryDelay = totalDelay;
-        return { response, output };
-      } catch (e) {
-        const err = asSdkError(e);
-        attempts++;
-        if (this.shouldRetry(err, attempts, maxAttempts)) {
-          retryTokenAmount = this.retryQuota.retrieveRetryTokens(err);
-          const delayFromDecider = this.delayDecider(
-            (0, import_service_error_classification.isThrottlingError)(err) ? import_util_retry.THROTTLING_RETRY_DELAY_BASE : import_util_retry.DEFAULT_RETRY_DELAY_BASE,
-            attempts
-          );
-          const delayFromResponse = getDelayFromRetryAfterHeader(err.$response);
-          const delay = Math.max(delayFromResponse || 0, delayFromDecider);
-          totalDelay += delay;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-        if (!err.$metadata) {
-          err.$metadata = {};
-        }
-        err.$metadata.attempts = attempts;
-        err.$metadata.totalRetryDelay = totalDelay;
-        throw err;
-      }
-    }
-  }
-};
-var getDelayFromRetryAfterHeader = /* @__PURE__ */ __name((response) => {
-  if (!import_protocol_http.HttpResponse.isInstance(response)) return;
-  const retryAfterHeaderName = Object.keys(response.headers).find((key) => key.toLowerCase() === "retry-after");
-  if (!retryAfterHeaderName) return;
-  const retryAfter = response.headers[retryAfterHeaderName];
-  const retryAfterSeconds = Number(retryAfter);
-  if (!Number.isNaN(retryAfterSeconds)) return retryAfterSeconds * 1e3;
-  const retryAfterDate = new Date(retryAfter);
-  return retryAfterDate.getTime() - Date.now();
-}, "getDelayFromRetryAfterHeader");
-
-// src/AdaptiveRetryStrategy.ts
-var AdaptiveRetryStrategy = class extends StandardRetryStrategy {
-  static {
-    __name(this, "AdaptiveRetryStrategy");
-  }
-  constructor(maxAttemptsProvider, options) {
-    const { rateLimiter, ...superOptions } = options ?? {};
-    super(maxAttemptsProvider, superOptions);
-    this.rateLimiter = rateLimiter ?? new import_util_retry.DefaultRateLimiter();
-    this.mode = import_util_retry.RETRY_MODES.ADAPTIVE;
-  }
-  async retry(next, args) {
-    return super.retry(next, args, {
-      beforeRequest: /* @__PURE__ */ __name(async () => {
-        return this.rateLimiter.getSendToken();
-      }, "beforeRequest"),
-      afterRequest: /* @__PURE__ */ __name((response) => {
-        this.rateLimiter.updateClientSendingRate(response);
-      }, "afterRequest")
+        const capacityAmount = getCapacityAmount(error);
+        availableCapacity -= capacityAmount;
+        return capacityAmount;
+    };
+    const releaseRetryTokens = (capacityReleaseAmount) => {
+        availableCapacity += capacityReleaseAmount ?? noRetryIncrement;
+        availableCapacity = Math.min(availableCapacity, MAX_CAPACITY);
+    };
+    return Object.freeze({
+        hasRetryTokens,
+        retrieveRetryTokens,
+        releaseRetryTokens,
     });
-  }
 };
 
-// src/configurations.ts
-var import_util_middleware = __nccwpck_require__(6324);
+const defaultDelayDecider = (delayBase, attempts) => Math.floor(Math.min(utilRetry.MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase));
 
-var ENV_MAX_ATTEMPTS = "AWS_MAX_ATTEMPTS";
-var CONFIG_MAX_ATTEMPTS = "max_attempts";
-var NODE_MAX_ATTEMPT_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => {
-    const value = env[ENV_MAX_ATTEMPTS];
-    if (!value) return void 0;
-    const maxAttempt = parseInt(value);
-    if (Number.isNaN(maxAttempt)) {
-      throw new Error(`Environment variable ${ENV_MAX_ATTEMPTS} mast be a number, got "${value}"`);
+const defaultRetryDecider = (error) => {
+    if (!error) {
+        return false;
     }
-    return maxAttempt;
-  }, "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => {
-    const value = profile[CONFIG_MAX_ATTEMPTS];
-    if (!value) return void 0;
-    const maxAttempt = parseInt(value);
-    if (Number.isNaN(maxAttempt)) {
-      throw new Error(`Shared config file entry ${CONFIG_MAX_ATTEMPTS} mast be a number, got "${value}"`);
+    return serviceErrorClassification.isRetryableByTrait(error) || serviceErrorClassification.isClockSkewError(error) || serviceErrorClassification.isThrottlingError(error) || serviceErrorClassification.isTransientError(error);
+};
+
+const asSdkError = (error) => {
+    if (error instanceof Error)
+        return error;
+    if (error instanceof Object)
+        return Object.assign(new Error(), error);
+    if (typeof error === "string")
+        return new Error(error);
+    return new Error(`AWS SDK error wrapper for ${error}`);
+};
+
+class StandardRetryStrategy {
+    maxAttemptsProvider;
+    retryDecider;
+    delayDecider;
+    retryQuota;
+    mode = utilRetry.RETRY_MODES.STANDARD;
+    constructor(maxAttemptsProvider, options) {
+        this.maxAttemptsProvider = maxAttemptsProvider;
+        this.retryDecider = options?.retryDecider ?? defaultRetryDecider;
+        this.delayDecider = options?.delayDecider ?? defaultDelayDecider;
+        this.retryQuota = options?.retryQuota ?? getDefaultRetryQuota(utilRetry.INITIAL_RETRY_TOKENS);
     }
-    return maxAttempt;
-  }, "configFileSelector"),
-  default: import_util_retry.DEFAULT_MAX_ATTEMPTS
-};
-var resolveRetryConfig = /* @__PURE__ */ __name((input) => {
-  const { retryStrategy, retryMode: _retryMode, maxAttempts: _maxAttempts } = input;
-  const maxAttempts = (0, import_util_middleware.normalizeProvider)(_maxAttempts ?? import_util_retry.DEFAULT_MAX_ATTEMPTS);
-  return Object.assign(input, {
-    maxAttempts,
-    retryStrategy: /* @__PURE__ */ __name(async () => {
-      if (retryStrategy) {
-        return retryStrategy;
-      }
-      const retryMode = await (0, import_util_middleware.normalizeProvider)(_retryMode)();
-      if (retryMode === import_util_retry.RETRY_MODES.ADAPTIVE) {
-        return new import_util_retry.AdaptiveRetryStrategy(maxAttempts);
-      }
-      return new import_util_retry.StandardRetryStrategy(maxAttempts);
-    }, "retryStrategy")
-  });
-}, "resolveRetryConfig");
-var ENV_RETRY_MODE = "AWS_RETRY_MODE";
-var CONFIG_RETRY_MODE = "retry_mode";
-var NODE_RETRY_MODE_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => env[ENV_RETRY_MODE], "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => profile[CONFIG_RETRY_MODE], "configFileSelector"),
-  default: import_util_retry.DEFAULT_RETRY_MODE
-};
-
-// src/omitRetryHeadersMiddleware.ts
-
-
-var omitRetryHeadersMiddleware = /* @__PURE__ */ __name(() => (next) => async (args) => {
-  const { request } = args;
-  if (import_protocol_http.HttpRequest.isInstance(request)) {
-    delete request.headers[import_util_retry.INVOCATION_ID_HEADER];
-    delete request.headers[import_util_retry.REQUEST_HEADER];
-  }
-  return next(args);
-}, "omitRetryHeadersMiddleware");
-var omitRetryHeadersMiddlewareOptions = {
-  name: "omitRetryHeadersMiddleware",
-  tags: ["RETRY", "HEADERS", "OMIT_RETRY_HEADERS"],
-  relation: "before",
-  toMiddleware: "awsAuthMiddleware",
-  override: true
-};
-var getOmitRetryHeadersPlugin = /* @__PURE__ */ __name((options) => ({
-  applyToStack: /* @__PURE__ */ __name((clientStack) => {
-    clientStack.addRelativeTo(omitRetryHeadersMiddleware(), omitRetryHeadersMiddlewareOptions);
-  }, "applyToStack")
-}), "getOmitRetryHeadersPlugin");
-
-// src/retryMiddleware.ts
-
-
-var import_smithy_client = __nccwpck_require__(1411);
-
-
-var import_isStreamingPayload = __nccwpck_require__(9831);
-var retryMiddleware = /* @__PURE__ */ __name((options) => (next, context) => async (args) => {
-  let retryStrategy = await options.retryStrategy();
-  const maxAttempts = await options.maxAttempts();
-  if (isRetryStrategyV2(retryStrategy)) {
-    retryStrategy = retryStrategy;
-    let retryToken = await retryStrategy.acquireInitialRetryToken(context["partition_id"]);
-    let lastError = new Error();
-    let attempts = 0;
-    let totalRetryDelay = 0;
-    const { request } = args;
-    const isRequest = import_protocol_http.HttpRequest.isInstance(request);
-    if (isRequest) {
-      request.headers[import_util_retry.INVOCATION_ID_HEADER] = (0, import_uuid.v4)();
+    shouldRetry(error, attempts, maxAttempts) {
+        return attempts < maxAttempts && this.retryDecider(error) && this.retryQuota.hasRetryTokens(error);
     }
-    while (true) {
-      try {
-        if (isRequest) {
-          request.headers[import_util_retry.REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
-        }
-        const { response, output } = await next(args);
-        retryStrategy.recordSuccess(retryToken);
-        output.$metadata.attempts = attempts + 1;
-        output.$metadata.totalRetryDelay = totalRetryDelay;
-        return { response, output };
-      } catch (e) {
-        const retryErrorInfo = getRetryErrorInfo(e);
-        lastError = asSdkError(e);
-        if (isRequest && (0, import_isStreamingPayload.isStreamingPayload)(request)) {
-          (context.logger instanceof import_smithy_client.NoOpLogger ? console : context.logger)?.warn(
-            "An error was encountered in a non-retryable streaming request."
-          );
-          throw lastError;
-        }
+    async getMaxAttempts() {
+        let maxAttempts;
         try {
-          retryToken = await retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo);
-        } catch (refreshError) {
-          if (!lastError.$metadata) {
-            lastError.$metadata = {};
-          }
-          lastError.$metadata.attempts = attempts + 1;
-          lastError.$metadata.totalRetryDelay = totalRetryDelay;
-          throw lastError;
+            maxAttempts = await this.maxAttemptsProvider();
         }
-        attempts = retryToken.getRetryCount();
-        const delay = retryToken.getRetryDelay();
-        totalRetryDelay += delay;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+        catch (error) {
+            maxAttempts = utilRetry.DEFAULT_MAX_ATTEMPTS;
+        }
+        return maxAttempts;
     }
-  } else {
-    retryStrategy = retryStrategy;
-    if (retryStrategy?.mode)
-      context.userAgent = [...context.userAgent || [], ["cfg/retry-mode", retryStrategy.mode]];
-    return retryStrategy.retry(next, args);
-  }
-}, "retryMiddleware");
-var isRetryStrategyV2 = /* @__PURE__ */ __name((retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined", "isRetryStrategyV2");
-var getRetryErrorInfo = /* @__PURE__ */ __name((error) => {
-  const errorInfo = {
-    error,
-    errorType: getRetryErrorType(error)
-  };
-  const retryAfterHint = getRetryAfterHint(error.$response);
-  if (retryAfterHint) {
-    errorInfo.retryAfterHint = retryAfterHint;
-  }
-  return errorInfo;
-}, "getRetryErrorInfo");
-var getRetryErrorType = /* @__PURE__ */ __name((error) => {
-  if ((0, import_service_error_classification.isThrottlingError)(error)) return "THROTTLING";
-  if ((0, import_service_error_classification.isTransientError)(error)) return "TRANSIENT";
-  if ((0, import_service_error_classification.isServerError)(error)) return "SERVER_ERROR";
-  return "CLIENT_ERROR";
-}, "getRetryErrorType");
-var retryMiddlewareOptions = {
-  name: "retryMiddleware",
-  tags: ["RETRY"],
-  step: "finalizeRequest",
-  priority: "high",
-  override: true
+    async retry(next, args, options) {
+        let retryTokenAmount;
+        let attempts = 0;
+        let totalDelay = 0;
+        const maxAttempts = await this.getMaxAttempts();
+        const { request } = args;
+        if (protocolHttp.HttpRequest.isInstance(request)) {
+            request.headers[utilRetry.INVOCATION_ID_HEADER] = uuid.v4();
+        }
+        while (true) {
+            try {
+                if (protocolHttp.HttpRequest.isInstance(request)) {
+                    request.headers[utilRetry.REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
+                }
+                if (options?.beforeRequest) {
+                    await options.beforeRequest();
+                }
+                const { response, output } = await next(args);
+                if (options?.afterRequest) {
+                    options.afterRequest(response);
+                }
+                this.retryQuota.releaseRetryTokens(retryTokenAmount);
+                output.$metadata.attempts = attempts + 1;
+                output.$metadata.totalRetryDelay = totalDelay;
+                return { response, output };
+            }
+            catch (e) {
+                const err = asSdkError(e);
+                attempts++;
+                if (this.shouldRetry(err, attempts, maxAttempts)) {
+                    retryTokenAmount = this.retryQuota.retrieveRetryTokens(err);
+                    const delayFromDecider = this.delayDecider(serviceErrorClassification.isThrottlingError(err) ? utilRetry.THROTTLING_RETRY_DELAY_BASE : utilRetry.DEFAULT_RETRY_DELAY_BASE, attempts);
+                    const delayFromResponse = getDelayFromRetryAfterHeader(err.$response);
+                    const delay = Math.max(delayFromResponse || 0, delayFromDecider);
+                    totalDelay += delay;
+                    await new Promise((resolve) => setTimeout(resolve, delay));
+                    continue;
+                }
+                if (!err.$metadata) {
+                    err.$metadata = {};
+                }
+                err.$metadata.attempts = attempts;
+                err.$metadata.totalRetryDelay = totalDelay;
+                throw err;
+            }
+        }
+    }
+}
+const getDelayFromRetryAfterHeader = (response) => {
+    if (!protocolHttp.HttpResponse.isInstance(response))
+        return;
+    const retryAfterHeaderName = Object.keys(response.headers).find((key) => key.toLowerCase() === "retry-after");
+    if (!retryAfterHeaderName)
+        return;
+    const retryAfter = response.headers[retryAfterHeaderName];
+    const retryAfterSeconds = Number(retryAfter);
+    if (!Number.isNaN(retryAfterSeconds))
+        return retryAfterSeconds * 1000;
+    const retryAfterDate = new Date(retryAfter);
+    return retryAfterDate.getTime() - Date.now();
 };
-var getRetryPlugin = /* @__PURE__ */ __name((options) => ({
-  applyToStack: /* @__PURE__ */ __name((clientStack) => {
-    clientStack.add(retryMiddleware(options), retryMiddlewareOptions);
-  }, "applyToStack")
-}), "getRetryPlugin");
-var getRetryAfterHint = /* @__PURE__ */ __name((response) => {
-  if (!import_protocol_http.HttpResponse.isInstance(response)) return;
-  const retryAfterHeaderName = Object.keys(response.headers).find((key) => key.toLowerCase() === "retry-after");
-  if (!retryAfterHeaderName) return;
-  const retryAfter = response.headers[retryAfterHeaderName];
-  const retryAfterSeconds = Number(retryAfter);
-  if (!Number.isNaN(retryAfterSeconds)) return new Date(retryAfterSeconds * 1e3);
-  const retryAfterDate = new Date(retryAfter);
-  return retryAfterDate;
-}, "getRetryAfterHint");
-// Annotate the CommonJS export names for ESM import in node:
 
-0 && (0);
+class AdaptiveRetryStrategy extends StandardRetryStrategy {
+    rateLimiter;
+    constructor(maxAttemptsProvider, options) {
+        const { rateLimiter, ...superOptions } = options ?? {};
+        super(maxAttemptsProvider, superOptions);
+        this.rateLimiter = rateLimiter ?? new utilRetry.DefaultRateLimiter();
+        this.mode = utilRetry.RETRY_MODES.ADAPTIVE;
+    }
+    async retry(next, args) {
+        return super.retry(next, args, {
+            beforeRequest: async () => {
+                return this.rateLimiter.getSendToken();
+            },
+            afterRequest: (response) => {
+                this.rateLimiter.updateClientSendingRate(response);
+            },
+        });
+    }
+}
 
+const ENV_MAX_ATTEMPTS = "AWS_MAX_ATTEMPTS";
+const CONFIG_MAX_ATTEMPTS = "max_attempts";
+const NODE_MAX_ATTEMPT_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => {
+        const value = env[ENV_MAX_ATTEMPTS];
+        if (!value)
+            return undefined;
+        const maxAttempt = parseInt(value);
+        if (Number.isNaN(maxAttempt)) {
+            throw new Error(`Environment variable ${ENV_MAX_ATTEMPTS} mast be a number, got "${value}"`);
+        }
+        return maxAttempt;
+    },
+    configFileSelector: (profile) => {
+        const value = profile[CONFIG_MAX_ATTEMPTS];
+        if (!value)
+            return undefined;
+        const maxAttempt = parseInt(value);
+        if (Number.isNaN(maxAttempt)) {
+            throw new Error(`Shared config file entry ${CONFIG_MAX_ATTEMPTS} mast be a number, got "${value}"`);
+        }
+        return maxAttempt;
+    },
+    default: utilRetry.DEFAULT_MAX_ATTEMPTS,
+};
+const resolveRetryConfig = (input) => {
+    const { retryStrategy, retryMode: _retryMode, maxAttempts: _maxAttempts } = input;
+    const maxAttempts = utilMiddleware.normalizeProvider(_maxAttempts ?? utilRetry.DEFAULT_MAX_ATTEMPTS);
+    return Object.assign(input, {
+        maxAttempts,
+        retryStrategy: async () => {
+            if (retryStrategy) {
+                return retryStrategy;
+            }
+            const retryMode = await utilMiddleware.normalizeProvider(_retryMode)();
+            if (retryMode === utilRetry.RETRY_MODES.ADAPTIVE) {
+                return new utilRetry.AdaptiveRetryStrategy(maxAttempts);
+            }
+            return new utilRetry.StandardRetryStrategy(maxAttempts);
+        },
+    });
+};
+const ENV_RETRY_MODE = "AWS_RETRY_MODE";
+const CONFIG_RETRY_MODE = "retry_mode";
+const NODE_RETRY_MODE_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => env[ENV_RETRY_MODE],
+    configFileSelector: (profile) => profile[CONFIG_RETRY_MODE],
+    default: utilRetry.DEFAULT_RETRY_MODE,
+};
+
+const omitRetryHeadersMiddleware = () => (next) => async (args) => {
+    const { request } = args;
+    if (protocolHttp.HttpRequest.isInstance(request)) {
+        delete request.headers[utilRetry.INVOCATION_ID_HEADER];
+        delete request.headers[utilRetry.REQUEST_HEADER];
+    }
+    return next(args);
+};
+const omitRetryHeadersMiddlewareOptions = {
+    name: "omitRetryHeadersMiddleware",
+    tags: ["RETRY", "HEADERS", "OMIT_RETRY_HEADERS"],
+    relation: "before",
+    toMiddleware: "awsAuthMiddleware",
+    override: true,
+};
+const getOmitRetryHeadersPlugin = (options) => ({
+    applyToStack: (clientStack) => {
+        clientStack.addRelativeTo(omitRetryHeadersMiddleware(), omitRetryHeadersMiddlewareOptions);
+    },
+});
+
+const retryMiddleware = (options) => (next, context) => async (args) => {
+    let retryStrategy = await options.retryStrategy();
+    const maxAttempts = await options.maxAttempts();
+    if (isRetryStrategyV2(retryStrategy)) {
+        retryStrategy = retryStrategy;
+        let retryToken = await retryStrategy.acquireInitialRetryToken(context["partition_id"]);
+        let lastError = new Error();
+        let attempts = 0;
+        let totalRetryDelay = 0;
+        const { request } = args;
+        const isRequest = protocolHttp.HttpRequest.isInstance(request);
+        if (isRequest) {
+            request.headers[utilRetry.INVOCATION_ID_HEADER] = uuid.v4();
+        }
+        while (true) {
+            try {
+                if (isRequest) {
+                    request.headers[utilRetry.REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
+                }
+                const { response, output } = await next(args);
+                retryStrategy.recordSuccess(retryToken);
+                output.$metadata.attempts = attempts + 1;
+                output.$metadata.totalRetryDelay = totalRetryDelay;
+                return { response, output };
+            }
+            catch (e) {
+                const retryErrorInfo = getRetryErrorInfo(e);
+                lastError = asSdkError(e);
+                if (isRequest && isStreamingPayload.isStreamingPayload(request)) {
+                    (context.logger instanceof smithyClient.NoOpLogger ? console : context.logger)?.warn("An error was encountered in a non-retryable streaming request.");
+                    throw lastError;
+                }
+                try {
+                    retryToken = await retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo);
+                }
+                catch (refreshError) {
+                    if (!lastError.$metadata) {
+                        lastError.$metadata = {};
+                    }
+                    lastError.$metadata.attempts = attempts + 1;
+                    lastError.$metadata.totalRetryDelay = totalRetryDelay;
+                    throw lastError;
+                }
+                attempts = retryToken.getRetryCount();
+                const delay = retryToken.getRetryDelay();
+                totalRetryDelay += delay;
+                await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+        }
+    }
+    else {
+        retryStrategy = retryStrategy;
+        if (retryStrategy?.mode)
+            context.userAgent = [...(context.userAgent || []), ["cfg/retry-mode", retryStrategy.mode]];
+        return retryStrategy.retry(next, args);
+    }
+};
+const isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" &&
+    typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" &&
+    typeof retryStrategy.recordSuccess !== "undefined";
+const getRetryErrorInfo = (error) => {
+    const errorInfo = {
+        error,
+        errorType: getRetryErrorType(error),
+    };
+    const retryAfterHint = getRetryAfterHint(error.$response);
+    if (retryAfterHint) {
+        errorInfo.retryAfterHint = retryAfterHint;
+    }
+    return errorInfo;
+};
+const getRetryErrorType = (error) => {
+    if (serviceErrorClassification.isThrottlingError(error))
+        return "THROTTLING";
+    if (serviceErrorClassification.isTransientError(error))
+        return "TRANSIENT";
+    if (serviceErrorClassification.isServerError(error))
+        return "SERVER_ERROR";
+    return "CLIENT_ERROR";
+};
+const retryMiddlewareOptions = {
+    name: "retryMiddleware",
+    tags: ["RETRY"],
+    step: "finalizeRequest",
+    priority: "high",
+    override: true,
+};
+const getRetryPlugin = (options) => ({
+    applyToStack: (clientStack) => {
+        clientStack.add(retryMiddleware(options), retryMiddlewareOptions);
+    },
+});
+const getRetryAfterHint = (response) => {
+    if (!protocolHttp.HttpResponse.isInstance(response))
+        return;
+    const retryAfterHeaderName = Object.keys(response.headers).find((key) => key.toLowerCase() === "retry-after");
+    if (!retryAfterHeaderName)
+        return;
+    const retryAfter = response.headers[retryAfterHeaderName];
+    const retryAfterSeconds = Number(retryAfter);
+    if (!Number.isNaN(retryAfterSeconds))
+        return new Date(retryAfterSeconds * 1000);
+    const retryAfterDate = new Date(retryAfter);
+    return retryAfterDate;
+};
+
+exports.AdaptiveRetryStrategy = AdaptiveRetryStrategy;
+exports.CONFIG_MAX_ATTEMPTS = CONFIG_MAX_ATTEMPTS;
+exports.CONFIG_RETRY_MODE = CONFIG_RETRY_MODE;
+exports.ENV_MAX_ATTEMPTS = ENV_MAX_ATTEMPTS;
+exports.ENV_RETRY_MODE = ENV_RETRY_MODE;
+exports.NODE_MAX_ATTEMPT_CONFIG_OPTIONS = NODE_MAX_ATTEMPT_CONFIG_OPTIONS;
+exports.NODE_RETRY_MODE_CONFIG_OPTIONS = NODE_RETRY_MODE_CONFIG_OPTIONS;
+exports.StandardRetryStrategy = StandardRetryStrategy;
+exports.defaultDelayDecider = defaultDelayDecider;
+exports.defaultRetryDecider = defaultRetryDecider;
+exports.getOmitRetryHeadersPlugin = getOmitRetryHeadersPlugin;
+exports.getRetryAfterHint = getRetryAfterHint;
+exports.getRetryPlugin = getRetryPlugin;
+exports.omitRetryHeadersMiddleware = omitRetryHeadersMiddleware;
+exports.omitRetryHeadersMiddlewareOptions = omitRetryHeadersMiddlewareOptions;
+exports.resolveRetryConfig = resolveRetryConfig;
+exports.retryMiddleware = retryMiddleware;
+exports.retryMiddlewareOptions = retryMiddlewareOptions;
 
 
 /***/ }),
@@ -19986,8 +19737,8 @@ var getRetryAfterHint = /* @__PURE__ */ __name((response) => {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isStreamingPayload = void 0;
 const stream_1 = __nccwpck_require__(2203);
-const isStreamingPayload = (request) => (request === null || request === void 0 ? void 0 : request.body) instanceof stream_1.Readable ||
-    (typeof ReadableStream !== "undefined" && (request === null || request === void 0 ? void 0 : request.body) instanceof ReadableStream);
+const isStreamingPayload = (request) => request?.body instanceof stream_1.Readable ||
+    (typeof ReadableStream !== "undefined" && request?.body instanceof ReadableStream);
 exports.isStreamingPayload = isStreamingPayload;
 
 
@@ -21544,110 +21295,86 @@ exports.parseQueryString = parseQueryString;
 /***/ }),
 
 /***/ 2058:
-/***/ ((module) => {
+/***/ ((__unused_webpack_module, exports) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  isBrowserNetworkError: () => isBrowserNetworkError,
-  isClockSkewCorrectedError: () => isClockSkewCorrectedError,
-  isClockSkewError: () => isClockSkewError,
-  isRetryableByTrait: () => isRetryableByTrait,
-  isServerError: () => isServerError,
-  isThrottlingError: () => isThrottlingError,
-  isTransientError: () => isTransientError
-});
-module.exports = __toCommonJS(index_exports);
 
-// src/constants.ts
-var CLOCK_SKEW_ERROR_CODES = [
-  "AuthFailure",
-  "InvalidSignatureException",
-  "RequestExpired",
-  "RequestInTheFuture",
-  "RequestTimeTooSkewed",
-  "SignatureDoesNotMatch"
+const CLOCK_SKEW_ERROR_CODES = [
+    "AuthFailure",
+    "InvalidSignatureException",
+    "RequestExpired",
+    "RequestInTheFuture",
+    "RequestTimeTooSkewed",
+    "SignatureDoesNotMatch",
 ];
-var THROTTLING_ERROR_CODES = [
-  "BandwidthLimitExceeded",
-  "EC2ThrottledException",
-  "LimitExceededException",
-  "PriorRequestNotComplete",
-  "ProvisionedThroughputExceededException",
-  "RequestLimitExceeded",
-  "RequestThrottled",
-  "RequestThrottledException",
-  "SlowDown",
-  "ThrottledException",
-  "Throttling",
-  "ThrottlingException",
-  "TooManyRequestsException",
-  "TransactionInProgressException"
-  // DynamoDB
+const THROTTLING_ERROR_CODES = [
+    "BandwidthLimitExceeded",
+    "EC2ThrottledException",
+    "LimitExceededException",
+    "PriorRequestNotComplete",
+    "ProvisionedThroughputExceededException",
+    "RequestLimitExceeded",
+    "RequestThrottled",
+    "RequestThrottledException",
+    "SlowDown",
+    "ThrottledException",
+    "Throttling",
+    "ThrottlingException",
+    "TooManyRequestsException",
+    "TransactionInProgressException",
 ];
-var TRANSIENT_ERROR_CODES = ["TimeoutError", "RequestTimeout", "RequestTimeoutException"];
-var TRANSIENT_ERROR_STATUS_CODES = [500, 502, 503, 504];
-var NODEJS_TIMEOUT_ERROR_CODES = ["ECONNRESET", "ECONNREFUSED", "EPIPE", "ETIMEDOUT"];
-var NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND"];
+const TRANSIENT_ERROR_CODES = ["TimeoutError", "RequestTimeout", "RequestTimeoutException"];
+const TRANSIENT_ERROR_STATUS_CODES = [500, 502, 503, 504];
+const NODEJS_TIMEOUT_ERROR_CODES = ["ECONNRESET", "ECONNREFUSED", "EPIPE", "ETIMEDOUT"];
+const NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND"];
 
-// src/index.ts
-var isRetryableByTrait = /* @__PURE__ */ __name((error) => error?.$retryable !== void 0, "isRetryableByTrait");
-var isClockSkewError = /* @__PURE__ */ __name((error) => CLOCK_SKEW_ERROR_CODES.includes(error.name), "isClockSkewError");
-var isClockSkewCorrectedError = /* @__PURE__ */ __name((error) => error.$metadata?.clockSkewCorrected, "isClockSkewCorrectedError");
-var isBrowserNetworkError = /* @__PURE__ */ __name((error) => {
-  const errorMessages = /* @__PURE__ */ new Set([
-    "Failed to fetch",
-    // Chrome
-    "NetworkError when attempting to fetch resource",
-    // Firefox
-    "The Internet connection appears to be offline",
-    // Safari 16
-    "Load failed",
-    // Safari 17+
-    "Network request failed"
-    // `cross-fetch`
-  ]);
-  const isValid = error && error instanceof TypeError;
-  if (!isValid) {
-    return false;
-  }
-  return errorMessages.has(error.message);
-}, "isBrowserNetworkError");
-var isThrottlingError = /* @__PURE__ */ __name((error) => error.$metadata?.httpStatusCode === 429 || THROTTLING_ERROR_CODES.includes(error.name) || error.$retryable?.throttling == true, "isThrottlingError");
-var isTransientError = /* @__PURE__ */ __name((error, depth = 0) => isRetryableByTrait(error) || isClockSkewCorrectedError(error) || TRANSIENT_ERROR_CODES.includes(error.name) || NODEJS_TIMEOUT_ERROR_CODES.includes(error?.code || "") || NODEJS_NETWORK_ERROR_CODES.includes(error?.code || "") || TRANSIENT_ERROR_STATUS_CODES.includes(error.$metadata?.httpStatusCode || 0) || isBrowserNetworkError(error) || error.cause !== void 0 && depth <= 10 && isTransientError(error.cause, depth + 1), "isTransientError");
-var isServerError = /* @__PURE__ */ __name((error) => {
-  if (error.$metadata?.httpStatusCode !== void 0) {
-    const statusCode = error.$metadata.httpStatusCode;
-    if (500 <= statusCode && statusCode <= 599 && !isTransientError(error)) {
-      return true;
+const isRetryableByTrait = (error) => error?.$retryable !== undefined;
+const isClockSkewError = (error) => CLOCK_SKEW_ERROR_CODES.includes(error.name);
+const isClockSkewCorrectedError = (error) => error.$metadata?.clockSkewCorrected;
+const isBrowserNetworkError = (error) => {
+    const errorMessages = new Set([
+        "Failed to fetch",
+        "NetworkError when attempting to fetch resource",
+        "The Internet connection appears to be offline",
+        "Load failed",
+        "Network request failed",
+    ]);
+    const isValid = error && error instanceof TypeError;
+    if (!isValid) {
+        return false;
+    }
+    return errorMessages.has(error.message);
+};
+const isThrottlingError = (error) => error.$metadata?.httpStatusCode === 429 ||
+    THROTTLING_ERROR_CODES.includes(error.name) ||
+    error.$retryable?.throttling == true;
+const isTransientError = (error, depth = 0) => isRetryableByTrait(error) ||
+    isClockSkewCorrectedError(error) ||
+    TRANSIENT_ERROR_CODES.includes(error.name) ||
+    NODEJS_TIMEOUT_ERROR_CODES.includes(error?.code || "") ||
+    NODEJS_NETWORK_ERROR_CODES.includes(error?.code || "") ||
+    TRANSIENT_ERROR_STATUS_CODES.includes(error.$metadata?.httpStatusCode || 0) ||
+    isBrowserNetworkError(error) ||
+    (error.cause !== undefined && depth <= 10 && isTransientError(error.cause, depth + 1));
+const isServerError = (error) => {
+    if (error.$metadata?.httpStatusCode !== undefined) {
+        const statusCode = error.$metadata.httpStatusCode;
+        if (500 <= statusCode && statusCode <= 599 && !isTransientError(error)) {
+            return true;
+        }
+        return false;
     }
     return false;
-  }
-  return false;
-}, "isServerError");
-// Annotate the CommonJS export names for ESM import in node:
+};
 
-0 && (0);
-
+exports.isBrowserNetworkError = isBrowserNetworkError;
+exports.isClockSkewCorrectedError = isClockSkewCorrectedError;
+exports.isClockSkewError = isClockSkewError;
+exports.isRetryableByTrait = isRetryableByTrait;
+exports.isServerError = isServerError;
+exports.isThrottlingError = isThrottlingError;
+exports.isTransientError = isTransientError;
 
 
 /***/ }),
@@ -23359,59 +23086,39 @@ exports.calculateBodyLength = calculateBodyLength;
 /***/ }),
 
 /***/ 3638:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+"use strict";
+
+
+var fs = __nccwpck_require__(9896);
+
+const calculateBodyLength = (body) => {
+    if (!body) {
+        return 0;
+    }
+    if (typeof body === "string") {
+        return Buffer.byteLength(body);
+    }
+    else if (typeof body.byteLength === "number") {
+        return body.byteLength;
+    }
+    else if (typeof body.size === "number") {
+        return body.size;
+    }
+    else if (typeof body.start === "number" && typeof body.end === "number") {
+        return body.end + 1 - body.start;
+    }
+    else if (typeof body.path === "string" || Buffer.isBuffer(body.path)) {
+        return fs.lstatSync(body.path).size;
+    }
+    else if (typeof body.fd === "number") {
+        return fs.fstatSync(body.fd).size;
+    }
+    throw new Error(`Body Length computation failed for ${body}`);
 };
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  calculateBodyLength: () => calculateBodyLength
-});
-module.exports = __toCommonJS(index_exports);
-
-// src/calculateBodyLength.ts
-var import_fs = __nccwpck_require__(9896);
-var calculateBodyLength = /* @__PURE__ */ __name((body) => {
-  if (!body) {
-    return 0;
-  }
-  if (typeof body === "string") {
-    return Buffer.byteLength(body);
-  } else if (typeof body.byteLength === "number") {
-    return body.byteLength;
-  } else if (typeof body.size === "number") {
-    return body.size;
-  } else if (typeof body.start === "number" && typeof body.end === "number") {
-    return body.end + 1 - body.start;
-  } else if (typeof body.path === "string" || Buffer.isBuffer(body.path)) {
-    return (0, import_fs.lstatSync)(body.path).size;
-  } else if (typeof body.fd === "number") {
-    return (0, import_fs.fstatSync)(body.fd).size;
-  }
-  throw new Error(`Body Length computation failed for ${body}`);
-}, "calculateBodyLength");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
+exports.calculateBodyLength = calculateBodyLength;
 
 
 /***/ }),
@@ -23445,732 +23152,592 @@ exports.fromString = fromString;
 /***/ }),
 
 /***/ 6716:
-/***/ ((module) => {
+/***/ ((__unused_webpack_module, exports) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+"use strict";
+
+
+const booleanSelector = (obj, key, type) => {
+    if (!(key in obj))
+        return undefined;
+    if (obj[key] === "true")
+        return true;
+    if (obj[key] === "false")
+        return false;
+    throw new Error(`Cannot load ${type} "${key}". Expected "true" or "false", got ${obj[key]}.`);
 };
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
+
+const numberSelector = (obj, key, type) => {
+    if (!(key in obj))
+        return undefined;
+    const numberValue = parseInt(obj[key], 10);
+    if (Number.isNaN(numberValue)) {
+        throw new TypeError(`Cannot load ${type} '${key}'. Expected number, got '${obj[key]}'.`);
+    }
+    return numberValue;
 };
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  SelectorType: () => SelectorType,
-  booleanSelector: () => booleanSelector,
-  numberSelector: () => numberSelector
-});
-module.exports = __toCommonJS(index_exports);
+exports.SelectorType = void 0;
+(function (SelectorType) {
+    SelectorType["ENV"] = "env";
+    SelectorType["CONFIG"] = "shared config entry";
+})(exports.SelectorType || (exports.SelectorType = {}));
 
-// src/booleanSelector.ts
-var booleanSelector = /* @__PURE__ */ __name((obj, key, type) => {
-  if (!(key in obj)) return void 0;
-  if (obj[key] === "true") return true;
-  if (obj[key] === "false") return false;
-  throw new Error(`Cannot load ${type} "${key}". Expected "true" or "false", got ${obj[key]}.`);
-}, "booleanSelector");
-
-// src/numberSelector.ts
-var numberSelector = /* @__PURE__ */ __name((obj, key, type) => {
-  if (!(key in obj)) return void 0;
-  const numberValue = parseInt(obj[key], 10);
-  if (Number.isNaN(numberValue)) {
-    throw new TypeError(`Cannot load ${type} '${key}'. Expected number, got '${obj[key]}'.`);
-  }
-  return numberValue;
-}, "numberSelector");
-
-// src/types.ts
-var SelectorType = /* @__PURE__ */ ((SelectorType2) => {
-  SelectorType2["ENV"] = "env";
-  SelectorType2["CONFIG"] = "shared config entry";
-  return SelectorType2;
-})(SelectorType || {});
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
+exports.booleanSelector = booleanSelector;
+exports.numberSelector = numberSelector;
 
 
 /***/ }),
 
 /***/ 5435:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  resolveDefaultsModeConfig: () => resolveDefaultsModeConfig
+
+var configResolver = __nccwpck_require__(9316);
+var nodeConfigProvider = __nccwpck_require__(5704);
+var propertyProvider = __nccwpck_require__(1238);
+
+const AWS_EXECUTION_ENV = "AWS_EXECUTION_ENV";
+const AWS_REGION_ENV = "AWS_REGION";
+const AWS_DEFAULT_REGION_ENV = "AWS_DEFAULT_REGION";
+const ENV_IMDS_DISABLED = "AWS_EC2_METADATA_DISABLED";
+const DEFAULTS_MODE_OPTIONS = ["in-region", "cross-region", "mobile", "standard", "legacy"];
+const IMDS_REGION_PATH = "/latest/meta-data/placement/region";
+
+const AWS_DEFAULTS_MODE_ENV = "AWS_DEFAULTS_MODE";
+const AWS_DEFAULTS_MODE_CONFIG = "defaults_mode";
+const NODE_DEFAULTS_MODE_CONFIG_OPTIONS = {
+    environmentVariableSelector: (env) => {
+        return env[AWS_DEFAULTS_MODE_ENV];
+    },
+    configFileSelector: (profile) => {
+        return profile[AWS_DEFAULTS_MODE_CONFIG];
+    },
+    default: "legacy",
+};
+
+const resolveDefaultsModeConfig = ({ region = nodeConfigProvider.loadConfig(configResolver.NODE_REGION_CONFIG_OPTIONS), defaultsMode = nodeConfigProvider.loadConfig(NODE_DEFAULTS_MODE_CONFIG_OPTIONS), } = {}) => propertyProvider.memoize(async () => {
+    const mode = typeof defaultsMode === "function" ? await defaultsMode() : defaultsMode;
+    switch (mode?.toLowerCase()) {
+        case "auto":
+            return resolveNodeDefaultsModeAuto(region);
+        case "in-region":
+        case "cross-region":
+        case "mobile":
+        case "standard":
+        case "legacy":
+            return Promise.resolve(mode?.toLocaleLowerCase());
+        case undefined:
+            return Promise.resolve("legacy");
+        default:
+            throw new Error(`Invalid parameter for "defaultsMode", expect ${DEFAULTS_MODE_OPTIONS.join(", ")}, got ${mode}`);
+    }
 });
-module.exports = __toCommonJS(index_exports);
-
-// src/resolveDefaultsModeConfig.ts
-var import_config_resolver = __nccwpck_require__(9316);
-var import_node_config_provider = __nccwpck_require__(5704);
-var import_property_provider = __nccwpck_require__(1238);
-
-// src/constants.ts
-var AWS_EXECUTION_ENV = "AWS_EXECUTION_ENV";
-var AWS_REGION_ENV = "AWS_REGION";
-var AWS_DEFAULT_REGION_ENV = "AWS_DEFAULT_REGION";
-var ENV_IMDS_DISABLED = "AWS_EC2_METADATA_DISABLED";
-var DEFAULTS_MODE_OPTIONS = ["in-region", "cross-region", "mobile", "standard", "legacy"];
-var IMDS_REGION_PATH = "/latest/meta-data/placement/region";
-
-// src/defaultsModeConfig.ts
-var AWS_DEFAULTS_MODE_ENV = "AWS_DEFAULTS_MODE";
-var AWS_DEFAULTS_MODE_CONFIG = "defaults_mode";
-var NODE_DEFAULTS_MODE_CONFIG_OPTIONS = {
-  environmentVariableSelector: /* @__PURE__ */ __name((env) => {
-    return env[AWS_DEFAULTS_MODE_ENV];
-  }, "environmentVariableSelector"),
-  configFileSelector: /* @__PURE__ */ __name((profile) => {
-    return profile[AWS_DEFAULTS_MODE_CONFIG];
-  }, "configFileSelector"),
-  default: "legacy"
+const resolveNodeDefaultsModeAuto = async (clientRegion) => {
+    if (clientRegion) {
+        const resolvedRegion = typeof clientRegion === "function" ? await clientRegion() : clientRegion;
+        const inferredRegion = await inferPhysicalRegion();
+        if (!inferredRegion) {
+            return "standard";
+        }
+        if (resolvedRegion === inferredRegion) {
+            return "in-region";
+        }
+        else {
+            return "cross-region";
+        }
+    }
+    return "standard";
+};
+const inferPhysicalRegion = async () => {
+    if (process.env[AWS_EXECUTION_ENV] && (process.env[AWS_REGION_ENV] || process.env[AWS_DEFAULT_REGION_ENV])) {
+        return process.env[AWS_REGION_ENV] ?? process.env[AWS_DEFAULT_REGION_ENV];
+    }
+    if (!process.env[ENV_IMDS_DISABLED]) {
+        try {
+            const { getInstanceMetadataEndpoint, httpRequest } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 566, 19));
+            const endpoint = await getInstanceMetadataEndpoint();
+            return (await httpRequest({ ...endpoint, path: IMDS_REGION_PATH })).toString();
+        }
+        catch (e) {
+        }
+    }
 };
 
-// src/resolveDefaultsModeConfig.ts
-var resolveDefaultsModeConfig = /* @__PURE__ */ __name(({
-  region = (0, import_node_config_provider.loadConfig)(import_config_resolver.NODE_REGION_CONFIG_OPTIONS),
-  defaultsMode = (0, import_node_config_provider.loadConfig)(NODE_DEFAULTS_MODE_CONFIG_OPTIONS)
-} = {}) => (0, import_property_provider.memoize)(async () => {
-  const mode = typeof defaultsMode === "function" ? await defaultsMode() : defaultsMode;
-  switch (mode?.toLowerCase()) {
-    case "auto":
-      return resolveNodeDefaultsModeAuto(region);
-    case "in-region":
-    case "cross-region":
-    case "mobile":
-    case "standard":
-    case "legacy":
-      return Promise.resolve(mode?.toLocaleLowerCase());
-    case void 0:
-      return Promise.resolve("legacy");
-    default:
-      throw new Error(
-        `Invalid parameter for "defaultsMode", expect ${DEFAULTS_MODE_OPTIONS.join(", ")}, got ${mode}`
-      );
-  }
-}), "resolveDefaultsModeConfig");
-var resolveNodeDefaultsModeAuto = /* @__PURE__ */ __name(async (clientRegion) => {
-  if (clientRegion) {
-    const resolvedRegion = typeof clientRegion === "function" ? await clientRegion() : clientRegion;
-    const inferredRegion = await inferPhysicalRegion();
-    if (!inferredRegion) {
-      return "standard";
-    }
-    if (resolvedRegion === inferredRegion) {
-      return "in-region";
-    } else {
-      return "cross-region";
-    }
-  }
-  return "standard";
-}, "resolveNodeDefaultsModeAuto");
-var inferPhysicalRegion = /* @__PURE__ */ __name(async () => {
-  if (process.env[AWS_EXECUTION_ENV] && (process.env[AWS_REGION_ENV] || process.env[AWS_DEFAULT_REGION_ENV])) {
-    return process.env[AWS_REGION_ENV] ?? process.env[AWS_DEFAULT_REGION_ENV];
-  }
-  if (!process.env[ENV_IMDS_DISABLED]) {
-    try {
-      const { getInstanceMetadataEndpoint, httpRequest } = await Promise.resolve().then(() => __toESM(__nccwpck_require__(566)));
-      const endpoint = await getInstanceMetadataEndpoint();
-      return (await httpRequest({ ...endpoint, path: IMDS_REGION_PATH })).toString();
-    } catch (e) {
-    }
-  }
-}, "inferPhysicalRegion");
-// Annotate the CommonJS export names for ESM import in node:
-
-0 && (0);
-
+exports.resolveDefaultsModeConfig = resolveDefaultsModeConfig;
 
 
 /***/ }),
 
 /***/ 9674:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  EndpointCache: () => EndpointCache,
-  EndpointError: () => EndpointError,
-  customEndpointFunctions: () => customEndpointFunctions,
-  isIpAddress: () => isIpAddress,
-  isValidHostLabel: () => isValidHostLabel,
-  resolveEndpoint: () => resolveEndpoint
-});
-module.exports = __toCommonJS(index_exports);
 
-// src/cache/EndpointCache.ts
-var EndpointCache = class {
-  /**
-   * @param [size] - desired average maximum capacity. A buffer of 10 additional keys will be allowed
-   *                 before keys are dropped.
-   * @param [params] - list of params to consider as part of the cache key.
-   *
-   * If the params list is not populated, no caching will happen.
-   * This may be out of order depending on how the object is created and arrives to this class.
-   */
-  constructor({ size, params }) {
-    this.data = /* @__PURE__ */ new Map();
-    this.parameters = [];
-    this.capacity = size ?? 50;
-    if (params) {
-      this.parameters = params;
-    }
-  }
-  static {
-    __name(this, "EndpointCache");
-  }
-  /**
-   * @param endpointParams - query for endpoint.
-   * @param resolver - provider of the value if not present.
-   * @returns endpoint corresponding to the query.
-   */
-  get(endpointParams, resolver) {
-    const key = this.hash(endpointParams);
-    if (key === false) {
-      return resolver();
-    }
-    if (!this.data.has(key)) {
-      if (this.data.size > this.capacity + 10) {
-        const keys = this.data.keys();
-        let i = 0;
-        while (true) {
-          const { value, done } = keys.next();
-          this.data.delete(value);
-          if (done || ++i > 10) {
-            break;
-          }
+var types = __nccwpck_require__(690);
+
+class EndpointCache {
+    capacity;
+    data = new Map();
+    parameters = [];
+    constructor({ size, params }) {
+        this.capacity = size ?? 50;
+        if (params) {
+            this.parameters = params;
         }
-      }
-      this.data.set(key, resolver());
     }
-    return this.data.get(key);
-  }
-  size() {
-    return this.data.size;
-  }
-  /**
-   * @returns cache key or false if not cachable.
-   */
-  hash(endpointParams) {
-    let buffer = "";
-    const { parameters } = this;
-    if (parameters.length === 0) {
-      return false;
+    get(endpointParams, resolver) {
+        const key = this.hash(endpointParams);
+        if (key === false) {
+            return resolver();
+        }
+        if (!this.data.has(key)) {
+            if (this.data.size > this.capacity + 10) {
+                const keys = this.data.keys();
+                let i = 0;
+                while (true) {
+                    const { value, done } = keys.next();
+                    this.data.delete(value);
+                    if (done || ++i > 10) {
+                        break;
+                    }
+                }
+            }
+            this.data.set(key, resolver());
+        }
+        return this.data.get(key);
     }
-    for (const param of parameters) {
-      const val = String(endpointParams[param] ?? "");
-      if (val.includes("|;")) {
-        return false;
-      }
-      buffer += val + "|;";
+    size() {
+        return this.data.size;
     }
-    return buffer;
-  }
-};
-
-// src/lib/isIpAddress.ts
-var IP_V4_REGEX = new RegExp(
-  `^(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}$`
-);
-var isIpAddress = /* @__PURE__ */ __name((value) => IP_V4_REGEX.test(value) || value.startsWith("[") && value.endsWith("]"), "isIpAddress");
-
-// src/lib/isValidHostLabel.ts
-var VALID_HOST_LABEL_REGEX = new RegExp(`^(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$`);
-var isValidHostLabel = /* @__PURE__ */ __name((value, allowSubDomains = false) => {
-  if (!allowSubDomains) {
-    return VALID_HOST_LABEL_REGEX.test(value);
-  }
-  const labels = value.split(".");
-  for (const label of labels) {
-    if (!isValidHostLabel(label)) {
-      return false;
+    hash(endpointParams) {
+        let buffer = "";
+        const { parameters } = this;
+        if (parameters.length === 0) {
+            return false;
+        }
+        for (const param of parameters) {
+            const val = String(endpointParams[param] ?? "");
+            if (val.includes("|;")) {
+                return false;
+            }
+            buffer += val + "|;";
+        }
+        return buffer;
     }
-  }
-  return true;
-}, "isValidHostLabel");
-
-// src/utils/customEndpointFunctions.ts
-var customEndpointFunctions = {};
-
-// src/debug/debugId.ts
-var debugId = "endpoints";
-
-// src/debug/toDebugString.ts
-function toDebugString(input) {
-  if (typeof input !== "object" || input == null) {
-    return input;
-  }
-  if ("ref" in input) {
-    return `$${toDebugString(input.ref)}`;
-  }
-  if ("fn" in input) {
-    return `${input.fn}(${(input.argv || []).map(toDebugString).join(", ")})`;
-  }
-  return JSON.stringify(input, null, 2);
 }
-__name(toDebugString, "toDebugString");
 
-// src/types/EndpointError.ts
-var EndpointError = class extends Error {
-  static {
-    __name(this, "EndpointError");
-  }
-  constructor(message) {
-    super(message);
-    this.name = "EndpointError";
-  }
+const IP_V4_REGEX = new RegExp(`^(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}$`);
+const isIpAddress = (value) => IP_V4_REGEX.test(value) || (value.startsWith("[") && value.endsWith("]"));
+
+const VALID_HOST_LABEL_REGEX = new RegExp(`^(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$`);
+const isValidHostLabel = (value, allowSubDomains = false) => {
+    if (!allowSubDomains) {
+        return VALID_HOST_LABEL_REGEX.test(value);
+    }
+    const labels = value.split(".");
+    for (const label of labels) {
+        if (!isValidHostLabel(label)) {
+            return false;
+        }
+    }
+    return true;
 };
 
-// src/lib/booleanEquals.ts
-var booleanEquals = /* @__PURE__ */ __name((value1, value2) => value1 === value2, "booleanEquals");
+const customEndpointFunctions = {};
 
-// src/lib/getAttrPathList.ts
-var getAttrPathList = /* @__PURE__ */ __name((path) => {
-  const parts = path.split(".");
-  const pathList = [];
-  for (const part of parts) {
-    const squareBracketIndex = part.indexOf("[");
-    if (squareBracketIndex !== -1) {
-      if (part.indexOf("]") !== part.length - 1) {
-        throw new EndpointError(`Path: '${path}' does not end with ']'`);
-      }
-      const arrayIndex = part.slice(squareBracketIndex + 1, -1);
-      if (Number.isNaN(parseInt(arrayIndex))) {
-        throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path}'`);
-      }
-      if (squareBracketIndex !== 0) {
-        pathList.push(part.slice(0, squareBracketIndex));
-      }
-      pathList.push(arrayIndex);
-    } else {
-      pathList.push(part);
+const debugId = "endpoints";
+
+function toDebugString(input) {
+    if (typeof input !== "object" || input == null) {
+        return input;
     }
-  }
-  return pathList;
-}, "getAttrPathList");
-
-// src/lib/getAttr.ts
-var getAttr = /* @__PURE__ */ __name((value, path) => getAttrPathList(path).reduce((acc, index) => {
-  if (typeof acc !== "object") {
-    throw new EndpointError(`Index '${index}' in '${path}' not found in '${JSON.stringify(value)}'`);
-  } else if (Array.isArray(acc)) {
-    return acc[parseInt(index)];
-  }
-  return acc[index];
-}, value), "getAttr");
-
-// src/lib/isSet.ts
-var isSet = /* @__PURE__ */ __name((value) => value != null, "isSet");
-
-// src/lib/not.ts
-var not = /* @__PURE__ */ __name((value) => !value, "not");
-
-// src/lib/parseURL.ts
-var import_types3 = __nccwpck_require__(690);
-var DEFAULT_PORTS = {
-  [import_types3.EndpointURLScheme.HTTP]: 80,
-  [import_types3.EndpointURLScheme.HTTPS]: 443
-};
-var parseURL = /* @__PURE__ */ __name((value) => {
-  const whatwgURL = (() => {
-    try {
-      if (value instanceof URL) {
-        return value;
-      }
-      if (typeof value === "object" && "hostname" in value) {
-        const { hostname: hostname2, port, protocol: protocol2 = "", path = "", query = {} } = value;
-        const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path}`);
-        url.search = Object.entries(query).map(([k, v]) => `${k}=${v}`).join("&");
-        return url;
-      }
-      return new URL(value);
-    } catch (error) {
-      return null;
+    if ("ref" in input) {
+        return `$${toDebugString(input.ref)}`;
     }
-  })();
-  if (!whatwgURL) {
-    console.error(`Unable to parse ${JSON.stringify(value)} as a whatwg URL.`);
-    return null;
-  }
-  const urlString = whatwgURL.href;
-  const { host, hostname, pathname, protocol, search } = whatwgURL;
-  if (search) {
-    return null;
-  }
-  const scheme = protocol.slice(0, -1);
-  if (!Object.values(import_types3.EndpointURLScheme).includes(scheme)) {
-    return null;
-  }
-  const isIp = isIpAddress(hostname);
-  const inputContainsDefaultPort = urlString.includes(`${host}:${DEFAULT_PORTS[scheme]}`) || typeof value === "string" && value.includes(`${host}:${DEFAULT_PORTS[scheme]}`);
-  const authority = `${host}${inputContainsDefaultPort ? `:${DEFAULT_PORTS[scheme]}` : ``}`;
-  return {
-    scheme,
-    authority,
-    path: pathname,
-    normalizedPath: pathname.endsWith("/") ? pathname : `${pathname}/`,
-    isIp
-  };
-}, "parseURL");
+    if ("fn" in input) {
+        return `${input.fn}(${(input.argv || []).map(toDebugString).join(", ")})`;
+    }
+    return JSON.stringify(input, null, 2);
+}
 
-// src/lib/stringEquals.ts
-var stringEquals = /* @__PURE__ */ __name((value1, value2) => value1 === value2, "stringEquals");
+class EndpointError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "EndpointError";
+    }
+}
 
-// src/lib/substring.ts
-var substring = /* @__PURE__ */ __name((input, start, stop, reverse) => {
-  if (start >= stop || input.length < stop) {
-    return null;
-  }
-  if (!reverse) {
-    return input.substring(start, stop);
-  }
-  return input.substring(input.length - stop, input.length - start);
-}, "substring");
+const booleanEquals = (value1, value2) => value1 === value2;
 
-// src/lib/uriEncode.ts
-var uriEncode = /* @__PURE__ */ __name((value) => encodeURIComponent(value).replace(/[!*'()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`), "uriEncode");
-
-// src/utils/endpointFunctions.ts
-var endpointFunctions = {
-  booleanEquals,
-  getAttr,
-  isSet,
-  isValidHostLabel,
-  not,
-  parseURL,
-  stringEquals,
-  substring,
-  uriEncode
+const getAttrPathList = (path) => {
+    const parts = path.split(".");
+    const pathList = [];
+    for (const part of parts) {
+        const squareBracketIndex = part.indexOf("[");
+        if (squareBracketIndex !== -1) {
+            if (part.indexOf("]") !== part.length - 1) {
+                throw new EndpointError(`Path: '${path}' does not end with ']'`);
+            }
+            const arrayIndex = part.slice(squareBracketIndex + 1, -1);
+            if (Number.isNaN(parseInt(arrayIndex))) {
+                throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path}'`);
+            }
+            if (squareBracketIndex !== 0) {
+                pathList.push(part.slice(0, squareBracketIndex));
+            }
+            pathList.push(arrayIndex);
+        }
+        else {
+            pathList.push(part);
+        }
+    }
+    return pathList;
 };
 
-// src/utils/evaluateTemplate.ts
-var evaluateTemplate = /* @__PURE__ */ __name((template, options) => {
-  const evaluatedTemplateArr = [];
-  const templateContext = {
-    ...options.endpointParams,
-    ...options.referenceRecord
-  };
-  let currentIndex = 0;
-  while (currentIndex < template.length) {
-    const openingBraceIndex = template.indexOf("{", currentIndex);
-    if (openingBraceIndex === -1) {
-      evaluatedTemplateArr.push(template.slice(currentIndex));
-      break;
+const getAttr = (value, path) => getAttrPathList(path).reduce((acc, index) => {
+    if (typeof acc !== "object") {
+        throw new EndpointError(`Index '${index}' in '${path}' not found in '${JSON.stringify(value)}'`);
     }
-    evaluatedTemplateArr.push(template.slice(currentIndex, openingBraceIndex));
-    const closingBraceIndex = template.indexOf("}", openingBraceIndex);
-    if (closingBraceIndex === -1) {
-      evaluatedTemplateArr.push(template.slice(openingBraceIndex));
-      break;
+    else if (Array.isArray(acc)) {
+        return acc[parseInt(index)];
     }
-    if (template[openingBraceIndex + 1] === "{" && template[closingBraceIndex + 1] === "}") {
-      evaluatedTemplateArr.push(template.slice(openingBraceIndex + 1, closingBraceIndex));
-      currentIndex = closingBraceIndex + 2;
+    return acc[index];
+}, value);
+
+const isSet = (value) => value != null;
+
+const not = (value) => !value;
+
+const DEFAULT_PORTS = {
+    [types.EndpointURLScheme.HTTP]: 80,
+    [types.EndpointURLScheme.HTTPS]: 443,
+};
+const parseURL = (value) => {
+    const whatwgURL = (() => {
+        try {
+            if (value instanceof URL) {
+                return value;
+            }
+            if (typeof value === "object" && "hostname" in value) {
+                const { hostname, port, protocol = "", path = "", query = {} } = value;
+                const url = new URL(`${protocol}//${hostname}${port ? `:${port}` : ""}${path}`);
+                url.search = Object.entries(query)
+                    .map(([k, v]) => `${k}=${v}`)
+                    .join("&");
+                return url;
+            }
+            return new URL(value);
+        }
+        catch (error) {
+            return null;
+        }
+    })();
+    if (!whatwgURL) {
+        console.error(`Unable to parse ${JSON.stringify(value)} as a whatwg URL.`);
+        return null;
     }
-    const parameterName = template.substring(openingBraceIndex + 1, closingBraceIndex);
-    if (parameterName.includes("#")) {
-      const [refName, attrName] = parameterName.split("#");
-      evaluatedTemplateArr.push(getAttr(templateContext[refName], attrName));
-    } else {
-      evaluatedTemplateArr.push(templateContext[parameterName]);
+    const urlString = whatwgURL.href;
+    const { host, hostname, pathname, protocol, search } = whatwgURL;
+    if (search) {
+        return null;
     }
-    currentIndex = closingBraceIndex + 1;
-  }
-  return evaluatedTemplateArr.join("");
-}, "evaluateTemplate");
+    const scheme = protocol.slice(0, -1);
+    if (!Object.values(types.EndpointURLScheme).includes(scheme)) {
+        return null;
+    }
+    const isIp = isIpAddress(hostname);
+    const inputContainsDefaultPort = urlString.includes(`${host}:${DEFAULT_PORTS[scheme]}`) ||
+        (typeof value === "string" && value.includes(`${host}:${DEFAULT_PORTS[scheme]}`));
+    const authority = `${host}${inputContainsDefaultPort ? `:${DEFAULT_PORTS[scheme]}` : ``}`;
+    return {
+        scheme,
+        authority,
+        path: pathname,
+        normalizedPath: pathname.endsWith("/") ? pathname : `${pathname}/`,
+        isIp,
+    };
+};
 
-// src/utils/getReferenceValue.ts
-var getReferenceValue = /* @__PURE__ */ __name(({ ref }, options) => {
-  const referenceRecord = {
-    ...options.endpointParams,
-    ...options.referenceRecord
-  };
-  return referenceRecord[ref];
-}, "getReferenceValue");
+const stringEquals = (value1, value2) => value1 === value2;
 
-// src/utils/evaluateExpression.ts
-var evaluateExpression = /* @__PURE__ */ __name((obj, keyName, options) => {
-  if (typeof obj === "string") {
-    return evaluateTemplate(obj, options);
-  } else if (obj["fn"]) {
-    return callFunction(obj, options);
-  } else if (obj["ref"]) {
-    return getReferenceValue(obj, options);
-  }
-  throw new EndpointError(`'${keyName}': ${String(obj)} is not a string, function or reference.`);
-}, "evaluateExpression");
+const substring = (input, start, stop, reverse) => {
+    if (start >= stop || input.length < stop) {
+        return null;
+    }
+    if (!reverse) {
+        return input.substring(start, stop);
+    }
+    return input.substring(input.length - stop, input.length - start);
+};
 
-// src/utils/callFunction.ts
-var callFunction = /* @__PURE__ */ __name(({ fn, argv }, options) => {
-  const evaluatedArgs = argv.map(
-    (arg) => ["boolean", "number"].includes(typeof arg) ? arg : evaluateExpression(arg, "arg", options)
-  );
-  const fnSegments = fn.split(".");
-  if (fnSegments[0] in customEndpointFunctions && fnSegments[1] != null) {
-    return customEndpointFunctions[fnSegments[0]][fnSegments[1]](...evaluatedArgs);
-  }
-  return endpointFunctions[fn](...evaluatedArgs);
-}, "callFunction");
+const uriEncode = (value) => encodeURIComponent(value).replace(/[!*'()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 
-// src/utils/evaluateCondition.ts
-var evaluateCondition = /* @__PURE__ */ __name(({ assign, ...fnArgs }, options) => {
-  if (assign && assign in options.referenceRecord) {
-    throw new EndpointError(`'${assign}' is already defined in Reference Record.`);
-  }
-  const value = callFunction(fnArgs, options);
-  options.logger?.debug?.(`${debugId} evaluateCondition: ${toDebugString(fnArgs)} = ${toDebugString(value)}`);
-  return {
-    result: value === "" ? true : !!value,
-    ...assign != null && { toAssign: { name: assign, value } }
-  };
-}, "evaluateCondition");
+const endpointFunctions = {
+    booleanEquals,
+    getAttr,
+    isSet,
+    isValidHostLabel,
+    not,
+    parseURL,
+    stringEquals,
+    substring,
+    uriEncode,
+};
 
-// src/utils/evaluateConditions.ts
-var evaluateConditions = /* @__PURE__ */ __name((conditions = [], options) => {
-  const conditionsReferenceRecord = {};
-  for (const condition of conditions) {
-    const { result, toAssign } = evaluateCondition(condition, {
-      ...options,
-      referenceRecord: {
+const evaluateTemplate = (template, options) => {
+    const evaluatedTemplateArr = [];
+    const templateContext = {
+        ...options.endpointParams,
         ...options.referenceRecord,
-        ...conditionsReferenceRecord
-      }
-    });
-    if (!result) {
-      return { result };
+    };
+    let currentIndex = 0;
+    while (currentIndex < template.length) {
+        const openingBraceIndex = template.indexOf("{", currentIndex);
+        if (openingBraceIndex === -1) {
+            evaluatedTemplateArr.push(template.slice(currentIndex));
+            break;
+        }
+        evaluatedTemplateArr.push(template.slice(currentIndex, openingBraceIndex));
+        const closingBraceIndex = template.indexOf("}", openingBraceIndex);
+        if (closingBraceIndex === -1) {
+            evaluatedTemplateArr.push(template.slice(openingBraceIndex));
+            break;
+        }
+        if (template[openingBraceIndex + 1] === "{" && template[closingBraceIndex + 1] === "}") {
+            evaluatedTemplateArr.push(template.slice(openingBraceIndex + 1, closingBraceIndex));
+            currentIndex = closingBraceIndex + 2;
+        }
+        const parameterName = template.substring(openingBraceIndex + 1, closingBraceIndex);
+        if (parameterName.includes("#")) {
+            const [refName, attrName] = parameterName.split("#");
+            evaluatedTemplateArr.push(getAttr(templateContext[refName], attrName));
+        }
+        else {
+            evaluatedTemplateArr.push(templateContext[parameterName]);
+        }
+        currentIndex = closingBraceIndex + 1;
     }
-    if (toAssign) {
-      conditionsReferenceRecord[toAssign.name] = toAssign.value;
-      options.logger?.debug?.(`${debugId} assign: ${toAssign.name} := ${toDebugString(toAssign.value)}`);
-    }
-  }
-  return { result: true, referenceRecord: conditionsReferenceRecord };
-}, "evaluateConditions");
+    return evaluatedTemplateArr.join("");
+};
 
-// src/utils/getEndpointHeaders.ts
-var getEndpointHeaders = /* @__PURE__ */ __name((headers, options) => Object.entries(headers).reduce(
-  (acc, [headerKey, headerVal]) => ({
+const getReferenceValue = ({ ref }, options) => {
+    const referenceRecord = {
+        ...options.endpointParams,
+        ...options.referenceRecord,
+    };
+    return referenceRecord[ref];
+};
+
+const evaluateExpression = (obj, keyName, options) => {
+    if (typeof obj === "string") {
+        return evaluateTemplate(obj, options);
+    }
+    else if (obj["fn"]) {
+        return callFunction(obj, options);
+    }
+    else if (obj["ref"]) {
+        return getReferenceValue(obj, options);
+    }
+    throw new EndpointError(`'${keyName}': ${String(obj)} is not a string, function or reference.`);
+};
+
+const callFunction = ({ fn, argv }, options) => {
+    const evaluatedArgs = argv.map((arg) => ["boolean", "number"].includes(typeof arg) ? arg : evaluateExpression(arg, "arg", options));
+    const fnSegments = fn.split(".");
+    if (fnSegments[0] in customEndpointFunctions && fnSegments[1] != null) {
+        return customEndpointFunctions[fnSegments[0]][fnSegments[1]](...evaluatedArgs);
+    }
+    return endpointFunctions[fn](...evaluatedArgs);
+};
+
+const evaluateCondition = ({ assign, ...fnArgs }, options) => {
+    if (assign && assign in options.referenceRecord) {
+        throw new EndpointError(`'${assign}' is already defined in Reference Record.`);
+    }
+    const value = callFunction(fnArgs, options);
+    options.logger?.debug?.(`${debugId} evaluateCondition: ${toDebugString(fnArgs)} = ${toDebugString(value)}`);
+    return {
+        result: value === "" ? true : !!value,
+        ...(assign != null && { toAssign: { name: assign, value } }),
+    };
+};
+
+const evaluateConditions = (conditions = [], options) => {
+    const conditionsReferenceRecord = {};
+    for (const condition of conditions) {
+        const { result, toAssign } = evaluateCondition(condition, {
+            ...options,
+            referenceRecord: {
+                ...options.referenceRecord,
+                ...conditionsReferenceRecord,
+            },
+        });
+        if (!result) {
+            return { result };
+        }
+        if (toAssign) {
+            conditionsReferenceRecord[toAssign.name] = toAssign.value;
+            options.logger?.debug?.(`${debugId} assign: ${toAssign.name} := ${toDebugString(toAssign.value)}`);
+        }
+    }
+    return { result: true, referenceRecord: conditionsReferenceRecord };
+};
+
+const getEndpointHeaders = (headers, options) => Object.entries(headers).reduce((acc, [headerKey, headerVal]) => ({
     ...acc,
     [headerKey]: headerVal.map((headerValEntry) => {
-      const processedExpr = evaluateExpression(headerValEntry, "Header value entry", options);
-      if (typeof processedExpr !== "string") {
-        throw new EndpointError(`Header '${headerKey}' value '${processedExpr}' is not a string`);
-      }
-      return processedExpr;
-    })
-  }),
-  {}
-), "getEndpointHeaders");
+        const processedExpr = evaluateExpression(headerValEntry, "Header value entry", options);
+        if (typeof processedExpr !== "string") {
+            throw new EndpointError(`Header '${headerKey}' value '${processedExpr}' is not a string`);
+        }
+        return processedExpr;
+    }),
+}), {});
 
-// src/utils/getEndpointProperty.ts
-var getEndpointProperty = /* @__PURE__ */ __name((property, options) => {
-  if (Array.isArray(property)) {
-    return property.map((propertyEntry) => getEndpointProperty(propertyEntry, options));
-  }
-  switch (typeof property) {
-    case "string":
-      return evaluateTemplate(property, options);
-    case "object":
-      if (property === null) {
-        throw new EndpointError(`Unexpected endpoint property: ${property}`);
-      }
-      return getEndpointProperties(property, options);
-    case "boolean":
-      return property;
-    default:
-      throw new EndpointError(`Unexpected endpoint property type: ${typeof property}`);
-  }
-}, "getEndpointProperty");
+const getEndpointProperty = (property, options) => {
+    if (Array.isArray(property)) {
+        return property.map((propertyEntry) => getEndpointProperty(propertyEntry, options));
+    }
+    switch (typeof property) {
+        case "string":
+            return evaluateTemplate(property, options);
+        case "object":
+            if (property === null) {
+                throw new EndpointError(`Unexpected endpoint property: ${property}`);
+            }
+            return getEndpointProperties(property, options);
+        case "boolean":
+            return property;
+        default:
+            throw new EndpointError(`Unexpected endpoint property type: ${typeof property}`);
+    }
+};
 
-// src/utils/getEndpointProperties.ts
-var getEndpointProperties = /* @__PURE__ */ __name((properties, options) => Object.entries(properties).reduce(
-  (acc, [propertyKey, propertyVal]) => ({
+const getEndpointProperties = (properties, options) => Object.entries(properties).reduce((acc, [propertyKey, propertyVal]) => ({
     ...acc,
-    [propertyKey]: getEndpointProperty(propertyVal, options)
-  }),
-  {}
-), "getEndpointProperties");
+    [propertyKey]: getEndpointProperty(propertyVal, options),
+}), {});
 
-// src/utils/getEndpointUrl.ts
-var getEndpointUrl = /* @__PURE__ */ __name((endpointUrl, options) => {
-  const expression = evaluateExpression(endpointUrl, "Endpoint URL", options);
-  if (typeof expression === "string") {
-    try {
-      return new URL(expression);
-    } catch (error) {
-      console.error(`Failed to construct URL with ${expression}`, error);
-      throw error;
+const getEndpointUrl = (endpointUrl, options) => {
+    const expression = evaluateExpression(endpointUrl, "Endpoint URL", options);
+    if (typeof expression === "string") {
+        try {
+            return new URL(expression);
+        }
+        catch (error) {
+            console.error(`Failed to construct URL with ${expression}`, error);
+            throw error;
+        }
     }
-  }
-  throw new EndpointError(`Endpoint URL must be a string, got ${typeof expression}`);
-}, "getEndpointUrl");
+    throw new EndpointError(`Endpoint URL must be a string, got ${typeof expression}`);
+};
 
-// src/utils/evaluateEndpointRule.ts
-var evaluateEndpointRule = /* @__PURE__ */ __name((endpointRule, options) => {
-  const { conditions, endpoint } = endpointRule;
-  const { result, referenceRecord } = evaluateConditions(conditions, options);
-  if (!result) {
-    return;
-  }
-  const endpointRuleOptions = {
-    ...options,
-    referenceRecord: { ...options.referenceRecord, ...referenceRecord }
-  };
-  const { url, properties, headers } = endpoint;
-  options.logger?.debug?.(`${debugId} Resolving endpoint from template: ${toDebugString(endpoint)}`);
-  return {
-    ...headers != void 0 && {
-      headers: getEndpointHeaders(headers, endpointRuleOptions)
-    },
-    ...properties != void 0 && {
-      properties: getEndpointProperties(properties, endpointRuleOptions)
-    },
-    url: getEndpointUrl(url, endpointRuleOptions)
-  };
-}, "evaluateEndpointRule");
-
-// src/utils/evaluateErrorRule.ts
-var evaluateErrorRule = /* @__PURE__ */ __name((errorRule, options) => {
-  const { conditions, error } = errorRule;
-  const { result, referenceRecord } = evaluateConditions(conditions, options);
-  if (!result) {
-    return;
-  }
-  throw new EndpointError(
-    evaluateExpression(error, "Error", {
-      ...options,
-      referenceRecord: { ...options.referenceRecord, ...referenceRecord }
-    })
-  );
-}, "evaluateErrorRule");
-
-// src/utils/evaluateTreeRule.ts
-var evaluateTreeRule = /* @__PURE__ */ __name((treeRule, options) => {
-  const { conditions, rules } = treeRule;
-  const { result, referenceRecord } = evaluateConditions(conditions, options);
-  if (!result) {
-    return;
-  }
-  return evaluateRules(rules, {
-    ...options,
-    referenceRecord: { ...options.referenceRecord, ...referenceRecord }
-  });
-}, "evaluateTreeRule");
-
-// src/utils/evaluateRules.ts
-var evaluateRules = /* @__PURE__ */ __name((rules, options) => {
-  for (const rule of rules) {
-    if (rule.type === "endpoint") {
-      const endpointOrUndefined = evaluateEndpointRule(rule, options);
-      if (endpointOrUndefined) {
-        return endpointOrUndefined;
-      }
-    } else if (rule.type === "error") {
-      evaluateErrorRule(rule, options);
-    } else if (rule.type === "tree") {
-      const endpointOrUndefined = evaluateTreeRule(rule, options);
-      if (endpointOrUndefined) {
-        return endpointOrUndefined;
-      }
-    } else {
-      throw new EndpointError(`Unknown endpoint rule: ${rule}`);
+const evaluateEndpointRule = (endpointRule, options) => {
+    const { conditions, endpoint } = endpointRule;
+    const { result, referenceRecord } = evaluateConditions(conditions, options);
+    if (!result) {
+        return;
     }
-  }
-  throw new EndpointError(`Rules evaluation failed`);
-}, "evaluateRules");
+    const endpointRuleOptions = {
+        ...options,
+        referenceRecord: { ...options.referenceRecord, ...referenceRecord },
+    };
+    const { url, properties, headers } = endpoint;
+    options.logger?.debug?.(`${debugId} Resolving endpoint from template: ${toDebugString(endpoint)}`);
+    return {
+        ...(headers != undefined && {
+            headers: getEndpointHeaders(headers, endpointRuleOptions),
+        }),
+        ...(properties != undefined && {
+            properties: getEndpointProperties(properties, endpointRuleOptions),
+        }),
+        url: getEndpointUrl(url, endpointRuleOptions),
+    };
+};
 
-// src/resolveEndpoint.ts
-var resolveEndpoint = /* @__PURE__ */ __name((ruleSetObject, options) => {
-  const { endpointParams, logger } = options;
-  const { parameters, rules } = ruleSetObject;
-  options.logger?.debug?.(`${debugId} Initial EndpointParams: ${toDebugString(endpointParams)}`);
-  const paramsWithDefault = Object.entries(parameters).filter(([, v]) => v.default != null).map(([k, v]) => [k, v.default]);
-  if (paramsWithDefault.length > 0) {
-    for (const [paramKey, paramDefaultValue] of paramsWithDefault) {
-      endpointParams[paramKey] = endpointParams[paramKey] ?? paramDefaultValue;
+const evaluateErrorRule = (errorRule, options) => {
+    const { conditions, error } = errorRule;
+    const { result, referenceRecord } = evaluateConditions(conditions, options);
+    if (!result) {
+        return;
     }
-  }
-  const requiredParams = Object.entries(parameters).filter(([, v]) => v.required).map(([k]) => k);
-  for (const requiredParam of requiredParams) {
-    if (endpointParams[requiredParam] == null) {
-      throw new EndpointError(`Missing required parameter: '${requiredParam}'`);
+    throw new EndpointError(evaluateExpression(error, "Error", {
+        ...options,
+        referenceRecord: { ...options.referenceRecord, ...referenceRecord },
+    }));
+};
+
+const evaluateTreeRule = (treeRule, options) => {
+    const { conditions, rules } = treeRule;
+    const { result, referenceRecord } = evaluateConditions(conditions, options);
+    if (!result) {
+        return;
     }
-  }
-  const endpoint = evaluateRules(rules, { endpointParams, logger, referenceRecord: {} });
-  options.logger?.debug?.(`${debugId} Resolved endpoint: ${toDebugString(endpoint)}`);
-  return endpoint;
-}, "resolveEndpoint");
-// Annotate the CommonJS export names for ESM import in node:
+    return evaluateRules(rules, {
+        ...options,
+        referenceRecord: { ...options.referenceRecord, ...referenceRecord },
+    });
+};
 
-0 && (0);
+const evaluateRules = (rules, options) => {
+    for (const rule of rules) {
+        if (rule.type === "endpoint") {
+            const endpointOrUndefined = evaluateEndpointRule(rule, options);
+            if (endpointOrUndefined) {
+                return endpointOrUndefined;
+            }
+        }
+        else if (rule.type === "error") {
+            evaluateErrorRule(rule, options);
+        }
+        else if (rule.type === "tree") {
+            const endpointOrUndefined = evaluateTreeRule(rule, options);
+            if (endpointOrUndefined) {
+                return endpointOrUndefined;
+            }
+        }
+        else {
+            throw new EndpointError(`Unknown endpoint rule: ${rule}`);
+        }
+    }
+    throw new EndpointError(`Rules evaluation failed`);
+};
 
+const resolveEndpoint = (ruleSetObject, options) => {
+    const { endpointParams, logger } = options;
+    const { parameters, rules } = ruleSetObject;
+    options.logger?.debug?.(`${debugId} Initial EndpointParams: ${toDebugString(endpointParams)}`);
+    const paramsWithDefault = Object.entries(parameters)
+        .filter(([, v]) => v.default != null)
+        .map(([k, v]) => [k, v.default]);
+    if (paramsWithDefault.length > 0) {
+        for (const [paramKey, paramDefaultValue] of paramsWithDefault) {
+            endpointParams[paramKey] = endpointParams[paramKey] ?? paramDefaultValue;
+        }
+    }
+    const requiredParams = Object.entries(parameters)
+        .filter(([, v]) => v.required)
+        .map(([k]) => k);
+    for (const requiredParam of requiredParams) {
+        if (endpointParams[requiredParam] == null) {
+            throw new EndpointError(`Missing required parameter: '${requiredParam}'`);
+        }
+    }
+    const endpoint = evaluateRules(rules, { endpointParams, logger, referenceRecord: {} });
+    options.logger?.debug?.(`${debugId} Resolved endpoint: ${toDebugString(endpoint)}`);
+    return endpoint;
+};
+
+exports.EndpointCache = EndpointCache;
+exports.EndpointError = EndpointError;
+exports.customEndpointFunctions = customEndpointFunctions;
+exports.isIpAddress = isIpAddress;
+exports.isValidHostLabel = isValidHostLabel;
+exports.resolveEndpoint = resolveEndpoint;
 
 
 /***/ }),
@@ -24245,349 +23812,287 @@ exports.normalizeProvider = normalizeProvider;
 /***/ }),
 
 /***/ 5518:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+"use strict";
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  AdaptiveRetryStrategy: () => AdaptiveRetryStrategy,
-  ConfiguredRetryStrategy: () => ConfiguredRetryStrategy,
-  DEFAULT_MAX_ATTEMPTS: () => DEFAULT_MAX_ATTEMPTS,
-  DEFAULT_RETRY_DELAY_BASE: () => DEFAULT_RETRY_DELAY_BASE,
-  DEFAULT_RETRY_MODE: () => DEFAULT_RETRY_MODE,
-  DefaultRateLimiter: () => DefaultRateLimiter,
-  INITIAL_RETRY_TOKENS: () => INITIAL_RETRY_TOKENS,
-  INVOCATION_ID_HEADER: () => INVOCATION_ID_HEADER,
-  MAXIMUM_RETRY_DELAY: () => MAXIMUM_RETRY_DELAY,
-  NO_RETRY_INCREMENT: () => NO_RETRY_INCREMENT,
-  REQUEST_HEADER: () => REQUEST_HEADER,
-  RETRY_COST: () => RETRY_COST,
-  RETRY_MODES: () => RETRY_MODES,
-  StandardRetryStrategy: () => StandardRetryStrategy,
-  THROTTLING_RETRY_DELAY_BASE: () => THROTTLING_RETRY_DELAY_BASE,
-  TIMEOUT_RETRY_COST: () => TIMEOUT_RETRY_COST
-});
-module.exports = __toCommonJS(index_exports);
 
-// src/config.ts
-var RETRY_MODES = /* @__PURE__ */ ((RETRY_MODES2) => {
-  RETRY_MODES2["STANDARD"] = "standard";
-  RETRY_MODES2["ADAPTIVE"] = "adaptive";
-  return RETRY_MODES2;
-})(RETRY_MODES || {});
-var DEFAULT_MAX_ATTEMPTS = 3;
-var DEFAULT_RETRY_MODE = "standard" /* STANDARD */;
+var serviceErrorClassification = __nccwpck_require__(2058);
 
-// src/DefaultRateLimiter.ts
-var import_service_error_classification = __nccwpck_require__(2058);
-var DefaultRateLimiter = class _DefaultRateLimiter {
-  constructor(options) {
-    // Pre-set state variables
-    this.currentCapacity = 0;
-    this.enabled = false;
-    this.lastMaxRate = 0;
-    this.measuredTxRate = 0;
-    this.requestCount = 0;
-    this.lastTimestamp = 0;
-    this.timeWindow = 0;
-    this.beta = options?.beta ?? 0.7;
-    this.minCapacity = options?.minCapacity ?? 1;
-    this.minFillRate = options?.minFillRate ?? 0.5;
-    this.scaleConstant = options?.scaleConstant ?? 0.4;
-    this.smooth = options?.smooth ?? 0.8;
-    const currentTimeInSeconds = this.getCurrentTimeInSeconds();
-    this.lastThrottleTime = currentTimeInSeconds;
-    this.lastTxRateBucket = Math.floor(this.getCurrentTimeInSeconds());
-    this.fillRate = this.minFillRate;
-    this.maxCapacity = this.minCapacity;
-  }
-  static {
-    __name(this, "DefaultRateLimiter");
-  }
-  static {
-    /**
-     * Only used in testing.
-     */
-    this.setTimeoutFn = setTimeout;
-  }
-  getCurrentTimeInSeconds() {
-    return Date.now() / 1e3;
-  }
-  async getSendToken() {
-    return this.acquireTokenBucket(1);
-  }
-  async acquireTokenBucket(amount) {
-    if (!this.enabled) {
-      return;
+exports.RETRY_MODES = void 0;
+(function (RETRY_MODES) {
+    RETRY_MODES["STANDARD"] = "standard";
+    RETRY_MODES["ADAPTIVE"] = "adaptive";
+})(exports.RETRY_MODES || (exports.RETRY_MODES = {}));
+const DEFAULT_MAX_ATTEMPTS = 3;
+const DEFAULT_RETRY_MODE = exports.RETRY_MODES.STANDARD;
+
+class DefaultRateLimiter {
+    static setTimeoutFn = setTimeout;
+    beta;
+    minCapacity;
+    minFillRate;
+    scaleConstant;
+    smooth;
+    currentCapacity = 0;
+    enabled = false;
+    lastMaxRate = 0;
+    measuredTxRate = 0;
+    requestCount = 0;
+    fillRate;
+    lastThrottleTime;
+    lastTimestamp = 0;
+    lastTxRateBucket;
+    maxCapacity;
+    timeWindow = 0;
+    constructor(options) {
+        this.beta = options?.beta ?? 0.7;
+        this.minCapacity = options?.minCapacity ?? 1;
+        this.minFillRate = options?.minFillRate ?? 0.5;
+        this.scaleConstant = options?.scaleConstant ?? 0.4;
+        this.smooth = options?.smooth ?? 0.8;
+        const currentTimeInSeconds = this.getCurrentTimeInSeconds();
+        this.lastThrottleTime = currentTimeInSeconds;
+        this.lastTxRateBucket = Math.floor(this.getCurrentTimeInSeconds());
+        this.fillRate = this.minFillRate;
+        this.maxCapacity = this.minCapacity;
     }
-    this.refillTokenBucket();
-    if (amount > this.currentCapacity) {
-      const delay = (amount - this.currentCapacity) / this.fillRate * 1e3;
-      await new Promise((resolve) => _DefaultRateLimiter.setTimeoutFn(resolve, delay));
+    getCurrentTimeInSeconds() {
+        return Date.now() / 1000;
     }
-    this.currentCapacity = this.currentCapacity - amount;
-  }
-  refillTokenBucket() {
-    const timestamp = this.getCurrentTimeInSeconds();
-    if (!this.lastTimestamp) {
-      this.lastTimestamp = timestamp;
-      return;
+    async getSendToken() {
+        return this.acquireTokenBucket(1);
     }
-    const fillAmount = (timestamp - this.lastTimestamp) * this.fillRate;
-    this.currentCapacity = Math.min(this.maxCapacity, this.currentCapacity + fillAmount);
-    this.lastTimestamp = timestamp;
-  }
-  updateClientSendingRate(response) {
-    let calculatedRate;
-    this.updateMeasuredRate();
-    if ((0, import_service_error_classification.isThrottlingError)(response)) {
-      const rateToUse = !this.enabled ? this.measuredTxRate : Math.min(this.measuredTxRate, this.fillRate);
-      this.lastMaxRate = rateToUse;
-      this.calculateTimeWindow();
-      this.lastThrottleTime = this.getCurrentTimeInSeconds();
-      calculatedRate = this.cubicThrottle(rateToUse);
-      this.enableTokenBucket();
-    } else {
-      this.calculateTimeWindow();
-      calculatedRate = this.cubicSuccess(this.getCurrentTimeInSeconds());
+    async acquireTokenBucket(amount) {
+        if (!this.enabled) {
+            return;
+        }
+        this.refillTokenBucket();
+        if (amount > this.currentCapacity) {
+            const delay = ((amount - this.currentCapacity) / this.fillRate) * 1000;
+            await new Promise((resolve) => DefaultRateLimiter.setTimeoutFn(resolve, delay));
+        }
+        this.currentCapacity = this.currentCapacity - amount;
     }
-    const newRate = Math.min(calculatedRate, 2 * this.measuredTxRate);
-    this.updateTokenBucketRate(newRate);
-  }
-  calculateTimeWindow() {
-    this.timeWindow = this.getPrecise(Math.pow(this.lastMaxRate * (1 - this.beta) / this.scaleConstant, 1 / 3));
-  }
-  cubicThrottle(rateToUse) {
-    return this.getPrecise(rateToUse * this.beta);
-  }
-  cubicSuccess(timestamp) {
-    return this.getPrecise(
-      this.scaleConstant * Math.pow(timestamp - this.lastThrottleTime - this.timeWindow, 3) + this.lastMaxRate
-    );
-  }
-  enableTokenBucket() {
-    this.enabled = true;
-  }
-  updateTokenBucketRate(newRate) {
-    this.refillTokenBucket();
-    this.fillRate = Math.max(newRate, this.minFillRate);
-    this.maxCapacity = Math.max(newRate, this.minCapacity);
-    this.currentCapacity = Math.min(this.currentCapacity, this.maxCapacity);
-  }
-  updateMeasuredRate() {
-    const t = this.getCurrentTimeInSeconds();
-    const timeBucket = Math.floor(t * 2) / 2;
-    this.requestCount++;
-    if (timeBucket > this.lastTxRateBucket) {
-      const currentRate = this.requestCount / (timeBucket - this.lastTxRateBucket);
-      this.measuredTxRate = this.getPrecise(currentRate * this.smooth + this.measuredTxRate * (1 - this.smooth));
-      this.requestCount = 0;
-      this.lastTxRateBucket = timeBucket;
+    refillTokenBucket() {
+        const timestamp = this.getCurrentTimeInSeconds();
+        if (!this.lastTimestamp) {
+            this.lastTimestamp = timestamp;
+            return;
+        }
+        const fillAmount = (timestamp - this.lastTimestamp) * this.fillRate;
+        this.currentCapacity = Math.min(this.maxCapacity, this.currentCapacity + fillAmount);
+        this.lastTimestamp = timestamp;
     }
-  }
-  getPrecise(num) {
-    return parseFloat(num.toFixed(8));
-  }
+    updateClientSendingRate(response) {
+        let calculatedRate;
+        this.updateMeasuredRate();
+        if (serviceErrorClassification.isThrottlingError(response)) {
+            const rateToUse = !this.enabled ? this.measuredTxRate : Math.min(this.measuredTxRate, this.fillRate);
+            this.lastMaxRate = rateToUse;
+            this.calculateTimeWindow();
+            this.lastThrottleTime = this.getCurrentTimeInSeconds();
+            calculatedRate = this.cubicThrottle(rateToUse);
+            this.enableTokenBucket();
+        }
+        else {
+            this.calculateTimeWindow();
+            calculatedRate = this.cubicSuccess(this.getCurrentTimeInSeconds());
+        }
+        const newRate = Math.min(calculatedRate, 2 * this.measuredTxRate);
+        this.updateTokenBucketRate(newRate);
+    }
+    calculateTimeWindow() {
+        this.timeWindow = this.getPrecise(Math.pow((this.lastMaxRate * (1 - this.beta)) / this.scaleConstant, 1 / 3));
+    }
+    cubicThrottle(rateToUse) {
+        return this.getPrecise(rateToUse * this.beta);
+    }
+    cubicSuccess(timestamp) {
+        return this.getPrecise(this.scaleConstant * Math.pow(timestamp - this.lastThrottleTime - this.timeWindow, 3) + this.lastMaxRate);
+    }
+    enableTokenBucket() {
+        this.enabled = true;
+    }
+    updateTokenBucketRate(newRate) {
+        this.refillTokenBucket();
+        this.fillRate = Math.max(newRate, this.minFillRate);
+        this.maxCapacity = Math.max(newRate, this.minCapacity);
+        this.currentCapacity = Math.min(this.currentCapacity, this.maxCapacity);
+    }
+    updateMeasuredRate() {
+        const t = this.getCurrentTimeInSeconds();
+        const timeBucket = Math.floor(t * 2) / 2;
+        this.requestCount++;
+        if (timeBucket > this.lastTxRateBucket) {
+            const currentRate = this.requestCount / (timeBucket - this.lastTxRateBucket);
+            this.measuredTxRate = this.getPrecise(currentRate * this.smooth + this.measuredTxRate * (1 - this.smooth));
+            this.requestCount = 0;
+            this.lastTxRateBucket = timeBucket;
+        }
+    }
+    getPrecise(num) {
+        return parseFloat(num.toFixed(8));
+    }
+}
+
+const DEFAULT_RETRY_DELAY_BASE = 100;
+const MAXIMUM_RETRY_DELAY = 20 * 1000;
+const THROTTLING_RETRY_DELAY_BASE = 500;
+const INITIAL_RETRY_TOKENS = 500;
+const RETRY_COST = 5;
+const TIMEOUT_RETRY_COST = 10;
+const NO_RETRY_INCREMENT = 1;
+const INVOCATION_ID_HEADER = "amz-sdk-invocation-id";
+const REQUEST_HEADER = "amz-sdk-request";
+
+const getDefaultRetryBackoffStrategy = () => {
+    let delayBase = DEFAULT_RETRY_DELAY_BASE;
+    const computeNextBackoffDelay = (attempts) => {
+        return Math.floor(Math.min(MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase));
+    };
+    const setDelayBase = (delay) => {
+        delayBase = delay;
+    };
+    return {
+        computeNextBackoffDelay,
+        setDelayBase,
+    };
 };
 
-// src/constants.ts
-var DEFAULT_RETRY_DELAY_BASE = 100;
-var MAXIMUM_RETRY_DELAY = 20 * 1e3;
-var THROTTLING_RETRY_DELAY_BASE = 500;
-var INITIAL_RETRY_TOKENS = 500;
-var RETRY_COST = 5;
-var TIMEOUT_RETRY_COST = 10;
-var NO_RETRY_INCREMENT = 1;
-var INVOCATION_ID_HEADER = "amz-sdk-invocation-id";
-var REQUEST_HEADER = "amz-sdk-request";
-
-// src/defaultRetryBackoffStrategy.ts
-var getDefaultRetryBackoffStrategy = /* @__PURE__ */ __name(() => {
-  let delayBase = DEFAULT_RETRY_DELAY_BASE;
-  const computeNextBackoffDelay = /* @__PURE__ */ __name((attempts) => {
-    return Math.floor(Math.min(MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase));
-  }, "computeNextBackoffDelay");
-  const setDelayBase = /* @__PURE__ */ __name((delay) => {
-    delayBase = delay;
-  }, "setDelayBase");
-  return {
-    computeNextBackoffDelay,
-    setDelayBase
-  };
-}, "getDefaultRetryBackoffStrategy");
-
-// src/defaultRetryToken.ts
-var createDefaultRetryToken = /* @__PURE__ */ __name(({
-  retryDelay,
-  retryCount,
-  retryCost
-}) => {
-  const getRetryCount = /* @__PURE__ */ __name(() => retryCount, "getRetryCount");
-  const getRetryDelay = /* @__PURE__ */ __name(() => Math.min(MAXIMUM_RETRY_DELAY, retryDelay), "getRetryDelay");
-  const getRetryCost = /* @__PURE__ */ __name(() => retryCost, "getRetryCost");
-  return {
-    getRetryCount,
-    getRetryDelay,
-    getRetryCost
-  };
-}, "createDefaultRetryToken");
-
-// src/StandardRetryStrategy.ts
-var StandardRetryStrategy = class {
-  constructor(maxAttempts) {
-    this.maxAttempts = maxAttempts;
-    this.mode = "standard" /* STANDARD */;
-    this.capacity = INITIAL_RETRY_TOKENS;
-    this.retryBackoffStrategy = getDefaultRetryBackoffStrategy();
-    this.maxAttemptsProvider = typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts;
-  }
-  static {
-    __name(this, "StandardRetryStrategy");
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async acquireInitialRetryToken(retryTokenScope) {
-    return createDefaultRetryToken({
-      retryDelay: DEFAULT_RETRY_DELAY_BASE,
-      retryCount: 0
-    });
-  }
-  async refreshRetryTokenForRetry(token, errorInfo) {
-    const maxAttempts = await this.getMaxAttempts();
-    if (this.shouldRetry(token, errorInfo, maxAttempts)) {
-      const errorType = errorInfo.errorType;
-      this.retryBackoffStrategy.setDelayBase(
-        errorType === "THROTTLING" ? THROTTLING_RETRY_DELAY_BASE : DEFAULT_RETRY_DELAY_BASE
-      );
-      const delayFromErrorType = this.retryBackoffStrategy.computeNextBackoffDelay(token.getRetryCount());
-      const retryDelay = errorInfo.retryAfterHint ? Math.max(errorInfo.retryAfterHint.getTime() - Date.now() || 0, delayFromErrorType) : delayFromErrorType;
-      const capacityCost = this.getCapacityCost(errorType);
-      this.capacity -= capacityCost;
-      return createDefaultRetryToken({
-        retryDelay,
-        retryCount: token.getRetryCount() + 1,
-        retryCost: capacityCost
-      });
-    }
-    throw new Error("No retry token available");
-  }
-  recordSuccess(token) {
-    this.capacity = Math.max(INITIAL_RETRY_TOKENS, this.capacity + (token.getRetryCost() ?? NO_RETRY_INCREMENT));
-  }
-  /**
-   * @returns the current available retry capacity.
-   *
-   * This number decreases when retries are executed and refills when requests or retries succeed.
-   */
-  getCapacity() {
-    return this.capacity;
-  }
-  async getMaxAttempts() {
-    try {
-      return await this.maxAttemptsProvider();
-    } catch (error) {
-      console.warn(`Max attempts provider could not resolve. Using default of ${DEFAULT_MAX_ATTEMPTS}`);
-      return DEFAULT_MAX_ATTEMPTS;
-    }
-  }
-  shouldRetry(tokenToRenew, errorInfo, maxAttempts) {
-    const attempts = tokenToRenew.getRetryCount() + 1;
-    return attempts < maxAttempts && this.capacity >= this.getCapacityCost(errorInfo.errorType) && this.isRetryableError(errorInfo.errorType);
-  }
-  getCapacityCost(errorType) {
-    return errorType === "TRANSIENT" ? TIMEOUT_RETRY_COST : RETRY_COST;
-  }
-  isRetryableError(errorType) {
-    return errorType === "THROTTLING" || errorType === "TRANSIENT";
-  }
+const createDefaultRetryToken = ({ retryDelay, retryCount, retryCost, }) => {
+    const getRetryCount = () => retryCount;
+    const getRetryDelay = () => Math.min(MAXIMUM_RETRY_DELAY, retryDelay);
+    const getRetryCost = () => retryCost;
+    return {
+        getRetryCount,
+        getRetryDelay,
+        getRetryCost,
+    };
 };
 
-// src/AdaptiveRetryStrategy.ts
-var AdaptiveRetryStrategy = class {
-  constructor(maxAttemptsProvider, options) {
-    this.maxAttemptsProvider = maxAttemptsProvider;
-    this.mode = "adaptive" /* ADAPTIVE */;
-    const { rateLimiter } = options ?? {};
-    this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
-    this.standardRetryStrategy = new StandardRetryStrategy(maxAttemptsProvider);
-  }
-  static {
-    __name(this, "AdaptiveRetryStrategy");
-  }
-  async acquireInitialRetryToken(retryTokenScope) {
-    await this.rateLimiter.getSendToken();
-    return this.standardRetryStrategy.acquireInitialRetryToken(retryTokenScope);
-  }
-  async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
-    this.rateLimiter.updateClientSendingRate(errorInfo);
-    return this.standardRetryStrategy.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
-  }
-  recordSuccess(token) {
-    this.rateLimiter.updateClientSendingRate({});
-    this.standardRetryStrategy.recordSuccess(token);
-  }
-};
-
-// src/ConfiguredRetryStrategy.ts
-var ConfiguredRetryStrategy = class extends StandardRetryStrategy {
-  static {
-    __name(this, "ConfiguredRetryStrategy");
-  }
-  /**
-   * @param maxAttempts - the maximum number of retry attempts allowed.
-   *                      e.g., if set to 3, then 4 total requests are possible.
-   * @param computeNextBackoffDelay - a millisecond delay for each retry or a function that takes the retry attempt
-   *                                  and returns the delay.
-   *
-   * @example exponential backoff.
-   * ```js
-   * new Client({
-   *   retryStrategy: new ConfiguredRetryStrategy(3, (attempt) => attempt ** 2)
-   * });
-   * ```
-   * @example constant delay.
-   * ```js
-   * new Client({
-   *   retryStrategy: new ConfiguredRetryStrategy(3, 2000)
-   * });
-   * ```
-   */
-  constructor(maxAttempts, computeNextBackoffDelay = DEFAULT_RETRY_DELAY_BASE) {
-    super(typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts);
-    if (typeof computeNextBackoffDelay === "number") {
-      this.computeNextBackoffDelay = () => computeNextBackoffDelay;
-    } else {
-      this.computeNextBackoffDelay = computeNextBackoffDelay;
+class StandardRetryStrategy {
+    maxAttempts;
+    mode = exports.RETRY_MODES.STANDARD;
+    capacity = INITIAL_RETRY_TOKENS;
+    retryBackoffStrategy = getDefaultRetryBackoffStrategy();
+    maxAttemptsProvider;
+    constructor(maxAttempts) {
+        this.maxAttempts = maxAttempts;
+        this.maxAttemptsProvider = typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts;
     }
-  }
-  async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
-    const token = await super.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
-    token.getRetryDelay = () => this.computeNextBackoffDelay(token.getRetryCount());
-    return token;
-  }
-};
-// Annotate the CommonJS export names for ESM import in node:
+    async acquireInitialRetryToken(retryTokenScope) {
+        return createDefaultRetryToken({
+            retryDelay: DEFAULT_RETRY_DELAY_BASE,
+            retryCount: 0,
+        });
+    }
+    async refreshRetryTokenForRetry(token, errorInfo) {
+        const maxAttempts = await this.getMaxAttempts();
+        if (this.shouldRetry(token, errorInfo, maxAttempts)) {
+            const errorType = errorInfo.errorType;
+            this.retryBackoffStrategy.setDelayBase(errorType === "THROTTLING" ? THROTTLING_RETRY_DELAY_BASE : DEFAULT_RETRY_DELAY_BASE);
+            const delayFromErrorType = this.retryBackoffStrategy.computeNextBackoffDelay(token.getRetryCount());
+            const retryDelay = errorInfo.retryAfterHint
+                ? Math.max(errorInfo.retryAfterHint.getTime() - Date.now() || 0, delayFromErrorType)
+                : delayFromErrorType;
+            const capacityCost = this.getCapacityCost(errorType);
+            this.capacity -= capacityCost;
+            return createDefaultRetryToken({
+                retryDelay,
+                retryCount: token.getRetryCount() + 1,
+                retryCost: capacityCost,
+            });
+        }
+        throw new Error("No retry token available");
+    }
+    recordSuccess(token) {
+        this.capacity = Math.max(INITIAL_RETRY_TOKENS, this.capacity + (token.getRetryCost() ?? NO_RETRY_INCREMENT));
+    }
+    getCapacity() {
+        return this.capacity;
+    }
+    async getMaxAttempts() {
+        try {
+            return await this.maxAttemptsProvider();
+        }
+        catch (error) {
+            console.warn(`Max attempts provider could not resolve. Using default of ${DEFAULT_MAX_ATTEMPTS}`);
+            return DEFAULT_MAX_ATTEMPTS;
+        }
+    }
+    shouldRetry(tokenToRenew, errorInfo, maxAttempts) {
+        const attempts = tokenToRenew.getRetryCount() + 1;
+        return (attempts < maxAttempts &&
+            this.capacity >= this.getCapacityCost(errorInfo.errorType) &&
+            this.isRetryableError(errorInfo.errorType));
+    }
+    getCapacityCost(errorType) {
+        return errorType === "TRANSIENT" ? TIMEOUT_RETRY_COST : RETRY_COST;
+    }
+    isRetryableError(errorType) {
+        return errorType === "THROTTLING" || errorType === "TRANSIENT";
+    }
+}
 
-0 && (0);
+class AdaptiveRetryStrategy {
+    maxAttemptsProvider;
+    rateLimiter;
+    standardRetryStrategy;
+    mode = exports.RETRY_MODES.ADAPTIVE;
+    constructor(maxAttemptsProvider, options) {
+        this.maxAttemptsProvider = maxAttemptsProvider;
+        const { rateLimiter } = options ?? {};
+        this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
+        this.standardRetryStrategy = new StandardRetryStrategy(maxAttemptsProvider);
+    }
+    async acquireInitialRetryToken(retryTokenScope) {
+        await this.rateLimiter.getSendToken();
+        return this.standardRetryStrategy.acquireInitialRetryToken(retryTokenScope);
+    }
+    async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
+        this.rateLimiter.updateClientSendingRate(errorInfo);
+        return this.standardRetryStrategy.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
+    }
+    recordSuccess(token) {
+        this.rateLimiter.updateClientSendingRate({});
+        this.standardRetryStrategy.recordSuccess(token);
+    }
+}
 
+class ConfiguredRetryStrategy extends StandardRetryStrategy {
+    computeNextBackoffDelay;
+    constructor(maxAttempts, computeNextBackoffDelay = DEFAULT_RETRY_DELAY_BASE) {
+        super(typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts);
+        if (typeof computeNextBackoffDelay === "number") {
+            this.computeNextBackoffDelay = () => computeNextBackoffDelay;
+        }
+        else {
+            this.computeNextBackoffDelay = computeNextBackoffDelay;
+        }
+    }
+    async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
+        const token = await super.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
+        token.getRetryDelay = () => this.computeNextBackoffDelay(token.getRetryCount());
+        return token;
+    }
+}
+
+exports.AdaptiveRetryStrategy = AdaptiveRetryStrategy;
+exports.ConfiguredRetryStrategy = ConfiguredRetryStrategy;
+exports.DEFAULT_MAX_ATTEMPTS = DEFAULT_MAX_ATTEMPTS;
+exports.DEFAULT_RETRY_DELAY_BASE = DEFAULT_RETRY_DELAY_BASE;
+exports.DEFAULT_RETRY_MODE = DEFAULT_RETRY_MODE;
+exports.DefaultRateLimiter = DefaultRateLimiter;
+exports.INITIAL_RETRY_TOKENS = INITIAL_RETRY_TOKENS;
+exports.INVOCATION_ID_HEADER = INVOCATION_ID_HEADER;
+exports.MAXIMUM_RETRY_DELAY = MAXIMUM_RETRY_DELAY;
+exports.NO_RETRY_INCREMENT = NO_RETRY_INCREMENT;
+exports.REQUEST_HEADER = REQUEST_HEADER;
+exports.RETRY_COST = RETRY_COST;
+exports.StandardRetryStrategy = StandardRetryStrategy;
+exports.THROTTLING_RETRY_DELAY_BASE = THROTTLING_RETRY_DELAY_BASE;
+exports.TIMEOUT_RETRY_COST = TIMEOUT_RETRY_COST;
 
 
 /***/ }),
@@ -84153,7 +83658,7 @@ module.exports = LRUCache
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.899.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.899.0","@aws-sdk/middleware-host-header":"3.893.0","@aws-sdk/middleware-logger":"3.893.0","@aws-sdk/middleware-recursion-detection":"3.893.0","@aws-sdk/middleware-user-agent":"3.899.0","@aws-sdk/region-config-resolver":"3.893.0","@aws-sdk/types":"3.893.0","@aws-sdk/util-endpoints":"3.895.0","@aws-sdk/util-user-agent-browser":"3.893.0","@aws-sdk/util-user-agent-node":"3.899.0","@smithy/config-resolver":"^4.2.2","@smithy/core":"^3.13.0","@smithy/fetch-http-handler":"^5.2.1","@smithy/hash-node":"^4.1.1","@smithy/invalid-dependency":"^4.1.1","@smithy/middleware-content-length":"^4.1.1","@smithy/middleware-endpoint":"^4.2.5","@smithy/middleware-retry":"^4.3.1","@smithy/middleware-serde":"^4.1.1","@smithy/middleware-stack":"^4.1.1","@smithy/node-config-provider":"^4.2.2","@smithy/node-http-handler":"^4.2.1","@smithy/protocol-http":"^5.2.1","@smithy/smithy-client":"^4.6.5","@smithy/types":"^4.5.0","@smithy/url-parser":"^4.1.1","@smithy/util-base64":"^4.1.0","@smithy/util-body-length-browser":"^4.1.0","@smithy/util-body-length-node":"^4.1.0","@smithy/util-defaults-mode-browser":"^4.1.5","@smithy/util-defaults-mode-node":"^4.1.5","@smithy/util-endpoints":"^3.1.2","@smithy/util-middleware":"^4.1.1","@smithy/util-retry":"^4.1.2","@smithy/util-utf8":"^4.1.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.901.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.901.0","@aws-sdk/middleware-host-header":"3.901.0","@aws-sdk/middleware-logger":"3.901.0","@aws-sdk/middleware-recursion-detection":"3.901.0","@aws-sdk/middleware-user-agent":"3.901.0","@aws-sdk/region-config-resolver":"3.901.0","@aws-sdk/types":"3.901.0","@aws-sdk/util-endpoints":"3.901.0","@aws-sdk/util-user-agent-browser":"3.901.0","@aws-sdk/util-user-agent-node":"3.901.0","@smithy/config-resolver":"^4.3.0","@smithy/core":"^3.14.0","@smithy/fetch-http-handler":"^5.3.0","@smithy/hash-node":"^4.2.0","@smithy/invalid-dependency":"^4.2.0","@smithy/middleware-content-length":"^4.2.0","@smithy/middleware-endpoint":"^4.3.0","@smithy/middleware-retry":"^4.4.0","@smithy/middleware-serde":"^4.2.0","@smithy/middleware-stack":"^4.2.0","@smithy/node-config-provider":"^4.3.0","@smithy/node-http-handler":"^4.3.0","@smithy/protocol-http":"^5.3.0","@smithy/smithy-client":"^4.7.0","@smithy/types":"^4.6.0","@smithy/url-parser":"^4.2.0","@smithy/util-base64":"^4.2.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.0","@smithy/util-defaults-mode-browser":"^4.2.0","@smithy/util-defaults-mode-node":"^4.2.0","@smithy/util-endpoints":"^3.2.0","@smithy/util-middleware":"^4.2.0","@smithy/util-retry":"^4.2.0","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
 
 /***/ }),
 
@@ -84161,7 +83666,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","descrip
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.899.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.899.0","@aws-sdk/credential-provider-node":"3.899.0","@aws-sdk/middleware-host-header":"3.893.0","@aws-sdk/middleware-logger":"3.893.0","@aws-sdk/middleware-recursion-detection":"3.893.0","@aws-sdk/middleware-user-agent":"3.899.0","@aws-sdk/region-config-resolver":"3.893.0","@aws-sdk/types":"3.893.0","@aws-sdk/util-endpoints":"3.895.0","@aws-sdk/util-user-agent-browser":"3.893.0","@aws-sdk/util-user-agent-node":"3.899.0","@smithy/config-resolver":"^4.2.2","@smithy/core":"^3.13.0","@smithy/fetch-http-handler":"^5.2.1","@smithy/hash-node":"^4.1.1","@smithy/invalid-dependency":"^4.1.1","@smithy/middleware-content-length":"^4.1.1","@smithy/middleware-endpoint":"^4.2.5","@smithy/middleware-retry":"^4.3.1","@smithy/middleware-serde":"^4.1.1","@smithy/middleware-stack":"^4.1.1","@smithy/node-config-provider":"^4.2.2","@smithy/node-http-handler":"^4.2.1","@smithy/protocol-http":"^5.2.1","@smithy/smithy-client":"^4.6.5","@smithy/types":"^4.5.0","@smithy/url-parser":"^4.1.1","@smithy/util-base64":"^4.1.0","@smithy/util-body-length-browser":"^4.1.0","@smithy/util-body-length-node":"^4.1.0","@smithy/util-defaults-mode-browser":"^4.1.5","@smithy/util-defaults-mode-node":"^4.1.5","@smithy/util-endpoints":"^3.1.2","@smithy/util-middleware":"^4.1.1","@smithy/util-retry":"^4.1.2","@smithy/util-utf8":"^4.1.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.901.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.901.0","@aws-sdk/credential-provider-node":"3.901.0","@aws-sdk/middleware-host-header":"3.901.0","@aws-sdk/middleware-logger":"3.901.0","@aws-sdk/middleware-recursion-detection":"3.901.0","@aws-sdk/middleware-user-agent":"3.901.0","@aws-sdk/region-config-resolver":"3.901.0","@aws-sdk/types":"3.901.0","@aws-sdk/util-endpoints":"3.901.0","@aws-sdk/util-user-agent-browser":"3.901.0","@aws-sdk/util-user-agent-node":"3.901.0","@smithy/config-resolver":"^4.3.0","@smithy/core":"^3.14.0","@smithy/fetch-http-handler":"^5.3.0","@smithy/hash-node":"^4.2.0","@smithy/invalid-dependency":"^4.2.0","@smithy/middleware-content-length":"^4.2.0","@smithy/middleware-endpoint":"^4.3.0","@smithy/middleware-retry":"^4.4.0","@smithy/middleware-serde":"^4.2.0","@smithy/middleware-stack":"^4.2.0","@smithy/node-config-provider":"^4.3.0","@smithy/node-http-handler":"^4.3.0","@smithy/protocol-http":"^5.3.0","@smithy/smithy-client":"^4.7.0","@smithy/types":"^4.6.0","@smithy/url-parser":"^4.2.0","@smithy/util-base64":"^4.2.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.0","@smithy/util-defaults-mode-browser":"^4.2.0","@smithy/util-defaults-mode-node":"^4.2.0","@smithy/util-endpoints":"^3.2.0","@smithy/util-middleware":"^4.2.0","@smithy/util-retry":"^4.2.0","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ }),
 
@@ -84169,7 +83674,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","descrip
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.899.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"sideEffects":false,"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.899.0","@aws-sdk/middleware-host-header":"3.893.0","@aws-sdk/middleware-logger":"3.893.0","@aws-sdk/middleware-recursion-detection":"3.893.0","@aws-sdk/middleware-user-agent":"3.899.0","@aws-sdk/region-config-resolver":"3.893.0","@aws-sdk/types":"3.893.0","@aws-sdk/util-endpoints":"3.895.0","@aws-sdk/util-user-agent-browser":"3.893.0","@aws-sdk/util-user-agent-node":"3.899.0","@smithy/config-resolver":"^4.2.2","@smithy/core":"^3.13.0","@smithy/fetch-http-handler":"^5.2.1","@smithy/hash-node":"^4.1.1","@smithy/invalid-dependency":"^4.1.1","@smithy/middleware-content-length":"^4.1.1","@smithy/middleware-endpoint":"^4.2.5","@smithy/middleware-retry":"^4.3.1","@smithy/middleware-serde":"^4.1.1","@smithy/middleware-stack":"^4.1.1","@smithy/node-config-provider":"^4.2.2","@smithy/node-http-handler":"^4.2.1","@smithy/protocol-http":"^5.2.1","@smithy/smithy-client":"^4.6.5","@smithy/types":"^4.5.0","@smithy/url-parser":"^4.1.1","@smithy/util-base64":"^4.1.0","@smithy/util-body-length-browser":"^4.1.0","@smithy/util-body-length-node":"^4.1.0","@smithy/util-defaults-mode-browser":"^4.1.5","@smithy/util-defaults-mode-node":"^4.1.5","@smithy/util-endpoints":"^3.1.2","@smithy/util-middleware":"^4.1.1","@smithy/util-retry":"^4.1.2","@smithy/util-utf8":"^4.1.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"}}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.901.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"sideEffects":false,"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.901.0","@aws-sdk/middleware-host-header":"3.901.0","@aws-sdk/middleware-logger":"3.901.0","@aws-sdk/middleware-recursion-detection":"3.901.0","@aws-sdk/middleware-user-agent":"3.901.0","@aws-sdk/region-config-resolver":"3.901.0","@aws-sdk/types":"3.901.0","@aws-sdk/util-endpoints":"3.901.0","@aws-sdk/util-user-agent-browser":"3.901.0","@aws-sdk/util-user-agent-node":"3.901.0","@smithy/config-resolver":"^4.3.0","@smithy/core":"^3.14.0","@smithy/fetch-http-handler":"^5.3.0","@smithy/hash-node":"^4.2.0","@smithy/invalid-dependency":"^4.2.0","@smithy/middleware-content-length":"^4.2.0","@smithy/middleware-endpoint":"^4.3.0","@smithy/middleware-retry":"^4.4.0","@smithy/middleware-serde":"^4.2.0","@smithy/middleware-stack":"^4.2.0","@smithy/node-config-provider":"^4.3.0","@smithy/node-http-handler":"^4.3.0","@smithy/protocol-http":"^5.3.0","@smithy/smithy-client":"^4.7.0","@smithy/types":"^4.6.0","@smithy/url-parser":"^4.2.0","@smithy/util-base64":"^4.2.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.0","@smithy/util-defaults-mode-browser":"^4.2.0","@smithy/util-defaults-mode-node":"^4.2.0","@smithy/util-endpoints":"^3.2.0","@smithy/util-middleware":"^4.2.0","@smithy/util-retry":"^4.2.0","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"}}}');
 
 /***/ }),
 
