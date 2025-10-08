@@ -1,13 +1,20 @@
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import * as core from '@actions/core';
-import type { Credentials, STSClient } from '@aws-sdk/client-sts';
-import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
-import type { CredentialsClient } from './CredentialsClient';
+import { type Credentials, GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import type { AwsCredentialIdentity } from '@aws-sdk/types';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import { ProxyAgent } from 'proxy-agent';
+import { ProxyResolver } from './ProxyResolver';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
+const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
+const ROLE_SESSION_NAME = 'GitHubActions';
+const REGION_REGEX = /^[a-z0-9-]+$/g;
 
-export function translateEnvVariables() {
+export function importEnvVariables() {
   const envVars = [
     'AWS_REGION',
     'ROLE_TO_ASSUME',
@@ -40,56 +47,93 @@ export function translateEnvVariables() {
     }
   }
 }
+export function getActionInputs() {
+  const options = {
+    AccessKeyId: getInput('aws-access-key-id'),
+    SecretAccessKey: getInput('aws-secret-access-key'),
+    SessionToken: getInput('aws-session-token'),
+    region: getInput('aws-region', { required: true }) as string,
+    roleToAssume: getInput('role-to-assume'),
+    audience: getInput('audience'),
+    maskAccountId: getBooleanInput('mask-aws-account-id'),
+    roleExternalId: getInput('role-external-id'),
+    webIdentityTokenFile: getInput('web-identity-token-file'),
+    roleDuration: getNumberInput('role-duration-seconds', { default: DEFAULT_ROLE_DURATION }),
+    roleSessionName: getInput('role-session-name', { default: ROLE_SESSION_NAME }),
+    roleSkipSessionTagging: getBooleanInput('role-skip-session-tagging'),
+    proxyServer: getInput('http-proxy', { default: process.env.HTTP_PROXY }),
+    inlineSessionPolicy: getInput('inline-session-policy'),
+    managedSessionPolicies: getMultilineInput('managed-session-policies')?.map((p) => ({ arn: p })),
+    roleChaining: getBooleanInput('role-chaining'),
+    outputCredentials: getBooleanInput('output-credentials'),
+    unsetCurrentCredentials: getBooleanInput('unset-current-credentials'),
+    exportEnvCredentials: getBooleanInput('output-env-credentials', { default: true }),
+    disableRetry: getBooleanInput('disable-retry'),
+    maxRetries: getNumberInput('retry-max-attempts', { default: 12 }) as number,
+    specialCharacterWorkaround: getBooleanInput('special-characters-workaround'),
+    useExistingCredentials: getBooleanInput('use-existing-credentials'),
+    expectedAccountIds: getInput('allowed-account-ids')
+      ?.split(',')
+      .map((s) => s.trim()),
+    forceSkipOidc: getBooleanInput('force-skip-oidc'),
+    noProxy: getInput('no-proxy'),
+    globalTimeout: getNumberInput('action-timeout-s', { default: 0 }) as number,
+  } as const;
+  // Checks
+  if (options.forceSkipOidc && options.roleToAssume && !options.AccessKeyId && !options.webIdentityTokenFile) {
+    throw new Error(
+      "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id' or 'web-identity-token-file' must be set",
+    );
+  }
+  if (!options.roleToAssume && options.AccessKeyId && !options.SecretAccessKey) {
+    throw new Error(
+      "'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided and not assuming a role",
+    );
+  }
+  if (!options.region?.match(REGION_REGEX)) {
+    throw new Error(`Region is not valid: ${options.region}`);
+  }
+
+  return options;
+}
 
 // Configure the AWS CLI and AWS SDKs using environment variables and set them as secrets.
 // Setting the credentials as secrets masks them in Github Actions logs
-export function exportCredentials(
-  creds?: Partial<Credentials>,
-  outputCredentials?: boolean,
-  outputEnvCredentials?: boolean,
-) {
+export function exportCredentials(creds?: Partial<Credentials>) {
   if (creds?.AccessKeyId) {
     core.setSecret(creds.AccessKeyId);
+    core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
   }
 
   if (creds?.SecretAccessKey) {
     core.setSecret(creds.SecretAccessKey);
+    core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
   }
 
   if (creds?.SessionToken) {
     core.setSecret(creds.SessionToken);
+    core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
+  } else if (process.env.AWS_SESSION_TOKEN) {
+    // clear session token from previous credentials action
+    core.exportVariable('AWS_SESSION_TOKEN', '');
   }
+}
 
-  if (outputEnvCredentials) {
-    if (creds?.AccessKeyId) {
-      core.exportVariable('AWS_ACCESS_KEY_ID', creds.AccessKeyId);
-    }
-
-    if (creds?.SecretAccessKey) {
-      core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.SecretAccessKey);
-    }
-
-    if (creds?.SessionToken) {
-      core.exportVariable('AWS_SESSION_TOKEN', creds.SessionToken);
-    } else if (process.env.AWS_SESSION_TOKEN) {
-      // clear session token from previous credentials action
-      core.exportVariable('AWS_SESSION_TOKEN', '');
-    }
+export function outputCredentials(creds?: Partial<Credentials>) {
+  if (creds?.AccessKeyId) {
+    core.setSecret(creds.AccessKeyId);
+    core.setOutput('aws-access-key-id', creds.AccessKeyId);
   }
-
-  if (outputCredentials) {
-    if (creds?.AccessKeyId) {
-      core.setOutput('aws-access-key-id', creds.AccessKeyId);
-    }
-    if (creds?.SecretAccessKey) {
-      core.setOutput('aws-secret-access-key', creds.SecretAccessKey);
-    }
-    if (creds?.SessionToken) {
-      core.setOutput('aws-session-token', creds.SessionToken);
-    }
-    if (creds?.Expiration) {
-      core.setOutput('aws-expiration', creds.Expiration);
-    }
+  if (creds?.SecretAccessKey) {
+    core.setSecret(creds.SecretAccessKey);
+    core.setOutput('aws-secret-access-key', creds.SecretAccessKey);
+  }
+  if (creds?.SessionToken) {
+    core.setSecret(creds.SessionToken);
+    core.setOutput('aws-session-token', creds.SessionToken);
+  }
+  if (creds?.Expiration) {
+    core.setOutput('aws-expiration', creds.Expiration);
   }
 }
 
@@ -103,14 +147,17 @@ export function unsetCredentials(outputEnvCredentials?: boolean) {
   }
 }
 
-export function exportRegion(region: string, outputEnvCredentials?: boolean) {
-  if (outputEnvCredentials) {
-    core.exportVariable('AWS_DEFAULT_REGION', region);
-    core.exportVariable('AWS_REGION', region);
-  }
+export function exportRegion(region: string) {
+  core.exportVariable('AWS_DEFAULT_REGION', region);
+  core.exportVariable('AWS_REGION', region);
 }
 
-export async function getCallerIdentity(client: STSClient): Promise<{ Account: string; Arn: string; UserId?: string }> {
+export function outputRegion(region: string) {
+  core.setOutput('aws-region', region);
+  core.setOutput('aws-default-region', region);
+}
+
+async function getCallerIdentity(client: STSClient): Promise<{ Account: string; Arn: string; UserId?: string }> {
   const identity = await client.send(new GetCallerIdentityCommand({}));
   if (!identity.Account || !identity.Arn) {
     throw new Error('Could not get Account ID or ARN from STS. Did you set credentials?');
@@ -125,18 +172,37 @@ export async function getCallerIdentity(client: STSClient): Promise<{ Account: s
   return result;
 }
 
-// Obtains account ID from STS Client and sets it as output
-export async function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: boolean) {
-  const identity = await getCallerIdentity(credentialsClient.stsClient);
-  const accountId = identity.Account;
-  const arn = identity.Arn;
-  if (maskAccountId) {
+export function outputAccountId(accountId: string, opts: { arn?: string | undefined; maskAccountId?: boolean }) {
+  if (opts.maskAccountId) {
     core.setSecret(accountId);
-    core.setSecret(arn);
+    if (opts.arn) core.setSecret(opts.arn);
   }
   core.setOutput('aws-account-id', accountId);
-  core.setOutput('authenticated-arn', arn);
-  return accountId;
+  core.setOutput('authenticated-arn', opts.arn);
+}
+
+export function exportAccountId(accountId: string, opts: { maskAccountId?: boolean }) {
+  if (opts.maskAccountId) {
+    core.setSecret(accountId);
+  }
+  core.exportVariable('AWS_ACCOUNT_ID', accountId);
+}
+
+// Obtains account ID and AssumedRole ARN from STS
+export async function getAccountIdFromCredentials(
+  credentials: AwsCredentialIdentity,
+  args?: { requestHandler?: NodeHttpHandler; region?: string },
+): Promise<{ Account: string; Arn?: string | undefined } | undefined> {
+  const requestHandler = args?.requestHandler;
+  const region = args?.region;
+  const client = new STSClient({ credentials, ...(requestHandler && { requestHandler }), ...(region && { region }) });
+  try {
+    const result = await getCallerIdentity(client);
+    return { Account: result.Account, Arn: result.Arn };
+  } catch (error) {
+    core.debug(`getAccountIdFromCredentials: ${errorMessage(error)}`);
+    return undefined;
+  }
 }
 
 // Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
@@ -148,20 +214,7 @@ export function sanitizeGitHubVariables(name: string) {
   return nameTruncated;
 }
 
-export async function defaultSleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-let sleep = defaultSleep;
-
-export function withsleep(s: typeof sleep) {
-  sleep = s;
-}
-
-export function reset() {
-  sleep = defaultSleep;
-}
-
-export function verifyKeys(creds: Partial<Credentials> | undefined) {
+export function verifyKeys(creds: { AccessKeyId?: string; SecretAccessKey?: string } | undefined) {
   if (!creds) {
     return false;
   }
@@ -204,7 +257,7 @@ export async function retryAndBackoff<T>(
         `Retrying after ${Math.floor(delay)}ms.`,
     );
 
-    await sleep(delay);
+    await new Promise((r) => setTimeout(r, delay));
 
     if (nextRetry >= maxRetries) {
       core.debug('retryAndBackoff: reached max retries; giving up.');
@@ -215,20 +268,18 @@ export async function retryAndBackoff<T>(
   }
 }
 
-/* c8 ignore start */
 export function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function isDefined<T>(i: T | undefined | null): i is T {
-  return i !== undefined && i !== null;
-}
-/* c8 ignore stop */
-
-export async function areCredentialsValid(credentialsClient: CredentialsClient) {
-  const client = credentialsClient.stsClient;
+// Note: requires that credentials are already resolvable with the default chain.
+export async function areCredentialsValid(args: { requestHandler?: NodeHttpHandler; region?: string }) {
+  // GetCallerIdentity does not require any permissions
+  const requestHandler = args.requestHandler;
+  const region = args.region;
+  const client = new STSClient({ ...(requestHandler && { requestHandler }), ...(region && { region }) });
   try {
-    const identity = await client.send(new GetCallerIdentityCommand({}));
+    const identity = await getCallerIdentity(client);
     if (identity.Account) {
       return true;
     }
@@ -236,6 +287,21 @@ export async function areCredentialsValid(credentialsClient: CredentialsClient) 
   } catch (_) {
     return false;
   }
+}
+
+export function configureProxy(proxyServer?: string, noProxy?: string): NodeHttpHandler {
+  if (proxyServer) {
+    core.info('Configuring proxy handler');
+    const proxyOptions: { httpProxy: string; httpsProxy: string; noProxy?: string } = {
+      httpProxy: proxyServer,
+      httpsProxy: proxyServer,
+      ...(noProxy && { noProxy }),
+    };
+    const getProxyForUrl = new ProxyResolver(proxyOptions).getProxyForUrl;
+    const handler = new ProxyAgent({ getProxyForUrl });
+    return new NodeHttpHandler({ httpsAgent: handler, httpAgent: handler });
+  }
+  return new NodeHttpHandler();
 }
 
 /**
@@ -265,4 +331,88 @@ export function getBooleanInput(name: string, options?: core.InputOptions & { de
     `Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
       `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``,
   );
+}
+
+// As above, but for other input types
+export function getInput(
+  name: string,
+  options?: core.InputOptions & { default?: string | undefined },
+): string | undefined {
+  const input = core.getInput(name, options);
+  if (input === '') return options?.default;
+  return input;
+}
+export function getNumberInput(
+  name: string,
+  options?: core.InputOptions & { default?: number | undefined },
+): number | undefined {
+  const input = core.getInput(name, options);
+  if (input === '') return options?.default;
+  // biome-ignore lint/correctness/useParseIntRadix: intentionally support 0x
+  return Number.parseInt(input);
+}
+export function getMultilineInput(name: string, options?: core.InputOptions): string[] | undefined {
+  const input = getInput(name, options)
+    ?.split('\n')
+    .filter((i) => i !== '');
+  if (options?.trimWhitespace === false) return input;
+  return input?.map((i) => i.trim());
+}
+
+export function useGitHubOIDCProvider(options: ReturnType<typeof getActionInputs>): boolean {
+  if (options.forceSkipOidc) return false;
+  if (
+    !!options.roleToAssume &&
+    !options.webIdentityTokenFile &&
+    !options.AccessKeyId &&
+    !process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN &&
+    !options.roleChaining
+  ) {
+    core.info(
+      'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission? ' +
+        'If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.',
+    );
+  }
+  return (
+    !!options.roleToAssume &&
+    !process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN &&
+    !options.AccessKeyId &&
+    !options.webIdentityTokenFile &&
+    !options.roleChaining
+  );
+}
+
+export async function getGHToken(options: ReturnType<typeof getActionInputs>): Promise<string> {
+  let webIdentityToken: string;
+  try {
+    webIdentityToken = await retryAndBackoff(
+      async () => core.getIDToken(options.audience),
+      !options.disableRetry,
+      options.maxRetries,
+    );
+  } catch (error) {
+    throw new Error(`getIDToken call failed: ${errorMessage(error)}`);
+  }
+  return webIdentityToken;
+}
+
+export async function getFileToken(options: ReturnType<typeof getActionInputs>): Promise<string> {
+  if (!options.webIdentityTokenFile) throw new Error('webIdentityTokenFile not provided');
+  core.debug(
+    'webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents.',
+  );
+  const workspace = process.env.GITHUB_WORKSPACE ?? '';
+  const webIdentityTokenFilePath = path.isAbsolute(options.webIdentityTokenFile)
+    ? options.webIdentityTokenFile
+    : path.join(workspace, options.webIdentityTokenFile);
+  if (!existsSync(webIdentityTokenFilePath)) {
+    throw new Error(`webIdentityTokenFile does not exist: ${webIdentityTokenFilePath}`);
+  }
+  core.info('Assuming role with web identity token file');
+  try {
+    const webIdentityToken = readFileSync(webIdentityTokenFilePath, 'utf8');
+    return webIdentityToken;
+  } catch (error) {
+    throw new Error(`Could not read web identity token file: ${errorMessage(error)}`);
+  }
 }

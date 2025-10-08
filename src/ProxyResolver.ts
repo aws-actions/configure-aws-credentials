@@ -33,7 +33,7 @@ export class ProxyResolver {
     const proto = parsedUrl.protocol.split(':', 1)[0];
     if (!proto) return ''; // Don't proxy URLs without a protocol.
     const hostname = parsedUrl.host;
-    const port = parseInt(parsedUrl.port || '') || DEFAULT_PORTS[proto] || 0;
+    const port = Number.parseInt(parsedUrl.port || '', 10) || DEFAULT_PORTS[proto] || 0;
 
     if (options?.noProxy && !this.shouldProxy(hostname, port, options.noProxy)) return '';
     if (proto === 'http' && options?.httpProxy) return options.httpProxy;
@@ -50,7 +50,7 @@ export class ProxyResolver {
 
       const parsedProxy = proxy.match(/^(.+):(\d+)$/);
       const parsedProxyHostname = parsedProxy ? parsedProxy[1] : proxy;
-      const parsedProxyPort = parsedProxy?.[2] ? parseInt(parsedProxy[2]) : 0;
+      const parsedProxyPort = parsedProxy?.[2] ? Number.parseInt(parsedProxy[2], 10) : 0;
 
       if (parsedProxyPort && parsedProxyPort !== port) return true; // Skip if ports don't match.
 
