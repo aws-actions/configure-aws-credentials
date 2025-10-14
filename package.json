@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@aws-sdk/credential-provider-env": "^3.901.0",
-    "@biomejs/biome": "2.2.5",
+    "@biomejs/biome": "2.2.6",
     "@smithy/property-provider": "^4.0.3",
     "@types/node": "^24.7.0",
     "@vercel/ncc": "^0.38.4",
