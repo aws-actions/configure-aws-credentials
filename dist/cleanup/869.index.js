@@ -64,7 +64,7 @@ const isCredentialSourceProfile = (arg, { profile, logger }) => {
     }
     return withProviderProfile;
 };
-const resolveAssumeRoleCredentials = async (profileName, profiles, options, visitedProfiles = {}) => {
+const resolveAssumeRoleCredentials = async (profileName, profiles, options, visitedProfiles = {}, resolveProfileData) => {
     options.logger?.debug("@aws-sdk/credential-provider-ini - resolveAssumeRoleCredentials (STS)");
     const profileData = profiles[profileName];
     const { source_profile, region } = profileData;
@@ -184,7 +184,7 @@ const resolveProfileData = async (profileName, profiles, options, visitedProfile
         return resolveStaticCredentials(data, options);
     }
     if (isAssumeRoleRecursiveCall || isAssumeRoleProfile(data, { profile: profileName, logger: options.logger })) {
-        return resolveAssumeRoleCredentials(profileName, profiles, options, visitedProfiles);
+        return resolveAssumeRoleCredentials(profileName, profiles, options, visitedProfiles, resolveProfileData);
     }
     if (isStaticCredsProfile(data)) {
         return resolveStaticCredentials(data, options);
