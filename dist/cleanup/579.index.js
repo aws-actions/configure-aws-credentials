@@ -27,7 +27,6 @@ class EventStreamSerde {
         const marshaller = this.marshaller;
         const eventStreamMember = requestSchema.getEventStreamMember();
         const unionSchema = requestSchema.getMemberSchema(eventStreamMember);
-        unionSchema.getMemberSchemas();
         const serializer = this.serializer;
         const defaultContentType = this.defaultContentType;
         const initialRequestMarker = Symbol("initialRequestMarker");
@@ -140,7 +139,7 @@ class EventStreamSerde {
         let explicitPayloadContentType;
         const isKnownSchema = (() => {
             const struct = unionSchema.getSchema();
-            return struct.memberNames.includes(unionMember);
+            return struct[4].includes(unionMember);
         })();
         const additionalHeaders = {};
         if (!isKnownSchema) {
