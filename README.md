@@ -434,6 +434,8 @@ In this two-step example, the first step will use OIDC to assume the role
 example. Following that, a second step will use this role to assume a different
 role, `arn:aws:iam::987654321000:role/my-second-role`.
 
+Note that the trust relationship/trust policy of the second role must grant the permissions `sts:AssumeRole` and `sts:TagSession` to the first role. (Or, alternatively, the `TagSession` permission can be omitted if you are using the `role-skip-session-tagging: true` flag for the second step.)
+
 ### AssumeRole with static IAM credentials in repository secrets
 ```yaml
     - name: Configure AWS Credentials
