@@ -128,6 +128,7 @@ var middlewareRecursionDetection = __webpack_require__(1568);
 var middlewareUserAgent = __webpack_require__(2959);
 var configResolver = __webpack_require__(9316);
 var core = __webpack_require__(402);
+var schema = __webpack_require__(6890);
 var middlewareContentLength = __webpack_require__(7212);
 var middlewareEndpoint = __webpack_require__(99);
 var middlewareRetry = __webpack_require__(9618);
@@ -136,8 +137,6 @@ var httpAuthSchemeProvider = __webpack_require__(2041);
 var runtimeConfig = __webpack_require__(2696);
 var regionConfigResolver = __webpack_require__(6463);
 var protocolHttp = __webpack_require__(2356);
-var middlewareSerde = __webpack_require__(3255);
-var core$1 = __webpack_require__(8704);
 
 const resolveClientEndpointParameters = (options) => {
     return Object.assign(options, {
@@ -213,6 +212,7 @@ class SSOClient extends smithyClient.Client {
         const _config_7 = httpAuthSchemeProvider.resolveHttpAuthSchemeConfig(_config_6);
         const _config_8 = resolveRuntimeExtensions(_config_7, configuration?.extensions || []);
         this.config = _config_8;
+        this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(middlewareUserAgent.getUserAgentPlugin(this.config));
         this.middlewareStack.use(middlewareRetry.getRetryPlugin(this.config));
         this.middlewareStack.use(middlewareContentLength.getContentLengthPlugin(this.config));
@@ -232,14 +232,14 @@ class SSOClient extends smithyClient.Client {
     }
 }
 
-class SSOServiceException extends smithyClient.ServiceException {
+let SSOServiceException$1 = class SSOServiceException extends smithyClient.ServiceException {
     constructor(options) {
         super(options);
         Object.setPrototypeOf(this, SSOServiceException.prototype);
     }
-}
+};
 
-class InvalidRequestException extends SSOServiceException {
+let InvalidRequestException$1 = class InvalidRequestException extends SSOServiceException$1 {
     name = "InvalidRequestException";
     $fault = "client";
     constructor(opts) {
@@ -250,8 +250,8 @@ class InvalidRequestException extends SSOServiceException {
         });
         Object.setPrototypeOf(this, InvalidRequestException.prototype);
     }
-}
-class ResourceNotFoundException extends SSOServiceException {
+};
+let ResourceNotFoundException$1 = class ResourceNotFoundException extends SSOServiceException$1 {
     name = "ResourceNotFoundException";
     $fault = "client";
     constructor(opts) {
@@ -262,8 +262,8 @@ class ResourceNotFoundException extends SSOServiceException {
         });
         Object.setPrototypeOf(this, ResourceNotFoundException.prototype);
     }
-}
-class TooManyRequestsException extends SSOServiceException {
+};
+let TooManyRequestsException$1 = class TooManyRequestsException extends SSOServiceException$1 {
     name = "TooManyRequestsException";
     $fault = "client";
     constructor(opts) {
@@ -274,8 +274,8 @@ class TooManyRequestsException extends SSOServiceException {
         });
         Object.setPrototypeOf(this, TooManyRequestsException.prototype);
     }
-}
-class UnauthorizedException extends SSOServiceException {
+};
+let UnauthorizedException$1 = class UnauthorizedException extends SSOServiceException$1 {
     name = "UnauthorizedException";
     $fault = "client";
     constructor(opts) {
@@ -286,252 +286,280 @@ class UnauthorizedException extends SSOServiceException {
         });
         Object.setPrototypeOf(this, UnauthorizedException.prototype);
     }
-}
-const GetRoleCredentialsRequestFilterSensitiveLog = (obj) => ({
-    ...obj,
-    ...(obj.accessToken && { accessToken: smithyClient.SENSITIVE_STRING }),
-});
-const RoleCredentialsFilterSensitiveLog = (obj) => ({
-    ...obj,
-    ...(obj.secretAccessKey && { secretAccessKey: smithyClient.SENSITIVE_STRING }),
-    ...(obj.sessionToken && { sessionToken: smithyClient.SENSITIVE_STRING }),
-});
-const GetRoleCredentialsResponseFilterSensitiveLog = (obj) => ({
-    ...obj,
-    ...(obj.roleCredentials && { roleCredentials: RoleCredentialsFilterSensitiveLog(obj.roleCredentials) }),
-});
-const ListAccountRolesRequestFilterSensitiveLog = (obj) => ({
-    ...obj,
-    ...(obj.accessToken && { accessToken: smithyClient.SENSITIVE_STRING }),
-});
-const ListAccountsRequestFilterSensitiveLog = (obj) => ({
-    ...obj,
-    ...(obj.accessToken && { accessToken: smithyClient.SENSITIVE_STRING }),
-});
-const LogoutRequestFilterSensitiveLog = (obj) => ({
-    ...obj,
-    ...(obj.accessToken && { accessToken: smithyClient.SENSITIVE_STRING }),
-});
+};
 
-const se_GetRoleCredentialsCommand = async (input, context) => {
-    const b = core.requestBuilder(input, context);
-    const headers = smithyClient.map({}, smithyClient.isSerializableHeaderValue, {
-        [_xasbt]: input[_aT],
-    });
-    b.bp("/federation/credentials");
-    const query = smithyClient.map({
-        [_rn]: [, smithyClient.expectNonNull(input[_rN], `roleName`)],
-        [_ai]: [, smithyClient.expectNonNull(input[_aI], `accountId`)],
-    });
-    let body;
-    b.m("GET").h(headers).q(query).b(body);
-    return b.build();
-};
-const se_ListAccountRolesCommand = async (input, context) => {
-    const b = core.requestBuilder(input, context);
-    const headers = smithyClient.map({}, smithyClient.isSerializableHeaderValue, {
-        [_xasbt]: input[_aT],
-    });
-    b.bp("/assignment/roles");
-    const query = smithyClient.map({
-        [_nt]: [, input[_nT]],
-        [_mr]: [() => input.maxResults !== void 0, () => input[_mR].toString()],
-        [_ai]: [, smithyClient.expectNonNull(input[_aI], `accountId`)],
-    });
-    let body;
-    b.m("GET").h(headers).q(query).b(body);
-    return b.build();
-};
-const se_ListAccountsCommand = async (input, context) => {
-    const b = core.requestBuilder(input, context);
-    const headers = smithyClient.map({}, smithyClient.isSerializableHeaderValue, {
-        [_xasbt]: input[_aT],
-    });
-    b.bp("/assignment/accounts");
-    const query = smithyClient.map({
-        [_nt]: [, input[_nT]],
-        [_mr]: [() => input.maxResults !== void 0, () => input[_mR].toString()],
-    });
-    let body;
-    b.m("GET").h(headers).q(query).b(body);
-    return b.build();
-};
-const se_LogoutCommand = async (input, context) => {
-    const b = core.requestBuilder(input, context);
-    const headers = smithyClient.map({}, smithyClient.isSerializableHeaderValue, {
-        [_xasbt]: input[_aT],
-    });
-    b.bp("/logout");
-    let body;
-    b.m("POST").h(headers).b(body);
-    return b.build();
-};
-const de_GetRoleCredentialsCommand = async (output, context) => {
-    if (output.statusCode !== 200 && output.statusCode >= 300) {
-        return de_CommandError(output, context);
-    }
-    const contents = smithyClient.map({
-        $metadata: deserializeMetadata(output),
-    });
-    const data = smithyClient.expectNonNull(smithyClient.expectObject(await core$1.parseJsonBody(output.body, context)), "body");
-    const doc = smithyClient.take(data, {
-        roleCredentials: smithyClient._json,
-    });
-    Object.assign(contents, doc);
-    return contents;
-};
-const de_ListAccountRolesCommand = async (output, context) => {
-    if (output.statusCode !== 200 && output.statusCode >= 300) {
-        return de_CommandError(output, context);
-    }
-    const contents = smithyClient.map({
-        $metadata: deserializeMetadata(output),
-    });
-    const data = smithyClient.expectNonNull(smithyClient.expectObject(await core$1.parseJsonBody(output.body, context)), "body");
-    const doc = smithyClient.take(data, {
-        nextToken: smithyClient.expectString,
-        roleList: smithyClient._json,
-    });
-    Object.assign(contents, doc);
-    return contents;
-};
-const de_ListAccountsCommand = async (output, context) => {
-    if (output.statusCode !== 200 && output.statusCode >= 300) {
-        return de_CommandError(output, context);
-    }
-    const contents = smithyClient.map({
-        $metadata: deserializeMetadata(output),
-    });
-    const data = smithyClient.expectNonNull(smithyClient.expectObject(await core$1.parseJsonBody(output.body, context)), "body");
-    const doc = smithyClient.take(data, {
-        accountList: smithyClient._json,
-        nextToken: smithyClient.expectString,
-    });
-    Object.assign(contents, doc);
-    return contents;
-};
-const de_LogoutCommand = async (output, context) => {
-    if (output.statusCode !== 200 && output.statusCode >= 300) {
-        return de_CommandError(output, context);
-    }
-    const contents = smithyClient.map({
-        $metadata: deserializeMetadata(output),
-    });
-    await smithyClient.collectBody(output.body, context);
-    return contents;
-};
-const de_CommandError = async (output, context) => {
-    const parsedOutput = {
-        ...output,
-        body: await core$1.parseJsonErrorBody(output.body, context),
-    };
-    const errorCode = core$1.loadRestJsonErrorCode(output, parsedOutput.body);
-    switch (errorCode) {
-        case "InvalidRequestException":
-        case "com.amazonaws.sso#InvalidRequestException":
-            throw await de_InvalidRequestExceptionRes(parsedOutput);
-        case "ResourceNotFoundException":
-        case "com.amazonaws.sso#ResourceNotFoundException":
-            throw await de_ResourceNotFoundExceptionRes(parsedOutput);
-        case "TooManyRequestsException":
-        case "com.amazonaws.sso#TooManyRequestsException":
-            throw await de_TooManyRequestsExceptionRes(parsedOutput);
-        case "UnauthorizedException":
-        case "com.amazonaws.sso#UnauthorizedException":
-            throw await de_UnauthorizedExceptionRes(parsedOutput);
-        default:
-            const parsedBody = parsedOutput.body;
-            return throwDefaultError({
-                output,
-                parsedBody,
-                errorCode,
-            });
-    }
-};
-const throwDefaultError = smithyClient.withBaseException(SSOServiceException);
-const de_InvalidRequestExceptionRes = async (parsedOutput, context) => {
-    const contents = smithyClient.map({});
-    const data = parsedOutput.body;
-    const doc = smithyClient.take(data, {
-        message: smithyClient.expectString,
-    });
-    Object.assign(contents, doc);
-    const exception = new InvalidRequestException({
-        $metadata: deserializeMetadata(parsedOutput),
-        ...contents,
-    });
-    return smithyClient.decorateServiceException(exception, parsedOutput.body);
-};
-const de_ResourceNotFoundExceptionRes = async (parsedOutput, context) => {
-    const contents = smithyClient.map({});
-    const data = parsedOutput.body;
-    const doc = smithyClient.take(data, {
-        message: smithyClient.expectString,
-    });
-    Object.assign(contents, doc);
-    const exception = new ResourceNotFoundException({
-        $metadata: deserializeMetadata(parsedOutput),
-        ...contents,
-    });
-    return smithyClient.decorateServiceException(exception, parsedOutput.body);
-};
-const de_TooManyRequestsExceptionRes = async (parsedOutput, context) => {
-    const contents = smithyClient.map({});
-    const data = parsedOutput.body;
-    const doc = smithyClient.take(data, {
-        message: smithyClient.expectString,
-    });
-    Object.assign(contents, doc);
-    const exception = new TooManyRequestsException({
-        $metadata: deserializeMetadata(parsedOutput),
-        ...contents,
-    });
-    return smithyClient.decorateServiceException(exception, parsedOutput.body);
-};
-const de_UnauthorizedExceptionRes = async (parsedOutput, context) => {
-    const contents = smithyClient.map({});
-    const data = parsedOutput.body;
-    const doc = smithyClient.take(data, {
-        message: smithyClient.expectString,
-    });
-    Object.assign(contents, doc);
-    const exception = new UnauthorizedException({
-        $metadata: deserializeMetadata(parsedOutput),
-        ...contents,
-    });
-    return smithyClient.decorateServiceException(exception, parsedOutput.body);
-};
-const deserializeMetadata = (output) => ({
-    httpStatusCode: output.statusCode,
-    requestId: output.headers["x-amzn-requestid"] ?? output.headers["x-amzn-request-id"] ?? output.headers["x-amz-request-id"],
-    extendedRequestId: output.headers["x-amz-id-2"],
-    cfId: output.headers["x-amz-cf-id"],
-});
+const _AI = "AccountInfo";
+const _ALT = "AccountListType";
+const _ATT = "AccessTokenType";
+const _GRC = "GetRoleCredentials";
+const _GRCR = "GetRoleCredentialsRequest";
+const _GRCRe = "GetRoleCredentialsResponse";
+const _IRE = "InvalidRequestException";
+const _L = "Logout";
+const _LA = "ListAccounts";
+const _LAR = "ListAccountsRequest";
+const _LARR = "ListAccountRolesRequest";
+const _LARRi = "ListAccountRolesResponse";
+const _LARi = "ListAccountsResponse";
+const _LARis = "ListAccountRoles";
+const _LR = "LogoutRequest";
+const _RC = "RoleCredentials";
+const _RI = "RoleInfo";
+const _RLT = "RoleListType";
+const _RNFE = "ResourceNotFoundException";
+const _SAKT = "SecretAccessKeyType";
+const _STT = "SessionTokenType";
+const _TMRE = "TooManyRequestsException";
+const _UE = "UnauthorizedException";
 const _aI = "accountId";
+const _aKI = "accessKeyId";
+const _aL = "accountList";
+const _aN = "accountName";
 const _aT = "accessToken";
 const _ai = "account_id";
+const _c = "client";
+const _e = "error";
+const _eA = "emailAddress";
+const _ex = "expiration";
+const _h = "http";
+const _hE = "httpError";
+const _hH = "httpHeader";
+const _hQ = "httpQuery";
+const _m = "message";
 const _mR = "maxResults";
 const _mr = "max_result";
 const _nT = "nextToken";
 const _nt = "next_token";
+const _rC = "roleCredentials";
+const _rL = "roleList";
 const _rN = "roleName";
 const _rn = "role_name";
+const _s = "smithy.ts.sdk.synthetic.com.amazonaws.sso";
+const _sAK = "secretAccessKey";
+const _sT = "sessionToken";
 const _xasbt = "x-amz-sso_bearer_token";
+const n0 = "com.amazonaws.sso";
+var AccessTokenType = [0, n0, _ATT, 8, 0];
+var SecretAccessKeyType = [0, n0, _SAKT, 8, 0];
+var SessionTokenType = [0, n0, _STT, 8, 0];
+var AccountInfo = [3, n0, _AI, 0, [_aI, _aN, _eA], [0, 0, 0]];
+var GetRoleCredentialsRequest = [
+    3,
+    n0,
+    _GRCR,
+    0,
+    [_rN, _aI, _aT],
+    [
+        [
+            0,
+            {
+                [_hQ]: _rn,
+            },
+        ],
+        [
+            0,
+            {
+                [_hQ]: _ai,
+            },
+        ],
+        [
+            () => AccessTokenType,
+            {
+                [_hH]: _xasbt,
+            },
+        ],
+    ],
+];
+var GetRoleCredentialsResponse = [3, n0, _GRCRe, 0, [_rC], [[() => RoleCredentials, 0]]];
+var InvalidRequestException = [
+    -3,
+    n0,
+    _IRE,
+    {
+        [_e]: _c,
+        [_hE]: 400,
+    },
+    [_m],
+    [0],
+];
+schema.TypeRegistry.for(n0).registerError(InvalidRequestException, InvalidRequestException$1);
+var ListAccountRolesRequest = [
+    3,
+    n0,
+    _LARR,
+    0,
+    [_nT, _mR, _aT, _aI],
+    [
+        [
+            0,
+            {
+                [_hQ]: _nt,
+            },
+        ],
+        [
+            1,
+            {
+                [_hQ]: _mr,
+            },
+        ],
+        [
+            () => AccessTokenType,
+            {
+                [_hH]: _xasbt,
+            },
+        ],
+        [
+            0,
+            {
+                [_hQ]: _ai,
+            },
+        ],
+    ],
+];
+var ListAccountRolesResponse = [3, n0, _LARRi, 0, [_nT, _rL], [0, () => RoleListType]];
+var ListAccountsRequest = [
+    3,
+    n0,
+    _LAR,
+    0,
+    [_nT, _mR, _aT],
+    [
+        [
+            0,
+            {
+                [_hQ]: _nt,
+            },
+        ],
+        [
+            1,
+            {
+                [_hQ]: _mr,
+            },
+        ],
+        [
+            () => AccessTokenType,
+            {
+                [_hH]: _xasbt,
+            },
+        ],
+    ],
+];
+var ListAccountsResponse = [3, n0, _LARi, 0, [_nT, _aL], [0, () => AccountListType]];
+var LogoutRequest = [
+    3,
+    n0,
+    _LR,
+    0,
+    [_aT],
+    [
+        [
+            () => AccessTokenType,
+            {
+                [_hH]: _xasbt,
+            },
+        ],
+    ],
+];
+var ResourceNotFoundException = [
+    -3,
+    n0,
+    _RNFE,
+    {
+        [_e]: _c,
+        [_hE]: 404,
+    },
+    [_m],
+    [0],
+];
+schema.TypeRegistry.for(n0).registerError(ResourceNotFoundException, ResourceNotFoundException$1);
+var RoleCredentials = [
+    3,
+    n0,
+    _RC,
+    0,
+    [_aKI, _sAK, _sT, _ex],
+    [0, [() => SecretAccessKeyType, 0], [() => SessionTokenType, 0], 1],
+];
+var RoleInfo = [3, n0, _RI, 0, [_rN, _aI], [0, 0]];
+var TooManyRequestsException = [
+    -3,
+    n0,
+    _TMRE,
+    {
+        [_e]: _c,
+        [_hE]: 429,
+    },
+    [_m],
+    [0],
+];
+schema.TypeRegistry.for(n0).registerError(TooManyRequestsException, TooManyRequestsException$1);
+var UnauthorizedException = [
+    -3,
+    n0,
+    _UE,
+    {
+        [_e]: _c,
+        [_hE]: 401,
+    },
+    [_m],
+    [0],
+];
+schema.TypeRegistry.for(n0).registerError(UnauthorizedException, UnauthorizedException$1);
+var __Unit = "unit";
+var SSOServiceException = [-3, _s, "SSOServiceException", 0, [], []];
+schema.TypeRegistry.for(_s).registerError(SSOServiceException, SSOServiceException$1);
+var AccountListType = [1, n0, _ALT, 0, () => AccountInfo];
+var RoleListType = [1, n0, _RLT, 0, () => RoleInfo];
+var GetRoleCredentials = [
+    9,
+    n0,
+    _GRC,
+    {
+        [_h]: ["GET", "/federation/credentials", 200],
+    },
+    () => GetRoleCredentialsRequest,
+    () => GetRoleCredentialsResponse,
+];
+var ListAccountRoles = [
+    9,
+    n0,
+    _LARis,
+    {
+        [_h]: ["GET", "/assignment/roles", 200],
+    },
+    () => ListAccountRolesRequest,
+    () => ListAccountRolesResponse,
+];
+var ListAccounts = [
+    9,
+    n0,
+    _LA,
+    {
+        [_h]: ["GET", "/assignment/accounts", 200],
+    },
+    () => ListAccountsRequest,
+    () => ListAccountsResponse,
+];
+var Logout = [
+    9,
+    n0,
+    _L,
+    {
+        [_h]: ["POST", "/logout", 200],
+    },
+    () => LogoutRequest,
+    () => __Unit,
+];
 
 class GetRoleCredentialsCommand extends smithyClient.Command
     .classBuilder()
     .ep(commonParams)
     .m(function (Command, cs, config, o) {
-    return [
-        middlewareSerde.getSerdePlugin(config, this.serialize, this.deserialize),
-        middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions()),
-    ];
+    return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
 })
     .s("SWBPortalService", "GetRoleCredentials", {})
     .n("SSOClient", "GetRoleCredentialsCommand")
-    .f(GetRoleCredentialsRequestFilterSensitiveLog, GetRoleCredentialsResponseFilterSensitiveLog)
-    .ser(se_GetRoleCredentialsCommand)
-    .de(de_GetRoleCredentialsCommand)
+    .sc(GetRoleCredentials)
     .build() {
 }
 
@@ -539,16 +567,11 @@ class ListAccountRolesCommand extends smithyClient.Command
     .classBuilder()
     .ep(commonParams)
     .m(function (Command, cs, config, o) {
-    return [
-        middlewareSerde.getSerdePlugin(config, this.serialize, this.deserialize),
-        middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions()),
-    ];
+    return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
 })
     .s("SWBPortalService", "ListAccountRoles", {})
     .n("SSOClient", "ListAccountRolesCommand")
-    .f(ListAccountRolesRequestFilterSensitiveLog, void 0)
-    .ser(se_ListAccountRolesCommand)
-    .de(de_ListAccountRolesCommand)
+    .sc(ListAccountRoles)
     .build() {
 }
 
@@ -556,16 +579,11 @@ class ListAccountsCommand extends smithyClient.Command
     .classBuilder()
     .ep(commonParams)
     .m(function (Command, cs, config, o) {
-    return [
-        middlewareSerde.getSerdePlugin(config, this.serialize, this.deserialize),
-        middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions()),
-    ];
+    return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
 })
     .s("SWBPortalService", "ListAccounts", {})
     .n("SSOClient", "ListAccountsCommand")
-    .f(ListAccountsRequestFilterSensitiveLog, void 0)
-    .ser(se_ListAccountsCommand)
-    .de(de_ListAccountsCommand)
+    .sc(ListAccounts)
     .build() {
 }
 
@@ -573,16 +591,11 @@ class LogoutCommand extends smithyClient.Command
     .classBuilder()
     .ep(commonParams)
     .m(function (Command, cs, config, o) {
-    return [
-        middlewareSerde.getSerdePlugin(config, this.serialize, this.deserialize),
-        middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions()),
-    ];
+    return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
 })
     .s("SWBPortalService", "Logout", {})
     .n("SSOClient", "LogoutCommand")
-    .f(LogoutRequestFilterSensitiveLog, void 0)
-    .ser(se_LogoutCommand)
-    .de(de_LogoutCommand)
+    .sc(Logout)
     .build() {
 }
 
@@ -609,22 +622,16 @@ Object.defineProperty(exports, "__Client", ({
     get: function () { return smithyClient.Client; }
 }));
 exports.GetRoleCredentialsCommand = GetRoleCredentialsCommand;
-exports.GetRoleCredentialsRequestFilterSensitiveLog = GetRoleCredentialsRequestFilterSensitiveLog;
-exports.GetRoleCredentialsResponseFilterSensitiveLog = GetRoleCredentialsResponseFilterSensitiveLog;
-exports.InvalidRequestException = InvalidRequestException;
+exports.InvalidRequestException = InvalidRequestException$1;
 exports.ListAccountRolesCommand = ListAccountRolesCommand;
-exports.ListAccountRolesRequestFilterSensitiveLog = ListAccountRolesRequestFilterSensitiveLog;
 exports.ListAccountsCommand = ListAccountsCommand;
-exports.ListAccountsRequestFilterSensitiveLog = ListAccountsRequestFilterSensitiveLog;
 exports.LogoutCommand = LogoutCommand;
-exports.LogoutRequestFilterSensitiveLog = LogoutRequestFilterSensitiveLog;
-exports.ResourceNotFoundException = ResourceNotFoundException;
-exports.RoleCredentialsFilterSensitiveLog = RoleCredentialsFilterSensitiveLog;
+exports.ResourceNotFoundException = ResourceNotFoundException$1;
 exports.SSO = SSO;
 exports.SSOClient = SSOClient;
-exports.SSOServiceException = SSOServiceException;
-exports.TooManyRequestsException = TooManyRequestsException;
-exports.UnauthorizedException = UnauthorizedException;
+exports.SSOServiceException = SSOServiceException$1;
+exports.TooManyRequestsException = TooManyRequestsException$1;
+exports.UnauthorizedException = UnauthorizedException$1;
 exports.paginateListAccountRoles = paginateListAccountRoles;
 exports.paginateListAccounts = paginateListAccounts;
 
@@ -699,6 +706,7 @@ exports.getRuntimeConfig = getRuntimeConfig;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRuntimeConfig = void 0;
 const core_1 = __webpack_require__(8704);
+const protocols_1 = __webpack_require__(7288);
 const core_2 = __webpack_require__(402);
 const smithy_client_1 = __webpack_require__(1411);
 const url_parser_1 = __webpack_require__(4494);
@@ -728,6 +736,7 @@ const getRuntimeConfig = (config) => {
             },
         ],
         logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
+        protocol: config?.protocol ?? new protocols_1.AwsRestJsonProtocol({ defaultNamespace: "com.amazonaws.sso" }),
         serviceId: config?.serviceId ?? "SSO",
         urlParser: config?.urlParser ?? url_parser_1.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
@@ -1438,7 +1447,7 @@ exports.nodeProvider = nodeProvider;
 /***/ 5188:
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.928.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.928.0","@aws-sdk/middleware-host-header":"3.922.0","@aws-sdk/middleware-logger":"3.922.0","@aws-sdk/middleware-recursion-detection":"3.922.0","@aws-sdk/middleware-user-agent":"3.928.0","@aws-sdk/region-config-resolver":"3.925.0","@aws-sdk/types":"3.922.0","@aws-sdk/util-endpoints":"3.922.0","@aws-sdk/util-user-agent-browser":"3.922.0","@aws-sdk/util-user-agent-node":"3.928.0","@smithy/config-resolver":"^4.4.2","@smithy/core":"^3.17.2","@smithy/fetch-http-handler":"^5.3.5","@smithy/hash-node":"^4.2.4","@smithy/invalid-dependency":"^4.2.4","@smithy/middleware-content-length":"^4.2.4","@smithy/middleware-endpoint":"^4.3.6","@smithy/middleware-retry":"^4.4.6","@smithy/middleware-serde":"^4.2.4","@smithy/middleware-stack":"^4.2.4","@smithy/node-config-provider":"^4.3.4","@smithy/node-http-handler":"^4.4.4","@smithy/protocol-http":"^5.3.4","@smithy/smithy-client":"^4.9.2","@smithy/types":"^4.8.1","@smithy/url-parser":"^4.2.4","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.5","@smithy/util-defaults-mode-node":"^4.2.8","@smithy/util-endpoints":"^3.2.4","@smithy/util-middleware":"^4.2.4","@smithy/util-retry":"^4.2.4","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.933.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.932.0","@aws-sdk/middleware-host-header":"3.930.0","@aws-sdk/middleware-logger":"3.930.0","@aws-sdk/middleware-recursion-detection":"3.933.0","@aws-sdk/middleware-user-agent":"3.932.0","@aws-sdk/region-config-resolver":"3.930.0","@aws-sdk/types":"3.930.0","@aws-sdk/util-endpoints":"3.930.0","@aws-sdk/util-user-agent-browser":"3.930.0","@aws-sdk/util-user-agent-node":"3.932.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.2","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.9","@smithy/middleware-retry":"^4.4.9","@smithy/middleware-serde":"^4.2.5","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.5","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.8","@smithy/util-defaults-mode-node":"^4.2.11","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
 
 /***/ })
 
