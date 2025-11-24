@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.1.1](https://github.com/aws-actions/configure-aws-credentials/compare/v5.1.0...v5.1.1) (2025-11-24)
+
+
+### Miscellaneous Chores
+
+* release 5.1.1 ([56d6a58](https://github.com/aws-actions/configure-aws-credentials/commit/56d6a583f00f6bad6d19d91d53a7bc3b8143d0e9))
+
 ## [5.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v5.0.0...v5.1.0) (2025-10-06)
 
 
