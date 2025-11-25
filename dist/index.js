@@ -4440,6 +4440,42 @@ let ExpiredTradeInTokenException$1 = class ExpiredTradeInTokenException extends 
         Object.setPrototypeOf(this, ExpiredTradeInTokenException.prototype);
     }
 };
+let JWTPayloadSizeExceededException$1 = class JWTPayloadSizeExceededException extends STSServiceException$1 {
+    name = "JWTPayloadSizeExceededException";
+    $fault = "client";
+    constructor(opts) {
+        super({
+            name: "JWTPayloadSizeExceededException",
+            $fault: "client",
+            ...opts,
+        });
+        Object.setPrototypeOf(this, JWTPayloadSizeExceededException.prototype);
+    }
+};
+let OutboundWebIdentityFederationDisabledException$1 = class OutboundWebIdentityFederationDisabledException extends STSServiceException$1 {
+    name = "OutboundWebIdentityFederationDisabledException";
+    $fault = "client";
+    constructor(opts) {
+        super({
+            name: "OutboundWebIdentityFederationDisabledException",
+            $fault: "client",
+            ...opts,
+        });
+        Object.setPrototypeOf(this, OutboundWebIdentityFederationDisabledException.prototype);
+    }
+};
+let SessionDurationEscalationException$1 = class SessionDurationEscalationException extends STSServiceException$1 {
+    name = "SessionDurationEscalationException";
+    $fault = "client";
+    constructor(opts) {
+        super({
+            name: "SessionDurationEscalationException",
+            $fault: "client",
+            ...opts,
+        });
+        Object.setPrototypeOf(this, SessionDurationEscalationException.prototype);
+    }
+};
 
 const _A = "Arn";
 const _AKI = "AccessKeyId";
@@ -4489,15 +4525,20 @@ const _GFTRe = "GetFederationTokenResponse";
 const _GST = "GetSessionToken";
 const _GSTR = "GetSessionTokenRequest";
 const _GSTRe = "GetSessionTokenResponse";
+const _GWIT = "GetWebIdentityToken";
+const _GWITR = "GetWebIdentityTokenRequest";
+const _GWITRe = "GetWebIdentityTokenResponse";
 const _I = "Issuer";
 const _IAME = "InvalidAuthorizationMessageException";
 const _IDPCEE = "IDPCommunicationErrorException";
 const _IDPRCE = "IDPRejectedClaimException";
 const _IITE = "InvalidIdentityTokenException";
+const _JWTPSEE = "JWTPayloadSizeExceededException";
 const _K = "Key";
 const _MPDE = "MalformedPolicyDocumentException";
 const _N = "Name";
 const _NQ = "NameQualifier";
+const _OWIFDE = "OutboundWebIdentityFederationDisabledException";
 const _P = "Policy";
 const _PA = "PolicyArns";
 const _PAr = "PrincipalArn";
@@ -4514,9 +4555,11 @@ const _RA = "RoleArn";
 const _RDE = "RegionDisabledException";
 const _RSN = "RoleSessionName";
 const _S = "Subject";
+const _SA = "SigningAlgorithm";
 const _SAK = "SecretAccessKey";
 const _SAMLA = "SAMLAssertion";
 const _SAMLAT = "SAMLAssertionType";
+const _SDEE = "SessionDurationEscalationException";
 const _SFWIT = "SubjectFromWebIdentityToken";
 const _SI = "SourceIdentity";
 const _SN = "SerialNumber";
@@ -4544,11 +4587,13 @@ const _pDLT = "policyDescriptorListType";
 const _s = "smithy.ts.sdk.synthetic.com.amazonaws.sts";
 const _tITT = "tradeInTokenType";
 const _tLT = "tagListType";
+const _wITT = "webIdentityTokenType";
 const n0 = "com.amazonaws.sts";
 var accessKeySecretType = [0, n0, _aKST, 8, 0];
 var clientTokenType = [0, n0, _cTT, 8, 0];
 var SAMLAssertionType = [0, n0, _SAMLAT, 8, 0];
 var tradeInTokenType = [0, n0, _tITT, 8, 0];
+var webIdentityTokenType = [0, n0, _wITT, 8, 0];
 var AssumedRoleUser = [3, n0, _ARU, 0, [_ARI, _A], [0, 0]];
 var AssumeRoleRequest = [
     3,
@@ -4682,6 +4727,22 @@ var GetFederationTokenResponse = [
 ];
 var GetSessionTokenRequest = [3, n0, _GSTR, 0, [_DS, _SN, _TC], [1, 0, 0]];
 var GetSessionTokenResponse = [3, n0, _GSTRe, 0, [_C], [[() => Credentials, 0]]];
+var GetWebIdentityTokenRequest = [
+    3,
+    n0,
+    _GWITR,
+    0,
+    [_Au, _DS, _SA, _T],
+    [64 | 0, 1, 0, () => tagListType],
+];
+var GetWebIdentityTokenResponse = [
+    3,
+    n0,
+    _GWITRe,
+    0,
+    [_WIT, _E],
+    [[() => webIdentityTokenType, 0], 4],
+];
 var IDPCommunicationErrorException = [
     -3,
     n0,
@@ -4734,6 +4795,19 @@ var InvalidIdentityTokenException = [
     [0],
 ];
 schema.TypeRegistry.for(n0).registerError(InvalidIdentityTokenException, InvalidIdentityTokenException$1);
+var JWTPayloadSizeExceededException = [
+    -3,
+    n0,
+    _JWTPSEE,
+    {
+        [_e]: _c,
+        [_hE]: 400,
+        [_aQE]: [`JWTPayloadSizeExceededException`, 400],
+    },
+    [_m],
+    [0],
+];
+schema.TypeRegistry.for(n0).registerError(JWTPayloadSizeExceededException, JWTPayloadSizeExceededException$1);
 var MalformedPolicyDocumentException = [
     -3,
     n0,
@@ -4747,6 +4821,19 @@ var MalformedPolicyDocumentException = [
     [0],
 ];
 schema.TypeRegistry.for(n0).registerError(MalformedPolicyDocumentException, MalformedPolicyDocumentException$1);
+var OutboundWebIdentityFederationDisabledException = [
+    -3,
+    n0,
+    _OWIFDE,
+    {
+        [_e]: _c,
+        [_hE]: 403,
+        [_aQE]: [`OutboundWebIdentityFederationDisabledException`, 403],
+    },
+    [_m],
+    [0],
+];
+schema.TypeRegistry.for(n0).registerError(OutboundWebIdentityFederationDisabledException, OutboundWebIdentityFederationDisabledException$1);
 var PackedPolicyTooLargeException = [
     -3,
     n0,
@@ -4775,6 +4862,19 @@ var RegionDisabledException = [
     [0],
 ];
 schema.TypeRegistry.for(n0).registerError(RegionDisabledException, RegionDisabledException$1);
+var SessionDurationEscalationException = [
+    -3,
+    n0,
+    _SDEE,
+    {
+        [_e]: _c,
+        [_hE]: 403,
+        [_aQE]: [`SessionDurationEscalationException`, 403],
+    },
+    [_m],
+    [0],
+];
+schema.TypeRegistry.for(n0).registerError(SessionDurationEscalationException, SessionDurationEscalationException$1);
 var Tag = [3, n0, _Ta, 0, [_K, _V], [0, 0]];
 var STSServiceException = [-3, _s, "STSServiceException", 0, [], []];
 schema.TypeRegistry.for(_s).registerError(STSServiceException, STSServiceException$1);
@@ -4846,6 +4946,14 @@ var GetSessionToken = [
     0,
     () => GetSessionTokenRequest,
     () => GetSessionTokenResponse,
+];
+var GetWebIdentityToken = [
+    9,
+    n0,
+    _GWIT,
+    0,
+    () => GetWebIdentityTokenRequest,
+    () => GetWebIdentityTokenResponse,
 ];
 
 class AssumeRoleCommand extends smithyClient.Command
@@ -4968,6 +5076,18 @@ class GetSessionTokenCommand extends smithyClient.Command
     .build() {
 }
 
+class GetWebIdentityTokenCommand extends smithyClient.Command
+    .classBuilder()
+    .ep(EndpointParameters.commonParams)
+    .m(function (Command, cs, config, o) {
+    return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+})
+    .s("AWSSecurityTokenServiceV20110615", "GetWebIdentityToken", {})
+    .n("STSClient", "GetWebIdentityTokenCommand")
+    .sc(GetWebIdentityToken)
+    .build() {
+}
+
 const commands = {
     AssumeRoleCommand,
     AssumeRoleWithSAMLCommand,
@@ -4979,6 +5099,7 @@ const commands = {
     GetDelegatedAccessTokenCommand,
     GetFederationTokenCommand,
     GetSessionTokenCommand,
+    GetWebIdentityTokenCommand,
 };
 class STS extends STSClient.STSClient {
 }
@@ -5119,15 +5240,19 @@ exports.GetCallerIdentityCommand = GetCallerIdentityCommand;
 exports.GetDelegatedAccessTokenCommand = GetDelegatedAccessTokenCommand;
 exports.GetFederationTokenCommand = GetFederationTokenCommand;
 exports.GetSessionTokenCommand = GetSessionTokenCommand;
+exports.GetWebIdentityTokenCommand = GetWebIdentityTokenCommand;
 exports.IDPCommunicationErrorException = IDPCommunicationErrorException$1;
 exports.IDPRejectedClaimException = IDPRejectedClaimException$1;
 exports.InvalidAuthorizationMessageException = InvalidAuthorizationMessageException$1;
 exports.InvalidIdentityTokenException = InvalidIdentityTokenException$1;
+exports.JWTPayloadSizeExceededException = JWTPayloadSizeExceededException$1;
 exports.MalformedPolicyDocumentException = MalformedPolicyDocumentException$1;
+exports.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException$1;
 exports.PackedPolicyTooLargeException = PackedPolicyTooLargeException$1;
 exports.RegionDisabledException = RegionDisabledException$1;
 exports.STS = STS;
 exports.STSServiceException = STSServiceException$1;
+exports.SessionDurationEscalationException = SessionDurationEscalationException$1;
 exports.decorateDefaultCredentialProvider = decorateDefaultCredentialProvider;
 exports.getDefaultRoleAssumer = getDefaultRoleAssumer;
 exports.getDefaultRoleAssumerWithWebIdentity = getDefaultRoleAssumerWithWebIdentity;
@@ -9025,13 +9150,62 @@ exports.parseXmlErrorBody = parseXmlErrorBody;
 
 /***/ }),
 
+/***/ 5606:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var client = __nccwpck_require__(5152);
+var propertyProvider = __nccwpck_require__(1238);
+
+const ENV_KEY = "AWS_ACCESS_KEY_ID";
+const ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+const ENV_SESSION = "AWS_SESSION_TOKEN";
+const ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+const ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+const ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+const fromEnv = (init) => async () => {
+    init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+    const accessKeyId = process.env[ENV_KEY];
+    const secretAccessKey = process.env[ENV_SECRET];
+    const sessionToken = process.env[ENV_SESSION];
+    const expiry = process.env[ENV_EXPIRATION];
+    const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+    const accountId = process.env[ENV_ACCOUNT_ID];
+    if (accessKeyId && secretAccessKey) {
+        const credentials = {
+            accessKeyId,
+            secretAccessKey,
+            ...(sessionToken && { sessionToken }),
+            ...(expiry && { expiration: new Date(expiry) }),
+            ...(credentialScope && { credentialScope }),
+            ...(accountId && { accountId }),
+        };
+        client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
+        return credentials;
+    }
+    throw new propertyProvider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+};
+
+exports.ENV_ACCOUNT_ID = ENV_ACCOUNT_ID;
+exports.ENV_CREDENTIAL_SCOPE = ENV_CREDENTIAL_SCOPE;
+exports.ENV_EXPIRATION = ENV_EXPIRATION;
+exports.ENV_KEY = ENV_KEY;
+exports.ENV_SECRET = ENV_SECRET;
+exports.ENV_SESSION = ENV_SESSION;
+exports.fromEnv = fromEnv;
+
+
+/***/ }),
+
 /***/ 5861:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 
-var credentialProviderEnv = __nccwpck_require__(6153);
+var credentialProviderEnv = __nccwpck_require__(5606);
 var propertyProvider = __nccwpck_require__(1238);
 var sharedIniFileLoader = __nccwpck_require__(4964);
 
@@ -9179,55 +9353,6 @@ const credentialsTreatedAsExpired = (credentials) => credentials?.expiration !==
 exports.credentialsTreatedAsExpired = credentialsTreatedAsExpired;
 exports.credentialsWillNeedRefresh = credentialsWillNeedRefresh;
 exports.defaultProvider = defaultProvider;
-
-
-/***/ }),
-
-/***/ 6153:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-var client = __nccwpck_require__(5152);
-var propertyProvider = __nccwpck_require__(1238);
-
-const ENV_KEY = "AWS_ACCESS_KEY_ID";
-const ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
-const ENV_SESSION = "AWS_SESSION_TOKEN";
-const ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
-const ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
-const ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
-const fromEnv = (init) => async () => {
-    init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
-    const accessKeyId = process.env[ENV_KEY];
-    const secretAccessKey = process.env[ENV_SECRET];
-    const sessionToken = process.env[ENV_SESSION];
-    const expiry = process.env[ENV_EXPIRATION];
-    const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
-    const accountId = process.env[ENV_ACCOUNT_ID];
-    if (accessKeyId && secretAccessKey) {
-        const credentials = {
-            accessKeyId,
-            secretAccessKey,
-            ...(sessionToken && { sessionToken }),
-            ...(expiry && { expiration: new Date(expiry) }),
-            ...(credentialScope && { credentialScope }),
-            ...(accountId && { accountId }),
-        };
-        client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
-        return credentials;
-    }
-    throw new propertyProvider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
-};
-
-exports.ENV_ACCOUNT_ID = ENV_ACCOUNT_ID;
-exports.ENV_CREDENTIAL_SCOPE = ENV_CREDENTIAL_SCOPE;
-exports.ENV_EXPIRATION = ENV_EXPIRATION;
-exports.ENV_KEY = ENV_KEY;
-exports.ENV_SECRET = ENV_SECRET;
-exports.ENV_SESSION = ENV_SESSION;
-exports.fromEnv = fromEnv;
 
 
 /***/ }),
@@ -76244,6 +76369,14 @@ module.exports = require("node:fs/promises");
 
 /***/ }),
 
+/***/ 8161:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
+
+/***/ }),
+
 /***/ 6760:
 /***/ ((module) => {
 
@@ -79266,7 +79399,7 @@ module.exports = LRUCache
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.933.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.932.0","@aws-sdk/credential-provider-node":"3.933.0","@aws-sdk/middleware-host-header":"3.930.0","@aws-sdk/middleware-logger":"3.930.0","@aws-sdk/middleware-recursion-detection":"3.933.0","@aws-sdk/middleware-user-agent":"3.932.0","@aws-sdk/region-config-resolver":"3.930.0","@aws-sdk/types":"3.930.0","@aws-sdk/util-endpoints":"3.930.0","@aws-sdk/util-user-agent-browser":"3.930.0","@aws-sdk/util-user-agent-node":"3.932.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.2","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.9","@smithy/middleware-retry":"^4.4.9","@smithy/middleware-serde":"^4.2.5","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.5","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.8","@smithy/util-defaults-mode-node":"^4.2.11","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.939.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.936.0","@aws-sdk/credential-provider-node":"3.939.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.936.0","@aws-sdk/middleware-user-agent":"3.936.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.936.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.5","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.12","@smithy/middleware-retry":"^4.4.12","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.8","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.11","@smithy/util-defaults-mode-node":"^4.2.14","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ }),
 
