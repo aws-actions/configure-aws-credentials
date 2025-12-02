@@ -5965,6 +5965,44 @@ class SerdeContextConfig {
     }
 }
 
+function* serializingStructIterator(ns, sourceObject) {
+    if (ns.isUnitSchema()) {
+        return;
+    }
+    const struct = ns.getSchema();
+    for (let i = 0; i < struct[4].length; ++i) {
+        const key = struct[4][i];
+        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        if (!(key in sourceObject) && !memberNs.isIdempotencyToken()) {
+            continue;
+        }
+        yield [key, memberNs];
+    }
+}
+function* deserializingStructIterator(ns, sourceObject, nameTrait) {
+    if (ns.isUnitSchema()) {
+        return;
+    }
+    const struct = ns.getSchema();
+    let keysRemaining = Object.keys(sourceObject).length;
+    for (let i = 0; i < struct[4].length; ++i) {
+        if (keysRemaining === 0) {
+            break;
+        }
+        const key = struct[4][i];
+        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        let serializationKey = key;
+        if (nameTrait) {
+            serializationKey = memberNs.getMergedTraits()[nameTrait] ?? key;
+        }
+        if (!(serializationKey in sourceObject)) {
+            continue;
+        }
+        yield [key, memberNs];
+        keysRemaining -= 1;
+    }
+}
+
 function jsonReviver(key, value, context) {
     if (context?.source) {
         const numericString = context.source;
@@ -6078,7 +6116,7 @@ class JsonShapeDeserializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema() && isObject) {
             const out = {};
-            for (const [memberName, memberSchema] of ns.structIterator()) {
+            for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
                 const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
                 const deserializedValue = this._read(memberSchema, value[fromKey]);
                 if (deserializedValue != null) {
@@ -6255,10 +6293,10 @@ class JsonShapeSerializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema() && isObject) {
             const out = {};
-            for (const [memberName, memberSchema] of ns.structIterator()) {
-                const targetKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
+            for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
                 const serializableValue = this._write(memberSchema, value[memberName], ns);
                 if (serializableValue !== undefined) {
+                    const targetKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
                     out[targetKey] = serializableValue;
                 }
             }
@@ -6786,7 +6824,7 @@ class QueryShapeSerializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema()) {
             if (value && typeof value === "object") {
-                for (const [memberName, member] of ns.structIterator()) {
+                for (const [memberName, member] of serializingStructIterator(ns, value)) {
                     if (value[memberName] == null && !member.isIdempotencyToken()) {
                         continue;
                     }
@@ -7083,7 +7121,7 @@ class XmlShapeSerializer extends SerdeContextConfig {
         }
         const structXmlNode = xmlBuilder.XmlNode.of(name);
         const [xmlnsAttr, xmlns] = this.getXmlnsAttribute(ns, parentXmlns);
-        for (const [memberName, memberSchema] of ns.structIterator()) {
+        for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
             const val = value[memberName];
             if (val != null || memberSchema.isIdempotencyToken()) {
                 if (memberSchema.getMergedTraits().xmlAttribute) {
@@ -7702,6 +7740,44 @@ class SerdeContextConfig {
     }
 }
 
+function* serializingStructIterator(ns, sourceObject) {
+    if (ns.isUnitSchema()) {
+        return;
+    }
+    const struct = ns.getSchema();
+    for (let i = 0; i < struct[4].length; ++i) {
+        const key = struct[4][i];
+        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        if (!(key in sourceObject) && !memberNs.isIdempotencyToken()) {
+            continue;
+        }
+        yield [key, memberNs];
+    }
+}
+function* deserializingStructIterator(ns, sourceObject, nameTrait) {
+    if (ns.isUnitSchema()) {
+        return;
+    }
+    const struct = ns.getSchema();
+    let keysRemaining = Object.keys(sourceObject).length;
+    for (let i = 0; i < struct[4].length; ++i) {
+        if (keysRemaining === 0) {
+            break;
+        }
+        const key = struct[4][i];
+        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        let serializationKey = key;
+        if (nameTrait) {
+            serializationKey = memberNs.getMergedTraits()[nameTrait] ?? key;
+        }
+        if (!(serializationKey in sourceObject)) {
+            continue;
+        }
+        yield [key, memberNs];
+        keysRemaining -= 1;
+    }
+}
+
 function jsonReviver(key, value, context) {
     if (context?.source) {
         const numericString = context.source;
@@ -7815,7 +7891,7 @@ class JsonShapeDeserializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema() && isObject) {
             const out = {};
-            for (const [memberName, memberSchema] of ns.structIterator()) {
+            for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
                 const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
                 const deserializedValue = this._read(memberSchema, value[fromKey]);
                 if (deserializedValue != null) {
@@ -7992,10 +8068,10 @@ class JsonShapeSerializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema() && isObject) {
             const out = {};
-            for (const [memberName, memberSchema] of ns.structIterator()) {
-                const targetKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
+            for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
                 const serializableValue = this._write(memberSchema, value[memberName], ns);
                 if (serializableValue !== undefined) {
+                    const targetKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
                     out[targetKey] = serializableValue;
                 }
             }
@@ -8523,7 +8599,7 @@ class QueryShapeSerializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema()) {
             if (value && typeof value === "object") {
-                for (const [memberName, member] of ns.structIterator()) {
+                for (const [memberName, member] of serializingStructIterator(ns, value)) {
                     if (value[memberName] == null && !member.isIdempotencyToken()) {
                         continue;
                     }
@@ -8820,7 +8896,7 @@ class XmlShapeSerializer extends SerdeContextConfig {
         }
         const structXmlNode = xmlBuilder.XmlNode.of(name);
         const [xmlnsAttr, xmlns] = this.getXmlnsAttribute(ns, parentXmlns);
-        for (const [memberName, memberSchema] of ns.structIterator()) {
+        for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
             const val = value[memberName];
             if (val != null || memberSchema.isIdempotencyToken()) {
                 if (memberSchema.getMergedTraits().xmlAttribute) {
@@ -79399,7 +79475,7 @@ module.exports = LRUCache
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.939.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.936.0","@aws-sdk/credential-provider-node":"3.939.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.936.0","@aws-sdk/middleware-user-agent":"3.936.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.936.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.5","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.12","@smithy/middleware-retry":"^4.4.12","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.8","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.11","@smithy/util-defaults-mode-node":"^4.2.14","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.940.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.940.0","@aws-sdk/credential-provider-node":"3.940.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.936.0","@aws-sdk/middleware-user-agent":"3.940.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.940.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.5","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.12","@smithy/middleware-retry":"^4.4.12","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.8","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.11","@smithy/util-defaults-mode-node":"^4.2.14","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ }),
 
