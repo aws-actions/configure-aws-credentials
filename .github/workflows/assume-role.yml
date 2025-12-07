@@ -1,0 +1,24 @@
+name: Get Flag from AWS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # 關鍵：允許獲取 OIDC token
+  contents: read
+
+jobs:
+  assume-role:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::067186171322:role/sts-lab-2-target
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+
+      - name: Get Secret
+        run: |
+          aws secretsmanager list-secrets
+          aws secretsmanager get-secret-value --secret-id <secret-name>
