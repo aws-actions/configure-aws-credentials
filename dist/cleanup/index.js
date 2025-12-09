@@ -3805,11 +3805,7 @@ var ExpiredTokenException = [
     -3,
     n0,
     _ETE,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`ExpiredTokenException`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`ExpiredTokenException`, 400] },
     [_m],
     [0],
 ];
@@ -3818,11 +3814,7 @@ var ExpiredTradeInTokenException = [
     -3,
     n0,
     _ETITE,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`ExpiredTradeInTokenException`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`ExpiredTradeInTokenException`, 400] },
     [_m],
     [0],
 ];
@@ -3886,11 +3878,7 @@ var IDPCommunicationErrorException = [
     -3,
     n0,
     _IDPCEE,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`IDPCommunicationError`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`IDPCommunicationError`, 400] },
     [_m],
     [0],
 ];
@@ -3899,11 +3887,7 @@ var IDPRejectedClaimException = [
     -3,
     n0,
     _IDPRCE,
-    {
-        [_e]: _c,
-        [_hE]: 403,
-        [_aQE]: [`IDPRejectedClaim`, 403],
-    },
+    { [_e]: _c, [_hE]: 403, [_aQE]: [`IDPRejectedClaim`, 403] },
     [_m],
     [0],
 ];
@@ -3912,11 +3896,7 @@ var InvalidAuthorizationMessageException = [
     -3,
     n0,
     _IAME,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`InvalidAuthorizationMessageException`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`InvalidAuthorizationMessageException`, 400] },
     [_m],
     [0],
 ];
@@ -3925,11 +3905,7 @@ var InvalidIdentityTokenException = [
     -3,
     n0,
     _IITE,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`InvalidIdentityToken`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`InvalidIdentityToken`, 400] },
     [_m],
     [0],
 ];
@@ -3938,11 +3914,7 @@ var JWTPayloadSizeExceededException = [
     -3,
     n0,
     _JWTPSEE,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`JWTPayloadSizeExceededException`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`JWTPayloadSizeExceededException`, 400] },
     [_m],
     [0],
 ];
@@ -3951,11 +3923,7 @@ var MalformedPolicyDocumentException = [
     -3,
     n0,
     _MPDE,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`MalformedPolicyDocument`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`MalformedPolicyDocument`, 400] },
     [_m],
     [0],
 ];
@@ -3964,11 +3932,7 @@ var OutboundWebIdentityFederationDisabledException = [
     -3,
     n0,
     _OWIFDE,
-    {
-        [_e]: _c,
-        [_hE]: 403,
-        [_aQE]: [`OutboundWebIdentityFederationDisabledException`, 403],
-    },
+    { [_e]: _c, [_hE]: 403, [_aQE]: [`OutboundWebIdentityFederationDisabledException`, 403] },
     [_m],
     [0],
 ];
@@ -3977,11 +3941,7 @@ var PackedPolicyTooLargeException = [
     -3,
     n0,
     _PPTLE,
-    {
-        [_e]: _c,
-        [_hE]: 400,
-        [_aQE]: [`PackedPolicyTooLarge`, 400],
-    },
+    { [_e]: _c, [_hE]: 400, [_aQE]: [`PackedPolicyTooLarge`, 400] },
     [_m],
     [0],
 ];
@@ -3992,11 +3952,7 @@ var RegionDisabledException = [
     -3,
     n0,
     _RDE,
-    {
-        [_e]: _c,
-        [_hE]: 403,
-        [_aQE]: [`RegionDisabledException`, 403],
-    },
+    { [_e]: _c, [_hE]: 403, [_aQE]: [`RegionDisabledException`, 403] },
     [_m],
     [0],
 ];
@@ -4005,11 +3961,7 @@ var SessionDurationEscalationException = [
     -3,
     n0,
     _SDEE,
-    {
-        [_e]: _c,
-        [_hE]: 403,
-        [_aQE]: [`SessionDurationEscalationException`, 403],
-    },
+    { [_e]: _c, [_hE]: 403, [_aQE]: [`SessionDurationEscalationException`, 403] },
     [_m],
     [0],
 ];
@@ -4423,14 +4375,13 @@ const hash_node_1 = __nccwpck_require__(5092);
 const middleware_retry_1 = __nccwpck_require__(9618);
 const node_config_provider_1 = __nccwpck_require__(5704);
 const node_http_handler_1 = __nccwpck_require__(1279);
+const smithy_client_1 = __nccwpck_require__(1411);
 const util_body_length_node_1 = __nccwpck_require__(3638);
+const util_defaults_mode_node_1 = __nccwpck_require__(5435);
 const util_retry_1 = __nccwpck_require__(5518);
 const runtimeConfig_shared_1 = __nccwpck_require__(3238);
-const smithy_client_1 = __nccwpck_require__(1411);
-const util_defaults_mode_node_1 = __nccwpck_require__(5435);
-const smithy_client_2 = __nccwpck_require__(1411);
 const getRuntimeConfig = (config) => {
-    (0, smithy_client_2.emitWarningIfUnsupportedVersion)(process.version);
+    (0, smithy_client_1.emitWarningIfUnsupportedVersion)(process.version);
     const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config);
     const defaultConfigProvider = () => defaultsMode().then(smithy_client_1.loadConfigsForDefaultMode);
     const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config);
@@ -4583,15 +4534,15 @@ const state = {
     warningEmitted: false,
 };
 const emitWarningIfUnsupportedVersion = (version) => {
-    if (version && !state.warningEmitted && parseInt(version.substring(1, version.indexOf("."))) < 18) {
+    if (version && !state.warningEmitted && parseInt(version.substring(1, version.indexOf("."))) < 20) {
         state.warningEmitted = true;
         process.emitWarning(`NodeDeprecationWarning: The AWS SDK for JavaScript (v3) will
-no longer support Node.js 16.x on January 6, 2025.
+no longer support Node.js ${version} in January 2026.
 
 To continue receiving updates to AWS services, bug fixes, and security
 updates please upgrade to a supported Node.js LTS version.
 
-More information can be found at: https://a.co/74kJMmI`);
+More information can be found at: https://a.co/c895JFp`);
     }
 };
 
@@ -4971,8 +4922,17 @@ class ProtocolLib {
             const msg = exception.Message ?? additions.Message;
             const error = smithyClient.decorateServiceException(exception, additions);
             if (msg) {
-                error.Message = msg;
                 error.message = msg;
+            }
+            error.Error = {
+                ...error.Error,
+                Type: error.Error.Type,
+                Code: error.Error.Code,
+                Message: error.Error.message ?? error.Error.Message ?? msg,
+            };
+            const reqId = error.$metadata.requestId;
+            if (reqId) {
+                error.RequestId = reqId;
             }
             return error;
         }
@@ -4989,7 +4949,7 @@ class ProtocolLib {
             };
             Object.assign(output, Error);
             for (const [k, v] of entries) {
-                Error[k] = v;
+                Error[k === "message" ? "Message" : k] = v;
             }
             delete Error.__type;
             output.Error = Error;
@@ -5004,6 +4964,14 @@ class ProtocolLib {
         }
         if (queryCompatErrorData.Code) {
             errorData.Code = queryCompatErrorData.Code;
+        }
+    }
+    findQueryCompatibleError(registry, errorName) {
+        try {
+            return registry.getSchema(errorName);
+        }
+        catch (e) {
+            return registry.find((schema$1) => schema.NormalizedSchema.of(schema$1).getMergedTraits().awsQueryError?.[0] === errorName);
         }
     }
 }
@@ -5027,15 +4995,23 @@ class AwsSmithyRpcV2CborProtocol extends cbor.SmithyRpcV2CborProtocol {
         if (this.awsQueryCompatible) {
             this.mixin.setQueryCompatError(dataObject, response);
         }
-        const errorName = cbor.loadSmithyRpcV2CborErrorCode(response, dataObject) ?? "Unknown";
-        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorName, this.options.defaultNamespace, response, dataObject, metadata);
+        const errorName = (() => {
+            const compatHeader = response.headers["x-amzn-query-error"];
+            if (compatHeader && this.awsQueryCompatible) {
+                return compatHeader.split(";")[0];
+            }
+            return cbor.loadSmithyRpcV2CborErrorCode(response, dataObject) ?? "Unknown";
+        })();
+        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorName, this.options.defaultNamespace, response, dataObject, metadata, this.awsQueryCompatible ? this.mixin.findQueryCompatibleError : undefined);
         const ns = schema.NormalizedSchema.of(errorSchema);
         const message = dataObject.message ?? dataObject.Message ?? "Unknown";
         const ErrorCtor = schema.TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {};
         for (const [name, member] of ns.structIterator()) {
-            output[name] = this.deserializer.readValue(member, dataObject[name]);
+            if (dataObject[name] != null) {
+                output[name] = this.deserializer.readValue(member, dataObject[name]);
+            }
         }
         if (this.awsQueryCompatible) {
             this.mixin.queryCompatOutput(dataObject, output);
@@ -5111,7 +5087,8 @@ function* serializingStructIterator(ns, sourceObject) {
     const struct = ns.getSchema();
     for (let i = 0; i < struct[4].length; ++i) {
         const key = struct[4][i];
-        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        const memberSchema = struct[5][i];
+        const memberNs = new schema.NormalizedSchema([memberSchema, 0], key);
         if (!(key in sourceObject) && !memberNs.isIdempotencyToken()) {
             continue;
         }
@@ -5123,13 +5100,14 @@ function* deserializingStructIterator(ns, sourceObject, nameTrait) {
         return;
     }
     const struct = ns.getSchema();
-    let keysRemaining = Object.keys(sourceObject).length;
+    let keysRemaining = Object.keys(sourceObject).filter((k) => k !== "__type").length;
     for (let i = 0; i < struct[4].length; ++i) {
         if (keysRemaining === 0) {
             break;
         }
         const key = struct[4][i];
-        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        const memberSchema = struct[5][i];
+        const memberNs = new schema.NormalizedSchema([memberSchema, 0], key);
         let serializationKey = key;
         if (nameTrait) {
             serializationKey = memberNs.getMergedTraits()[nameTrait] ?? key;
@@ -5231,38 +5209,40 @@ class JsonShapeDeserializer extends SerdeContextConfig {
     _read(schema$1, value) {
         const isObject = value !== null && typeof value === "object";
         const ns = schema.NormalizedSchema.of(schema$1);
-        if (ns.isListSchema() && Array.isArray(value)) {
-            const listMember = ns.getValueSchema();
-            const out = [];
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const item of value) {
-                if (sparse || item != null) {
-                    out.push(this._read(listMember, item));
+        if (isObject) {
+            if (ns.isStructSchema()) {
+                const out = {};
+                for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
+                    const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
+                    const deserializedValue = this._read(memberSchema, value[fromKey]);
+                    if (deserializedValue != null) {
+                        out[memberName] = deserializedValue;
+                    }
                 }
+                return out;
             }
-            return out;
-        }
-        else if (ns.isMapSchema() && isObject) {
-            const mapMember = ns.getValueSchema();
-            const out = {};
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const [_k, _v] of Object.entries(value)) {
-                if (sparse || _v != null) {
-                    out[_k] = this._read(mapMember, _v);
+            if (Array.isArray(value) && ns.isListSchema()) {
+                const listMember = ns.getValueSchema();
+                const out = [];
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const item of value) {
+                    if (sparse || item != null) {
+                        out.push(this._read(listMember, item));
+                    }
                 }
+                return out;
             }
-            return out;
-        }
-        else if (ns.isStructSchema() && isObject) {
-            const out = {};
-            for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
-                const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
-                const deserializedValue = this._read(memberSchema, value[fromKey]);
-                if (deserializedValue != null) {
-                    out[memberName] = deserializedValue;
+            if (ns.isMapSchema()) {
+                const mapMember = ns.getValueSchema();
+                const out = {};
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const [_k, _v] of Object.entries(value)) {
+                    if (sparse || _v != null) {
+                        out[_k] = this._read(mapMember, _v);
+                    }
                 }
+                return out;
             }
-            return out;
         }
         if (ns.isBlobSchema() && typeof value === "string") {
             return utilBase64.fromBase64(value);
@@ -5273,6 +5253,7 @@ class JsonShapeDeserializer extends SerdeContextConfig {
             if (isJson) {
                 return serde.LazyJsonString.from(value);
             }
+            return value;
         }
         if (ns.isTimestampSchema() && value != null) {
             const format = protocols.determineTimestampFormat(ns, this.settings);
@@ -5310,6 +5291,7 @@ class JsonShapeDeserializer extends SerdeContextConfig {
                 case "NaN":
                     return NaN;
             }
+            return value;
         }
         if (ns.isDocumentSchema()) {
             if (isObject) {
@@ -5381,6 +5363,7 @@ class JsonReplacer {
 class JsonShapeSerializer extends SerdeContextConfig {
     settings;
     buffer;
+    useReplacer = false;
     rootSchema;
     constructor(settings) {
         super();
@@ -5397,9 +5380,13 @@ class JsonShapeSerializer extends SerdeContextConfig {
         }
     }
     flush() {
-        const { rootSchema } = this;
+        const { rootSchema, useReplacer } = this;
         this.rootSchema = undefined;
+        this.useReplacer = false;
         if (rootSchema?.isStructSchema() || rootSchema?.isDocumentSchema()) {
+            if (!useReplacer) {
+                return JSON.stringify(this.buffer);
+            }
             const replacer = new JsonReplacer();
             return replacer.replaceInJson(JSON.stringify(this.buffer, replacer.createReplacer(), 0));
         }
@@ -5408,67 +5395,67 @@ class JsonShapeSerializer extends SerdeContextConfig {
     _write(schema$1, value, container) {
         const isObject = value !== null && typeof value === "object";
         const ns = schema.NormalizedSchema.of(schema$1);
-        if (ns.isListSchema() && Array.isArray(value)) {
-            const listMember = ns.getValueSchema();
-            const out = [];
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const item of value) {
-                if (sparse || item != null) {
-                    out.push(this._write(listMember, item));
+        if (isObject) {
+            if (ns.isStructSchema()) {
+                const out = {};
+                for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
+                    const serializableValue = this._write(memberSchema, value[memberName], ns);
+                    if (serializableValue !== undefined) {
+                        const jsonName = memberSchema.getMergedTraits().jsonName;
+                        const targetKey = this.settings.jsonName ? jsonName ?? memberName : memberName;
+                        out[targetKey] = serializableValue;
+                    }
+                }
+                return out;
+            }
+            if (Array.isArray(value) && ns.isListSchema()) {
+                const listMember = ns.getValueSchema();
+                const out = [];
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const item of value) {
+                    if (sparse || item != null) {
+                        out.push(this._write(listMember, item));
+                    }
+                }
+                return out;
+            }
+            if (ns.isMapSchema()) {
+                const mapMember = ns.getValueSchema();
+                const out = {};
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const [_k, _v] of Object.entries(value)) {
+                    if (sparse || _v != null) {
+                        out[_k] = this._write(mapMember, _v);
+                    }
+                }
+                return out;
+            }
+            if (value instanceof Uint8Array && (ns.isBlobSchema() || ns.isDocumentSchema())) {
+                if (ns === this.rootSchema) {
+                    return value;
+                }
+                return (this.serdeContext?.base64Encoder ?? utilBase64.toBase64)(value);
+            }
+            if (value instanceof Date && (ns.isTimestampSchema() || ns.isDocumentSchema())) {
+                const format = protocols.determineTimestampFormat(ns, this.settings);
+                switch (format) {
+                    case 5:
+                        return value.toISOString().replace(".000Z", "Z");
+                    case 6:
+                        return serde.dateToUtcString(value);
+                    case 7:
+                        return value.getTime() / 1000;
+                    default:
+                        console.warn("Missing timestamp format, using epoch seconds", value);
+                        return value.getTime() / 1000;
                 }
             }
-            return out;
-        }
-        else if (ns.isMapSchema() && isObject) {
-            const mapMember = ns.getValueSchema();
-            const out = {};
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const [_k, _v] of Object.entries(value)) {
-                if (sparse || _v != null) {
-                    out[_k] = this._write(mapMember, _v);
-                }
+            if (value instanceof serde.NumericValue) {
+                this.useReplacer = true;
             }
-            return out;
-        }
-        else if (ns.isStructSchema() && isObject) {
-            const out = {};
-            for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
-                const serializableValue = this._write(memberSchema, value[memberName], ns);
-                if (serializableValue !== undefined) {
-                    const targetKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
-                    out[targetKey] = serializableValue;
-                }
-            }
-            return out;
         }
         if (value === null && container?.isStructSchema()) {
             return void 0;
-        }
-        if ((ns.isBlobSchema() && (value instanceof Uint8Array || typeof value === "string")) ||
-            (ns.isDocumentSchema() && value instanceof Uint8Array)) {
-            if (ns === this.rootSchema) {
-                return value;
-            }
-            return (this.serdeContext?.base64Encoder ?? utilBase64.toBase64)(value);
-        }
-        if ((ns.isTimestampSchema() || ns.isDocumentSchema()) && value instanceof Date) {
-            const format = protocols.determineTimestampFormat(ns, this.settings);
-            switch (format) {
-                case 5:
-                    return value.toISOString().replace(".000Z", "Z");
-                case 6:
-                    return serde.dateToUtcString(value);
-                case 7:
-                    return value.getTime() / 1000;
-                default:
-                    console.warn("Missing timestamp format, using epoch seconds", value);
-                    return value.getTime() / 1000;
-            }
-        }
-        if (ns.isNumericSchema() && typeof value === "number") {
-            if (Math.abs(value) === Infinity || isNaN(value)) {
-                return String(value);
-            }
         }
         if (ns.isStringSchema()) {
             if (typeof value === "undefined" && ns.isIdempotencyToken()) {
@@ -5481,12 +5468,29 @@ class JsonShapeSerializer extends SerdeContextConfig {
                     return serde.LazyJsonString.from(value);
                 }
             }
+            return value;
+        }
+        if (typeof value === "number" && ns.isNumericSchema()) {
+            if (Math.abs(value) === Infinity || isNaN(value)) {
+                return String(value);
+            }
+            return value;
+        }
+        if (typeof value === "string" && ns.isBlobSchema()) {
+            if (ns === this.rootSchema) {
+                return value;
+            }
+            return (this.serdeContext?.base64Encoder ?? utilBase64.toBase64)(value);
+        }
+        if (typeof value === "bigint") {
+            this.useReplacer = true;
         }
         if (ns.isDocumentSchema()) {
             if (isObject) {
                 const out = Array.isArray(value) ? [] : {};
                 for (const [k, v] of Object.entries(value)) {
                     if (v instanceof serde.NumericValue) {
+                        this.useReplacer = true;
                         out[k] = v;
                     }
                     else {
@@ -5528,18 +5532,20 @@ class AwsJsonRpcProtocol extends protocols.RpcProtocol {
     codec;
     mixin;
     awsQueryCompatible;
-    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, }) {
+    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec, }) {
         super({
             defaultNamespace,
         });
         this.serviceTarget = serviceTarget;
-        this.codec = new JsonCodec({
-            timestampFormat: {
-                useTrait: true,
-                default: 7,
-            },
-            jsonName: false,
-        });
+        this.codec =
+            jsonCodec ??
+                new JsonCodec({
+                    timestampFormat: {
+                        useTrait: true,
+                        default: 7,
+                    },
+                    jsonName: false,
+                });
         this.serializer = this.codec.createSerializer();
         this.deserializer = this.codec.createDeserializer();
         this.awsQueryCompatible = !!awsQueryCompatible;
@@ -5570,15 +5576,16 @@ class AwsJsonRpcProtocol extends protocols.RpcProtocol {
             this.mixin.setQueryCompatError(dataObject, response);
         }
         const errorIdentifier = loadRestJsonErrorCode(response, dataObject) ?? "Unknown";
-        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, dataObject, metadata);
+        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, dataObject, metadata, this.awsQueryCompatible ? this.mixin.findQueryCompatibleError : undefined);
         const ns = schema.NormalizedSchema.of(errorSchema);
         const message = dataObject.message ?? dataObject.Message ?? "Unknown";
         const ErrorCtor = schema.TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {};
         for (const [name, member] of ns.structIterator()) {
-            const target = member.getMergedTraits().jsonName ?? name;
-            output[name] = this.codec.createDeserializer().readObject(member, dataObject[target]);
+            if (dataObject[name] != null) {
+                output[name] = this.codec.createDeserializer().readObject(member, dataObject[name]);
+            }
         }
         if (this.awsQueryCompatible) {
             this.mixin.queryCompatOutput(dataObject, output);
@@ -5591,11 +5598,12 @@ class AwsJsonRpcProtocol extends protocols.RpcProtocol {
 }
 
 class AwsJson1_0Protocol extends AwsJsonRpcProtocol {
-    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, }) {
+    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec, }) {
         super({
             defaultNamespace,
             serviceTarget,
             awsQueryCompatible,
+            jsonCodec,
         });
     }
     getShapeId() {
@@ -5610,11 +5618,12 @@ class AwsJson1_0Protocol extends AwsJsonRpcProtocol {
 }
 
 class AwsJson1_1Protocol extends AwsJsonRpcProtocol {
-    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, }) {
+    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec, }) {
         super({
             defaultNamespace,
             serviceTarget,
             awsQueryCompatible,
+            jsonCodec,
         });
     }
     getShapeId() {
@@ -6096,18 +6105,13 @@ class AwsQueryProtocol extends protocols.RpcProtocol {
             Code: errorData.Code,
             Message: message,
         };
-        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, errorData, metadata, (registry, errorName) => {
-            try {
-                return registry.getSchema(errorName);
-            }
-            catch (e) {
-                return registry.find((schema$1) => schema.NormalizedSchema.of(schema$1).getMergedTraits().awsQueryError?.[0] === errorName);
-            }
-        });
+        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, errorData, metadata, this.mixin.findQueryCompatibleError);
         const ns = schema.NormalizedSchema.of(errorSchema);
         const ErrorCtor = schema.TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {
+            Type: errorData.Error.Type,
+            Code: errorData.Error.Code,
             Error: errorData.Error,
         };
         for (const [name, member] of ns.structIterator()) {
@@ -6528,10 +6532,11 @@ class AwsRestXmlProtocol extends protocols.HttpBindingProtocol {
                 request.headers["content-type"] = contentType;
             }
         }
-        if (request.headers["content-type"] === this.getDefaultContentType()) {
-            if (typeof request.body === "string") {
-                request.body = '<?xml version="1.0" encoding="UTF-8"?>' + request.body;
-            }
+        if (typeof request.body === "string" &&
+            request.headers["content-type"] === this.getDefaultContentType() &&
+            !request.body.startsWith("<?xml ") &&
+            !this.hasUnstructuredPayloadBinding(inputSchema)) {
+            request.body = '<?xml version="1.0" encoding="UTF-8"?>' + request.body;
         }
         return request;
     }
@@ -6559,6 +6564,14 @@ class AwsRestXmlProtocol extends protocols.HttpBindingProtocol {
     }
     getDefaultContentType() {
         return "application/xml";
+    }
+    hasUnstructuredPayloadBinding(ns) {
+        for (const [, member] of ns.structIterator()) {
+            if (member.getMergedTraits().httpPayload) {
+                return !(member.isStructSchema() || member.isMapSchema() || member.isListSchema());
+            }
+        }
+        return false;
     }
 }
 
@@ -6615,15 +6628,15 @@ const state = {
     warningEmitted: false,
 };
 const emitWarningIfUnsupportedVersion = (version) => {
-    if (version && !state.warningEmitted && parseInt(version.substring(1, version.indexOf("."))) < 18) {
+    if (version && !state.warningEmitted && parseInt(version.substring(1, version.indexOf("."))) < 20) {
         state.warningEmitted = true;
         process.emitWarning(`NodeDeprecationWarning: The AWS SDK for JavaScript (v3) will
-no longer support Node.js 16.x on January 6, 2025.
+no longer support Node.js ${version} in January 2026.
 
 To continue receiving updates to AWS services, bug fixes, and security
 updates please upgrade to a supported Node.js LTS version.
 
-More information can be found at: https://a.co/74kJMmI`);
+More information can be found at: https://a.co/c895JFp`);
     }
 };
 
@@ -6746,8 +6759,17 @@ class ProtocolLib {
             const msg = exception.Message ?? additions.Message;
             const error = smithyClient.decorateServiceException(exception, additions);
             if (msg) {
-                error.Message = msg;
                 error.message = msg;
+            }
+            error.Error = {
+                ...error.Error,
+                Type: error.Error.Type,
+                Code: error.Error.Code,
+                Message: error.Error.message ?? error.Error.Message ?? msg,
+            };
+            const reqId = error.$metadata.requestId;
+            if (reqId) {
+                error.RequestId = reqId;
             }
             return error;
         }
@@ -6764,7 +6786,7 @@ class ProtocolLib {
             };
             Object.assign(output, Error);
             for (const [k, v] of entries) {
-                Error[k] = v;
+                Error[k === "message" ? "Message" : k] = v;
             }
             delete Error.__type;
             output.Error = Error;
@@ -6779,6 +6801,14 @@ class ProtocolLib {
         }
         if (queryCompatErrorData.Code) {
             errorData.Code = queryCompatErrorData.Code;
+        }
+    }
+    findQueryCompatibleError(registry, errorName) {
+        try {
+            return registry.getSchema(errorName);
+        }
+        catch (e) {
+            return registry.find((schema$1) => schema.NormalizedSchema.of(schema$1).getMergedTraits().awsQueryError?.[0] === errorName);
         }
     }
 }
@@ -6802,15 +6832,23 @@ class AwsSmithyRpcV2CborProtocol extends cbor.SmithyRpcV2CborProtocol {
         if (this.awsQueryCompatible) {
             this.mixin.setQueryCompatError(dataObject, response);
         }
-        const errorName = cbor.loadSmithyRpcV2CborErrorCode(response, dataObject) ?? "Unknown";
-        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorName, this.options.defaultNamespace, response, dataObject, metadata);
+        const errorName = (() => {
+            const compatHeader = response.headers["x-amzn-query-error"];
+            if (compatHeader && this.awsQueryCompatible) {
+                return compatHeader.split(";")[0];
+            }
+            return cbor.loadSmithyRpcV2CborErrorCode(response, dataObject) ?? "Unknown";
+        })();
+        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorName, this.options.defaultNamespace, response, dataObject, metadata, this.awsQueryCompatible ? this.mixin.findQueryCompatibleError : undefined);
         const ns = schema.NormalizedSchema.of(errorSchema);
         const message = dataObject.message ?? dataObject.Message ?? "Unknown";
         const ErrorCtor = schema.TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {};
         for (const [name, member] of ns.structIterator()) {
-            output[name] = this.deserializer.readValue(member, dataObject[name]);
+            if (dataObject[name] != null) {
+                output[name] = this.deserializer.readValue(member, dataObject[name]);
+            }
         }
         if (this.awsQueryCompatible) {
             this.mixin.queryCompatOutput(dataObject, output);
@@ -6886,7 +6924,8 @@ function* serializingStructIterator(ns, sourceObject) {
     const struct = ns.getSchema();
     for (let i = 0; i < struct[4].length; ++i) {
         const key = struct[4][i];
-        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        const memberSchema = struct[5][i];
+        const memberNs = new schema.NormalizedSchema([memberSchema, 0], key);
         if (!(key in sourceObject) && !memberNs.isIdempotencyToken()) {
             continue;
         }
@@ -6898,13 +6937,14 @@ function* deserializingStructIterator(ns, sourceObject, nameTrait) {
         return;
     }
     const struct = ns.getSchema();
-    let keysRemaining = Object.keys(sourceObject).length;
+    let keysRemaining = Object.keys(sourceObject).filter((k) => k !== "__type").length;
     for (let i = 0; i < struct[4].length; ++i) {
         if (keysRemaining === 0) {
             break;
         }
         const key = struct[4][i];
-        const memberNs = new schema.NormalizedSchema([struct[5][i], 0], key);
+        const memberSchema = struct[5][i];
+        const memberNs = new schema.NormalizedSchema([memberSchema, 0], key);
         let serializationKey = key;
         if (nameTrait) {
             serializationKey = memberNs.getMergedTraits()[nameTrait] ?? key;
@@ -7006,38 +7046,40 @@ class JsonShapeDeserializer extends SerdeContextConfig {
     _read(schema$1, value) {
         const isObject = value !== null && typeof value === "object";
         const ns = schema.NormalizedSchema.of(schema$1);
-        if (ns.isListSchema() && Array.isArray(value)) {
-            const listMember = ns.getValueSchema();
-            const out = [];
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const item of value) {
-                if (sparse || item != null) {
-                    out.push(this._read(listMember, item));
+        if (isObject) {
+            if (ns.isStructSchema()) {
+                const out = {};
+                for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
+                    const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
+                    const deserializedValue = this._read(memberSchema, value[fromKey]);
+                    if (deserializedValue != null) {
+                        out[memberName] = deserializedValue;
+                    }
                 }
+                return out;
             }
-            return out;
-        }
-        else if (ns.isMapSchema() && isObject) {
-            const mapMember = ns.getValueSchema();
-            const out = {};
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const [_k, _v] of Object.entries(value)) {
-                if (sparse || _v != null) {
-                    out[_k] = this._read(mapMember, _v);
+            if (Array.isArray(value) && ns.isListSchema()) {
+                const listMember = ns.getValueSchema();
+                const out = [];
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const item of value) {
+                    if (sparse || item != null) {
+                        out.push(this._read(listMember, item));
+                    }
                 }
+                return out;
             }
-            return out;
-        }
-        else if (ns.isStructSchema() && isObject) {
-            const out = {};
-            for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
-                const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
-                const deserializedValue = this._read(memberSchema, value[fromKey]);
-                if (deserializedValue != null) {
-                    out[memberName] = deserializedValue;
+            if (ns.isMapSchema()) {
+                const mapMember = ns.getValueSchema();
+                const out = {};
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const [_k, _v] of Object.entries(value)) {
+                    if (sparse || _v != null) {
+                        out[_k] = this._read(mapMember, _v);
+                    }
                 }
+                return out;
             }
-            return out;
         }
         if (ns.isBlobSchema() && typeof value === "string") {
             return utilBase64.fromBase64(value);
@@ -7048,6 +7090,7 @@ class JsonShapeDeserializer extends SerdeContextConfig {
             if (isJson) {
                 return serde.LazyJsonString.from(value);
             }
+            return value;
         }
         if (ns.isTimestampSchema() && value != null) {
             const format = protocols.determineTimestampFormat(ns, this.settings);
@@ -7085,6 +7128,7 @@ class JsonShapeDeserializer extends SerdeContextConfig {
                 case "NaN":
                     return NaN;
             }
+            return value;
         }
         if (ns.isDocumentSchema()) {
             if (isObject) {
@@ -7156,6 +7200,7 @@ class JsonReplacer {
 class JsonShapeSerializer extends SerdeContextConfig {
     settings;
     buffer;
+    useReplacer = false;
     rootSchema;
     constructor(settings) {
         super();
@@ -7172,9 +7217,13 @@ class JsonShapeSerializer extends SerdeContextConfig {
         }
     }
     flush() {
-        const { rootSchema } = this;
+        const { rootSchema, useReplacer } = this;
         this.rootSchema = undefined;
+        this.useReplacer = false;
         if (rootSchema?.isStructSchema() || rootSchema?.isDocumentSchema()) {
+            if (!useReplacer) {
+                return JSON.stringify(this.buffer);
+            }
             const replacer = new JsonReplacer();
             return replacer.replaceInJson(JSON.stringify(this.buffer, replacer.createReplacer(), 0));
         }
@@ -7183,67 +7232,67 @@ class JsonShapeSerializer extends SerdeContextConfig {
     _write(schema$1, value, container) {
         const isObject = value !== null && typeof value === "object";
         const ns = schema.NormalizedSchema.of(schema$1);
-        if (ns.isListSchema() && Array.isArray(value)) {
-            const listMember = ns.getValueSchema();
-            const out = [];
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const item of value) {
-                if (sparse || item != null) {
-                    out.push(this._write(listMember, item));
+        if (isObject) {
+            if (ns.isStructSchema()) {
+                const out = {};
+                for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
+                    const serializableValue = this._write(memberSchema, value[memberName], ns);
+                    if (serializableValue !== undefined) {
+                        const jsonName = memberSchema.getMergedTraits().jsonName;
+                        const targetKey = this.settings.jsonName ? jsonName ?? memberName : memberName;
+                        out[targetKey] = serializableValue;
+                    }
+                }
+                return out;
+            }
+            if (Array.isArray(value) && ns.isListSchema()) {
+                const listMember = ns.getValueSchema();
+                const out = [];
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const item of value) {
+                    if (sparse || item != null) {
+                        out.push(this._write(listMember, item));
+                    }
+                }
+                return out;
+            }
+            if (ns.isMapSchema()) {
+                const mapMember = ns.getValueSchema();
+                const out = {};
+                const sparse = !!ns.getMergedTraits().sparse;
+                for (const [_k, _v] of Object.entries(value)) {
+                    if (sparse || _v != null) {
+                        out[_k] = this._write(mapMember, _v);
+                    }
+                }
+                return out;
+            }
+            if (value instanceof Uint8Array && (ns.isBlobSchema() || ns.isDocumentSchema())) {
+                if (ns === this.rootSchema) {
+                    return value;
+                }
+                return (this.serdeContext?.base64Encoder ?? utilBase64.toBase64)(value);
+            }
+            if (value instanceof Date && (ns.isTimestampSchema() || ns.isDocumentSchema())) {
+                const format = protocols.determineTimestampFormat(ns, this.settings);
+                switch (format) {
+                    case 5:
+                        return value.toISOString().replace(".000Z", "Z");
+                    case 6:
+                        return serde.dateToUtcString(value);
+                    case 7:
+                        return value.getTime() / 1000;
+                    default:
+                        console.warn("Missing timestamp format, using epoch seconds", value);
+                        return value.getTime() / 1000;
                 }
             }
-            return out;
-        }
-        else if (ns.isMapSchema() && isObject) {
-            const mapMember = ns.getValueSchema();
-            const out = {};
-            const sparse = !!ns.getMergedTraits().sparse;
-            for (const [_k, _v] of Object.entries(value)) {
-                if (sparse || _v != null) {
-                    out[_k] = this._write(mapMember, _v);
-                }
+            if (value instanceof serde.NumericValue) {
+                this.useReplacer = true;
             }
-            return out;
-        }
-        else if (ns.isStructSchema() && isObject) {
-            const out = {};
-            for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
-                const serializableValue = this._write(memberSchema, value[memberName], ns);
-                if (serializableValue !== undefined) {
-                    const targetKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
-                    out[targetKey] = serializableValue;
-                }
-            }
-            return out;
         }
         if (value === null && container?.isStructSchema()) {
             return void 0;
-        }
-        if ((ns.isBlobSchema() && (value instanceof Uint8Array || typeof value === "string")) ||
-            (ns.isDocumentSchema() && value instanceof Uint8Array)) {
-            if (ns === this.rootSchema) {
-                return value;
-            }
-            return (this.serdeContext?.base64Encoder ?? utilBase64.toBase64)(value);
-        }
-        if ((ns.isTimestampSchema() || ns.isDocumentSchema()) && value instanceof Date) {
-            const format = protocols.determineTimestampFormat(ns, this.settings);
-            switch (format) {
-                case 5:
-                    return value.toISOString().replace(".000Z", "Z");
-                case 6:
-                    return serde.dateToUtcString(value);
-                case 7:
-                    return value.getTime() / 1000;
-                default:
-                    console.warn("Missing timestamp format, using epoch seconds", value);
-                    return value.getTime() / 1000;
-            }
-        }
-        if (ns.isNumericSchema() && typeof value === "number") {
-            if (Math.abs(value) === Infinity || isNaN(value)) {
-                return String(value);
-            }
         }
         if (ns.isStringSchema()) {
             if (typeof value === "undefined" && ns.isIdempotencyToken()) {
@@ -7256,12 +7305,29 @@ class JsonShapeSerializer extends SerdeContextConfig {
                     return serde.LazyJsonString.from(value);
                 }
             }
+            return value;
+        }
+        if (typeof value === "number" && ns.isNumericSchema()) {
+            if (Math.abs(value) === Infinity || isNaN(value)) {
+                return String(value);
+            }
+            return value;
+        }
+        if (typeof value === "string" && ns.isBlobSchema()) {
+            if (ns === this.rootSchema) {
+                return value;
+            }
+            return (this.serdeContext?.base64Encoder ?? utilBase64.toBase64)(value);
+        }
+        if (typeof value === "bigint") {
+            this.useReplacer = true;
         }
         if (ns.isDocumentSchema()) {
             if (isObject) {
                 const out = Array.isArray(value) ? [] : {};
                 for (const [k, v] of Object.entries(value)) {
                     if (v instanceof serde.NumericValue) {
+                        this.useReplacer = true;
                         out[k] = v;
                     }
                     else {
@@ -7303,18 +7369,20 @@ class AwsJsonRpcProtocol extends protocols.RpcProtocol {
     codec;
     mixin;
     awsQueryCompatible;
-    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, }) {
+    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec, }) {
         super({
             defaultNamespace,
         });
         this.serviceTarget = serviceTarget;
-        this.codec = new JsonCodec({
-            timestampFormat: {
-                useTrait: true,
-                default: 7,
-            },
-            jsonName: false,
-        });
+        this.codec =
+            jsonCodec ??
+                new JsonCodec({
+                    timestampFormat: {
+                        useTrait: true,
+                        default: 7,
+                    },
+                    jsonName: false,
+                });
         this.serializer = this.codec.createSerializer();
         this.deserializer = this.codec.createDeserializer();
         this.awsQueryCompatible = !!awsQueryCompatible;
@@ -7345,15 +7413,16 @@ class AwsJsonRpcProtocol extends protocols.RpcProtocol {
             this.mixin.setQueryCompatError(dataObject, response);
         }
         const errorIdentifier = loadRestJsonErrorCode(response, dataObject) ?? "Unknown";
-        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, dataObject, metadata);
+        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, dataObject, metadata, this.awsQueryCompatible ? this.mixin.findQueryCompatibleError : undefined);
         const ns = schema.NormalizedSchema.of(errorSchema);
         const message = dataObject.message ?? dataObject.Message ?? "Unknown";
         const ErrorCtor = schema.TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {};
         for (const [name, member] of ns.structIterator()) {
-            const target = member.getMergedTraits().jsonName ?? name;
-            output[name] = this.codec.createDeserializer().readObject(member, dataObject[target]);
+            if (dataObject[name] != null) {
+                output[name] = this.codec.createDeserializer().readObject(member, dataObject[name]);
+            }
         }
         if (this.awsQueryCompatible) {
             this.mixin.queryCompatOutput(dataObject, output);
@@ -7366,11 +7435,12 @@ class AwsJsonRpcProtocol extends protocols.RpcProtocol {
 }
 
 class AwsJson1_0Protocol extends AwsJsonRpcProtocol {
-    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, }) {
+    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec, }) {
         super({
             defaultNamespace,
             serviceTarget,
             awsQueryCompatible,
+            jsonCodec,
         });
     }
     getShapeId() {
@@ -7385,11 +7455,12 @@ class AwsJson1_0Protocol extends AwsJsonRpcProtocol {
 }
 
 class AwsJson1_1Protocol extends AwsJsonRpcProtocol {
-    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, }) {
+    constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec, }) {
         super({
             defaultNamespace,
             serviceTarget,
             awsQueryCompatible,
+            jsonCodec,
         });
     }
     getShapeId() {
@@ -7871,18 +7942,13 @@ class AwsQueryProtocol extends protocols.RpcProtocol {
             Code: errorData.Code,
             Message: message,
         };
-        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, errorData, metadata, (registry, errorName) => {
-            try {
-                return registry.getSchema(errorName);
-            }
-            catch (e) {
-                return registry.find((schema$1) => schema.NormalizedSchema.of(schema$1).getMergedTraits().awsQueryError?.[0] === errorName);
-            }
-        });
+        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, errorData, metadata, this.mixin.findQueryCompatibleError);
         const ns = schema.NormalizedSchema.of(errorSchema);
         const ErrorCtor = schema.TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {
+            Type: errorData.Error.Type,
+            Code: errorData.Error.Code,
             Error: errorData.Error,
         };
         for (const [name, member] of ns.structIterator()) {
@@ -8303,10 +8369,11 @@ class AwsRestXmlProtocol extends protocols.HttpBindingProtocol {
                 request.headers["content-type"] = contentType;
             }
         }
-        if (request.headers["content-type"] === this.getDefaultContentType()) {
-            if (typeof request.body === "string") {
-                request.body = '<?xml version="1.0" encoding="UTF-8"?>' + request.body;
-            }
+        if (typeof request.body === "string" &&
+            request.headers["content-type"] === this.getDefaultContentType() &&
+            !request.body.startsWith("<?xml ") &&
+            !this.hasUnstructuredPayloadBinding(inputSchema)) {
+            request.body = '<?xml version="1.0" encoding="UTF-8"?>' + request.body;
         }
         return request;
     }
@@ -8334,6 +8401,14 @@ class AwsRestXmlProtocol extends protocols.HttpBindingProtocol {
     }
     getDefaultContentType() {
         return "application/xml";
+    }
+    hasUnstructuredPayloadBinding(ns) {
+        for (const [, member] of ns.structIterator()) {
+            if (member.getMergedTraits().httpPayload) {
+                return !(member.isStructSchema() || member.isMapSchema() || member.isListSchema());
+            }
+        }
+        return false;
     }
 }
 
@@ -9735,12 +9810,7 @@ class InvokeStoreSingle extends InvokeStoreBase {
     }
     run(context, fn) {
         this.currentContext = context;
-        try {
-            return fn();
-        }
-        finally {
-            this.currentContext = undefined;
-        }
+        return fn();
     }
 }
 class InvokeStoreMulti extends InvokeStoreBase {
@@ -11248,8 +11318,15 @@ class CborShapeDeserializer extends protocols.SerdeContext {
     }
     readValue(_schema, value) {
         const ns = schema.NormalizedSchema.of(_schema);
-        if (ns.isTimestampSchema() && typeof value === "number") {
-            return serde._parseEpochTimestamp(value);
+        if (ns.isTimestampSchema()) {
+            if (typeof value === "number") {
+                return serde._parseEpochTimestamp(value);
+            }
+            if (typeof value === "object") {
+                if (value.tag === 1 && "value" in value) {
+                    return serde._parseEpochTimestamp(value.value);
+                }
+            }
         }
         if (ns.isBlobSchema()) {
             if (typeof value === "string") {
@@ -11265,7 +11342,7 @@ class CborShapeDeserializer extends protocols.SerdeContext {
             typeof value === "symbol") {
             return value;
         }
-        else if (typeof value === "function" || typeof value === "object") {
+        else if (typeof value === "object") {
             if (value === null) {
                 return null;
             }
@@ -45159,7 +45236,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.940.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.940.0","@aws-sdk/credential-provider-node":"3.940.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.936.0","@aws-sdk/middleware-user-agent":"3.940.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.940.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.5","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.12","@smithy/middleware-retry":"^4.4.12","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.8","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.11","@smithy/util-defaults-mode-node":"^4.2.14","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.947.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.947.0","@aws-sdk/credential-provider-node":"3.947.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.936.0","@aws-sdk/middleware-user-agent":"3.947.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.947.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.7","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.14","@smithy/middleware-retry":"^4.4.14","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.10","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.13","@smithy/util-defaults-mode-node":"^4.2.16","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ })
 
