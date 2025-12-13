@@ -46,6 +46,10 @@ export async function run() {
     const roleChaining = getBooleanInput('role-chaining', { required: false });
     const outputCredentials = getBooleanInput('output-credentials', { required: false });
     const outputEnvCredentials = getBooleanInput('output-env-credentials', { required: false, default: true });
+    const outputConfigFiles = getBooleanInput('output-config-files', { required: false });
+    const awsConfigFilePath = core.getInput('aws-config-file-path', { required: false });
+    const awsSharedCredentialsFilePath = core.getInput('aws-shared-credentials-file-path', { required: false });
+    const awsProfileName = core.getInput('aws-profile-name', { required: false }) || 'default';
     const unsetCurrentCredentials = getBooleanInput('unset-current-credentials', { required: false });
     let disableRetry = getBooleanInput('disable-retry', { required: false });
     const specialCharacterWorkaround = getBooleanInput('special-characters-workaround', { required: false });
@@ -160,7 +164,16 @@ export async function run() {
       // Plus, in the assume role case, if the AssumeRole call fails, we want
       // the source credentials to already be masked as secrets
       // in any error messages.
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+      exportCredentials(
+        { AccessKeyId, SecretAccessKey, SessionToken },
+        outputCredentials,
+        outputEnvCredentials,
+        outputConfigFiles,
+        region,
+        awsConfigFilePath || undefined,
+        awsSharedCredentialsFilePath || undefined,
+        awsProfileName,
+      );
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
@@ -200,7 +213,16 @@ export async function run() {
         );
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
+      exportCredentials(
+        roleCredentials.Credentials,
+        outputCredentials,
+        outputEnvCredentials,
+        outputConfigFiles,
+        region,
+        awsConfigFilePath || undefined,
+        awsSharedCredentialsFilePath || undefined,
+        awsProfileName,
+      );
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.

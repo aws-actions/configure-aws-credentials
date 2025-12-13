@@ -1,6 +1,9 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import { clearAwsConfigFilePaths, createAwsConfigFiles, getAwsConfigFilePaths } from './awsConfigFiles';
 import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
@@ -23,6 +26,10 @@ export function translateEnvVariables() {
     'INLINE_SESSION_POLICY',
     'MANAGED_SESSION_POLICIES',
     'OUTPUT_CREDENTIALS',
+    'OUTPUT_CONFIG_FILES',
+    'AWS_CONFIG_FILE_PATH',
+    'AWS_SHARED_CREDENTIALS_FILE_PATH',
+    'AWS_PROFILE_NAME',
     'UNSET_CURRENT_CREDENTIALS',
     'DISABLE_RETRY',
     'RETRY_MAX_ATTEMPTS',
@@ -47,6 +54,11 @@ export function exportCredentials(
   creds?: Partial<Credentials>,
   outputCredentials?: boolean,
   outputEnvCredentials?: boolean,
+  outputConfigFiles?: boolean,
+  region?: string,
+  configFilePath?: string,
+  credentialsFilePath?: string,
+  profileName?: string,
 ) {
   if (creds?.AccessKeyId) {
     core.setSecret(creds.AccessKeyId);
@@ -91,6 +103,33 @@ export function exportCredentials(
       core.setOutput('aws-expiration', creds.Expiration);
     }
   }
+
+  if (outputConfigFiles && creds?.AccessKeyId && creds?.SecretAccessKey && region) {
+    try {
+      const profile = profileName || 'default';
+      const { configFile, credentialsFile, isDefaultPath } = createAwsConfigFiles(
+        creds,
+        region,
+        profile,
+        configFilePath,
+        credentialsFilePath,
+      );
+      // Only set environment variables if using custom paths
+      // Default paths (~/.aws/*) don't need environment variables
+      if (!isDefaultPath) {
+        core.exportVariable('AWS_CONFIG_FILE', configFile);
+        core.exportVariable('AWS_SHARED_CREDENTIALS_FILE', credentialsFile);
+      }
+      // Set outputs for config file paths and profile name
+      core.setOutput('aws-config-file-path', configFile);
+      core.setOutput('aws-shared-credentials-file-path', credentialsFile);
+      core.setOutput('aws-profile-name', profile);
+      core.debug(`Created AWS config file at ${configFile}`);
+      core.debug(`Created AWS shared credentials file at ${credentialsFile}`);
+    } catch (error) {
+      core.warning(`Failed to create AWS config files: ${errorMessage(error)}`);
+    }
+  }
 }
 
 export function unsetCredentials(outputEnvCredentials?: boolean) {
@@ -100,6 +139,44 @@ export function unsetCredentials(outputEnvCredentials?: boolean) {
     core.exportVariable('AWS_SESSION_TOKEN', '');
     core.exportVariable('AWS_REGION', '');
     core.exportVariable('AWS_DEFAULT_REGION', '');
+  }
+  // Clean up config files if they were created (only temp files, not default paths)
+  const { configFilePath, credentialsFilePath, isDefaultPath } = getAwsConfigFilePaths();
+  if ((configFilePath || credentialsFilePath) && !isDefaultPath) {
+    try {
+      if (configFilePath && fs.existsSync(configFilePath)) {
+        const configDir = path.dirname(configFilePath);
+        // Only remove if it's a temp directory we created
+        if (configDir.includes('aws-config-')) {
+          fs.rmSync(configDir, { recursive: true, force: true });
+          core.debug(`Removed AWS config file directory: ${configDir}`);
+        } else {
+          // For custom paths, just remove the files, not the directory
+          fs.unlinkSync(configFilePath);
+          core.debug(`Removed AWS config file: ${configFilePath}`);
+        }
+      }
+      if (credentialsFilePath && fs.existsSync(credentialsFilePath)) {
+        const credsDir = path.dirname(credentialsFilePath);
+        // Only remove if it's a temp directory we created
+        if (credsDir.includes('aws-config-')) {
+          // Directory already removed above if same as configDir
+          if (credsDir !== path.dirname(configFilePath ?? '')) {
+            fs.rmSync(credsDir, { recursive: true, force: true });
+            core.debug(`Removed AWS credentials file directory: ${credsDir}`);
+          }
+        } else {
+          // For custom paths, just remove the files, not the directory
+          fs.unlinkSync(credentialsFilePath);
+          core.debug(`Removed AWS credentials file: ${credentialsFilePath}`);
+        }
+      }
+      core.exportVariable('AWS_CONFIG_FILE', '');
+      core.exportVariable('AWS_SHARED_CREDENTIALS_FILE', '');
+      clearAwsConfigFilePaths();
+    } catch (error) {
+      core.warning(`Failed to remove AWS config files: ${errorMessage(error)}`);
+    }
   }
 }
 

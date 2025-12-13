@@ -4,3 +4,11 @@ coverage
 Thumbs.db
 build
 test-reports
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test temporary directory
+.test-tmp/
+test-tmp/

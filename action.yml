@@ -68,6 +68,20 @@ inputs:
     description: Whether to export credentials as environment variables. If you set this to false, you probably want to use output-credentials.
     required: false
     default: true
+  output-config-files:
+    description: Whether to create AWS config files (AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE) with the credentials. By default, files are created at ~/.aws/config and ~/.aws/credentials.
+    required: false
+    default: false
+  aws-config-file-path:
+    description: Custom path for AWS_CONFIG_FILE. If not specified, defaults to ~/.aws/config. Only used when output-config-files is true.
+    required: false
+  aws-shared-credentials-file-path:
+    description: Custom path for AWS_SHARED_CREDENTIALS_FILE. If not specified, defaults to ~/.aws/credentials. Only used when output-config-files is true.
+    required: false
+  aws-profile-name:
+    description: Profile name to use in AWS config and credentials files. Defaults to 'default'. Only used when output-config-files is true.
+    required: false
+    default: default
   unset-current-credentials:
     description: Whether to unset the existing credentials in your runner. May be useful if you run this action multiple times in the same job
     required: false
@@ -104,3 +118,9 @@ outputs:
     description: The AWS session token for the provided credentials
   aws-expiration:
     description: The expiration time for the provided credentials
+  aws-config-file-path:
+    description: The path to the AWS config file created when output-config-files is enabled
+  aws-shared-credentials-file-path:
+    description: The path to the AWS shared credentials file created when output-config-files is enabled
+  aws-profile-name:
+    description: The profile name used in the AWS config and credentials files when output-config-files is enabled

@@ -5,7 +5,7 @@ Manager](https://github.com/aws-actions/aws-secretsmanager-get-secrets).
 
 Quick Start (OIDC, recommended)
 -------------------------------
-1. Create an IAM Identity Provider in your AWS account for GitHub OIDC. (See 
+1. Create an IAM Identity Provider in your AWS account for GitHub OIDC. (See
 [OIDC configuration](#oidc-configuration) below for details.)
 2. Create an IAM Role in your AWS account with a trust policy that allows GitHub
 Actions to assume it:
@@ -33,7 +33,7 @@ Actions to assume it:
     }
     ```
     </details>
-3. Attach permissions to the IAM Role that allow it to access the AWS resources 
+3. Attach permissions to the IAM Role that allow it to access the AWS resources
 you need.
 4. Add the following to your GitHub Actions workflow:
     <details>
@@ -55,7 +55,7 @@ you need.
           - name: Additional steps
             run: |
               # Your commands that require AWS credentials
-              aws sts get-caller-identity 
+              aws sts get-caller-identity
     ```
     </details>
 That's it! Your GitHub Actions workflow can now access AWS resources using the
@@ -145,6 +145,10 @@ See [action.yml](./action.yml) for more detail.
 | managed-session-policies  | You may further restrict the assumed role policy by specifying a managed policy here.             |    No    |
 | output-credentials        | When set, outputs fetched credentials as action step output. (Outputs aws-access-key-id, aws-secret-access-key, aws-session-token, aws-account-id, authenticated-arn, and aws-expiration). Defaults to false.                   |    No    |
 | output-env-credentials       | When set, outputs fetched credentials as environment variables (AWS_REGION, AWS_DEFAULT_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN). Defaults to true. Set to false if you need to avoid setting/changing env variables. You'd probably want to use output-credentials if you disable this. (NOTE: Setting to false will prevent the aws-account-id from being exported as a step output). |    No    |
+| output-config-files       | When set, creates AWS config files (AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE) with the credentials. By default, files are created at ~/.aws/config and ~/.aws/credentials. If custom paths are provided via aws-config-file-path and aws-shared-credentials-file-path, the AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE environment variables will be set accordingly. Also outputs aws-config-file-path, aws-shared-credentials-file-path, and aws-profile-name as step outputs. Defaults to false. |    No    |
+| aws-config-file-path      | Custom path for AWS_CONFIG_FILE. If not specified, defaults to ~/.aws/config. Only used when output-config-files is true. Supports ~ expansion for home directory. |    No    |
+| aws-shared-credentials-file-path | Custom path for AWS_SHARED_CREDENTIALS_FILE. If not specified, defaults to ~/.aws/credentials. Only used when output-config-files is true. Supports ~ expansion for home directory. |    No    |
+| aws-profile-name          | Profile name to use in AWS config and credentials files. Defaults to 'default'. Only used when output-config-files is true. |    No    |
 | unset-current-credentials | When set, attempts to unset any existing credentials in your action runner.                       |    No    |
 | disable-retry             | Disabled retry/backoff logic for assume role calls. By default, retries are enabled.              |    No    |
 | retry-max-attempts        | Limits the number of retry attempts before giving up. Defaults to 12.                             |    No    |
@@ -170,6 +174,9 @@ if desired.
 Sometimes, existing credentials in your runner can get in the way of the
 intended outcome. You can set the `unset-current-credentials` input to `true` to
 work around this issue.
+
+#### Error handling for config files
+If file creation fails (e.g., due to permission issues), the action will log a warning but continue execution. The workflow will not fail, allowing you to handle the error gracefully or fall back to environment variables.
 
 #### Use an HTTP proxy
 
@@ -206,13 +213,118 @@ special characters. This option overrides the `disable-retry` and
 unless required, because retrying APIs infinitely until they succeed is not best
 practice.
 
+#### Creating AWS Config Files
+By default, this action exports credentials as environment variables. However, some tools and applications require AWS credentials to be stored in config files. You can enable the `output-config-files` option to create AWS config and credentials files.
+
+**Requirements:**
+- Files are only created when complete credentials are available (AccessKeyId, SecretAccessKey, and region)
+- Files are created with secure permissions (0o600 for files, 0o700 for directories) to ensure only the owner can read/write
+- This feature can be used alongside `output-env-credentials` (both can be enabled simultaneously)
+
+When enabled, the action will:
+- Create `~/.aws/config` and `~/.aws/credentials` files by default (or custom paths if specified)
+- Update existing files if they already exist, preserving other profiles
+- Use the specified profile name (defaults to 'default')
+- Only create files if they don't already exist (unless updating an existing profile)
+
+**Note:** When updating existing config files, comments and empty lines are not preserved. Only profile sections and their key-value pairs are maintained.
+
+<details>
+<summary>Creating config files with default paths</summary>
+
+```yaml
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        output-config-files: true
+        aws-profile-name: production
+```
+
+This will create:
+- `~/.aws/config` with `[profile production]` section containing the region
+- `~/.aws/credentials` with `[production]` section containing the credentials
+
+The files will persist after the workflow completes (they are not cleaned up by default).
+</details>
+
+<details>
+<summary>Creating config files with custom paths</summary>
+
+```yaml
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        output-config-files: true
+        aws-config-file-path: /tmp/my-aws-config
+        aws-shared-credentials-file-path: /tmp/my-aws-credentials
+        aws-profile-name: workflow-profile
+```
+
+This will:
+- Create config file at `/tmp/my-aws-config`
+- Create credentials file at `/tmp/my-aws-credentials`
+- Set `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` environment variables
+- Clean up these files when the workflow completes (custom paths are cleaned up automatically)
+
+You can also use `~` in paths, which will be expanded to the home directory:
+```yaml
+        aws-config-file-path: ~/custom-aws-config
+        aws-shared-credentials-file-path: ~/custom-aws-credentials
+```
+</details>
+
+<details>
+<summary>Updating existing config files</summary>
+
+If `~/.aws/config` or `~/.aws/credentials` already exist, the action will:
+- Preserve all existing profiles
+- Update the specified profile if it exists
+- Add the profile if it doesn't exist
+
+Example with existing profiles:
+```yaml
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-west-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        output-config-files: true
+        aws-profile-name: staging
+```
+
+If `~/.aws/config` already contains:
+```ini
+[default]
+region = us-east-1
+
+[profile dev]
+region = us-west-1
+```
+
+After the action runs, it will contain:
+```ini
+[default]
+region = us-east-1
+
+[profile dev]
+region = us-west-1
+
+[profile staging]
+region = us-west-2
+```
+</details>
+
 Session Naming and Policies
 ---------------------------
 The default session name is "GitHubActions", and you can modify it by specifying
 the desired name in `role-session-name`.
 
-*Note: you might find it helpful to set the `role-session-name` to `${{ github.run_id }}` 
-so as to clarify in audit logs which AWS actions were performed by which workflow 
+*Note: you might find it helpful to set the `role-session-name` to `${{ github.run_id }}`
+so as to clarify in audit logs which AWS actions were performed by which workflow
 run.*
 
 The session will be tagged with the
@@ -305,7 +417,7 @@ provider](https://docs.github.com/en/actions/deployment/security-hardening-your-
 to get short-lived AWS credentials needed for your actions. When using OIDC, you
 configure IAM to accept JWTs from GitHub's OIDC endpoint. This action will
 then create a JWT unique to the workflow run using the OIDC endpoint, and it
-will use the JWT to assume the specified role with short-term credentials. 
+will use the JWT to assume the specified role with short-term credentials.
 
 To get this to work
 1. Configure your workflow to use the `id-token: write` permission.
@@ -338,7 +450,7 @@ You can specify the audience through the `audience` input:
 ### Configuring IAM to trust GitHub
 To use GitHub's OIDC provider, you must first set up federation in your AWS
 account. This involves creating an IAM Identity Provider that trusts GitHub's
-OIDC endpoint. You can create an IAM Identity Provider in the AWS Management 
+OIDC endpoint. You can create an IAM Identity Provider in the AWS Management
 Console by specifying the following details:
 - **Provider Type**: OIDC
 - **Provider URL**: `https://token.actions.githubusercontent.com`
@@ -346,7 +458,7 @@ Console by specifying the following details:
   one in the `audience` input)
 
 Prior versions of this documentation gave instructions for specifying the
-certificate fingerprint, but this is no longer necessary. The thumbprint, if 
+certificate fingerprint, but this is no longer necessary. The thumbprint, if
 specified, will be ignored.
 
 You can also create the IAM Identity Provider using the AWS CLI:
@@ -354,7 +466,7 @@ You can also create the IAM Identity Provider using the AWS CLI:
 ```bash
 aws iam create-open-id-connect-provider \
     --url https://token.actions.githubusercontent.com \
-    --client-id-list sts.amazonaws.com 
+    --client-id-list sts.amazonaws.com
 ```
 
 ### Claims and scoping permissions
@@ -482,6 +594,67 @@ This example shows that you can reference the fetched credentials as outputs if
 `output-credentials` is set to true. This example also shows that you can use
 the `aws-session-token` input in a situation where session tokens are fetched
 and passed to this action.
+
+### Using AWS Config Files
+```yaml
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        output-config-files: true
+        aws-profile-name: github-actions
+    - name: Use AWS CLI with config files
+      run: |
+        aws s3 ls --profile github-actions
+```
+
+This example creates AWS config files at the default locations (`~/.aws/config` and `~/.aws/credentials`) with the profile name `github-actions`. The AWS CLI and SDKs will automatically use these files.
+
+**Note:** You can use `output-config-files` together with `output-env-credentials` if you need both environment variables and config files. By default, `output-env-credentials` is `true`, so both will be created unless you explicitly disable environment variable output.
+
+The action also outputs the config file paths and profile name as step outputs:
+- `aws-config-file-path`: The path to the created config file
+- `aws-shared-credentials-file-path`: The path to the created credentials file
+- `aws-profile-name`: The profile name used in the files
+
+You can reference these outputs in subsequent steps:
+```yaml
+    - name: Configure AWS Credentials
+      id: aws-creds
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        output-config-files: true
+        aws-profile-name: github-actions
+    - name: Use config file paths
+      run: |
+        echo "Config file: ${{ steps.aws-creds.outputs.aws-config-file-path }}"
+        echo "Credentials file: ${{ steps.aws-creds.outputs.aws-shared-credentials-file-path }}"
+        echo "Profile name: ${{ steps.aws-creds.outputs.aws-profile-name }}"
+```
+
+### Using Custom Config File Paths
+```yaml
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-2
+        role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+        output-config-files: true
+        aws-config-file-path: /tmp/workflow-aws-config
+        aws-shared-credentials-file-path: /tmp/workflow-aws-credentials
+    - name: Use AWS CLI with custom config files
+      run: |
+        export AWS_CONFIG_FILE=/tmp/workflow-aws-config
+        export AWS_SHARED_CREDENTIALS_FILE=/tmp/workflow-aws-credentials
+        aws s3 ls
+```
+
+This example creates config files at custom paths. The `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` environment variables are automatically set by the action, so you can use the AWS CLI and SDKs without additional configuration. These files will be automatically cleaned up when the workflow completes.
+
+**Note:** The environment variables are only set for custom paths. When using default paths (`~/.aws/config` and `~/.aws/credentials`), the AWS CLI and SDKs will automatically discover these files without needing environment variables.
 
 Versioning
 ----------
