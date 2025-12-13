@@ -69,7 +69,7 @@ inputs:
     required: false
     default: true
   output-config-files:
-    description: Whether to create AWS config files (AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE) with the credentials. File paths are determined by: 1) explicit input paths (aws-config-file-path/aws-shared-credentials-file-path), 2) AWS_CONFIG_FILE/AWS_SHARED_CREDENTIALS_FILE environment variables if set, 3) default ~/.aws/config and ~/.aws/credentials.
+    description: "Whether to create AWS config files (AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE) with the credentials. File paths are determined by: 1) explicit input paths (aws-config-file-path/aws-shared-credentials-file-path), 2) AWS_CONFIG_FILE/AWS_SHARED_CREDENTIALS_FILE environment variables if set, 3) default ~/.aws/config and ~/.aws/credentials."
     required: false
     default: false
   aws-config-file-path:
