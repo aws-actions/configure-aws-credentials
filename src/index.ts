@@ -145,7 +145,8 @@ export async function run() {
 
     // If OIDC is being used, generate token
     // Else, export credentials provided as input
-    if (useGitHubOIDCProvider()) {
+    const isUsingOIDC = useGitHubOIDCProvider();
+    if (isUsingOIDC) {
       try {
         webIdentityToken = await retryAndBackoff(
           async () => {
@@ -176,8 +177,9 @@ export async function run() {
         awsProfileName,
         debugConfigFiles,
       );
-    } else if (!webIdentityTokenFile && !roleChaining) {
+    } else if (!webIdentityTokenFile && !roleChaining && !isUsingOIDC) {
       // Proceed only if credentials can be picked up
+      // Skip this for OIDC since we don't have credentials yet - they'll be obtained after assuming the role
       await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
