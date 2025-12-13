@@ -105,6 +105,26 @@ export function exportCredentials(
     }
   }
 
+  // Diagnostic logging when debug-config-files is enabled
+  if (debugConfigFiles === true) {
+    core.info(`[DEBUG] Config files creation check:`);
+    core.info(`[DEBUG]   outputConfigFiles: ${outputConfigFiles}`);
+    core.info(`[DEBUG]   creds?.AccessKeyId: ${creds?.AccessKeyId ? 'present' : 'missing'}`);
+    core.info(`[DEBUG]   creds?.SecretAccessKey: ${creds?.SecretAccessKey ? 'present' : 'missing'}`);
+    core.info(`[DEBUG]   region: ${region || 'missing'}`);
+    if (!outputConfigFiles) {
+      core.info(`[DEBUG] Skipping config files creation: outputConfigFiles is false`);
+    } else if (!creds?.AccessKeyId) {
+      core.info(`[DEBUG] Skipping config files creation: AccessKeyId is missing`);
+    } else if (!creds?.SecretAccessKey) {
+      core.info(`[DEBUG] Skipping config files creation: SecretAccessKey is missing`);
+    } else if (!region) {
+      core.info(`[DEBUG] Skipping config files creation: region is missing`);
+    } else {
+      core.info(`[DEBUG] All conditions met, proceeding with config files creation`);
+    }
+  }
+
   if (outputConfigFiles && creds?.AccessKeyId && creds?.SecretAccessKey && region) {
     try {
       const profile = profileName || 'default';
