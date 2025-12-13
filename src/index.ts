@@ -50,6 +50,7 @@ export async function run() {
     const awsConfigFilePath = core.getInput('aws-config-file-path', { required: false });
     const awsSharedCredentialsFilePath = core.getInput('aws-shared-credentials-file-path', { required: false });
     const awsProfileName = core.getInput('aws-profile-name', { required: false }) || 'default';
+    const debugConfigFiles = getBooleanInput('debug-config-files', { required: false });
     const unsetCurrentCredentials = getBooleanInput('unset-current-credentials', { required: false });
     let disableRetry = getBooleanInput('disable-retry', { required: false });
     const specialCharacterWorkaround = getBooleanInput('special-characters-workaround', { required: false });
@@ -173,6 +174,7 @@ export async function run() {
         awsConfigFilePath || undefined,
         awsSharedCredentialsFilePath || undefined,
         awsProfileName,
+        debugConfigFiles,
       );
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
@@ -222,6 +224,7 @@ export async function run() {
         awsConfigFilePath || undefined,
         awsSharedCredentialsFilePath || undefined,
         awsProfileName,
+        debugConfigFiles,
       );
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable

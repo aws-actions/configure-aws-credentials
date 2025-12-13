@@ -137,6 +137,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
 
     it('creates config files when outputConfigFiles is enabled with default paths', {}, () => {
       vi.spyOn(core, 'debug').mockImplementation(() => {});
+      vi.spyOn(core, 'info').mockImplementation(() => {});
       vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
       vi.spyOn(core, 'setOutput').mockImplementation(() => {});
 
@@ -146,7 +147,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
         SessionToken: 'testsessiontoken123',
       };
 
-      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, 'default');
+      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, 'default', false);
 
       // Check that files were created
       const configFile = `${mockHomeDir}/.aws/config`;
@@ -154,9 +155,9 @@ describe('Configure AWS Credentials helpers', {}, () => {
       expect(fs.existsSync(configFile)).toBe(true);
       expect(fs.existsSync(credentialsFile)).toBe(true);
 
-      // Check that environment variables were NOT set for default paths
-      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_CONFIG_FILE', expect.any(String));
-      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SHARED_CREDENTIALS_FILE', expect.any(String));
+      // Check that environment variables were set (even for default paths, we set them explicitly)
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_CONFIG_FILE', expect.stringContaining('.aws/config'));
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SHARED_CREDENTIALS_FILE', expect.stringContaining('.aws/credentials'));
 
       // Check that outputs were set
       expect(core.setOutput).toHaveBeenCalledWith('aws-config-file-path', expect.stringContaining('.aws/config'));
@@ -167,8 +168,8 @@ describe('Configure AWS Credentials helpers', {}, () => {
       expect(core.setOutput).toHaveBeenCalledWith('aws-profile-name', 'default');
 
       // Check debug messages
-      expect(core.debug).toHaveBeenCalledWith(expect.stringContaining('Created AWS config file at'));
-      expect(core.debug).toHaveBeenCalledWith(expect.stringContaining('Created AWS shared credentials file at'));
+      expect(core.debug).toHaveBeenCalledWith(expect.stringContaining('Successfully created AWS config file at'));
+      expect(core.debug).toHaveBeenCalledWith(expect.stringContaining('Successfully created AWS shared credentials file at'));
     });
 
     it('creates config files with custom paths and sets environment variables', {}, () => {
@@ -194,6 +195,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
         customConfigPath,
         customCredsPath,
         profileName,
+        false,
       );
 
       // Check that files were created
@@ -253,7 +255,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
       }
 
       // Missing SecretAccessKey - should not create files
-      helpers.exportCredentials({ AccessKeyId: 'AKIATEST123' }, false, false, true, 'us-east-1');
+      helpers.exportCredentials({ AccessKeyId: 'AKIATEST123' }, false, false, true, 'us-east-1', undefined, undefined, undefined, false);
 
       // Files should not be created or modified when credentials are incomplete
       if (!configExistedBefore) {
@@ -293,6 +295,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
         customConfigPath,
         customCredsPath,
         profileName,
+        false,
       );
 
       expect(core.setOutput).toHaveBeenCalledWith('aws-config-file-path', expect.stringContaining('test-config'));
@@ -312,7 +315,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
         SecretAccessKey: 'testsecretkey123',
       };
 
-      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, 'default');
+      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, 'default', false);
 
       expect(core.setOutput).toHaveBeenCalledWith('aws-config-file-path', expect.stringContaining('.aws/config'));
       expect(core.setOutput).toHaveBeenCalledWith(
@@ -340,7 +343,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
           throw new Error('Permission denied');
         });
 
-      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1');
+      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, undefined, false);
 
       expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Failed to create AWS config files'));
       // Outputs should not be set if file creation fails
@@ -396,7 +399,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
         SecretAccessKey: 'testsecretkey123',
       };
 
-      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1');
+      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, undefined, false);
 
       const configFile = `${mockHomeDir}/.aws/config`;
       const credentialsFile = `${mockHomeDir}/.aws/credentials`;
@@ -419,13 +422,14 @@ describe('Configure AWS Credentials helpers', {}, () => {
 
     it('uses custom profile name when provided', {}, () => {
       vi.spyOn(core, 'debug').mockImplementation(() => {});
+      vi.spyOn(core, 'info').mockImplementation(() => {});
 
       const testCredentials = {
         AccessKeyId: 'AKIATEST123',
         SecretAccessKey: 'testsecretkey123',
       };
 
-      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, 'production');
+      helpers.exportCredentials(testCredentials, false, false, true, 'us-east-1', undefined, undefined, 'production', false);
 
       const configFile = `${mockHomeDir}/.aws/config`;
       expect(fs.existsSync(configFile)).toBe(true);

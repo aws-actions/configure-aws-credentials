@@ -59,6 +59,7 @@ export function exportCredentials(
   configFilePath?: string,
   credentialsFilePath?: string,
   profileName?: string,
+  debugConfigFiles?: boolean,
 ) {
   if (creds?.AccessKeyId) {
     core.setSecret(creds.AccessKeyId);
@@ -107,25 +108,33 @@ export function exportCredentials(
   if (outputConfigFiles && creds?.AccessKeyId && creds?.SecretAccessKey && region) {
     try {
       const profile = profileName || 'default';
-      const { configFile, credentialsFile, isDefaultPath } = createAwsConfigFiles(
+      const log = debugConfigFiles === true ? core.info.bind(core) : core.debug.bind(core);
+
+      log(`Creating AWS config files for profile '${profile}' in region '${region}'`);
+      const { configFile, credentialsFile } = createAwsConfigFiles(
         creds,
         region,
         profile,
         configFilePath,
         credentialsFilePath,
+        debugConfigFiles,
       );
-      // Only set environment variables if using custom paths
-      // Default paths (~/.aws/*) don't need environment variables
-      if (!isDefaultPath) {
-        core.exportVariable('AWS_CONFIG_FILE', configFile);
-        core.exportVariable('AWS_SHARED_CREDENTIALS_FILE', credentialsFile);
-      }
+      // Set environment variables so AWS SDK/CLI can find the files
+      // This is needed for:
+      // 1. Explicit custom paths (user provided aws-config-file-path/aws-shared-credentials-file-path)
+      // 2. Environment variable paths (AWS_CONFIG_FILE/AWS_SHARED_CREDENTIALS_FILE were set)
+      // For default paths (~/.aws/*), AWS SDK/CLI will find them automatically, but setting
+      // the env vars explicitly ensures consistency
+      log(`Setting AWS_CONFIG_FILE environment variable to: ${configFile}`);
+      log(`Setting AWS_SHARED_CREDENTIALS_FILE environment variable to: ${credentialsFile}`);
+      core.exportVariable('AWS_CONFIG_FILE', configFile);
+      core.exportVariable('AWS_SHARED_CREDENTIALS_FILE', credentialsFile);
       // Set outputs for config file paths and profile name
       core.setOutput('aws-config-file-path', configFile);
       core.setOutput('aws-shared-credentials-file-path', credentialsFile);
       core.setOutput('aws-profile-name', profile);
-      core.debug(`Created AWS config file at ${configFile}`);
-      core.debug(`Created AWS shared credentials file at ${credentialsFile}`);
+      log(`Successfully created AWS config file at ${configFile}`);
+      log(`Successfully created AWS shared credentials file at ${credentialsFile}`);
     } catch (error) {
       core.warning(`Failed to create AWS config files: ${errorMessage(error)}`);
     }

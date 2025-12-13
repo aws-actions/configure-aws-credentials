@@ -4,6 +4,14 @@ import { fs, vol } from 'memfs';
 const testTempDir = './.test-tmp';
 const mockHomeDir = `${testTempDir}/home/testuser`;
 
+// Mock @actions/core
+vi.mock('@actions/core', () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warning: vi.fn(),
+  error: vi.fn(),
+}));
+
 // Mock node:fs to use memfs
 vi.mock('node:fs', () => {
   return { default: fs, ...fs };
@@ -130,6 +138,64 @@ describe('AWS Config Files', {}, () => {
 
       expect(result.configFile).toBe(`${mockHomeDir}/custom-config`);
       expect(result.credentialsFile).toBe(`${mockHomeDir}/custom-creds`);
+    });
+
+    it('uses AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE environment variables when set', {}, () => {
+      const envConfigPath = `${testTempDir}/env-config`;
+      const envCredsPath = `${testTempDir}/env-credentials`;
+      process.env.AWS_CONFIG_FILE = envConfigPath;
+      process.env.AWS_SHARED_CREDENTIALS_FILE = envCredsPath;
+
+      const result = createAwsConfigFiles(testCredentials, 'us-east-1', 'default');
+
+      expect(result.configFile).toBe(envConfigPath);
+      expect(result.credentialsFile).toBe(envCredsPath);
+      // Should not be considered default path since env vars point to custom locations
+      expect(result.isDefaultPath).toBe(false);
+
+      // Clean up
+      delete process.env.AWS_CONFIG_FILE;
+      delete process.env.AWS_SHARED_CREDENTIALS_FILE;
+    });
+
+    it('uses explicit input paths over environment variables', {}, () => {
+      const explicitConfigPath = `${testTempDir}/explicit-config`;
+      const explicitCredsPath = `${testTempDir}/explicit-credentials`;
+      const envConfigPath = `${testTempDir}/env-config`;
+      const envCredsPath = `${testTempDir}/env-credentials`;
+      process.env.AWS_CONFIG_FILE = envConfigPath;
+      process.env.AWS_SHARED_CREDENTIALS_FILE = envCredsPath;
+
+      const result = createAwsConfigFiles(
+        testCredentials,
+        'us-east-1',
+        'default',
+        explicitConfigPath,
+        explicitCredsPath,
+      );
+
+      expect(result.configFile).toBe(explicitConfigPath);
+      expect(result.credentialsFile).toBe(explicitCredsPath);
+      expect(result.isDefaultPath).toBe(false);
+
+      // Clean up
+      delete process.env.AWS_CONFIG_FILE;
+      delete process.env.AWS_SHARED_CREDENTIALS_FILE;
+    });
+
+    it('expands ~ in AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE environment variables', {}, () => {
+      process.env.AWS_CONFIG_FILE = '~/env-config';
+      process.env.AWS_SHARED_CREDENTIALS_FILE = '~/env-credentials';
+
+      const result = createAwsConfigFiles(testCredentials, 'us-east-1', 'default');
+
+      expect(result.configFile).toBe(`${mockHomeDir}/env-config`);
+      expect(result.credentialsFile).toBe(`${mockHomeDir}/env-credentials`);
+      expect(result.isDefaultPath).toBe(false);
+
+      // Clean up
+      delete process.env.AWS_CONFIG_FILE;
+      delete process.env.AWS_SHARED_CREDENTIALS_FILE;
     });
 
     it('updates existing config file with new profile', {}, () => {

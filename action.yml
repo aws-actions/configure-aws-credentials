@@ -69,19 +69,23 @@ inputs:
     required: false
     default: true
   output-config-files:
-    description: Whether to create AWS config files (AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE) with the credentials. By default, files are created at ~/.aws/config and ~/.aws/credentials.
+    description: Whether to create AWS config files (AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE) with the credentials. File paths are determined by: 1) explicit input paths (aws-config-file-path/aws-shared-credentials-file-path), 2) AWS_CONFIG_FILE/AWS_SHARED_CREDENTIALS_FILE environment variables if set, 3) default ~/.aws/config and ~/.aws/credentials.
     required: false
     default: false
   aws-config-file-path:
-    description: Custom path for AWS_CONFIG_FILE. If not specified, defaults to ~/.aws/config. Only used when output-config-files is true.
+    description: Custom path for AWS_CONFIG_FILE. If not specified, the action uses the AWS_CONFIG_FILE environment variable if set, otherwise defaults to ~/.aws/config. Only used when output-config-files is true.
     required: false
   aws-shared-credentials-file-path:
-    description: Custom path for AWS_SHARED_CREDENTIALS_FILE. If not specified, defaults to ~/.aws/credentials. Only used when output-config-files is true.
+    description: Custom path for AWS_SHARED_CREDENTIALS_FILE. If not specified, the action uses the AWS_SHARED_CREDENTIALS_FILE environment variable if set, otherwise defaults to ~/.aws/credentials. Only used when output-config-files is true.
     required: false
   aws-profile-name:
     description: Profile name to use in AWS config and credentials files. Defaults to 'default'. Only used when output-config-files is true.
     required: false
     default: default
+  debug-config-files:
+    description: Enable verbose logging for AWS config file creation. When enabled, detailed debug information about file paths, directory creation, and file updates will be logged using core.info (visible in GitHub Actions logs). When disabled, only basic debug messages are logged using core.debug (requires ACTIONS_STEP_DEBUG=true to be visible). Only used when output-config-files is true.
+    required: false
+    default: false
   unset-current-credentials:
     description: Whether to unset the existing credentials in your runner. May be useful if you run this action multiple times in the same job
     required: false
