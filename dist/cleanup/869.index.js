@@ -65,7 +65,7 @@ const isCredentialSourceProfile = (arg, { profile, logger }) => {
     }
     return withProviderProfile;
 };
-const resolveAssumeRoleCredentials = async (profileName, profiles, options, visitedProfiles = {}, resolveProfileData) => {
+const resolveAssumeRoleCredentials = async (profileName, profiles, options, callerClientConfig, visitedProfiles = {}, resolveProfileData) => {
     options.logger?.debug("@aws-sdk/credential-provider-ini - resolveAssumeRoleCredentials (STS)");
     const profileData = profiles[profileName];
     const { source_profile, region } = profileData;
@@ -75,8 +75,9 @@ const resolveAssumeRoleCredentials = async (profileName, profiles, options, visi
             ...options.clientConfig,
             credentialProviderLogger: options.logger,
             parentClientConfig: {
+                ...callerClientConfig,
                 ...options?.parentClientConfig,
-                region: region ?? options?.parentClientConfig?.region,
+                region: region ?? options?.parentClientConfig?.region ?? callerClientConfig?.region,
             },
         }, options.clientPlugins);
     }
@@ -87,7 +88,7 @@ const resolveAssumeRoleCredentials = async (profileName, profiles, options, visi
     }
     options.logger?.debug(`@aws-sdk/credential-provider-ini - finding credential resolver using ${source_profile ? `source_profile=[${source_profile}]` : `profile=[${profileName}]`}`);
     const sourceCredsProvider = source_profile
-        ? resolveProfileData(source_profile, profiles, options, {
+        ? resolveProfileData(source_profile, profiles, options, callerClientConfig, {
             ...visitedProfiles,
             [source_profile]: true,
         }, isCredentialSourceWithoutRoleArn(profiles[source_profile] ?? {}))
@@ -121,11 +122,11 @@ const isCredentialSourceWithoutRoleArn = (section) => {
 const isLoginProfile = (data) => {
     return Boolean(data && data.login_session);
 };
-const resolveLoginCredentials = async (profileName, options) => {
+const resolveLoginCredentials = async (profileName, options, callerClientConfig) => {
     const credentials = await credentialProviderLogin.fromLoginCredentials({
         ...options,
         profile: profileName,
-    })();
+    })({ callerClientConfig });
     return client.setCredentialFeature(credentials, "CREDENTIALS_PROFILE_LOGIN", "AC");
 };
 
@@ -135,14 +136,16 @@ const resolveProcessCredentials = async (options, profile) => __webpack_require_
     profile,
 })().then((creds) => client.setCredentialFeature(creds, "CREDENTIALS_PROFILE_PROCESS", "v")));
 
-const resolveSsoCredentials = async (profile, profileData, options = {}) => {
+const resolveSsoCredentials = async (profile, profileData, options = {}, callerClientConfig) => {
     const { fromSSO } = await __webpack_require__.e(/* import() */ 998).then(__webpack_require__.t.bind(__webpack_require__, 998, 19));
     return fromSSO({
         profile,
         logger: options.logger,
         parentClientConfig: options.parentClientConfig,
         clientConfig: options.clientConfig,
-    })().then((creds) => {
+    })({
+        callerClientConfig,
+    }).then((creds) => {
         if (profileData.sso_session) {
             return client.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SSO", "r");
         }
@@ -181,54 +184,49 @@ const isWebIdentityProfile = (arg) => Boolean(arg) &&
     typeof arg.web_identity_token_file === "string" &&
     typeof arg.role_arn === "string" &&
     ["undefined", "string"].indexOf(typeof arg.role_session_name) > -1;
-const resolveWebIdentityCredentials = async (profile, options) => __webpack_require__.e(/* import() */ 956).then(__webpack_require__.t.bind(__webpack_require__, 9956, 23)).then(({ fromTokenFile }) => fromTokenFile({
+const resolveWebIdentityCredentials = async (profile, options, callerClientConfig) => __webpack_require__.e(/* import() */ 956).then(__webpack_require__.t.bind(__webpack_require__, 9956, 23)).then(({ fromTokenFile }) => fromTokenFile({
     webIdentityTokenFile: profile.web_identity_token_file,
     roleArn: profile.role_arn,
     roleSessionName: profile.role_session_name,
     roleAssumerWithWebIdentity: options.roleAssumerWithWebIdentity,
     logger: options.logger,
     parentClientConfig: options.parentClientConfig,
-})().then((creds) => client.setCredentialFeature(creds, "CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN", "q")));
+})({
+    callerClientConfig,
+}).then((creds) => client.setCredentialFeature(creds, "CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN", "q")));
 
-const resolveProfileData = async (profileName, profiles, options, visitedProfiles = {}, isAssumeRoleRecursiveCall = false) => {
+const resolveProfileData = async (profileName, profiles, options, callerClientConfig, visitedProfiles = {}, isAssumeRoleRecursiveCall = false) => {
     const data = profiles[profileName];
     if (Object.keys(visitedProfiles).length > 0 && isStaticCredsProfile(data)) {
         return resolveStaticCredentials(data, options);
     }
     if (isAssumeRoleRecursiveCall || isAssumeRoleProfile(data, { profile: profileName, logger: options.logger })) {
-        return resolveAssumeRoleCredentials(profileName, profiles, options, visitedProfiles, resolveProfileData);
+        return resolveAssumeRoleCredentials(profileName, profiles, options, callerClientConfig, visitedProfiles, resolveProfileData);
     }
     if (isStaticCredsProfile(data)) {
         return resolveStaticCredentials(data, options);
     }
     if (isWebIdentityProfile(data)) {
-        return resolveWebIdentityCredentials(data, options);
+        return resolveWebIdentityCredentials(data, options, callerClientConfig);
     }
     if (isProcessProfile(data)) {
         return resolveProcessCredentials(options, profileName);
     }
     if (isSsoProfile(data)) {
-        return await resolveSsoCredentials(profileName, data, options);
+        return await resolveSsoCredentials(profileName, data, options, callerClientConfig);
     }
     if (isLoginProfile(data)) {
-        return resolveLoginCredentials(profileName, options);
+        return resolveLoginCredentials(profileName, options, callerClientConfig);
     }
     throw new propertyProvider.CredentialsProviderError(`Could not resolve credentials using profile: [${profileName}] in configuration/credentials file(s).`, { logger: options.logger });
 };
 
-const fromIni = (_init = {}) => async ({ callerClientConfig } = {}) => {
-    const init = {
-        ..._init,
-        parentClientConfig: {
-            ...callerClientConfig,
-            ..._init.parentClientConfig,
-        },
-    };
+const fromIni = (init = {}) => async ({ callerClientConfig } = {}) => {
     init.logger?.debug("@aws-sdk/credential-provider-ini - fromIni");
     const profiles = await sharedIniFileLoader.parseKnownFiles(init);
     return resolveProfileData(sharedIniFileLoader.getProfileName({
-        profile: _init.profile ?? callerClientConfig?.profile,
-    }), profiles, init);
+        profile: init.profile ?? callerClientConfig?.profile,
+    }), profiles, init, callerClientConfig);
 };
 
 exports.fromIni = fromIni;
