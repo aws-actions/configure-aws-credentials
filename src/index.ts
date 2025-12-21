@@ -14,6 +14,7 @@ import {
   unsetCredentials,
   verifyKeys,
 } from './helpers';
+import { writeProfileFiles } from './profileManager';
 
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
 const ROLE_SESSION_NAME = 'GitHubActions';
@@ -29,6 +30,7 @@ export async function run() {
     const sessionTokenInput = core.getInput('aws-session-token', { required: false });
     const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
     const region = core.getInput('aws-region', { required: true });
+    const awsProfile = core.getInput('aws-profile', { required: false });
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
     const maskAccountId = getBooleanInput('mask-aws-account-id', { required: false });
@@ -117,7 +119,11 @@ export async function run() {
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
-    exportRegion(region, outputEnvCredentials);
+
+    // When using profile mode, always export region env vars
+    // When not using profile mode, respect outputEnvCredentials
+    const shouldExportRegionEnvVars = awsProfile ? true : outputEnvCredentials;
+    exportRegion(region, shouldExportRegionEnvVars);
 
     // Instantiate credentials client
     const clientProps: { region: string; proxyServer?: string; noProxy?: string } = { region };
@@ -160,7 +166,9 @@ export async function run() {
       // Plus, in the assume role case, if the AssumeRole call fails, we want
       // the source credentials to already be masked as secrets
       // in any error messages.
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+      // When using profile mode, we don't export to env vars (set to false) but still mask secrets
+      const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
+      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, shouldExportEnvCreds);
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
@@ -200,7 +208,10 @@ export async function run() {
         );
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
+
+      // When using profile mode, we don't export credentials to env vars but still mask secrets and handle step outputs
+      const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
+      exportCredentials(roleCredentials.Credentials, outputCredentials, shouldExportEnvCreds);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
@@ -215,8 +226,28 @@ export async function run() {
       if (outputEnvCredentials) {
         await exportAccountId(credentialsClient, maskAccountId);
       }
+
+      // Write profile files if profile mode is enabled
+      if (awsProfile) {
+        writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region);
+
+        // Export AWS_PROFILE env var if outputEnvCredentials is true
+        if (outputEnvCredentials) {
+          core.exportVariable('AWS_PROFILE', awsProfile);
+        }
+      }
     } else {
       core.info('Proceeding with IAM user credentials');
+
+      // Write profile files if profile mode is enabled (for IAM user credentials without role assumption)
+      if (awsProfile) {
+        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region);
+
+        // Export AWS_PROFILE env var if outputEnvCredentials is true
+        if (outputEnvCredentials) {
+          core.exportVariable('AWS_PROFILE', awsProfile);
+        }
+      }
     }
 
     // Clear timeout on successful completion

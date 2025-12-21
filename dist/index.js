@@ -658,6 +658,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const assumeRole_1 = __nccwpck_require__(6993);
 const CredentialsClient_1 = __nccwpck_require__(8234);
 const helpers_1 = __nccwpck_require__(2918);
+const profileManager_1 = __nccwpck_require__(1351);
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
@@ -671,6 +672,7 @@ async function run() {
         const sessionTokenInput = core.getInput('aws-session-token', { required: false });
         const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
         const region = core.getInput('aws-region', { required: true });
+        const awsProfile = core.getInput('aws-profile', { required: false });
         const roleToAssume = core.getInput('role-to-assume', { required: false });
         const audience = core.getInput('audience', { required: false });
         const maskAccountId = (0, helpers_1.getBooleanInput)('mask-aws-account-id', { required: false });
@@ -746,7 +748,10 @@ async function run() {
         if (!region.match(REGION_REGEX)) {
             throw new Error(`Region is not valid: ${region}`);
         }
-        (0, helpers_1.exportRegion)(region, outputEnvCredentials);
+        // When using profile mode, always export region env vars
+        // When not using profile mode, respect outputEnvCredentials
+        const shouldExportRegionEnvVars = awsProfile ? true : outputEnvCredentials;
+        (0, helpers_1.exportRegion)(region, shouldExportRegionEnvVars);
         // Instantiate credentials client
         const clientProps = { region };
         if (proxyServer)
@@ -787,7 +792,9 @@ async function run() {
             // Plus, in the assume role case, if the AssumeRole call fails, we want
             // the source credentials to already be masked as secrets
             // in any error messages.
-            (0, helpers_1.exportCredentials)({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+            // When using profile mode, we don't export to env vars (set to false) but still mask secrets
+            const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
+            (0, helpers_1.exportCredentials)({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, shouldExportEnvCreds);
         }
         else if (!webIdentityTokenFile && !roleChaining) {
             // Proceed only if credentials can be picked up
@@ -822,7 +829,9 @@ async function run() {
                 }, !disableRetry, maxRetries);
             } while (specialCharacterWorkaround && !(0, helpers_1.verifyKeys)(roleCredentials.Credentials));
             core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-            (0, helpers_1.exportCredentials)(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
+            // When using profile mode, we don't export credentials to env vars but still mask secrets and handle step outputs
+            const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
+            (0, helpers_1.exportCredentials)(roleCredentials.Credentials, outputCredentials, shouldExportEnvCreds);
             // We need to validate the credentials in 2 of our use-cases
             // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
             //  is set to `true` then we are NOT in a self-hosted runner.
@@ -833,9 +842,25 @@ async function run() {
             if (outputEnvCredentials) {
                 await (0, helpers_1.exportAccountId)(credentialsClient, maskAccountId);
             }
+            // Write profile files if profile mode is enabled
+            if (awsProfile) {
+                (0, profileManager_1.writeProfileFiles)(awsProfile, roleCredentials.Credentials || {}, region);
+                // Export AWS_PROFILE env var if outputEnvCredentials is true
+                if (outputEnvCredentials) {
+                    core.exportVariable('AWS_PROFILE', awsProfile);
+                }
+            }
         }
         else {
             core.info('Proceeding with IAM user credentials');
+            // Write profile files if profile mode is enabled (for IAM user credentials without role assumption)
+            if (awsProfile) {
+                (0, profileManager_1.writeProfileFiles)(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region);
+                // Export AWS_PROFILE env var if outputEnvCredentials is true
+                if (outputEnvCredentials) {
+                    core.exportVariable('AWS_PROFILE', awsProfile);
+                }
+            }
         }
         // Clear timeout on successful completion
         if (timeoutId)
@@ -859,6 +884,170 @@ if (require.main === require.cache[eval('__filename')]) {
     });
 }
 //# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 1351:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getProfileFilePaths = getProfileFilePaths;
+exports.ensureAwsDirectoryExists = ensureAwsDirectoryExists;
+exports.validateProfileName = validateProfileName;
+exports.mergeProfileSection = mergeProfileSection;
+exports.writeProfileFiles = writeProfileFiles;
+const fs = __importStar(__nccwpck_require__(3024));
+const os = __importStar(__nccwpck_require__(8161));
+const path = __importStar(__nccwpck_require__(6760));
+const core = __importStar(__nccwpck_require__(7484));
+const ini = __importStar(__nccwpck_require__(5756));
+/**
+ * Get the file paths for AWS credentials and config files
+ * Respects AWS_SHARED_CREDENTIALS_FILE and AWS_CONFIG_FILE environment variables
+ */
+function getProfileFilePaths() {
+    const credentialsPath = process.env.AWS_SHARED_CREDENTIALS_FILE || path.join(os.homedir(), '.aws', 'credentials');
+    const configPath = process.env.AWS_CONFIG_FILE || path.join(os.homedir(), '.aws', 'config');
+    return {
+        credentials: credentialsPath,
+        config: configPath,
+    };
+}
+/**
+ * Ensure the AWS directory exists with secure permissions
+ * Creates the directory with 700 permissions (rwx for owner only)
+ */
+function ensureAwsDirectoryExists(filePath) {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+        core.debug(`Creating directory: ${dir}`);
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    }
+}
+/**
+ * Validate profile name format
+ * Profile names must be non-empty, contain no whitespace, brackets, or path separators
+ */
+function validateProfileName(profileName) {
+    if (!profileName || profileName.trim() === '') {
+        throw new Error('aws-profile must not be empty');
+    }
+    if (/\s/.test(profileName)) {
+        throw new Error('aws-profile must not contain whitespace');
+    }
+    // INI section names can't contain brackets
+    if (/[[\]]/.test(profileName)) {
+        throw new Error('aws-profile must not contain brackets');
+    }
+    // Prevent path traversal
+    if (profileName.includes('/') || profileName.includes('\\')) {
+        throw new Error('aws-profile must not contain path separators');
+    }
+}
+/**
+ * Merge a profile section into an INI file
+ * Reads existing file, updates the specified section, and writes back atomically
+ */
+function mergeProfileSection(filePath, sectionName, data) {
+    let existingContent = {};
+    // Read existing file if it exists
+    if (fs.existsSync(filePath)) {
+        core.debug(`Reading existing file: ${filePath}`);
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        existingContent = ini.parse(fileContent);
+    }
+    // Merge: update existing profile or add new one
+    existingContent[sectionName] = data;
+    // Atomic write: write to temp file, then rename
+    const tempFile = `${filePath}.tmp`;
+    const content = ini.stringify(existingContent);
+    core.debug(`Writing profile to ${filePath}`);
+    fs.writeFileSync(tempFile, content, { mode: 0o600 });
+    fs.renameSync(tempFile, filePath);
+}
+/**
+ * Write AWS profile files with credentials and configuration
+ * This is the main entry point for profile file operations
+ *
+ * @param profileName - Name of the AWS profile to configure
+ * @param credentials - AWS credentials (access key, secret key, session token)
+ * @param region - AWS region
+ */
+function writeProfileFiles(profileName, credentials, region) {
+    try {
+        // Validate profile name
+        validateProfileName(profileName);
+        const paths = getProfileFilePaths();
+        // Ensure .aws directory exists
+        ensureAwsDirectoryExists(paths.credentials);
+        ensureAwsDirectoryExists(paths.config);
+        // Prepare credentials data
+        const credentialsData = {};
+        if (credentials.AccessKeyId) {
+            credentialsData.aws_access_key_id = credentials.AccessKeyId;
+        }
+        if (credentials.SecretAccessKey) {
+            credentialsData.aws_secret_access_key = credentials.SecretAccessKey;
+        }
+        if (credentials.SessionToken) {
+            credentialsData.aws_session_token = credentials.SessionToken;
+        }
+        // Credentials file uses [profileName] syntax
+        const credsSectionName = profileName;
+        // Config file uses [profile profileName] syntax, except for 'default'
+        const configSectionName = profileName === 'default' ? 'default' : `profile ${profileName}`;
+        // Prepare config data
+        const configData = {
+            region: region,
+        };
+        // Write to credentials file
+        core.info(`Writing credentials to profile: ${profileName}`);
+        mergeProfileSection(paths.credentials, credsSectionName, credentialsData);
+        // Write to config file
+        core.info(`Writing config to profile: ${profileName}`);
+        mergeProfileSection(paths.config, configSectionName, configData);
+        core.info(`✓ Successfully configured AWS profile: ${profileName}`);
+    }
+    catch (error) {
+        throw new Error(`Failed to write AWS profile '${profileName}': ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+//# sourceMappingURL=profileManager.js.map
 
 /***/ }),
 
@@ -44187,6 +44376,293 @@ function parseProxyResponse(socket) {
 }
 exports.parseProxyResponse = parseProxyResponse;
 //# sourceMappingURL=parse-proxy-response.js.map
+
+/***/ }),
+
+/***/ 5756:
+/***/ ((module) => {
+
+const { hasOwnProperty } = Object.prototype
+
+const encode = (obj, opt = {}) => {
+  if (typeof opt === 'string') {
+    opt = { section: opt }
+  }
+  opt.align = opt.align === true
+  opt.newline = opt.newline === true
+  opt.sort = opt.sort === true
+  opt.whitespace = opt.whitespace === true || opt.align === true
+  // The `typeof` check is required because accessing the `process` directly fails on browsers.
+  /* istanbul ignore next */
+  opt.platform = opt.platform || (typeof process !== 'undefined' && process.platform)
+  opt.bracketedArray = opt.bracketedArray !== false
+
+  /* istanbul ignore next */
+  const eol = opt.platform === 'win32' ? '\r\n' : '\n'
+  const separator = opt.whitespace ? ' = ' : '='
+  const children = []
+
+  const keys = opt.sort ? Object.keys(obj).sort() : Object.keys(obj)
+
+  let padToChars = 0
+  // If aligning on the separator, then padToChars is determined as follows:
+  // 1. Get the keys
+  // 2. Exclude keys pointing to objects unless the value is null or an array
+  // 3. Add `[]` to array keys
+  // 4. Ensure non empty set of keys
+  // 5. Reduce the set to the longest `safe` key
+  // 6. Get the `safe` length
+  if (opt.align) {
+    padToChars = safe(
+      (
+        keys
+          .filter(k => obj[k] === null || Array.isArray(obj[k]) || typeof obj[k] !== 'object')
+          .map(k => Array.isArray(obj[k]) ? `${k}[]` : k)
+      )
+        .concat([''])
+        .reduce((a, b) => safe(a).length >= safe(b).length ? a : b)
+    ).length
+  }
+
+  let out = ''
+  const arraySuffix = opt.bracketedArray ? '[]' : ''
+
+  for (const k of keys) {
+    const val = obj[k]
+    if (val && Array.isArray(val)) {
+      for (const item of val) {
+        out += safe(`${k}${arraySuffix}`).padEnd(padToChars, ' ') + separator + safe(item) + eol
+      }
+    } else if (val && typeof val === 'object') {
+      children.push(k)
+    } else {
+      out += safe(k).padEnd(padToChars, ' ') + separator + safe(val) + eol
+    }
+  }
+
+  if (opt.section && out.length) {
+    out = '[' + safe(opt.section) + ']' + (opt.newline ? eol + eol : eol) + out
+  }
+
+  for (const k of children) {
+    const nk = splitSections(k, '.').join('\\.')
+    const section = (opt.section ? opt.section + '.' : '') + nk
+    const child = encode(obj[k], {
+      ...opt,
+      section,
+    })
+    if (out.length && child.length) {
+      out += eol
+    }
+
+    out += child
+  }
+
+  return out
+}
+
+function splitSections (str, separator) {
+  var lastMatchIndex = 0
+  var lastSeparatorIndex = 0
+  var nextIndex = 0
+  var sections = []
+
+  do {
+    nextIndex = str.indexOf(separator, lastMatchIndex)
+
+    if (nextIndex !== -1) {
+      lastMatchIndex = nextIndex + separator.length
+
+      if (nextIndex > 0 && str[nextIndex - 1] === '\\') {
+        continue
+      }
+
+      sections.push(str.slice(lastSeparatorIndex, nextIndex))
+      lastSeparatorIndex = nextIndex + separator.length
+    }
+  } while (nextIndex !== -1)
+
+  sections.push(str.slice(lastSeparatorIndex))
+
+  return sections
+}
+
+const decode = (str, opt = {}) => {
+  opt.bracketedArray = opt.bracketedArray !== false
+  const out = Object.create(null)
+  let p = out
+  let section = null
+  //          section          |key      = value
+  const re = /^\[([^\]]*)\]\s*$|^([^=]+)(=(.*))?$/i
+  const lines = str.split(/[\r\n]+/g)
+  const duplicates = {}
+
+  for (const line of lines) {
+    if (!line || line.match(/^\s*[;#]/) || line.match(/^\s*$/)) {
+      continue
+    }
+    const match = line.match(re)
+    if (!match) {
+      continue
+    }
+    if (match[1] !== undefined) {
+      section = unsafe(match[1])
+      if (section === '__proto__') {
+        // not allowed
+        // keep parsing the section, but don't attach it.
+        p = Object.create(null)
+        continue
+      }
+      p = out[section] = out[section] || Object.create(null)
+      continue
+    }
+    const keyRaw = unsafe(match[2])
+    let isArray
+    if (opt.bracketedArray) {
+      isArray = keyRaw.length > 2 && keyRaw.slice(-2) === '[]'
+    } else {
+      duplicates[keyRaw] = (duplicates?.[keyRaw] || 0) + 1
+      isArray = duplicates[keyRaw] > 1
+    }
+    const key = isArray && keyRaw.endsWith('[]')
+      ? keyRaw.slice(0, -2) : keyRaw
+
+    if (key === '__proto__') {
+      continue
+    }
+    const valueRaw = match[3] ? unsafe(match[4]) : true
+    const value = valueRaw === 'true' ||
+      valueRaw === 'false' ||
+      valueRaw === 'null' ? JSON.parse(valueRaw)
+      : valueRaw
+
+    // Convert keys with '[]' suffix to an array
+    if (isArray) {
+      if (!hasOwnProperty.call(p, key)) {
+        p[key] = []
+      } else if (!Array.isArray(p[key])) {
+        p[key] = [p[key]]
+      }
+    }
+
+    // safeguard against resetting a previously defined
+    // array by accidentally forgetting the brackets
+    if (Array.isArray(p[key])) {
+      p[key].push(value)
+    } else {
+      p[key] = value
+    }
+  }
+
+  // {a:{y:1},"a.b":{x:2}} --> {a:{y:1,b:{x:2}}}
+  // use a filter to return the keys that have to be deleted.
+  const remove = []
+  for (const k of Object.keys(out)) {
+    if (!hasOwnProperty.call(out, k) ||
+      typeof out[k] !== 'object' ||
+      Array.isArray(out[k])) {
+      continue
+    }
+
+    // see if the parent section is also an object.
+    // if so, add it to that, and mark this one for deletion
+    const parts = splitSections(k, '.')
+    p = out
+    const l = parts.pop()
+    const nl = l.replace(/\\\./g, '.')
+    for (const part of parts) {
+      if (part === '__proto__') {
+        continue
+      }
+      if (!hasOwnProperty.call(p, part) || typeof p[part] !== 'object') {
+        p[part] = Object.create(null)
+      }
+      p = p[part]
+    }
+    if (p === out && nl === l) {
+      continue
+    }
+
+    p[nl] = out[k]
+    remove.push(k)
+  }
+  for (const del of remove) {
+    delete out[del]
+  }
+
+  return out
+}
+
+const isQuoted = val => {
+  return (val.startsWith('"') && val.endsWith('"')) ||
+    (val.startsWith("'") && val.endsWith("'"))
+}
+
+const safe = val => {
+  if (
+    typeof val !== 'string' ||
+    val.match(/[=\r\n]/) ||
+    val.match(/^\[/) ||
+    (val.length > 1 && isQuoted(val)) ||
+    val !== val.trim()
+  ) {
+    return JSON.stringify(val)
+  }
+  return val.split(';').join('\\;').split('#').join('\\#')
+}
+
+const unsafe = val => {
+  val = (val || '').trim()
+  if (isQuoted(val)) {
+    // remove the single quotes before calling JSON.parse
+    if (val.charAt(0) === "'") {
+      val = val.slice(1, -1)
+    }
+    try {
+      val = JSON.parse(val)
+    } catch {
+      // ignore errors
+    }
+  } else {
+    // walk the val to find the first not-escaped ; character
+    let esc = false
+    let unesc = ''
+    for (let i = 0, l = val.length; i < l; i++) {
+      const c = val.charAt(i)
+      if (esc) {
+        if ('\\;#'.indexOf(c) !== -1) {
+          unesc += c
+        } else {
+          unesc += '\\' + c
+        }
+
+        esc = false
+      } else if (';#'.indexOf(c) !== -1) {
+        break
+      } else if (c === '\\') {
+        esc = true
+      } else {
+        unesc += c
+      }
+    }
+    if (esc) {
+      unesc += '\\'
+    }
+
+    return unesc.trim()
+  }
+  return val
+}
+
+module.exports = {
+  parse: decode,
+  decode,
+  stringify: encode,
+  encode,
+  safe,
+  unsafe,
+}
+
 
 /***/ }),
 

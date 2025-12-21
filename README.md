@@ -129,6 +129,7 @@ See [action.yml](./action.yml) for more detail.
 |          Option           |                                            Description                                            | Required |
 |---------------------------|---------------------------------------------------------------------------------------------------|----------|
 | aws-region                | Which AWS region to use                                                                           |    Yes   |
+| aws-profile               | Name of the AWS profile to configure. When provided, credentials are written to `~/.aws/credentials` and `~/.aws/config` files instead of environment variables. This enables configuring multiple profiles in a single workflow. |    No    |
 | role-to-assume            | Role for which to fetch credentials. Only required for some authentication types.                 |    No    |
 | aws-access-key-id         | AWS access key to use. Only required for some authentication types.                               |    No    |
 | aws-secret-access-key     | AWS secret key to use. Only required for some authentication types.                               |    No    |
@@ -170,6 +171,26 @@ if desired.
 Sometimes, existing credentials in your runner can get in the way of the
 intended outcome. You can set the `unset-current-credentials` input to `true` to
 work around this issue.
+
+#### Configure named AWS profiles
+
+By default, this action exports credentials as environment variables
+(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc.). However, you can use the
+`aws-profile` input to configure named AWS profiles instead. When `aws-profile`
+is provided, credentials are written to `~/.aws/credentials` and
+`~/.aws/config` files, allowing you to:
+
+- Configure multiple AWS profiles in a single workflow
+- Use the `--profile` flag with AWS CLI and SDKs
+- Work naturally with tools like Terraform and AWS CDK that read from AWS config files
+
+When using profiles:
+- Credentials are **not** exported as environment variables (AWS_ACCESS_KEY_ID, etc.)
+- The `AWS_PROFILE` environment variable is set (unless `output-env-credentials: false`)
+- The `AWS_REGION` environment variable is always set for convenience
+- All authentication methods (OIDC, static credentials, role assumption) are supported
+
+See the [Examples](#examples) section for usage examples.
 
 #### Use an HTTP proxy
 
@@ -482,6 +503,43 @@ This example shows that you can reference the fetched credentials as outputs if
 `output-credentials` is set to true. This example also shows that you can use
 the `aws-session-token` input in a situation where session tokens are fetched
 and passed to this action.
+
+### Configure multiple AWS profiles in a single workflow
+```yaml
+    - name: Configure AWS Credentials for Dev
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-1
+        role-to-assume: arn:aws:iam::111111111111:role/dev-role
+        aws-profile: dev
+
+    - name: Configure AWS Credentials for Prod
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-west-2
+        role-to-assume: arn:aws:iam::222222222222:role/prod-role
+        aws-profile: prod
+
+    - name: Use multiple profiles
+      run: |
+        # Check caller identity for dev account
+        aws sts get-caller-identity --profile dev
+
+        # Check caller identity for prod account
+        aws sts get-caller-identity --profile prod
+
+        # Deploy to dev using Terraform
+        terraform apply -var="profile=dev"
+```
+This example shows how to configure multiple named AWS profiles in a single
+workflow. When using the `aws-profile` input, credentials are written to
+`~/.aws/credentials` and `~/.aws/config` files instead of environment
+variables, allowing you to reference different profiles using the `--profile`
+flag with AWS CLI, SDKs, Terraform, and other tools.
+
+Each profile is independent and can authenticate to different AWS accounts or
+use different roles. This is particularly useful for multi-account deployments
+or when you need to interact with multiple AWS environments in a single job.
 
 Versioning
 ----------
