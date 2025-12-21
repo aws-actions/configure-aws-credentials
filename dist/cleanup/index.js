@@ -43243,6 +43243,7 @@ function cleanup() {
             core.exportVariable('AWS_SESSION_TOKEN', '');
             core.exportVariable('AWS_DEFAULT_REGION', '');
             core.exportVariable('AWS_REGION', '');
+            core.exportVariable('AWS_PROFILE', '');
         }
         catch (error) {
             core.setFailed((0, helpers_1.errorMessage)(error));
