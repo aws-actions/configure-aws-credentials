@@ -3705,14 +3705,14 @@ var schema = __nccwpck_require__(6890);
 var client = __nccwpck_require__(5152);
 var regionConfigResolver = __nccwpck_require__(6463);
 
-let STSServiceException$1 = class STSServiceException extends smithyClient.ServiceException {
+class STSServiceException extends smithyClient.ServiceException {
     constructor(options) {
         super(options);
         Object.setPrototypeOf(this, STSServiceException.prototype);
     }
-};
+}
 
-let ExpiredTokenException$1 = class ExpiredTokenException extends STSServiceException$1 {
+class ExpiredTokenException extends STSServiceException {
     name = "ExpiredTokenException";
     $fault = "client";
     constructor(opts) {
@@ -3723,8 +3723,8 @@ let ExpiredTokenException$1 = class ExpiredTokenException extends STSServiceExce
         });
         Object.setPrototypeOf(this, ExpiredTokenException.prototype);
     }
-};
-let MalformedPolicyDocumentException$1 = class MalformedPolicyDocumentException extends STSServiceException$1 {
+}
+class MalformedPolicyDocumentException extends STSServiceException {
     name = "MalformedPolicyDocumentException";
     $fault = "client";
     constructor(opts) {
@@ -3735,8 +3735,8 @@ let MalformedPolicyDocumentException$1 = class MalformedPolicyDocumentException 
         });
         Object.setPrototypeOf(this, MalformedPolicyDocumentException.prototype);
     }
-};
-let PackedPolicyTooLargeException$1 = class PackedPolicyTooLargeException extends STSServiceException$1 {
+}
+class PackedPolicyTooLargeException extends STSServiceException {
     name = "PackedPolicyTooLargeException";
     $fault = "client";
     constructor(opts) {
@@ -3747,8 +3747,8 @@ let PackedPolicyTooLargeException$1 = class PackedPolicyTooLargeException extend
         });
         Object.setPrototypeOf(this, PackedPolicyTooLargeException.prototype);
     }
-};
-let RegionDisabledException$1 = class RegionDisabledException extends STSServiceException$1 {
+}
+class RegionDisabledException extends STSServiceException {
     name = "RegionDisabledException";
     $fault = "client";
     constructor(opts) {
@@ -3759,8 +3759,8 @@ let RegionDisabledException$1 = class RegionDisabledException extends STSService
         });
         Object.setPrototypeOf(this, RegionDisabledException.prototype);
     }
-};
-let IDPRejectedClaimException$1 = class IDPRejectedClaimException extends STSServiceException$1 {
+}
+class IDPRejectedClaimException extends STSServiceException {
     name = "IDPRejectedClaimException";
     $fault = "client";
     constructor(opts) {
@@ -3771,8 +3771,8 @@ let IDPRejectedClaimException$1 = class IDPRejectedClaimException extends STSSer
         });
         Object.setPrototypeOf(this, IDPRejectedClaimException.prototype);
     }
-};
-let InvalidIdentityTokenException$1 = class InvalidIdentityTokenException extends STSServiceException$1 {
+}
+class InvalidIdentityTokenException extends STSServiceException {
     name = "InvalidIdentityTokenException";
     $fault = "client";
     constructor(opts) {
@@ -3783,8 +3783,8 @@ let InvalidIdentityTokenException$1 = class InvalidIdentityTokenException extend
         });
         Object.setPrototypeOf(this, InvalidIdentityTokenException.prototype);
     }
-};
-let IDPCommunicationErrorException$1 = class IDPCommunicationErrorException extends STSServiceException$1 {
+}
+class IDPCommunicationErrorException extends STSServiceException {
     name = "IDPCommunicationErrorException";
     $fault = "client";
     constructor(opts) {
@@ -3795,8 +3795,8 @@ let IDPCommunicationErrorException$1 = class IDPCommunicationErrorException exte
         });
         Object.setPrototypeOf(this, IDPCommunicationErrorException.prototype);
     }
-};
-let InvalidAuthorizationMessageException$1 = class InvalidAuthorizationMessageException extends STSServiceException$1 {
+}
+class InvalidAuthorizationMessageException extends STSServiceException {
     name = "InvalidAuthorizationMessageException";
     $fault = "client";
     constructor(opts) {
@@ -3807,8 +3807,8 @@ let InvalidAuthorizationMessageException$1 = class InvalidAuthorizationMessageEx
         });
         Object.setPrototypeOf(this, InvalidAuthorizationMessageException.prototype);
     }
-};
-let ExpiredTradeInTokenException$1 = class ExpiredTradeInTokenException extends STSServiceException$1 {
+}
+class ExpiredTradeInTokenException extends STSServiceException {
     name = "ExpiredTradeInTokenException";
     $fault = "client";
     constructor(opts) {
@@ -3819,8 +3819,8 @@ let ExpiredTradeInTokenException$1 = class ExpiredTradeInTokenException extends 
         });
         Object.setPrototypeOf(this, ExpiredTradeInTokenException.prototype);
     }
-};
-let JWTPayloadSizeExceededException$1 = class JWTPayloadSizeExceededException extends STSServiceException$1 {
+}
+class JWTPayloadSizeExceededException extends STSServiceException {
     name = "JWTPayloadSizeExceededException";
     $fault = "client";
     constructor(opts) {
@@ -3831,8 +3831,8 @@ let JWTPayloadSizeExceededException$1 = class JWTPayloadSizeExceededException ex
         });
         Object.setPrototypeOf(this, JWTPayloadSizeExceededException.prototype);
     }
-};
-let OutboundWebIdentityFederationDisabledException$1 = class OutboundWebIdentityFederationDisabledException extends STSServiceException$1 {
+}
+class OutboundWebIdentityFederationDisabledException extends STSServiceException {
     name = "OutboundWebIdentityFederationDisabledException";
     $fault = "client";
     constructor(opts) {
@@ -3843,8 +3843,8 @@ let OutboundWebIdentityFederationDisabledException$1 = class OutboundWebIdentity
         });
         Object.setPrototypeOf(this, OutboundWebIdentityFederationDisabledException.prototype);
     }
-};
-let SessionDurationEscalationException$1 = class SessionDurationEscalationException extends STSServiceException$1 {
+}
+class SessionDurationEscalationException extends STSServiceException {
     name = "SessionDurationEscalationException";
     $fault = "client";
     constructor(opts) {
@@ -3855,7 +3855,7 @@ let SessionDurationEscalationException$1 = class SessionDurationEscalationExcept
         });
         Object.setPrototypeOf(this, SessionDurationEscalationException.prototype);
     }
-};
+}
 
 const _A = "Arn";
 const _AKI = "AccessKeyId";
@@ -3974,8 +3974,8 @@ var clientTokenType = [0, n0, _cTT, 8, 0];
 var SAMLAssertionType = [0, n0, _SAMLAT, 8, 0];
 var tradeInTokenType = [0, n0, _tITT, 8, 0];
 var webIdentityTokenType = [0, n0, _wITT, 8, 0];
-var AssumedRoleUser = [3, n0, _ARU, 0, [_ARI, _A], [0, 0]];
-var AssumeRoleRequest = [
+var AssumedRoleUser$ = [3, n0, _ARU, 0, [_ARI, _A], [0, 0]];
+var AssumeRoleRequest$ = [
     3,
     n0,
     _ARR,
@@ -3983,15 +3983,15 @@ var AssumeRoleRequest = [
     [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC],
     [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType],
 ];
-var AssumeRoleResponse = [
+var AssumeRoleResponse$ = [
     3,
     n0,
     _ARRs,
     0,
     [_C, _ARU, _PPS, _SI],
-    [[() => Credentials, 0], () => AssumedRoleUser, 1, 0],
+    [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0],
 ];
-var AssumeRoleWithSAMLRequest = [
+var AssumeRoleWithSAMLRequest$ = [
     3,
     n0,
     _ARWSAMLR,
@@ -3999,15 +3999,15 @@ var AssumeRoleWithSAMLRequest = [
     [_RA, _PAr, _SAMLA, _PA, _P, _DS],
     [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType, 0, 1],
 ];
-var AssumeRoleWithSAMLResponse = [
+var AssumeRoleWithSAMLResponse$ = [
     3,
     n0,
     _ARWSAMLRs,
     0,
     [_C, _ARU, _PPS, _S, _ST, _I, _Au, _NQ, _SI],
-    [[() => Credentials, 0], () => AssumedRoleUser, 1, 0, 0, 0, 0, 0, 0],
+    [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0, 0, 0, 0, 0, 0],
 ];
-var AssumeRoleWithWebIdentityRequest = [
+var AssumeRoleWithWebIdentityRequest$ = [
     3,
     n0,
     _ARWWIR,
@@ -4015,24 +4015,24 @@ var AssumeRoleWithWebIdentityRequest = [
     [_RA, _RSN, _WIT, _PI, _PA, _P, _DS],
     [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1],
 ];
-var AssumeRoleWithWebIdentityResponse = [
+var AssumeRoleWithWebIdentityResponse$ = [
     3,
     n0,
     _ARWWIRs,
     0,
     [_C, _SFWIT, _ARU, _PPS, _Pr, _Au, _SI],
-    [[() => Credentials, 0], 0, () => AssumedRoleUser, 1, 0, 0, 0],
+    [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0],
 ];
-var AssumeRootRequest = [
+var AssumeRootRequest$ = [
     3,
     n0,
     _ARRss,
     0,
     [_TP, _TPA, _DS],
-    [0, () => PolicyDescriptorType, 1],
+    [0, () => PolicyDescriptorType$, 1],
 ];
-var AssumeRootResponse = [3, n0, _ARRssu, 0, [_C, _SI], [[() => Credentials, 0], 0]];
-var Credentials = [
+var AssumeRootResponse$ = [3, n0, _ARRssu, 0, [_C, _SI], [[() => Credentials$, 0], 0]];
+var Credentials$ = [
     3,
     n0,
     _C,
@@ -4040,32 +4040,32 @@ var Credentials = [
     [_AKI, _SAK, _STe, _E],
     [0, [() => accessKeySecretType, 0], 0, 4],
 ];
-var DecodeAuthorizationMessageRequest = [3, n0, _DAMR, 0, [_EM], [0]];
-var DecodeAuthorizationMessageResponse = [3, n0, _DAMRe, 0, [_DM], [0]];
-var ExpiredTokenException = [
+var DecodeAuthorizationMessageRequest$ = [3, n0, _DAMR, 0, [_EM], [0]];
+var DecodeAuthorizationMessageResponse$ = [3, n0, _DAMRe, 0, [_DM], [0]];
+var ExpiredTokenException$ = [
     -3,
     n0,
     _ETE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`ExpiredTokenException`, 400] },
+    { [_aQE]: [`ExpiredTokenException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(ExpiredTokenException, ExpiredTokenException$1);
-var ExpiredTradeInTokenException = [
+schema.TypeRegistry.for(n0).registerError(ExpiredTokenException$, ExpiredTokenException);
+var ExpiredTradeInTokenException$ = [
     -3,
     n0,
     _ETITE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`ExpiredTradeInTokenException`, 400] },
+    { [_aQE]: [`ExpiredTradeInTokenException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(ExpiredTradeInTokenException, ExpiredTradeInTokenException$1);
-var FederatedUser = [3, n0, _FU, 0, [_FUI, _A], [0, 0]];
-var GetAccessKeyInfoRequest = [3, n0, _GAKIR, 0, [_AKI], [0]];
-var GetAccessKeyInfoResponse = [3, n0, _GAKIRe, 0, [_Ac], [0]];
-var GetCallerIdentityRequest = [3, n0, _GCIR, 0, [], []];
-var GetCallerIdentityResponse = [3, n0, _GCIRe, 0, [_UI, _Ac, _A], [0, 0, 0]];
-var GetDelegatedAccessTokenRequest = [
+schema.TypeRegistry.for(n0).registerError(ExpiredTradeInTokenException$, ExpiredTradeInTokenException);
+var FederatedUser$ = [3, n0, _FU, 0, [_FUI, _A], [0, 0]];
+var GetAccessKeyInfoRequest$ = [3, n0, _GAKIR, 0, [_AKI], [0]];
+var GetAccessKeyInfoResponse$ = [3, n0, _GAKIRe, 0, [_Ac], [0]];
+var GetCallerIdentityRequest$ = [3, n0, _GCIR, 0, [], []];
+var GetCallerIdentityResponse$ = [3, n0, _GCIRe, 0, [_UI, _Ac, _A], [0, 0, 0]];
+var GetDelegatedAccessTokenRequest$ = [
     3,
     n0,
     _GDATR,
@@ -4073,15 +4073,15 @@ var GetDelegatedAccessTokenRequest = [
     [_TIT],
     [[() => tradeInTokenType, 0]],
 ];
-var GetDelegatedAccessTokenResponse = [
+var GetDelegatedAccessTokenResponse$ = [
     3,
     n0,
     _GDATRe,
     0,
     [_C, _PPS, _AP],
-    [[() => Credentials, 0], 1, 0],
+    [[() => Credentials$, 0], 1, 0],
 ];
-var GetFederationTokenRequest = [
+var GetFederationTokenRequest$ = [
     3,
     n0,
     _GFTR,
@@ -4089,17 +4089,17 @@ var GetFederationTokenRequest = [
     [_N, _P, _PA, _DS, _T],
     [0, 0, () => policyDescriptorListType, 1, () => tagListType],
 ];
-var GetFederationTokenResponse = [
+var GetFederationTokenResponse$ = [
     3,
     n0,
     _GFTRe,
     0,
     [_C, _FU, _PPS],
-    [[() => Credentials, 0], () => FederatedUser, 1],
+    [[() => Credentials$, 0], () => FederatedUser$, 1],
 ];
-var GetSessionTokenRequest = [3, n0, _GSTR, 0, [_DS, _SN, _TC], [1, 0, 0]];
-var GetSessionTokenResponse = [3, n0, _GSTRe, 0, [_C], [[() => Credentials, 0]]];
-var GetWebIdentityTokenRequest = [
+var GetSessionTokenRequest$ = [3, n0, _GSTR, 0, [_DS, _SN, _TC], [1, 0, 0]];
+var GetSessionTokenResponse$ = [3, n0, _GSTRe, 0, [_C], [[() => Credentials$, 0]]];
+var GetWebIdentityTokenRequest$ = [
     3,
     n0,
     _GWITR,
@@ -4107,7 +4107,7 @@ var GetWebIdentityTokenRequest = [
     [_Au, _DS, _SA, _T],
     [64 | 0, 1, 0, () => tagListType],
 ];
-var GetWebIdentityTokenResponse = [
+var GetWebIdentityTokenResponse$ = [
     3,
     n0,
     _GWITRe,
@@ -4115,177 +4115,177 @@ var GetWebIdentityTokenResponse = [
     [_WIT, _E],
     [[() => webIdentityTokenType, 0], 4],
 ];
-var IDPCommunicationErrorException = [
+var IDPCommunicationErrorException$ = [
     -3,
     n0,
     _IDPCEE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`IDPCommunicationError`, 400] },
+    { [_aQE]: [`IDPCommunicationError`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(IDPCommunicationErrorException, IDPCommunicationErrorException$1);
-var IDPRejectedClaimException = [
+schema.TypeRegistry.for(n0).registerError(IDPCommunicationErrorException$, IDPCommunicationErrorException);
+var IDPRejectedClaimException$ = [
     -3,
     n0,
     _IDPRCE,
-    { [_e]: _c, [_hE]: 403, [_aQE]: [`IDPRejectedClaim`, 403] },
+    { [_aQE]: [`IDPRejectedClaim`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(IDPRejectedClaimException, IDPRejectedClaimException$1);
-var InvalidAuthorizationMessageException = [
+schema.TypeRegistry.for(n0).registerError(IDPRejectedClaimException$, IDPRejectedClaimException);
+var InvalidAuthorizationMessageException$ = [
     -3,
     n0,
     _IAME,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`InvalidAuthorizationMessageException`, 400] },
+    { [_aQE]: [`InvalidAuthorizationMessageException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(InvalidAuthorizationMessageException, InvalidAuthorizationMessageException$1);
-var InvalidIdentityTokenException = [
+schema.TypeRegistry.for(n0).registerError(InvalidAuthorizationMessageException$, InvalidAuthorizationMessageException);
+var InvalidIdentityTokenException$ = [
     -3,
     n0,
     _IITE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`InvalidIdentityToken`, 400] },
+    { [_aQE]: [`InvalidIdentityToken`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(InvalidIdentityTokenException, InvalidIdentityTokenException$1);
-var JWTPayloadSizeExceededException = [
+schema.TypeRegistry.for(n0).registerError(InvalidIdentityTokenException$, InvalidIdentityTokenException);
+var JWTPayloadSizeExceededException$ = [
     -3,
     n0,
     _JWTPSEE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`JWTPayloadSizeExceededException`, 400] },
+    { [_aQE]: [`JWTPayloadSizeExceededException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(JWTPayloadSizeExceededException, JWTPayloadSizeExceededException$1);
-var MalformedPolicyDocumentException = [
+schema.TypeRegistry.for(n0).registerError(JWTPayloadSizeExceededException$, JWTPayloadSizeExceededException);
+var MalformedPolicyDocumentException$ = [
     -3,
     n0,
     _MPDE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`MalformedPolicyDocument`, 400] },
+    { [_aQE]: [`MalformedPolicyDocument`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(MalformedPolicyDocumentException, MalformedPolicyDocumentException$1);
-var OutboundWebIdentityFederationDisabledException = [
+schema.TypeRegistry.for(n0).registerError(MalformedPolicyDocumentException$, MalformedPolicyDocumentException);
+var OutboundWebIdentityFederationDisabledException$ = [
     -3,
     n0,
     _OWIFDE,
-    { [_e]: _c, [_hE]: 403, [_aQE]: [`OutboundWebIdentityFederationDisabledException`, 403] },
+    { [_aQE]: [`OutboundWebIdentityFederationDisabledException`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(OutboundWebIdentityFederationDisabledException, OutboundWebIdentityFederationDisabledException$1);
-var PackedPolicyTooLargeException = [
+schema.TypeRegistry.for(n0).registerError(OutboundWebIdentityFederationDisabledException$, OutboundWebIdentityFederationDisabledException);
+var PackedPolicyTooLargeException$ = [
     -3,
     n0,
     _PPTLE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`PackedPolicyTooLarge`, 400] },
+    { [_aQE]: [`PackedPolicyTooLarge`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(PackedPolicyTooLargeException, PackedPolicyTooLargeException$1);
-var PolicyDescriptorType = [3, n0, _PDT, 0, [_a], [0]];
-var ProvidedContext = [3, n0, _PCr, 0, [_PAro, _CA], [0, 0]];
-var RegionDisabledException = [
+schema.TypeRegistry.for(n0).registerError(PackedPolicyTooLargeException$, PackedPolicyTooLargeException);
+var PolicyDescriptorType$ = [3, n0, _PDT, 0, [_a], [0]];
+var ProvidedContext$ = [3, n0, _PCr, 0, [_PAro, _CA], [0, 0]];
+var RegionDisabledException$ = [
     -3,
     n0,
     _RDE,
-    { [_e]: _c, [_hE]: 403, [_aQE]: [`RegionDisabledException`, 403] },
+    { [_aQE]: [`RegionDisabledException`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(RegionDisabledException, RegionDisabledException$1);
-var SessionDurationEscalationException = [
+schema.TypeRegistry.for(n0).registerError(RegionDisabledException$, RegionDisabledException);
+var SessionDurationEscalationException$ = [
     -3,
     n0,
     _SDEE,
-    { [_e]: _c, [_hE]: 403, [_aQE]: [`SessionDurationEscalationException`, 403] },
+    { [_aQE]: [`SessionDurationEscalationException`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(SessionDurationEscalationException, SessionDurationEscalationException$1);
-var Tag = [3, n0, _Ta, 0, [_K, _V], [0, 0]];
-var STSServiceException = [-3, _s, "STSServiceException", 0, [], []];
-schema.TypeRegistry.for(_s).registerError(STSServiceException, STSServiceException$1);
-var policyDescriptorListType = [1, n0, _pDLT, 0, () => PolicyDescriptorType];
-var ProvidedContextsListType = [1, n0, _PCLT, 0, () => ProvidedContext];
-var tagListType = [1, n0, _tLT, 0, () => Tag];
-var AssumeRole = [9, n0, _AR, 0, () => AssumeRoleRequest, () => AssumeRoleResponse];
-var AssumeRoleWithSAML = [
+schema.TypeRegistry.for(n0).registerError(SessionDurationEscalationException$, SessionDurationEscalationException);
+var Tag$ = [3, n0, _Ta, 0, [_K, _V], [0, 0]];
+var STSServiceException$ = [-3, _s, "STSServiceException", 0, [], []];
+schema.TypeRegistry.for(_s).registerError(STSServiceException$, STSServiceException);
+var policyDescriptorListType = [1, n0, _pDLT, 0, () => PolicyDescriptorType$];
+var ProvidedContextsListType = [1, n0, _PCLT, 0, () => ProvidedContext$];
+var tagListType = [1, n0, _tLT, 0, () => Tag$];
+var AssumeRole$ = [9, n0, _AR, 0, () => AssumeRoleRequest$, () => AssumeRoleResponse$];
+var AssumeRoleWithSAML$ = [
     9,
     n0,
     _ARWSAML,
     0,
-    () => AssumeRoleWithSAMLRequest,
-    () => AssumeRoleWithSAMLResponse,
+    () => AssumeRoleWithSAMLRequest$,
+    () => AssumeRoleWithSAMLResponse$,
 ];
-var AssumeRoleWithWebIdentity = [
+var AssumeRoleWithWebIdentity$ = [
     9,
     n0,
     _ARWWI,
     0,
-    () => AssumeRoleWithWebIdentityRequest,
-    () => AssumeRoleWithWebIdentityResponse,
+    () => AssumeRoleWithWebIdentityRequest$,
+    () => AssumeRoleWithWebIdentityResponse$,
 ];
-var AssumeRoot = [9, n0, _ARs, 0, () => AssumeRootRequest, () => AssumeRootResponse];
-var DecodeAuthorizationMessage = [
+var AssumeRoot$ = [9, n0, _ARs, 0, () => AssumeRootRequest$, () => AssumeRootResponse$];
+var DecodeAuthorizationMessage$ = [
     9,
     n0,
     _DAM,
     0,
-    () => DecodeAuthorizationMessageRequest,
-    () => DecodeAuthorizationMessageResponse,
+    () => DecodeAuthorizationMessageRequest$,
+    () => DecodeAuthorizationMessageResponse$,
 ];
-var GetAccessKeyInfo = [
+var GetAccessKeyInfo$ = [
     9,
     n0,
     _GAKI,
     0,
-    () => GetAccessKeyInfoRequest,
-    () => GetAccessKeyInfoResponse,
+    () => GetAccessKeyInfoRequest$,
+    () => GetAccessKeyInfoResponse$,
 ];
-var GetCallerIdentity = [
+var GetCallerIdentity$ = [
     9,
     n0,
     _GCI,
     0,
-    () => GetCallerIdentityRequest,
-    () => GetCallerIdentityResponse,
+    () => GetCallerIdentityRequest$,
+    () => GetCallerIdentityResponse$,
 ];
-var GetDelegatedAccessToken = [
+var GetDelegatedAccessToken$ = [
     9,
     n0,
     _GDAT,
     0,
-    () => GetDelegatedAccessTokenRequest,
-    () => GetDelegatedAccessTokenResponse,
+    () => GetDelegatedAccessTokenRequest$,
+    () => GetDelegatedAccessTokenResponse$,
 ];
-var GetFederationToken = [
+var GetFederationToken$ = [
     9,
     n0,
     _GFT,
     0,
-    () => GetFederationTokenRequest,
-    () => GetFederationTokenResponse,
+    () => GetFederationTokenRequest$,
+    () => GetFederationTokenResponse$,
 ];
-var GetSessionToken = [
+var GetSessionToken$ = [
     9,
     n0,
     _GST,
     0,
-    () => GetSessionTokenRequest,
-    () => GetSessionTokenResponse,
+    () => GetSessionTokenRequest$,
+    () => GetSessionTokenResponse$,
 ];
-var GetWebIdentityToken = [
+var GetWebIdentityToken$ = [
     9,
     n0,
     _GWIT,
     0,
-    () => GetWebIdentityTokenRequest,
-    () => GetWebIdentityTokenResponse,
+    () => GetWebIdentityTokenRequest$,
+    () => GetWebIdentityTokenResponse$,
 ];
 
 class AssumeRoleCommand extends smithyClient.Command
@@ -4296,7 +4296,7 @@ class AssumeRoleCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "AssumeRole", {})
     .n("STSClient", "AssumeRoleCommand")
-    .sc(AssumeRole)
+    .sc(AssumeRole$)
     .build() {
 }
 
@@ -4308,7 +4308,7 @@ class AssumeRoleWithSAMLCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithSAML", {})
     .n("STSClient", "AssumeRoleWithSAMLCommand")
-    .sc(AssumeRoleWithSAML)
+    .sc(AssumeRoleWithSAML$)
     .build() {
 }
 
@@ -4320,7 +4320,7 @@ class AssumeRoleWithWebIdentityCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {})
     .n("STSClient", "AssumeRoleWithWebIdentityCommand")
-    .sc(AssumeRoleWithWebIdentity)
+    .sc(AssumeRoleWithWebIdentity$)
     .build() {
 }
 
@@ -4332,7 +4332,7 @@ class AssumeRootCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "AssumeRoot", {})
     .n("STSClient", "AssumeRootCommand")
-    .sc(AssumeRoot)
+    .sc(AssumeRoot$)
     .build() {
 }
 
@@ -4344,7 +4344,7 @@ class DecodeAuthorizationMessageCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "DecodeAuthorizationMessage", {})
     .n("STSClient", "DecodeAuthorizationMessageCommand")
-    .sc(DecodeAuthorizationMessage)
+    .sc(DecodeAuthorizationMessage$)
     .build() {
 }
 
@@ -4356,7 +4356,7 @@ class GetAccessKeyInfoCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "GetAccessKeyInfo", {})
     .n("STSClient", "GetAccessKeyInfoCommand")
-    .sc(GetAccessKeyInfo)
+    .sc(GetAccessKeyInfo$)
     .build() {
 }
 
@@ -4368,7 +4368,7 @@ class GetCallerIdentityCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "GetCallerIdentity", {})
     .n("STSClient", "GetCallerIdentityCommand")
-    .sc(GetCallerIdentity)
+    .sc(GetCallerIdentity$)
     .build() {
 }
 
@@ -4380,7 +4380,7 @@ class GetDelegatedAccessTokenCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "GetDelegatedAccessToken", {})
     .n("STSClient", "GetDelegatedAccessTokenCommand")
-    .sc(GetDelegatedAccessToken)
+    .sc(GetDelegatedAccessToken$)
     .build() {
 }
 
@@ -4392,7 +4392,7 @@ class GetFederationTokenCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "GetFederationToken", {})
     .n("STSClient", "GetFederationTokenCommand")
-    .sc(GetFederationToken)
+    .sc(GetFederationToken$)
     .build() {
 }
 
@@ -4404,7 +4404,7 @@ class GetSessionTokenCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "GetSessionToken", {})
     .n("STSClient", "GetSessionTokenCommand")
-    .sc(GetSessionToken)
+    .sc(GetSessionToken$)
     .build() {
 }
 
@@ -4416,7 +4416,7 @@ class GetWebIdentityTokenCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "GetWebIdentityToken", {})
     .n("STSClient", "GetWebIdentityTokenCommand")
-    .sc(GetWebIdentityToken)
+    .sc(GetWebIdentityToken$)
     .build() {
 }
 
@@ -4561,31 +4561,83 @@ Object.defineProperty(exports, "$Command", ({
     enumerable: true,
     get: function () { return smithyClient.Command; }
 }));
+exports.AssumeRole$ = AssumeRole$;
 exports.AssumeRoleCommand = AssumeRoleCommand;
+exports.AssumeRoleRequest$ = AssumeRoleRequest$;
+exports.AssumeRoleResponse$ = AssumeRoleResponse$;
+exports.AssumeRoleWithSAML$ = AssumeRoleWithSAML$;
 exports.AssumeRoleWithSAMLCommand = AssumeRoleWithSAMLCommand;
+exports.AssumeRoleWithSAMLRequest$ = AssumeRoleWithSAMLRequest$;
+exports.AssumeRoleWithSAMLResponse$ = AssumeRoleWithSAMLResponse$;
+exports.AssumeRoleWithWebIdentity$ = AssumeRoleWithWebIdentity$;
 exports.AssumeRoleWithWebIdentityCommand = AssumeRoleWithWebIdentityCommand;
+exports.AssumeRoleWithWebIdentityRequest$ = AssumeRoleWithWebIdentityRequest$;
+exports.AssumeRoleWithWebIdentityResponse$ = AssumeRoleWithWebIdentityResponse$;
+exports.AssumeRoot$ = AssumeRoot$;
 exports.AssumeRootCommand = AssumeRootCommand;
+exports.AssumeRootRequest$ = AssumeRootRequest$;
+exports.AssumeRootResponse$ = AssumeRootResponse$;
+exports.AssumedRoleUser$ = AssumedRoleUser$;
+exports.Credentials$ = Credentials$;
+exports.DecodeAuthorizationMessage$ = DecodeAuthorizationMessage$;
 exports.DecodeAuthorizationMessageCommand = DecodeAuthorizationMessageCommand;
-exports.ExpiredTokenException = ExpiredTokenException$1;
-exports.ExpiredTradeInTokenException = ExpiredTradeInTokenException$1;
+exports.DecodeAuthorizationMessageRequest$ = DecodeAuthorizationMessageRequest$;
+exports.DecodeAuthorizationMessageResponse$ = DecodeAuthorizationMessageResponse$;
+exports.ExpiredTokenException = ExpiredTokenException;
+exports.ExpiredTokenException$ = ExpiredTokenException$;
+exports.ExpiredTradeInTokenException = ExpiredTradeInTokenException;
+exports.ExpiredTradeInTokenException$ = ExpiredTradeInTokenException$;
+exports.FederatedUser$ = FederatedUser$;
+exports.GetAccessKeyInfo$ = GetAccessKeyInfo$;
 exports.GetAccessKeyInfoCommand = GetAccessKeyInfoCommand;
+exports.GetAccessKeyInfoRequest$ = GetAccessKeyInfoRequest$;
+exports.GetAccessKeyInfoResponse$ = GetAccessKeyInfoResponse$;
+exports.GetCallerIdentity$ = GetCallerIdentity$;
 exports.GetCallerIdentityCommand = GetCallerIdentityCommand;
+exports.GetCallerIdentityRequest$ = GetCallerIdentityRequest$;
+exports.GetCallerIdentityResponse$ = GetCallerIdentityResponse$;
+exports.GetDelegatedAccessToken$ = GetDelegatedAccessToken$;
 exports.GetDelegatedAccessTokenCommand = GetDelegatedAccessTokenCommand;
+exports.GetDelegatedAccessTokenRequest$ = GetDelegatedAccessTokenRequest$;
+exports.GetDelegatedAccessTokenResponse$ = GetDelegatedAccessTokenResponse$;
+exports.GetFederationToken$ = GetFederationToken$;
 exports.GetFederationTokenCommand = GetFederationTokenCommand;
+exports.GetFederationTokenRequest$ = GetFederationTokenRequest$;
+exports.GetFederationTokenResponse$ = GetFederationTokenResponse$;
+exports.GetSessionToken$ = GetSessionToken$;
 exports.GetSessionTokenCommand = GetSessionTokenCommand;
+exports.GetSessionTokenRequest$ = GetSessionTokenRequest$;
+exports.GetSessionTokenResponse$ = GetSessionTokenResponse$;
+exports.GetWebIdentityToken$ = GetWebIdentityToken$;
 exports.GetWebIdentityTokenCommand = GetWebIdentityTokenCommand;
-exports.IDPCommunicationErrorException = IDPCommunicationErrorException$1;
-exports.IDPRejectedClaimException = IDPRejectedClaimException$1;
-exports.InvalidAuthorizationMessageException = InvalidAuthorizationMessageException$1;
-exports.InvalidIdentityTokenException = InvalidIdentityTokenException$1;
-exports.JWTPayloadSizeExceededException = JWTPayloadSizeExceededException$1;
-exports.MalformedPolicyDocumentException = MalformedPolicyDocumentException$1;
-exports.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException$1;
-exports.PackedPolicyTooLargeException = PackedPolicyTooLargeException$1;
-exports.RegionDisabledException = RegionDisabledException$1;
+exports.GetWebIdentityTokenRequest$ = GetWebIdentityTokenRequest$;
+exports.GetWebIdentityTokenResponse$ = GetWebIdentityTokenResponse$;
+exports.IDPCommunicationErrorException = IDPCommunicationErrorException;
+exports.IDPCommunicationErrorException$ = IDPCommunicationErrorException$;
+exports.IDPRejectedClaimException = IDPRejectedClaimException;
+exports.IDPRejectedClaimException$ = IDPRejectedClaimException$;
+exports.InvalidAuthorizationMessageException = InvalidAuthorizationMessageException;
+exports.InvalidAuthorizationMessageException$ = InvalidAuthorizationMessageException$;
+exports.InvalidIdentityTokenException = InvalidIdentityTokenException;
+exports.InvalidIdentityTokenException$ = InvalidIdentityTokenException$;
+exports.JWTPayloadSizeExceededException = JWTPayloadSizeExceededException;
+exports.JWTPayloadSizeExceededException$ = JWTPayloadSizeExceededException$;
+exports.MalformedPolicyDocumentException = MalformedPolicyDocumentException;
+exports.MalformedPolicyDocumentException$ = MalformedPolicyDocumentException$;
+exports.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException;
+exports.OutboundWebIdentityFederationDisabledException$ = OutboundWebIdentityFederationDisabledException$;
+exports.PackedPolicyTooLargeException = PackedPolicyTooLargeException;
+exports.PackedPolicyTooLargeException$ = PackedPolicyTooLargeException$;
+exports.PolicyDescriptorType$ = PolicyDescriptorType$;
+exports.ProvidedContext$ = ProvidedContext$;
+exports.RegionDisabledException = RegionDisabledException;
+exports.RegionDisabledException$ = RegionDisabledException$;
 exports.STS = STS;
-exports.STSServiceException = STSServiceException$1;
-exports.SessionDurationEscalationException = SessionDurationEscalationException$1;
+exports.STSServiceException = STSServiceException;
+exports.STSServiceException$ = STSServiceException$;
+exports.SessionDurationEscalationException = SessionDurationEscalationException;
+exports.SessionDurationEscalationException$ = SessionDurationEscalationException$;
+exports.Tag$ = Tag$;
 exports.decorateDefaultCredentialProvider = decorateDefaultCredentialProvider;
 exports.getDefaultRoleAssumer = getDefaultRoleAssumer;
 exports.getDefaultRoleAssumerWithWebIdentity = getDefaultRoleAssumerWithWebIdentity;
@@ -4714,12 +4766,13 @@ const getRuntimeConfig = (config) => {
             },
         ],
         logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
-        protocol: config?.protocol ??
-            new protocols_1.AwsQueryProtocol({
-                defaultNamespace: "com.amazonaws.sts",
-                xmlNamespace: "https://sts.amazonaws.com/doc/2011-06-15/",
-                version: "2011-06-15",
-            }),
+        protocol: config?.protocol ?? protocols_1.AwsQueryProtocol,
+        protocolSettings: config?.protocolSettings ?? {
+            defaultNamespace: "com.amazonaws.sts",
+            xmlNamespace: "https://sts.amazonaws.com/doc/2011-06-15/",
+            version: "2011-06-15",
+            serviceTarget: "AWSSecurityTokenServiceV20110615",
+        },
         serviceId: config?.serviceId ?? "STS",
         urlParser: config?.urlParser ?? url_parser_1.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
@@ -5362,6 +5415,30 @@ function* deserializingStructIterator(ns, sourceObject, nameTrait) {
     }
 }
 
+class UnionSerde {
+    from;
+    to;
+    keys;
+    constructor(from, to) {
+        this.from = from;
+        this.to = to;
+        this.keys = new Set(Object.keys(this.from).filter((k) => k !== "__type"));
+    }
+    mark(key) {
+        this.keys.delete(key);
+    }
+    hasUnknown() {
+        return this.keys.size === 1 && Object.keys(this.to).length === 0;
+    }
+    writeUnknown() {
+        if (this.hasUnknown()) {
+            const k = this.keys.values().next().value;
+            const v = this.from[k];
+            this.to.$unknown = [k, v];
+        }
+    }
+}
+
 function jsonReviver(key, value, context) {
     if (context?.source) {
         const numericString = context.source;
@@ -5453,13 +5530,23 @@ class JsonShapeDeserializer extends SerdeContextConfig {
         const ns = schema.NormalizedSchema.of(schema$1);
         if (isObject) {
             if (ns.isStructSchema()) {
+                const union = ns.isUnionSchema();
                 const out = {};
+                let unionSerde;
+                if (union) {
+                    unionSerde = new UnionSerde(value, out);
+                }
                 for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
                     const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
-                    const deserializedValue = this._read(memberSchema, value[fromKey]);
-                    if (deserializedValue != null) {
-                        out[memberName] = deserializedValue;
+                    if (union) {
+                        unionSerde.mark(fromKey);
                     }
+                    if (value[fromKey] != null) {
+                        out[memberName] = this._read(memberSchema, value[fromKey]);
+                    }
+                }
+                if (union) {
+                    unionSerde.writeUnknown();
                 }
                 return out;
             }
@@ -5646,6 +5733,13 @@ class JsonShapeSerializer extends SerdeContextConfig {
                         const jsonName = memberSchema.getMergedTraits().jsonName;
                         const targetKey = this.settings.jsonName ? jsonName ?? memberName : memberName;
                         out[targetKey] = serializableValue;
+                    }
+                }
+                if (ns.isUnionSchema() && Object.keys(out).length === 0) {
+                    const { $unknown } = value;
+                    if (Array.isArray($unknown)) {
+                        const [k, v] = $unknown;
+                        out[k] = this._write(15, v);
                     }
                 }
                 return out;
@@ -6054,14 +6148,25 @@ class XmlShapeDeserializer extends SerdeContextConfig {
                 return buffer;
             }
             if (ns.isStructSchema()) {
+                const union = ns.isUnionSchema();
+                let unionSerde;
+                if (union) {
+                    unionSerde = new UnionSerde(value, buffer);
+                }
                 for (const [memberName, memberSchema] of ns.structIterator()) {
                     const memberTraits = memberSchema.getMergedTraits();
                     const xmlObjectKey = !memberTraits.httpPayload
                         ? memberSchema.getMemberTraits().xmlName ?? memberName
                         : memberTraits.xmlName ?? memberSchema.getName();
+                    if (union) {
+                        unionSerde.mark(xmlObjectKey);
+                    }
                     if (value[xmlObjectKey] != null) {
                         buffer[memberName] = this.readSchema(memberSchema, value[xmlObjectKey]);
                     }
+                }
+                if (union) {
+                    unionSerde.writeUnknown();
                 }
                 return buffer;
             }
@@ -6166,7 +6271,22 @@ class QueryShapeSerializer extends SerdeContextConfig {
             }
         }
         else if (ns.isDocumentSchema()) {
-            throw new Error(`@aws-sdk/core/protocols - QuerySerializer unsupported document type ${ns.getName(true)}`);
+            if (Array.isArray(value)) {
+                this.write(64 | 15, value, prefix);
+            }
+            else if (value instanceof Date) {
+                this.write(4, value, prefix);
+            }
+            else if (value instanceof Uint8Array) {
+                this.write(21, value, prefix);
+            }
+            else if (value && typeof value === "object") {
+                this.write(128 | 15, value, prefix);
+            }
+            else {
+                this.writeKey(prefix);
+                this.writeValue(String(value));
+            }
         }
         else if (ns.isListSchema()) {
             if (Array.isArray(value)) {
@@ -6214,6 +6334,7 @@ class QueryShapeSerializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema()) {
             if (value && typeof value === "object") {
+                let didWriteMember = false;
                 for (const [memberName, member] of serializingStructIterator(ns, value)) {
                     if (value[memberName] == null && !member.isIdempotencyToken()) {
                         continue;
@@ -6221,6 +6342,15 @@ class QueryShapeSerializer extends SerdeContextConfig {
                     const suffix = this.getKey(memberName, member.getMergedTraits().xmlName);
                     const key = `${prefix}${suffix}`;
                     this.write(member, value[memberName], key);
+                    didWriteMember = true;
+                }
+                if (!didWriteMember && ns.isUnionSchema()) {
+                    const { $unknown } = value;
+                    if (Array.isArray($unknown)) {
+                        const [k, v] = $unknown;
+                        const key = `${prefix}${k}`;
+                        this.write(15, v, key);
+                    }
                 }
             }
         }
@@ -6528,6 +6658,22 @@ class XmlShapeSerializer extends SerdeContextConfig {
                     structXmlNode.addChildNode(memberNode);
                 }
             }
+        }
+        const { $unknown } = value;
+        if ($unknown && ns.isUnionSchema() && Array.isArray($unknown) && Object.keys(value).length === 1) {
+            const [k, v] = $unknown;
+            const node = xmlBuilder.XmlNode.of(k);
+            if (typeof v !== "string") {
+                if (value instanceof xmlBuilder.XmlNode || value instanceof xmlBuilder.XmlText) {
+                    structXmlNode.addChildNode(value);
+                }
+                else {
+                    throw new Error(`@aws-sdk - $unknown union member in XML requires ` +
+                        `value of type string, @aws-sdk/xml-builder::XmlNode or XmlText.`);
+                }
+            }
+            this.writeSimpleInto(0, v, node, xmlns);
+            structXmlNode.addChildNode(node);
         }
         if (xmlns) {
             structXmlNode.addAttribute(xmlnsAttr, xmlns);
@@ -7199,6 +7345,30 @@ function* deserializingStructIterator(ns, sourceObject, nameTrait) {
     }
 }
 
+class UnionSerde {
+    from;
+    to;
+    keys;
+    constructor(from, to) {
+        this.from = from;
+        this.to = to;
+        this.keys = new Set(Object.keys(this.from).filter((k) => k !== "__type"));
+    }
+    mark(key) {
+        this.keys.delete(key);
+    }
+    hasUnknown() {
+        return this.keys.size === 1 && Object.keys(this.to).length === 0;
+    }
+    writeUnknown() {
+        if (this.hasUnknown()) {
+            const k = this.keys.values().next().value;
+            const v = this.from[k];
+            this.to.$unknown = [k, v];
+        }
+    }
+}
+
 function jsonReviver(key, value, context) {
     if (context?.source) {
         const numericString = context.source;
@@ -7290,13 +7460,23 @@ class JsonShapeDeserializer extends SerdeContextConfig {
         const ns = schema.NormalizedSchema.of(schema$1);
         if (isObject) {
             if (ns.isStructSchema()) {
+                const union = ns.isUnionSchema();
                 const out = {};
+                let unionSerde;
+                if (union) {
+                    unionSerde = new UnionSerde(value, out);
+                }
                 for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
                     const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
-                    const deserializedValue = this._read(memberSchema, value[fromKey]);
-                    if (deserializedValue != null) {
-                        out[memberName] = deserializedValue;
+                    if (union) {
+                        unionSerde.mark(fromKey);
                     }
+                    if (value[fromKey] != null) {
+                        out[memberName] = this._read(memberSchema, value[fromKey]);
+                    }
+                }
+                if (union) {
+                    unionSerde.writeUnknown();
                 }
                 return out;
             }
@@ -7483,6 +7663,13 @@ class JsonShapeSerializer extends SerdeContextConfig {
                         const jsonName = memberSchema.getMergedTraits().jsonName;
                         const targetKey = this.settings.jsonName ? jsonName ?? memberName : memberName;
                         out[targetKey] = serializableValue;
+                    }
+                }
+                if (ns.isUnionSchema() && Object.keys(out).length === 0) {
+                    const { $unknown } = value;
+                    if (Array.isArray($unknown)) {
+                        const [k, v] = $unknown;
+                        out[k] = this._write(15, v);
                     }
                 }
                 return out;
@@ -7891,14 +8078,25 @@ class XmlShapeDeserializer extends SerdeContextConfig {
                 return buffer;
             }
             if (ns.isStructSchema()) {
+                const union = ns.isUnionSchema();
+                let unionSerde;
+                if (union) {
+                    unionSerde = new UnionSerde(value, buffer);
+                }
                 for (const [memberName, memberSchema] of ns.structIterator()) {
                     const memberTraits = memberSchema.getMergedTraits();
                     const xmlObjectKey = !memberTraits.httpPayload
                         ? memberSchema.getMemberTraits().xmlName ?? memberName
                         : memberTraits.xmlName ?? memberSchema.getName();
+                    if (union) {
+                        unionSerde.mark(xmlObjectKey);
+                    }
                     if (value[xmlObjectKey] != null) {
                         buffer[memberName] = this.readSchema(memberSchema, value[xmlObjectKey]);
                     }
+                }
+                if (union) {
+                    unionSerde.writeUnknown();
                 }
                 return buffer;
             }
@@ -8003,7 +8201,22 @@ class QueryShapeSerializer extends SerdeContextConfig {
             }
         }
         else if (ns.isDocumentSchema()) {
-            throw new Error(`@aws-sdk/core/protocols - QuerySerializer unsupported document type ${ns.getName(true)}`);
+            if (Array.isArray(value)) {
+                this.write(64 | 15, value, prefix);
+            }
+            else if (value instanceof Date) {
+                this.write(4, value, prefix);
+            }
+            else if (value instanceof Uint8Array) {
+                this.write(21, value, prefix);
+            }
+            else if (value && typeof value === "object") {
+                this.write(128 | 15, value, prefix);
+            }
+            else {
+                this.writeKey(prefix);
+                this.writeValue(String(value));
+            }
         }
         else if (ns.isListSchema()) {
             if (Array.isArray(value)) {
@@ -8051,6 +8264,7 @@ class QueryShapeSerializer extends SerdeContextConfig {
         }
         else if (ns.isStructSchema()) {
             if (value && typeof value === "object") {
+                let didWriteMember = false;
                 for (const [memberName, member] of serializingStructIterator(ns, value)) {
                     if (value[memberName] == null && !member.isIdempotencyToken()) {
                         continue;
@@ -8058,6 +8272,15 @@ class QueryShapeSerializer extends SerdeContextConfig {
                     const suffix = this.getKey(memberName, member.getMergedTraits().xmlName);
                     const key = `${prefix}${suffix}`;
                     this.write(member, value[memberName], key);
+                    didWriteMember = true;
+                }
+                if (!didWriteMember && ns.isUnionSchema()) {
+                    const { $unknown } = value;
+                    if (Array.isArray($unknown)) {
+                        const [k, v] = $unknown;
+                        const key = `${prefix}${k}`;
+                        this.write(15, v, key);
+                    }
                 }
             }
         }
@@ -8365,6 +8588,22 @@ class XmlShapeSerializer extends SerdeContextConfig {
                     structXmlNode.addChildNode(memberNode);
                 }
             }
+        }
+        const { $unknown } = value;
+        if ($unknown && ns.isUnionSchema() && Array.isArray($unknown) && Object.keys(value).length === 1) {
+            const [k, v] = $unknown;
+            const node = xmlBuilder.XmlNode.of(k);
+            if (typeof v !== "string") {
+                if (value instanceof xmlBuilder.XmlNode || value instanceof xmlBuilder.XmlText) {
+                    structXmlNode.addChildNode(value);
+                }
+                else {
+                    throw new Error(`@aws-sdk - $unknown union member in XML requires ` +
+                        `value of type string, @aws-sdk/xml-builder::XmlNode or XmlText.`);
+                }
+            }
+            this.writeSimpleInto(0, v, node, xmlns);
+            structXmlNode.addChildNode(node);
         }
         if (xmlns) {
             structXmlNode.addAttribute(xmlnsAttr, xmlns);
@@ -9276,8 +9515,8 @@ exports.userAgentMiddleware = userAgentMiddleware;
 "use strict";
 
 
-var configResolver = __nccwpck_require__(9316);
 var stsRegionDefaultResolver = __nccwpck_require__(5779);
+var configResolver = __nccwpck_require__(9316);
 
 const getAwsRegionExtensionConfiguration = (runtimeConfig) => {
     return {
@@ -11537,6 +11776,11 @@ class CborShapeSerializer extends protocols.SerdeContext {
                         newObject[key] = value;
                     }
                 }
+                const isUnion = ns.isUnionSchema();
+                if (isUnion && Array.isArray(sourceObject.$unknown)) {
+                    const [k, v] = sourceObject.$unknown;
+                    newObject[k] = v;
+                }
             }
             else if (ns.isDocumentSchema()) {
                 for (const key of Object.keys(sourceObject)) {
@@ -11621,11 +11865,22 @@ class CborShapeDeserializer extends protocols.SerdeContext {
                 }
             }
             else if (ns.isStructSchema()) {
+                const isUnion = ns.isUnionSchema();
+                let keys;
+                if (isUnion) {
+                    keys = new Set(Object.keys(value).filter((k) => k !== "__type"));
+                }
                 for (const [key, memberSchema] of ns.structIterator()) {
-                    const v = this.readValue(memberSchema, value[key]);
-                    if (v != null) {
-                        newObject[key] = v;
+                    if (isUnion) {
+                        keys.delete(key);
                     }
+                    if (value[key] != null) {
+                        newObject[key] = this.readValue(memberSchema, value[key]);
+                    }
+                }
+                if (isUnion && keys?.size === 1 && Object.keys(newObject).length === 0) {
+                    const k = keys.values().next().value;
+                    newObject.$unknown = [k, value[k]];
                 }
             }
             return newObject;
@@ -12948,8 +13203,14 @@ class NormalizedSchema {
     }
     isStructSchema() {
         const sc = this.getSchema();
-        return (sc[0] === 3 ||
-            sc[0] === -3);
+        const id = sc[0];
+        return (id === 3 ||
+            id === -3 ||
+            id === 4);
+    }
+    isUnionSchema() {
+        const sc = this.getSchema();
+        return sc[0] === 4;
     }
     isBlobSchema() {
         const sc = this.getSchema();
@@ -45492,7 +45753,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.952.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.947.0","@aws-sdk/credential-provider-node":"3.952.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.948.0","@aws-sdk/middleware-user-agent":"3.947.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.947.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.7","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.14","@smithy/middleware-retry":"^4.4.14","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.10","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.13","@smithy/util-defaults-mode-node":"^4.2.16","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.957.0","scripts":{"build":"concurrently \'yarn:build:types\' \'yarn:build:es\' && yarn build:cjs","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:e2e":"yarn g:vitest run -c vitest.config.e2e.mts --mode development","test:e2e:watch":"yarn g:vitest watch -c vitest.config.e2e.mts","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.957.0","@aws-sdk/credential-provider-node":"3.957.0","@aws-sdk/middleware-host-header":"3.957.0","@aws-sdk/middleware-logger":"3.957.0","@aws-sdk/middleware-recursion-detection":"3.957.0","@aws-sdk/middleware-user-agent":"3.957.0","@aws-sdk/region-config-resolver":"3.957.0","@aws-sdk/types":"3.957.0","@aws-sdk/util-endpoints":"3.957.0","@aws-sdk/util-user-agent-browser":"3.957.0","@aws-sdk/util-user-agent-node":"3.957.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.0","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.1","@smithy/middleware-retry":"^4.4.17","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.2","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.16","@smithy/util-defaults-mode-node":"^4.2.19","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ })
 

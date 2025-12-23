@@ -221,14 +221,14 @@ class SSOOIDCClient extends smithyClient.Client {
     }
 }
 
-let SSOOIDCServiceException$1 = class SSOOIDCServiceException extends smithyClient.ServiceException {
+class SSOOIDCServiceException extends smithyClient.ServiceException {
     constructor(options) {
         super(options);
         Object.setPrototypeOf(this, SSOOIDCServiceException.prototype);
     }
-};
+}
 
-let AccessDeniedException$1 = class AccessDeniedException extends SSOOIDCServiceException$1 {
+class AccessDeniedException extends SSOOIDCServiceException {
     name = "AccessDeniedException";
     $fault = "client";
     error;
@@ -245,8 +245,8 @@ let AccessDeniedException$1 = class AccessDeniedException extends SSOOIDCService
         this.reason = opts.reason;
         this.error_description = opts.error_description;
     }
-};
-let AuthorizationPendingException$1 = class AuthorizationPendingException extends SSOOIDCServiceException$1 {
+}
+class AuthorizationPendingException extends SSOOIDCServiceException {
     name = "AuthorizationPendingException";
     $fault = "client";
     error;
@@ -261,8 +261,8 @@ let AuthorizationPendingException$1 = class AuthorizationPendingException extend
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let ExpiredTokenException$1 = class ExpiredTokenException extends SSOOIDCServiceException$1 {
+}
+class ExpiredTokenException extends SSOOIDCServiceException {
     name = "ExpiredTokenException";
     $fault = "client";
     error;
@@ -277,8 +277,8 @@ let ExpiredTokenException$1 = class ExpiredTokenException extends SSOOIDCService
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let InternalServerException$1 = class InternalServerException extends SSOOIDCServiceException$1 {
+}
+class InternalServerException extends SSOOIDCServiceException {
     name = "InternalServerException";
     $fault = "server";
     error;
@@ -293,8 +293,8 @@ let InternalServerException$1 = class InternalServerException extends SSOOIDCSer
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let InvalidClientException$1 = class InvalidClientException extends SSOOIDCServiceException$1 {
+}
+class InvalidClientException extends SSOOIDCServiceException {
     name = "InvalidClientException";
     $fault = "client";
     error;
@@ -309,8 +309,8 @@ let InvalidClientException$1 = class InvalidClientException extends SSOOIDCServi
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let InvalidGrantException$1 = class InvalidGrantException extends SSOOIDCServiceException$1 {
+}
+class InvalidGrantException extends SSOOIDCServiceException {
     name = "InvalidGrantException";
     $fault = "client";
     error;
@@ -325,8 +325,8 @@ let InvalidGrantException$1 = class InvalidGrantException extends SSOOIDCService
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let InvalidRequestException$1 = class InvalidRequestException extends SSOOIDCServiceException$1 {
+}
+class InvalidRequestException extends SSOOIDCServiceException {
     name = "InvalidRequestException";
     $fault = "client";
     error;
@@ -343,8 +343,8 @@ let InvalidRequestException$1 = class InvalidRequestException extends SSOOIDCSer
         this.reason = opts.reason;
         this.error_description = opts.error_description;
     }
-};
-let InvalidScopeException$1 = class InvalidScopeException extends SSOOIDCServiceException$1 {
+}
+class InvalidScopeException extends SSOOIDCServiceException {
     name = "InvalidScopeException";
     $fault = "client";
     error;
@@ -359,8 +359,8 @@ let InvalidScopeException$1 = class InvalidScopeException extends SSOOIDCService
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let SlowDownException$1 = class SlowDownException extends SSOOIDCServiceException$1 {
+}
+class SlowDownException extends SSOOIDCServiceException {
     name = "SlowDownException";
     $fault = "client";
     error;
@@ -375,8 +375,8 @@ let SlowDownException$1 = class SlowDownException extends SSOOIDCServiceExceptio
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let UnauthorizedClientException$1 = class UnauthorizedClientException extends SSOOIDCServiceException$1 {
+}
+class UnauthorizedClientException extends SSOOIDCServiceException {
     name = "UnauthorizedClientException";
     $fault = "client";
     error;
@@ -391,8 +391,8 @@ let UnauthorizedClientException$1 = class UnauthorizedClientException extends SS
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
-let UnsupportedGrantTypeException$1 = class UnsupportedGrantTypeException extends SSOOIDCServiceException$1 {
+}
+class UnsupportedGrantTypeException extends SSOOIDCServiceException {
     name = "UnsupportedGrantTypeException";
     $fault = "client";
     error;
@@ -407,7 +407,7 @@ let UnsupportedGrantTypeException$1 = class UnsupportedGrantTypeException extend
         this.error = opts.error;
         this.error_description = opts.error_description;
     }
-};
+}
 
 const _ADE = "AccessDeniedException";
 const _APE = "AuthorizationPendingException";
@@ -455,7 +455,7 @@ var ClientSecret = [0, n0, _CS, 8, 0];
 var CodeVerifier = [0, n0, _CV, 8, 0];
 var IdToken = [0, n0, _IT, 8, 0];
 var RefreshToken = [0, n0, _RT, 8, 0];
-var AccessDeniedException = [
+var AccessDeniedException$ = [
     -3,
     n0,
     _ADE,
@@ -463,8 +463,8 @@ var AccessDeniedException = [
     [_e, _r, _ed],
     [0, 0, 0],
 ];
-schema.TypeRegistry.for(n0).registerError(AccessDeniedException, AccessDeniedException$1);
-var AuthorizationPendingException = [
+schema.TypeRegistry.for(n0).registerError(AccessDeniedException$, AccessDeniedException);
+var AuthorizationPendingException$ = [
     -3,
     n0,
     _APE,
@@ -472,8 +472,8 @@ var AuthorizationPendingException = [
     [_e, _ed],
     [0, 0],
 ];
-schema.TypeRegistry.for(n0).registerError(AuthorizationPendingException, AuthorizationPendingException$1);
-var CreateTokenRequest = [
+schema.TypeRegistry.for(n0).registerError(AuthorizationPendingException$, AuthorizationPendingException);
+var CreateTokenRequest$ = [
     3,
     n0,
     _CTR,
@@ -481,7 +481,7 @@ var CreateTokenRequest = [
     [_cI, _cS, _gT, _dC, _co, _rT, _s, _rU, _cV],
     [0, [() => ClientSecret, 0], 0, 0, 0, [() => RefreshToken, 0], 64 | 0, 0, [() => CodeVerifier, 0]],
 ];
-var CreateTokenResponse = [
+var CreateTokenResponse$ = [
     3,
     n0,
     _CTRr,
@@ -489,15 +489,15 @@ var CreateTokenResponse = [
     [_aT, _tT, _eI, _rT, _iT],
     [[() => AccessToken, 0], 0, 1, [() => RefreshToken, 0], [() => IdToken, 0]],
 ];
-var ExpiredTokenException = [-3, n0, _ETE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
-schema.TypeRegistry.for(n0).registerError(ExpiredTokenException, ExpiredTokenException$1);
-var InternalServerException = [-3, n0, _ISE, { [_e]: _se, [_hE]: 500 }, [_e, _ed], [0, 0]];
-schema.TypeRegistry.for(n0).registerError(InternalServerException, InternalServerException$1);
-var InvalidClientException = [-3, n0, _ICE, { [_e]: _c, [_hE]: 401 }, [_e, _ed], [0, 0]];
-schema.TypeRegistry.for(n0).registerError(InvalidClientException, InvalidClientException$1);
-var InvalidGrantException = [-3, n0, _IGE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
-schema.TypeRegistry.for(n0).registerError(InvalidGrantException, InvalidGrantException$1);
-var InvalidRequestException = [
+var ExpiredTokenException$ = [-3, n0, _ETE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+schema.TypeRegistry.for(n0).registerError(ExpiredTokenException$, ExpiredTokenException);
+var InternalServerException$ = [-3, n0, _ISE, { [_e]: _se, [_hE]: 500 }, [_e, _ed], [0, 0]];
+schema.TypeRegistry.for(n0).registerError(InternalServerException$, InternalServerException);
+var InvalidClientException$ = [-3, n0, _ICE, { [_e]: _c, [_hE]: 401 }, [_e, _ed], [0, 0]];
+schema.TypeRegistry.for(n0).registerError(InvalidClientException$, InvalidClientException);
+var InvalidGrantException$ = [-3, n0, _IGE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+schema.TypeRegistry.for(n0).registerError(InvalidGrantException$, InvalidGrantException);
+var InvalidRequestException$ = [
     -3,
     n0,
     _IRE,
@@ -505,14 +505,21 @@ var InvalidRequestException = [
     [_e, _r, _ed],
     [0, 0, 0],
 ];
-schema.TypeRegistry.for(n0).registerError(InvalidRequestException, InvalidRequestException$1);
-var InvalidScopeException = [-3, n0, _ISEn, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
-schema.TypeRegistry.for(n0).registerError(InvalidScopeException, InvalidScopeException$1);
-var SlowDownException = [-3, n0, _SDE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
-schema.TypeRegistry.for(n0).registerError(SlowDownException, SlowDownException$1);
-var UnauthorizedClientException = [-3, n0, _UCE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
-schema.TypeRegistry.for(n0).registerError(UnauthorizedClientException, UnauthorizedClientException$1);
-var UnsupportedGrantTypeException = [
+schema.TypeRegistry.for(n0).registerError(InvalidRequestException$, InvalidRequestException);
+var InvalidScopeException$ = [-3, n0, _ISEn, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+schema.TypeRegistry.for(n0).registerError(InvalidScopeException$, InvalidScopeException);
+var SlowDownException$ = [-3, n0, _SDE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+schema.TypeRegistry.for(n0).registerError(SlowDownException$, SlowDownException);
+var UnauthorizedClientException$ = [
+    -3,
+    n0,
+    _UCE,
+    { [_e]: _c, [_hE]: 400 },
+    [_e, _ed],
+    [0, 0],
+];
+schema.TypeRegistry.for(n0).registerError(UnauthorizedClientException$, UnauthorizedClientException);
+var UnsupportedGrantTypeException$ = [
     -3,
     n0,
     _UGTE,
@@ -520,16 +527,16 @@ var UnsupportedGrantTypeException = [
     [_e, _ed],
     [0, 0],
 ];
-schema.TypeRegistry.for(n0).registerError(UnsupportedGrantTypeException, UnsupportedGrantTypeException$1);
-var SSOOIDCServiceException = [-3, _sm, "SSOOIDCServiceException", 0, [], []];
-schema.TypeRegistry.for(_sm).registerError(SSOOIDCServiceException, SSOOIDCServiceException$1);
-var CreateToken = [
+schema.TypeRegistry.for(n0).registerError(UnsupportedGrantTypeException$, UnsupportedGrantTypeException);
+var SSOOIDCServiceException$ = [-3, _sm, "SSOOIDCServiceException", 0, [], []];
+schema.TypeRegistry.for(_sm).registerError(SSOOIDCServiceException$, SSOOIDCServiceException);
+var CreateToken$ = [
     9,
     n0,
     _CT,
     { [_h]: ["POST", "/token", 200] },
-    () => CreateTokenRequest,
-    () => CreateTokenResponse,
+    () => CreateTokenRequest$,
+    () => CreateTokenResponse$,
 ];
 
 class CreateTokenCommand extends smithyClient.Command
@@ -540,7 +547,7 @@ class CreateTokenCommand extends smithyClient.Command
 })
     .s("AWSSSOOIDCService", "CreateToken", {})
     .n("SSOOIDCClient", "CreateTokenCommand")
-    .sc(CreateToken)
+    .sc(CreateToken$)
     .build() {
 }
 
@@ -569,23 +576,38 @@ __webpack_unused_export__ = ({
     enumerable: true,
     get: function () { return smithyClient.Client; }
 });
-__webpack_unused_export__ = AccessDeniedException$1;
+__webpack_unused_export__ = AccessDeniedException;
+__webpack_unused_export__ = AccessDeniedException$;
 __webpack_unused_export__ = AccessDeniedExceptionReason;
-__webpack_unused_export__ = AuthorizationPendingException$1;
+__webpack_unused_export__ = AuthorizationPendingException;
+__webpack_unused_export__ = AuthorizationPendingException$;
+__webpack_unused_export__ = CreateToken$;
 exports.CreateTokenCommand = CreateTokenCommand;
-__webpack_unused_export__ = ExpiredTokenException$1;
-__webpack_unused_export__ = InternalServerException$1;
-__webpack_unused_export__ = InvalidClientException$1;
-__webpack_unused_export__ = InvalidGrantException$1;
-__webpack_unused_export__ = InvalidRequestException$1;
+__webpack_unused_export__ = CreateTokenRequest$;
+__webpack_unused_export__ = CreateTokenResponse$;
+__webpack_unused_export__ = ExpiredTokenException;
+__webpack_unused_export__ = ExpiredTokenException$;
+__webpack_unused_export__ = InternalServerException;
+__webpack_unused_export__ = InternalServerException$;
+__webpack_unused_export__ = InvalidClientException;
+__webpack_unused_export__ = InvalidClientException$;
+__webpack_unused_export__ = InvalidGrantException;
+__webpack_unused_export__ = InvalidGrantException$;
+__webpack_unused_export__ = InvalidRequestException;
+__webpack_unused_export__ = InvalidRequestException$;
 __webpack_unused_export__ = InvalidRequestExceptionReason;
-__webpack_unused_export__ = InvalidScopeException$1;
+__webpack_unused_export__ = InvalidScopeException;
+__webpack_unused_export__ = InvalidScopeException$;
 __webpack_unused_export__ = SSOOIDC;
 exports.SSOOIDCClient = SSOOIDCClient;
-__webpack_unused_export__ = SSOOIDCServiceException$1;
-__webpack_unused_export__ = SlowDownException$1;
-__webpack_unused_export__ = UnauthorizedClientException$1;
-__webpack_unused_export__ = UnsupportedGrantTypeException$1;
+__webpack_unused_export__ = SSOOIDCServiceException;
+__webpack_unused_export__ = SSOOIDCServiceException$;
+__webpack_unused_export__ = SlowDownException;
+__webpack_unused_export__ = SlowDownException$;
+__webpack_unused_export__ = UnauthorizedClientException;
+__webpack_unused_export__ = UnauthorizedClientException$;
+__webpack_unused_export__ = UnsupportedGrantTypeException;
+__webpack_unused_export__ = UnsupportedGrantTypeException$;
 
 
 /***/ }),
@@ -687,7 +709,12 @@ const getRuntimeConfig = (config) => {
             },
         ],
         logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
-        protocol: config?.protocol ?? new protocols_1.AwsRestJsonProtocol({ defaultNamespace: "com.amazonaws.ssooidc" }),
+        protocol: config?.protocol ?? protocols_1.AwsRestJsonProtocol,
+        protocolSettings: config?.protocolSettings ?? {
+            defaultNamespace: "com.amazonaws.ssooidc",
+            version: "2019-06-10",
+            serviceTarget: "AWSSSOOIDCService",
+        },
         serviceId: config?.serviceId ?? "SSO OIDC",
         urlParser: config?.urlParser ?? url_parser_1.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
@@ -702,7 +729,7 @@ exports.getRuntimeConfig = getRuntimeConfig;
 /***/ 9955:
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.952.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"sideEffects":false,"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.947.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.948.0","@aws-sdk/middleware-user-agent":"3.947.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.947.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.7","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.14","@smithy/middleware-retry":"^4.4.14","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.10","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.13","@smithy/util-defaults-mode-node":"^4.2.16","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./signin.d.ts","./signin.js","./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/signin/runtimeConfig":"./dist-es/submodules/signin/runtimeConfig.browser","./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./package.json":"./package.json","./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"},"./signin":{"types":"./dist-types/submodules/signin/index.d.ts","module":"./dist-es/submodules/signin/index.js","node":"./dist-cjs/submodules/signin/index.js","import":"./dist-es/submodules/signin/index.js","require":"./dist-cjs/submodules/signin/index.js"}}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.957.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"sideEffects":false,"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.957.0","@aws-sdk/middleware-host-header":"3.957.0","@aws-sdk/middleware-logger":"3.957.0","@aws-sdk/middleware-recursion-detection":"3.957.0","@aws-sdk/middleware-user-agent":"3.957.0","@aws-sdk/region-config-resolver":"3.957.0","@aws-sdk/types":"3.957.0","@aws-sdk/util-endpoints":"3.957.0","@aws-sdk/util-user-agent-browser":"3.957.0","@aws-sdk/util-user-agent-node":"3.957.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.0","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.1","@smithy/middleware-retry":"^4.4.17","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.2","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.16","@smithy/util-defaults-mode-node":"^4.2.19","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./signin.d.ts","./signin.js","./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/signin/runtimeConfig":"./dist-es/submodules/signin/runtimeConfig.browser","./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./package.json":"./package.json","./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"},"./signin":{"types":"./dist-types/submodules/signin/index.d.ts","module":"./dist-es/submodules/signin/index.js","node":"./dist-cjs/submodules/signin/index.js","import":"./dist-es/submodules/signin/index.js","require":"./dist-cjs/submodules/signin/index.js"}}}');
 
 /***/ })
 
