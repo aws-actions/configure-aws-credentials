@@ -397,14 +397,14 @@ var schema = __webpack_require__(6890);
 var client = __webpack_require__(5152);
 var regionConfigResolver = __webpack_require__(6463);
 
-let STSServiceException$1 = class STSServiceException extends smithyClient.ServiceException {
+class STSServiceException extends smithyClient.ServiceException {
     constructor(options) {
         super(options);
         Object.setPrototypeOf(this, STSServiceException.prototype);
     }
-};
+}
 
-let ExpiredTokenException$1 = class ExpiredTokenException extends STSServiceException$1 {
+class ExpiredTokenException extends STSServiceException {
     name = "ExpiredTokenException";
     $fault = "client";
     constructor(opts) {
@@ -415,8 +415,8 @@ let ExpiredTokenException$1 = class ExpiredTokenException extends STSServiceExce
         });
         Object.setPrototypeOf(this, ExpiredTokenException.prototype);
     }
-};
-let MalformedPolicyDocumentException$1 = class MalformedPolicyDocumentException extends STSServiceException$1 {
+}
+class MalformedPolicyDocumentException extends STSServiceException {
     name = "MalformedPolicyDocumentException";
     $fault = "client";
     constructor(opts) {
@@ -427,8 +427,8 @@ let MalformedPolicyDocumentException$1 = class MalformedPolicyDocumentException 
         });
         Object.setPrototypeOf(this, MalformedPolicyDocumentException.prototype);
     }
-};
-let PackedPolicyTooLargeException$1 = class PackedPolicyTooLargeException extends STSServiceException$1 {
+}
+class PackedPolicyTooLargeException extends STSServiceException {
     name = "PackedPolicyTooLargeException";
     $fault = "client";
     constructor(opts) {
@@ -439,8 +439,8 @@ let PackedPolicyTooLargeException$1 = class PackedPolicyTooLargeException extend
         });
         Object.setPrototypeOf(this, PackedPolicyTooLargeException.prototype);
     }
-};
-let RegionDisabledException$1 = class RegionDisabledException extends STSServiceException$1 {
+}
+class RegionDisabledException extends STSServiceException {
     name = "RegionDisabledException";
     $fault = "client";
     constructor(opts) {
@@ -451,8 +451,8 @@ let RegionDisabledException$1 = class RegionDisabledException extends STSService
         });
         Object.setPrototypeOf(this, RegionDisabledException.prototype);
     }
-};
-let IDPRejectedClaimException$1 = class IDPRejectedClaimException extends STSServiceException$1 {
+}
+class IDPRejectedClaimException extends STSServiceException {
     name = "IDPRejectedClaimException";
     $fault = "client";
     constructor(opts) {
@@ -463,8 +463,8 @@ let IDPRejectedClaimException$1 = class IDPRejectedClaimException extends STSSer
         });
         Object.setPrototypeOf(this, IDPRejectedClaimException.prototype);
     }
-};
-let InvalidIdentityTokenException$1 = class InvalidIdentityTokenException extends STSServiceException$1 {
+}
+class InvalidIdentityTokenException extends STSServiceException {
     name = "InvalidIdentityTokenException";
     $fault = "client";
     constructor(opts) {
@@ -475,8 +475,8 @@ let InvalidIdentityTokenException$1 = class InvalidIdentityTokenException extend
         });
         Object.setPrototypeOf(this, InvalidIdentityTokenException.prototype);
     }
-};
-let IDPCommunicationErrorException$1 = class IDPCommunicationErrorException extends STSServiceException$1 {
+}
+class IDPCommunicationErrorException extends STSServiceException {
     name = "IDPCommunicationErrorException";
     $fault = "client";
     constructor(opts) {
@@ -487,7 +487,7 @@ let IDPCommunicationErrorException$1 = class IDPCommunicationErrorException exte
         });
         Object.setPrototypeOf(this, IDPCommunicationErrorException.prototype);
     }
-};
+}
 
 const _A = "Arn";
 const _AKI = "AccessKeyId";
@@ -550,8 +550,8 @@ const _tLT = "tagListType";
 const n0 = "com.amazonaws.sts";
 var accessKeySecretType = [0, n0, _aKST, 8, 0];
 var clientTokenType = [0, n0, _cTT, 8, 0];
-var AssumedRoleUser = [3, n0, _ARU, 0, [_ARI, _A], [0, 0]];
-var AssumeRoleRequest = [
+var AssumedRoleUser$ = [3, n0, _ARU, 0, [_ARI, _A], [0, 0]];
+var AssumeRoleRequest$ = [
     3,
     n0,
     _ARR,
@@ -559,15 +559,15 @@ var AssumeRoleRequest = [
     [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC],
     [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType],
 ];
-var AssumeRoleResponse = [
+var AssumeRoleResponse$ = [
     3,
     n0,
     _ARRs,
     0,
     [_C, _ARU, _PPS, _SI],
-    [[() => Credentials, 0], () => AssumedRoleUser, 1, 0],
+    [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0],
 ];
-var AssumeRoleWithWebIdentityRequest = [
+var AssumeRoleWithWebIdentityRequest$ = [
     3,
     n0,
     _ARWWIR,
@@ -575,15 +575,15 @@ var AssumeRoleWithWebIdentityRequest = [
     [_RA, _RSN, _WIT, _PI, _PA, _P, _DS],
     [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1],
 ];
-var AssumeRoleWithWebIdentityResponse = [
+var AssumeRoleWithWebIdentityResponse$ = [
     3,
     n0,
     _ARWWIRs,
     0,
     [_C, _SFWIT, _ARU, _PPS, _Pr, _Au, _SI],
-    [[() => Credentials, 0], 0, () => AssumedRoleUser, 1, 0, 0, 0],
+    [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0],
 ];
-var Credentials = [
+var Credentials$ = [
     3,
     n0,
     _C,
@@ -591,85 +591,85 @@ var Credentials = [
     [_AKI, _SAK, _ST, _E],
     [0, [() => accessKeySecretType, 0], 0, 4],
 ];
-var ExpiredTokenException = [
+var ExpiredTokenException$ = [
     -3,
     n0,
     _ETE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`ExpiredTokenException`, 400] },
+    { [_aQE]: [`ExpiredTokenException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(ExpiredTokenException, ExpiredTokenException$1);
-var IDPCommunicationErrorException = [
+schema.TypeRegistry.for(n0).registerError(ExpiredTokenException$, ExpiredTokenException);
+var IDPCommunicationErrorException$ = [
     -3,
     n0,
     _IDPCEE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`IDPCommunicationError`, 400] },
+    { [_aQE]: [`IDPCommunicationError`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(IDPCommunicationErrorException, IDPCommunicationErrorException$1);
-var IDPRejectedClaimException = [
+schema.TypeRegistry.for(n0).registerError(IDPCommunicationErrorException$, IDPCommunicationErrorException);
+var IDPRejectedClaimException$ = [
     -3,
     n0,
     _IDPRCE,
-    { [_e]: _c, [_hE]: 403, [_aQE]: [`IDPRejectedClaim`, 403] },
+    { [_aQE]: [`IDPRejectedClaim`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(IDPRejectedClaimException, IDPRejectedClaimException$1);
-var InvalidIdentityTokenException = [
+schema.TypeRegistry.for(n0).registerError(IDPRejectedClaimException$, IDPRejectedClaimException);
+var InvalidIdentityTokenException$ = [
     -3,
     n0,
     _IITE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`InvalidIdentityToken`, 400] },
+    { [_aQE]: [`InvalidIdentityToken`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(InvalidIdentityTokenException, InvalidIdentityTokenException$1);
-var MalformedPolicyDocumentException = [
+schema.TypeRegistry.for(n0).registerError(InvalidIdentityTokenException$, InvalidIdentityTokenException);
+var MalformedPolicyDocumentException$ = [
     -3,
     n0,
     _MPDE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`MalformedPolicyDocument`, 400] },
+    { [_aQE]: [`MalformedPolicyDocument`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(MalformedPolicyDocumentException, MalformedPolicyDocumentException$1);
-var PackedPolicyTooLargeException = [
+schema.TypeRegistry.for(n0).registerError(MalformedPolicyDocumentException$, MalformedPolicyDocumentException);
+var PackedPolicyTooLargeException$ = [
     -3,
     n0,
     _PPTLE,
-    { [_e]: _c, [_hE]: 400, [_aQE]: [`PackedPolicyTooLarge`, 400] },
+    { [_aQE]: [`PackedPolicyTooLarge`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(PackedPolicyTooLargeException, PackedPolicyTooLargeException$1);
-var PolicyDescriptorType = [3, n0, _PDT, 0, [_a], [0]];
-var ProvidedContext = [3, n0, _PCr, 0, [_PAr, _CA], [0, 0]];
-var RegionDisabledException = [
+schema.TypeRegistry.for(n0).registerError(PackedPolicyTooLargeException$, PackedPolicyTooLargeException);
+var PolicyDescriptorType$ = [3, n0, _PDT, 0, [_a], [0]];
+var ProvidedContext$ = [3, n0, _PCr, 0, [_PAr, _CA], [0, 0]];
+var RegionDisabledException$ = [
     -3,
     n0,
     _RDE,
-    { [_e]: _c, [_hE]: 403, [_aQE]: [`RegionDisabledException`, 403] },
+    { [_aQE]: [`RegionDisabledException`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
     [0],
 ];
-schema.TypeRegistry.for(n0).registerError(RegionDisabledException, RegionDisabledException$1);
-var Tag = [3, n0, _Ta, 0, [_K, _V], [0, 0]];
-var STSServiceException = [-3, _s, "STSServiceException", 0, [], []];
-schema.TypeRegistry.for(_s).registerError(STSServiceException, STSServiceException$1);
-var policyDescriptorListType = [1, n0, _pDLT, 0, () => PolicyDescriptorType];
-var ProvidedContextsListType = [1, n0, _PCLT, 0, () => ProvidedContext];
-var tagListType = [1, n0, _tLT, 0, () => Tag];
-var AssumeRole = [9, n0, _AR, 0, () => AssumeRoleRequest, () => AssumeRoleResponse];
-var AssumeRoleWithWebIdentity = [
+schema.TypeRegistry.for(n0).registerError(RegionDisabledException$, RegionDisabledException);
+var Tag$ = [3, n0, _Ta, 0, [_K, _V], [0, 0]];
+var STSServiceException$ = [-3, _s, "STSServiceException", 0, [], []];
+schema.TypeRegistry.for(_s).registerError(STSServiceException$, STSServiceException);
+var policyDescriptorListType = [1, n0, _pDLT, 0, () => PolicyDescriptorType$];
+var ProvidedContextsListType = [1, n0, _PCLT, 0, () => ProvidedContext$];
+var tagListType = [1, n0, _tLT, 0, () => Tag$];
+var AssumeRole$ = [9, n0, _AR, 0, () => AssumeRoleRequest$, () => AssumeRoleResponse$];
+var AssumeRoleWithWebIdentity$ = [
     9,
     n0,
     _ARWWI,
     0,
-    () => AssumeRoleWithWebIdentityRequest,
-    () => AssumeRoleWithWebIdentityResponse,
+    () => AssumeRoleWithWebIdentityRequest$,
+    () => AssumeRoleWithWebIdentityResponse$,
 ];
 
 class AssumeRoleCommand extends smithyClient.Command
@@ -680,7 +680,7 @@ class AssumeRoleCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "AssumeRole", {})
     .n("STSClient", "AssumeRoleCommand")
-    .sc(AssumeRole)
+    .sc(AssumeRole$)
     .build() {
 }
 
@@ -692,7 +692,7 @@ class AssumeRoleWithWebIdentityCommand extends smithyClient.Command
 })
     .s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {})
     .n("STSClient", "AssumeRoleWithWebIdentityCommand")
-    .sc(AssumeRoleWithWebIdentity)
+    .sc(AssumeRoleWithWebIdentity$)
     .build() {
 }
 
@@ -828,17 +828,36 @@ Object.defineProperty(exports, "$Command", ({
     enumerable: true,
     get: function () { return smithyClient.Command; }
 }));
+exports.AssumeRole$ = AssumeRole$;
 exports.AssumeRoleCommand = AssumeRoleCommand;
+exports.AssumeRoleRequest$ = AssumeRoleRequest$;
+exports.AssumeRoleResponse$ = AssumeRoleResponse$;
+exports.AssumeRoleWithWebIdentity$ = AssumeRoleWithWebIdentity$;
 exports.AssumeRoleWithWebIdentityCommand = AssumeRoleWithWebIdentityCommand;
-exports.ExpiredTokenException = ExpiredTokenException$1;
-exports.IDPCommunicationErrorException = IDPCommunicationErrorException$1;
-exports.IDPRejectedClaimException = IDPRejectedClaimException$1;
-exports.InvalidIdentityTokenException = InvalidIdentityTokenException$1;
-exports.MalformedPolicyDocumentException = MalformedPolicyDocumentException$1;
-exports.PackedPolicyTooLargeException = PackedPolicyTooLargeException$1;
-exports.RegionDisabledException = RegionDisabledException$1;
+exports.AssumeRoleWithWebIdentityRequest$ = AssumeRoleWithWebIdentityRequest$;
+exports.AssumeRoleWithWebIdentityResponse$ = AssumeRoleWithWebIdentityResponse$;
+exports.AssumedRoleUser$ = AssumedRoleUser$;
+exports.Credentials$ = Credentials$;
+exports.ExpiredTokenException = ExpiredTokenException;
+exports.ExpiredTokenException$ = ExpiredTokenException$;
+exports.IDPCommunicationErrorException = IDPCommunicationErrorException;
+exports.IDPCommunicationErrorException$ = IDPCommunicationErrorException$;
+exports.IDPRejectedClaimException = IDPRejectedClaimException;
+exports.IDPRejectedClaimException$ = IDPRejectedClaimException$;
+exports.InvalidIdentityTokenException = InvalidIdentityTokenException;
+exports.InvalidIdentityTokenException$ = InvalidIdentityTokenException$;
+exports.MalformedPolicyDocumentException = MalformedPolicyDocumentException;
+exports.MalformedPolicyDocumentException$ = MalformedPolicyDocumentException$;
+exports.PackedPolicyTooLargeException = PackedPolicyTooLargeException;
+exports.PackedPolicyTooLargeException$ = PackedPolicyTooLargeException$;
+exports.PolicyDescriptorType$ = PolicyDescriptorType$;
+exports.ProvidedContext$ = ProvidedContext$;
+exports.RegionDisabledException = RegionDisabledException;
+exports.RegionDisabledException$ = RegionDisabledException$;
 exports.STS = STS;
-exports.STSServiceException = STSServiceException$1;
+exports.STSServiceException = STSServiceException;
+exports.STSServiceException$ = STSServiceException$;
+exports.Tag$ = Tag$;
 exports.decorateDefaultCredentialProvider = decorateDefaultCredentialProvider;
 exports.getDefaultRoleAssumer = getDefaultRoleAssumer;
 exports.getDefaultRoleAssumerWithWebIdentity = getDefaultRoleAssumerWithWebIdentity;
@@ -963,12 +982,13 @@ const getRuntimeConfig = (config) => {
             },
         ],
         logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
-        protocol: config?.protocol ??
-            new protocols_1.AwsQueryProtocol({
-                defaultNamespace: "com.amazonaws.sts",
-                xmlNamespace: "https://sts.amazonaws.com/doc/2011-06-15/",
-                version: "2011-06-15",
-            }),
+        protocol: config?.protocol ?? protocols_1.AwsQueryProtocol,
+        protocolSettings: config?.protocolSettings ?? {
+            defaultNamespace: "com.amazonaws.sts",
+            xmlNamespace: "https://sts.amazonaws.com/doc/2011-06-15/",
+            version: "2011-06-15",
+            serviceTarget: "AWSSecurityTokenServiceV20110615",
+        },
         serviceId: config?.serviceId ?? "STS",
         urlParser: config?.urlParser ?? url_parser_1.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
@@ -1003,7 +1023,7 @@ exports.resolveRuntimeExtensions = resolveRuntimeExtensions;
 /***/ 9955:
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.952.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"lerna run --scope $npm_package_name --include-dependencies build","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"sideEffects":false,"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.947.0","@aws-sdk/middleware-host-header":"3.936.0","@aws-sdk/middleware-logger":"3.936.0","@aws-sdk/middleware-recursion-detection":"3.948.0","@aws-sdk/middleware-user-agent":"3.947.0","@aws-sdk/region-config-resolver":"3.936.0","@aws-sdk/types":"3.936.0","@aws-sdk/util-endpoints":"3.936.0","@aws-sdk/util-user-agent-browser":"3.936.0","@aws-sdk/util-user-agent-node":"3.947.0","@smithy/config-resolver":"^4.4.3","@smithy/core":"^3.18.7","@smithy/fetch-http-handler":"^5.3.6","@smithy/hash-node":"^4.2.5","@smithy/invalid-dependency":"^4.2.5","@smithy/middleware-content-length":"^4.2.5","@smithy/middleware-endpoint":"^4.3.14","@smithy/middleware-retry":"^4.4.14","@smithy/middleware-serde":"^4.2.6","@smithy/middleware-stack":"^4.2.5","@smithy/node-config-provider":"^4.3.5","@smithy/node-http-handler":"^4.4.5","@smithy/protocol-http":"^5.3.5","@smithy/smithy-client":"^4.9.10","@smithy/types":"^4.9.0","@smithy/url-parser":"^4.2.5","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.13","@smithy/util-defaults-mode-node":"^4.2.16","@smithy/util-endpoints":"^3.2.5","@smithy/util-middleware":"^4.2.5","@smithy/util-retry":"^4.2.5","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./signin.d.ts","./signin.js","./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/signin/runtimeConfig":"./dist-es/submodules/signin/runtimeConfig.browser","./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./package.json":"./package.json","./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"},"./signin":{"types":"./dist-types/submodules/signin/index.d.ts","module":"./dist-es/submodules/signin/index.js","node":"./dist-cjs/submodules/signin/index.js","import":"./dist-es/submodules/signin/index.js","require":"./dist-cjs/submodules/signin/index.js"}}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/nested-clients","version":"3.957.0","description":"Nested clients for AWS SDK packages.","main":"./dist-cjs/index.js","module":"./dist-es/index.js","types":"./dist-types/index.d.ts","scripts":{"build":"yarn lint && concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"node ../../scripts/compilation/inline nested-clients","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","lint":"node ../../scripts/validation/submodules-linter.js --pkg nested-clients","test":"yarn g:vitest run","test:watch":"yarn g:vitest watch"},"engines":{"node":">=18.0.0"},"sideEffects":false,"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.957.0","@aws-sdk/middleware-host-header":"3.957.0","@aws-sdk/middleware-logger":"3.957.0","@aws-sdk/middleware-recursion-detection":"3.957.0","@aws-sdk/middleware-user-agent":"3.957.0","@aws-sdk/region-config-resolver":"3.957.0","@aws-sdk/types":"3.957.0","@aws-sdk/util-endpoints":"3.957.0","@aws-sdk/util-user-agent-browser":"3.957.0","@aws-sdk/util-user-agent-node":"3.957.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.0","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.1","@smithy/middleware-retry":"^4.4.17","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.2","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.16","@smithy/util-defaults-mode-node":"^4.2.19","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["./signin.d.ts","./signin.js","./sso-oidc.d.ts","./sso-oidc.js","./sts.d.ts","./sts.js","dist-*/**"],"browser":{"./dist-es/submodules/signin/runtimeConfig":"./dist-es/submodules/signin/runtimeConfig.browser","./dist-es/submodules/sso-oidc/runtimeConfig":"./dist-es/submodules/sso-oidc/runtimeConfig.browser","./dist-es/submodules/sts/runtimeConfig":"./dist-es/submodules/sts/runtimeConfig.browser"},"react-native":{},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"packages/nested-clients"},"exports":{"./package.json":"./package.json","./sso-oidc":{"types":"./dist-types/submodules/sso-oidc/index.d.ts","module":"./dist-es/submodules/sso-oidc/index.js","node":"./dist-cjs/submodules/sso-oidc/index.js","import":"./dist-es/submodules/sso-oidc/index.js","require":"./dist-cjs/submodules/sso-oidc/index.js"},"./sts":{"types":"./dist-types/submodules/sts/index.d.ts","module":"./dist-es/submodules/sts/index.js","node":"./dist-cjs/submodules/sts/index.js","import":"./dist-es/submodules/sts/index.js","require":"./dist-cjs/submodules/sts/index.js"},"./signin":{"types":"./dist-types/submodules/signin/index.d.ts","module":"./dist-es/submodules/signin/index.js","node":"./dist-cjs/submodules/signin/index.js","import":"./dist-es/submodules/signin/index.js","require":"./dist-cjs/submodules/signin/index.js"}}}');
 
 /***/ })
 
