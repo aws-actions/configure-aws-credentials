@@ -14,10 +14,9 @@ const util_middleware_1 = __webpack_require__(6324);
 const defaultSSOHttpAuthSchemeParametersProvider = async (config, context, input) => {
     return {
         operation: (0, util_middleware_1.getSmithyContext)(context).operation,
-        region: (await (0, util_middleware_1.normalizeProvider)(config.region)()) ||
-            (() => {
-                throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
-            })(),
+        region: await (0, util_middleware_1.normalizeProvider)(config.region)() || (() => {
+            throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
+        })(),
     };
 };
 exports.defaultSSOHttpAuthSchemeParametersProvider = defaultSSOHttpAuthSchemeParametersProvider;
@@ -44,22 +43,30 @@ function createSmithyApiNoAuthHttpAuthOption(authParameters) {
 const defaultSSOHttpAuthSchemeProvider = (authParameters) => {
     const options = [];
     switch (authParameters.operation) {
-        case "GetRoleCredentials": {
-            options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
-            break;
-        }
-        case "ListAccountRoles": {
-            options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
-            break;
-        }
-        case "ListAccounts": {
-            options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
-            break;
-        }
-        case "Logout": {
-            options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
-            break;
-        }
+        case "GetRoleCredentials":
+            {
+                options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
+                break;
+            }
+            ;
+        case "ListAccountRoles":
+            {
+                options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
+                break;
+            }
+            ;
+        case "ListAccounts":
+            {
+                options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
+                break;
+            }
+            ;
+        case "Logout":
+            {
+                options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
+                break;
+            }
+            ;
         default: {
             options.push(createAwsAuthSigv4HttpAuthOption(authParameters));
         }
@@ -342,108 +349,100 @@ const n0 = "com.amazonaws.sso";
 var AccessTokenType = [0, n0, _ATT, 8, 0];
 var SecretAccessKeyType = [0, n0, _SAKT, 8, 0];
 var SessionTokenType = [0, n0, _STT, 8, 0];
-var AccountInfo$ = [3, n0, _AI, 0, [_aI, _aN, _eA], [0, 0, 0]];
-var GetRoleCredentialsRequest$ = [
-    3,
-    n0,
-    _GRCR,
+var AccountInfo$ = [3, n0, _AI,
+    0,
+    [_aI, _aN, _eA],
+    [0, 0, 0]
+];
+var GetRoleCredentialsRequest$ = [3, n0, _GRCR,
     0,
     [_rN, _aI, _aT],
-    [
-        [0, { [_hQ]: _rn }],
-        [0, { [_hQ]: _ai }],
-        [() => AccessTokenType, { [_hH]: _xasbt }],
-    ],
+    [[0, { [_hQ]: _rn }], [0, { [_hQ]: _ai }], [() => AccessTokenType, { [_hH]: _xasbt }]]
 ];
-var GetRoleCredentialsResponse$ = [
-    3,
-    n0,
-    _GRCRe,
+var GetRoleCredentialsResponse$ = [3, n0, _GRCRe,
     0,
     [_rC],
-    [[() => RoleCredentials$, 0]],
+    [[() => RoleCredentials$, 0]]
 ];
-var InvalidRequestException$ = [-3, n0, _IRE, { [_e]: _c, [_hE]: 400 }, [_m], [0]];
+var InvalidRequestException$ = [-3, n0, _IRE,
+    { [_e]: _c, [_hE]: 400 },
+    [_m],
+    [0]
+];
 schema.TypeRegistry.for(n0).registerError(InvalidRequestException$, InvalidRequestException);
-var ListAccountRolesRequest$ = [
-    3,
-    n0,
-    _LARR,
+var ListAccountRolesRequest$ = [3, n0, _LARR,
     0,
     [_nT, _mR, _aT, _aI],
-    [
-        [0, { [_hQ]: _nt }],
-        [1, { [_hQ]: _mr }],
-        [() => AccessTokenType, { [_hH]: _xasbt }],
-        [0, { [_hQ]: _ai }],
-    ],
+    [[0, { [_hQ]: _nt }], [1, { [_hQ]: _mr }], [() => AccessTokenType, { [_hH]: _xasbt }], [0, { [_hQ]: _ai }]]
 ];
-var ListAccountRolesResponse$ = [3, n0, _LARRi, 0, [_nT, _rL], [0, () => RoleListType]];
-var ListAccountsRequest$ = [
-    3,
-    n0,
-    _LAR,
+var ListAccountRolesResponse$ = [3, n0, _LARRi,
+    0,
+    [_nT, _rL],
+    [0, () => RoleListType]
+];
+var ListAccountsRequest$ = [3, n0, _LAR,
     0,
     [_nT, _mR, _aT],
-    [
-        [0, { [_hQ]: _nt }],
-        [1, { [_hQ]: _mr }],
-        [() => AccessTokenType, { [_hH]: _xasbt }],
-    ],
+    [[0, { [_hQ]: _nt }], [1, { [_hQ]: _mr }], [() => AccessTokenType, { [_hH]: _xasbt }]]
 ];
-var ListAccountsResponse$ = [3, n0, _LARi, 0, [_nT, _aL], [0, () => AccountListType]];
-var LogoutRequest$ = [3, n0, _LR, 0, [_aT], [[() => AccessTokenType, { [_hH]: _xasbt }]]];
-var ResourceNotFoundException$ = [-3, n0, _RNFE, { [_e]: _c, [_hE]: 404 }, [_m], [0]];
+var ListAccountsResponse$ = [3, n0, _LARi,
+    0,
+    [_nT, _aL],
+    [0, () => AccountListType]
+];
+var LogoutRequest$ = [3, n0, _LR,
+    0,
+    [_aT],
+    [[() => AccessTokenType, { [_hH]: _xasbt }]]
+];
+var ResourceNotFoundException$ = [-3, n0, _RNFE,
+    { [_e]: _c, [_hE]: 404 },
+    [_m],
+    [0]
+];
 schema.TypeRegistry.for(n0).registerError(ResourceNotFoundException$, ResourceNotFoundException);
-var RoleCredentials$ = [
-    3,
-    n0,
-    _RC,
+var RoleCredentials$ = [3, n0, _RC,
     0,
     [_aKI, _sAK, _sT, _ex],
-    [0, [() => SecretAccessKeyType, 0], [() => SessionTokenType, 0], 1],
+    [0, [() => SecretAccessKeyType, 0], [() => SessionTokenType, 0], 1]
 ];
-var RoleInfo$ = [3, n0, _RI, 0, [_rN, _aI], [0, 0]];
-var TooManyRequestsException$ = [-3, n0, _TMRE, { [_e]: _c, [_hE]: 429 }, [_m], [0]];
+var RoleInfo$ = [3, n0, _RI,
+    0,
+    [_rN, _aI],
+    [0, 0]
+];
+var TooManyRequestsException$ = [-3, n0, _TMRE,
+    { [_e]: _c, [_hE]: 429 },
+    [_m],
+    [0]
+];
 schema.TypeRegistry.for(n0).registerError(TooManyRequestsException$, TooManyRequestsException);
-var UnauthorizedException$ = [-3, n0, _UE, { [_e]: _c, [_hE]: 401 }, [_m], [0]];
+var UnauthorizedException$ = [-3, n0, _UE,
+    { [_e]: _c, [_hE]: 401 },
+    [_m],
+    [0]
+];
 schema.TypeRegistry.for(n0).registerError(UnauthorizedException$, UnauthorizedException);
 var __Unit = "unit";
 var SSOServiceException$ = [-3, _s, "SSOServiceException", 0, [], []];
 schema.TypeRegistry.for(_s).registerError(SSOServiceException$, SSOServiceException);
-var AccountListType = [1, n0, _ALT, 0, () => AccountInfo$];
-var RoleListType = [1, n0, _RLT, 0, () => RoleInfo$];
-var GetRoleCredentials$ = [
-    9,
-    n0,
-    _GRC,
-    { [_h]: ["GET", "/federation/credentials", 200] },
-    () => GetRoleCredentialsRequest$,
-    () => GetRoleCredentialsResponse$,
+var AccountListType = [1, n0, _ALT,
+    0, () => AccountInfo$
 ];
-var ListAccountRoles$ = [
-    9,
-    n0,
-    _LARis,
-    { [_h]: ["GET", "/assignment/roles", 200] },
-    () => ListAccountRolesRequest$,
-    () => ListAccountRolesResponse$,
+var RoleListType = [1, n0, _RLT,
+    0, () => RoleInfo$
 ];
-var ListAccounts$ = [
-    9,
-    n0,
-    _LA,
-    { [_h]: ["GET", "/assignment/accounts", 200] },
-    () => ListAccountsRequest$,
-    () => ListAccountsResponse$,
+var GetRoleCredentials$ = [9, n0, _GRC,
+    { [_h]: ["GET", "/federation/credentials", 200] }, () => GetRoleCredentialsRequest$, () => GetRoleCredentialsResponse$
 ];
-var Logout$ = [
-    9,
-    n0,
-    _L,
-    { [_h]: ["POST", "/logout", 200] },
-    () => LogoutRequest$,
-    () => __Unit,
+var ListAccountRoles$ = [9, n0, _LARis,
+    { [_h]: ["GET", "/assignment/roles", 200] }, () => ListAccountRolesRequest$, () => ListAccountRolesResponse$
+];
+var ListAccounts$ = [9, n0, _LA,
+    { [_h]: ["GET", "/assignment/accounts", 200] }, () => ListAccountsRequest$, () => ListAccountsResponse$
+];
+var Logout$ = [9, n0, _L,
+    { [_h]: ["POST", "/logout", 200] }, () => LogoutRequest$, () => __Unit
 ];
 
 class GetRoleCredentialsCommand extends smithyClient.Command
@@ -589,11 +588,9 @@ const getRuntimeConfig = (config) => {
         defaultsMode,
         authSchemePreference: config?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
         bodyLengthChecker: config?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
-        defaultUserAgentProvider: config?.defaultUserAgentProvider ??
-            (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
         maxAttempts: config?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
-        region: config?.region ??
-            (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        region: config?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
         requestHandler: node_http_handler_1.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
         retryMode: config?.retryMode ??
             (0, node_config_provider_1.loadConfig)({
@@ -1360,7 +1357,7 @@ exports.nodeProvider = nodeProvider;
 /***/ 5188:
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.957.0","scripts":{"build":"concurrently \'yarn:build:types\' \'yarn:build:es\' && yarn build:cjs","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.957.0","@aws-sdk/middleware-host-header":"3.957.0","@aws-sdk/middleware-logger":"3.957.0","@aws-sdk/middleware-recursion-detection":"3.957.0","@aws-sdk/middleware-user-agent":"3.957.0","@aws-sdk/region-config-resolver":"3.957.0","@aws-sdk/types":"3.957.0","@aws-sdk/util-endpoints":"3.957.0","@aws-sdk/util-user-agent-browser":"3.957.0","@aws-sdk/util-user-agent-node":"3.957.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.0","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.1","@smithy/middleware-retry":"^4.4.17","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.2","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.16","@smithy/util-defaults-mode-node":"^4.2.19","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.958.0","scripts":{"build":"concurrently \'yarn:build:types\' \'yarn:build:es\' && yarn build:cjs","build:cjs":"node ../../scripts/compilation/inline client-sso","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sso","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.957.0","@aws-sdk/middleware-host-header":"3.957.0","@aws-sdk/middleware-logger":"3.957.0","@aws-sdk/middleware-recursion-detection":"3.957.0","@aws-sdk/middleware-user-agent":"3.957.0","@aws-sdk/region-config-resolver":"3.957.0","@aws-sdk/types":"3.957.0","@aws-sdk/util-endpoints":"3.957.0","@aws-sdk/util-user-agent-browser":"3.957.0","@aws-sdk/util-user-agent-node":"3.957.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.0","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.1","@smithy/middleware-retry":"^4.4.17","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.2","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.16","@smithy/util-defaults-mode-node":"^4.2.19","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
 
 /***/ })
 
