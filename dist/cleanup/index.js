@@ -3562,10 +3562,9 @@ const STSClient_1 = __nccwpck_require__(1548);
 const defaultSTSHttpAuthSchemeParametersProvider = async (config, context, input) => {
     return {
         operation: (0, util_middleware_1.getSmithyContext)(context).operation,
-        region: (await (0, util_middleware_1.normalizeProvider)(config.region)()) ||
-            (() => {
-                throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
-            })(),
+        region: await (0, util_middleware_1.normalizeProvider)(config.region)() || (() => {
+            throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
+        })(),
     };
 };
 exports.defaultSTSHttpAuthSchemeParametersProvider = defaultSTSHttpAuthSchemeParametersProvider;
@@ -3592,14 +3591,18 @@ function createSmithyApiNoAuthHttpAuthOption(authParameters) {
 const defaultSTSHttpAuthSchemeProvider = (authParameters) => {
     const options = [];
     switch (authParameters.operation) {
-        case "AssumeRoleWithSAML": {
-            options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
-            break;
-        }
-        case "AssumeRoleWithWebIdentity": {
-            options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
-            break;
-        }
+        case "AssumeRoleWithSAML":
+            {
+                options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
+                break;
+            }
+            ;
+        case "AssumeRoleWithWebIdentity":
+            {
+                options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
+                break;
+            }
+            ;
         default: {
             options.push(createAwsAuthSigv4HttpAuthOption(authParameters));
         }
@@ -3974,318 +3977,261 @@ var clientTokenType = [0, n0, _cTT, 8, 0];
 var SAMLAssertionType = [0, n0, _SAMLAT, 8, 0];
 var tradeInTokenType = [0, n0, _tITT, 8, 0];
 var webIdentityTokenType = [0, n0, _wITT, 8, 0];
-var AssumedRoleUser$ = [3, n0, _ARU, 0, [_ARI, _A], [0, 0]];
-var AssumeRoleRequest$ = [
-    3,
-    n0,
-    _ARR,
+var AssumedRoleUser$ = [3, n0, _ARU,
+    0,
+    [_ARI, _A],
+    [0, 0]
+];
+var AssumeRoleRequest$ = [3, n0, _ARR,
     0,
     [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC],
-    [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType],
+    [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType]
 ];
-var AssumeRoleResponse$ = [
-    3,
-    n0,
-    _ARRs,
+var AssumeRoleResponse$ = [3, n0, _ARRs,
     0,
     [_C, _ARU, _PPS, _SI],
-    [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0],
+    [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0]
 ];
-var AssumeRoleWithSAMLRequest$ = [
-    3,
-    n0,
-    _ARWSAMLR,
+var AssumeRoleWithSAMLRequest$ = [3, n0, _ARWSAMLR,
     0,
     [_RA, _PAr, _SAMLA, _PA, _P, _DS],
-    [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType, 0, 1],
+    [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType, 0, 1]
 ];
-var AssumeRoleWithSAMLResponse$ = [
-    3,
-    n0,
-    _ARWSAMLRs,
+var AssumeRoleWithSAMLResponse$ = [3, n0, _ARWSAMLRs,
     0,
     [_C, _ARU, _PPS, _S, _ST, _I, _Au, _NQ, _SI],
-    [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0, 0, 0, 0, 0, 0],
+    [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0, 0, 0, 0, 0, 0]
 ];
-var AssumeRoleWithWebIdentityRequest$ = [
-    3,
-    n0,
-    _ARWWIR,
+var AssumeRoleWithWebIdentityRequest$ = [3, n0, _ARWWIR,
     0,
     [_RA, _RSN, _WIT, _PI, _PA, _P, _DS],
-    [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1],
+    [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1]
 ];
-var AssumeRoleWithWebIdentityResponse$ = [
-    3,
-    n0,
-    _ARWWIRs,
+var AssumeRoleWithWebIdentityResponse$ = [3, n0, _ARWWIRs,
     0,
     [_C, _SFWIT, _ARU, _PPS, _Pr, _Au, _SI],
-    [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0],
+    [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0]
 ];
-var AssumeRootRequest$ = [
-    3,
-    n0,
-    _ARRss,
+var AssumeRootRequest$ = [3, n0, _ARRss,
     0,
     [_TP, _TPA, _DS],
-    [0, () => PolicyDescriptorType$, 1],
+    [0, () => PolicyDescriptorType$, 1]
 ];
-var AssumeRootResponse$ = [3, n0, _ARRssu, 0, [_C, _SI], [[() => Credentials$, 0], 0]];
-var Credentials$ = [
-    3,
-    n0,
-    _C,
+var AssumeRootResponse$ = [3, n0, _ARRssu,
+    0,
+    [_C, _SI],
+    [[() => Credentials$, 0], 0]
+];
+var Credentials$ = [3, n0, _C,
     0,
     [_AKI, _SAK, _STe, _E],
-    [0, [() => accessKeySecretType, 0], 0, 4],
+    [0, [() => accessKeySecretType, 0], 0, 4]
 ];
-var DecodeAuthorizationMessageRequest$ = [3, n0, _DAMR, 0, [_EM], [0]];
-var DecodeAuthorizationMessageResponse$ = [3, n0, _DAMRe, 0, [_DM], [0]];
-var ExpiredTokenException$ = [
-    -3,
-    n0,
-    _ETE,
+var DecodeAuthorizationMessageRequest$ = [3, n0, _DAMR,
+    0,
+    [_EM],
+    [0]
+];
+var DecodeAuthorizationMessageResponse$ = [3, n0, _DAMRe,
+    0,
+    [_DM],
+    [0]
+];
+var ExpiredTokenException$ = [-3, n0, _ETE,
     { [_aQE]: [`ExpiredTokenException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(ExpiredTokenException$, ExpiredTokenException);
-var ExpiredTradeInTokenException$ = [
-    -3,
-    n0,
-    _ETITE,
+var ExpiredTradeInTokenException$ = [-3, n0, _ETITE,
     { [_aQE]: [`ExpiredTradeInTokenException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(ExpiredTradeInTokenException$, ExpiredTradeInTokenException);
-var FederatedUser$ = [3, n0, _FU, 0, [_FUI, _A], [0, 0]];
-var GetAccessKeyInfoRequest$ = [3, n0, _GAKIR, 0, [_AKI], [0]];
-var GetAccessKeyInfoResponse$ = [3, n0, _GAKIRe, 0, [_Ac], [0]];
-var GetCallerIdentityRequest$ = [3, n0, _GCIR, 0, [], []];
-var GetCallerIdentityResponse$ = [3, n0, _GCIRe, 0, [_UI, _Ac, _A], [0, 0, 0]];
-var GetDelegatedAccessTokenRequest$ = [
-    3,
-    n0,
-    _GDATR,
+var FederatedUser$ = [3, n0, _FU,
+    0,
+    [_FUI, _A],
+    [0, 0]
+];
+var GetAccessKeyInfoRequest$ = [3, n0, _GAKIR,
+    0,
+    [_AKI],
+    [0]
+];
+var GetAccessKeyInfoResponse$ = [3, n0, _GAKIRe,
+    0,
+    [_Ac],
+    [0]
+];
+var GetCallerIdentityRequest$ = [3, n0, _GCIR,
+    0,
+    [],
+    []
+];
+var GetCallerIdentityResponse$ = [3, n0, _GCIRe,
+    0,
+    [_UI, _Ac, _A],
+    [0, 0, 0]
+];
+var GetDelegatedAccessTokenRequest$ = [3, n0, _GDATR,
     0,
     [_TIT],
-    [[() => tradeInTokenType, 0]],
+    [[() => tradeInTokenType, 0]]
 ];
-var GetDelegatedAccessTokenResponse$ = [
-    3,
-    n0,
-    _GDATRe,
+var GetDelegatedAccessTokenResponse$ = [3, n0, _GDATRe,
     0,
     [_C, _PPS, _AP],
-    [[() => Credentials$, 0], 1, 0],
+    [[() => Credentials$, 0], 1, 0]
 ];
-var GetFederationTokenRequest$ = [
-    3,
-    n0,
-    _GFTR,
+var GetFederationTokenRequest$ = [3, n0, _GFTR,
     0,
     [_N, _P, _PA, _DS, _T],
-    [0, 0, () => policyDescriptorListType, 1, () => tagListType],
+    [0, 0, () => policyDescriptorListType, 1, () => tagListType]
 ];
-var GetFederationTokenResponse$ = [
-    3,
-    n0,
-    _GFTRe,
+var GetFederationTokenResponse$ = [3, n0, _GFTRe,
     0,
     [_C, _FU, _PPS],
-    [[() => Credentials$, 0], () => FederatedUser$, 1],
+    [[() => Credentials$, 0], () => FederatedUser$, 1]
 ];
-var GetSessionTokenRequest$ = [3, n0, _GSTR, 0, [_DS, _SN, _TC], [1, 0, 0]];
-var GetSessionTokenResponse$ = [3, n0, _GSTRe, 0, [_C], [[() => Credentials$, 0]]];
-var GetWebIdentityTokenRequest$ = [
-    3,
-    n0,
-    _GWITR,
+var GetSessionTokenRequest$ = [3, n0, _GSTR,
+    0,
+    [_DS, _SN, _TC],
+    [1, 0, 0]
+];
+var GetSessionTokenResponse$ = [3, n0, _GSTRe,
+    0,
+    [_C],
+    [[() => Credentials$, 0]]
+];
+var GetWebIdentityTokenRequest$ = [3, n0, _GWITR,
     0,
     [_Au, _DS, _SA, _T],
-    [64 | 0, 1, 0, () => tagListType],
+    [64 | 0, 1, 0, () => tagListType]
 ];
-var GetWebIdentityTokenResponse$ = [
-    3,
-    n0,
-    _GWITRe,
+var GetWebIdentityTokenResponse$ = [3, n0, _GWITRe,
     0,
     [_WIT, _E],
-    [[() => webIdentityTokenType, 0], 4],
+    [[() => webIdentityTokenType, 0], 4]
 ];
-var IDPCommunicationErrorException$ = [
-    -3,
-    n0,
-    _IDPCEE,
+var IDPCommunicationErrorException$ = [-3, n0, _IDPCEE,
     { [_aQE]: [`IDPCommunicationError`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(IDPCommunicationErrorException$, IDPCommunicationErrorException);
-var IDPRejectedClaimException$ = [
-    -3,
-    n0,
-    _IDPRCE,
+var IDPRejectedClaimException$ = [-3, n0, _IDPRCE,
     { [_aQE]: [`IDPRejectedClaim`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(IDPRejectedClaimException$, IDPRejectedClaimException);
-var InvalidAuthorizationMessageException$ = [
-    -3,
-    n0,
-    _IAME,
+var InvalidAuthorizationMessageException$ = [-3, n0, _IAME,
     { [_aQE]: [`InvalidAuthorizationMessageException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(InvalidAuthorizationMessageException$, InvalidAuthorizationMessageException);
-var InvalidIdentityTokenException$ = [
-    -3,
-    n0,
-    _IITE,
+var InvalidIdentityTokenException$ = [-3, n0, _IITE,
     { [_aQE]: [`InvalidIdentityToken`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(InvalidIdentityTokenException$, InvalidIdentityTokenException);
-var JWTPayloadSizeExceededException$ = [
-    -3,
-    n0,
-    _JWTPSEE,
+var JWTPayloadSizeExceededException$ = [-3, n0, _JWTPSEE,
     { [_aQE]: [`JWTPayloadSizeExceededException`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(JWTPayloadSizeExceededException$, JWTPayloadSizeExceededException);
-var MalformedPolicyDocumentException$ = [
-    -3,
-    n0,
-    _MPDE,
+var MalformedPolicyDocumentException$ = [-3, n0, _MPDE,
     { [_aQE]: [`MalformedPolicyDocument`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(MalformedPolicyDocumentException$, MalformedPolicyDocumentException);
-var OutboundWebIdentityFederationDisabledException$ = [
-    -3,
-    n0,
-    _OWIFDE,
+var OutboundWebIdentityFederationDisabledException$ = [-3, n0, _OWIFDE,
     { [_aQE]: [`OutboundWebIdentityFederationDisabledException`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(OutboundWebIdentityFederationDisabledException$, OutboundWebIdentityFederationDisabledException);
-var PackedPolicyTooLargeException$ = [
-    -3,
-    n0,
-    _PPTLE,
+var PackedPolicyTooLargeException$ = [-3, n0, _PPTLE,
     { [_aQE]: [`PackedPolicyTooLarge`, 400], [_e]: _c, [_hE]: 400 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(PackedPolicyTooLargeException$, PackedPolicyTooLargeException);
-var PolicyDescriptorType$ = [3, n0, _PDT, 0, [_a], [0]];
-var ProvidedContext$ = [3, n0, _PCr, 0, [_PAro, _CA], [0, 0]];
-var RegionDisabledException$ = [
-    -3,
-    n0,
-    _RDE,
+var PolicyDescriptorType$ = [3, n0, _PDT,
+    0,
+    [_a],
+    [0]
+];
+var ProvidedContext$ = [3, n0, _PCr,
+    0,
+    [_PAro, _CA],
+    [0, 0]
+];
+var RegionDisabledException$ = [-3, n0, _RDE,
     { [_aQE]: [`RegionDisabledException`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(RegionDisabledException$, RegionDisabledException);
-var SessionDurationEscalationException$ = [
-    -3,
-    n0,
-    _SDEE,
+var SessionDurationEscalationException$ = [-3, n0, _SDEE,
     { [_aQE]: [`SessionDurationEscalationException`, 403], [_e]: _c, [_hE]: 403 },
     [_m],
-    [0],
+    [0]
 ];
 schema.TypeRegistry.for(n0).registerError(SessionDurationEscalationException$, SessionDurationEscalationException);
-var Tag$ = [3, n0, _Ta, 0, [_K, _V], [0, 0]];
+var Tag$ = [3, n0, _Ta,
+    0,
+    [_K, _V],
+    [0, 0]
+];
 var STSServiceException$ = [-3, _s, "STSServiceException", 0, [], []];
 schema.TypeRegistry.for(_s).registerError(STSServiceException$, STSServiceException);
-var policyDescriptorListType = [1, n0, _pDLT, 0, () => PolicyDescriptorType$];
-var ProvidedContextsListType = [1, n0, _PCLT, 0, () => ProvidedContext$];
-var tagListType = [1, n0, _tLT, 0, () => Tag$];
-var AssumeRole$ = [9, n0, _AR, 0, () => AssumeRoleRequest$, () => AssumeRoleResponse$];
-var AssumeRoleWithSAML$ = [
-    9,
-    n0,
-    _ARWSAML,
-    0,
-    () => AssumeRoleWithSAMLRequest$,
-    () => AssumeRoleWithSAMLResponse$,
+var policyDescriptorListType = [1, n0, _pDLT,
+    0, () => PolicyDescriptorType$
 ];
-var AssumeRoleWithWebIdentity$ = [
-    9,
-    n0,
-    _ARWWI,
-    0,
-    () => AssumeRoleWithWebIdentityRequest$,
-    () => AssumeRoleWithWebIdentityResponse$,
+var ProvidedContextsListType = [1, n0, _PCLT,
+    0, () => ProvidedContext$
 ];
-var AssumeRoot$ = [9, n0, _ARs, 0, () => AssumeRootRequest$, () => AssumeRootResponse$];
-var DecodeAuthorizationMessage$ = [
-    9,
-    n0,
-    _DAM,
-    0,
-    () => DecodeAuthorizationMessageRequest$,
-    () => DecodeAuthorizationMessageResponse$,
+var tagListType = [1, n0, _tLT,
+    0, () => Tag$
 ];
-var GetAccessKeyInfo$ = [
-    9,
-    n0,
-    _GAKI,
-    0,
-    () => GetAccessKeyInfoRequest$,
-    () => GetAccessKeyInfoResponse$,
+var AssumeRole$ = [9, n0, _AR,
+    0, () => AssumeRoleRequest$, () => AssumeRoleResponse$
 ];
-var GetCallerIdentity$ = [
-    9,
-    n0,
-    _GCI,
-    0,
-    () => GetCallerIdentityRequest$,
-    () => GetCallerIdentityResponse$,
+var AssumeRoleWithSAML$ = [9, n0, _ARWSAML,
+    0, () => AssumeRoleWithSAMLRequest$, () => AssumeRoleWithSAMLResponse$
 ];
-var GetDelegatedAccessToken$ = [
-    9,
-    n0,
-    _GDAT,
-    0,
-    () => GetDelegatedAccessTokenRequest$,
-    () => GetDelegatedAccessTokenResponse$,
+var AssumeRoleWithWebIdentity$ = [9, n0, _ARWWI,
+    0, () => AssumeRoleWithWebIdentityRequest$, () => AssumeRoleWithWebIdentityResponse$
 ];
-var GetFederationToken$ = [
-    9,
-    n0,
-    _GFT,
-    0,
-    () => GetFederationTokenRequest$,
-    () => GetFederationTokenResponse$,
+var AssumeRoot$ = [9, n0, _ARs,
+    0, () => AssumeRootRequest$, () => AssumeRootResponse$
 ];
-var GetSessionToken$ = [
-    9,
-    n0,
-    _GST,
-    0,
-    () => GetSessionTokenRequest$,
-    () => GetSessionTokenResponse$,
+var DecodeAuthorizationMessage$ = [9, n0, _DAM,
+    0, () => DecodeAuthorizationMessageRequest$, () => DecodeAuthorizationMessageResponse$
 ];
-var GetWebIdentityToken$ = [
-    9,
-    n0,
-    _GWIT,
-    0,
-    () => GetWebIdentityTokenRequest$,
-    () => GetWebIdentityTokenResponse$,
+var GetAccessKeyInfo$ = [9, n0, _GAKI,
+    0, () => GetAccessKeyInfoRequest$, () => GetAccessKeyInfoResponse$
+];
+var GetCallerIdentity$ = [9, n0, _GCI,
+    0, () => GetCallerIdentityRequest$, () => GetCallerIdentityResponse$
+];
+var GetDelegatedAccessToken$ = [9, n0, _GDAT,
+    0, () => GetDelegatedAccessTokenRequest$, () => GetDelegatedAccessTokenResponse$
+];
+var GetFederationToken$ = [9, n0, _GFT,
+    0, () => GetFederationTokenRequest$, () => GetFederationTokenResponse$
+];
+var GetSessionToken$ = [9, n0, _GST,
+    0, () => GetSessionTokenRequest$, () => GetSessionTokenResponse$
+];
+var GetWebIdentityToken$ = [9, n0, _GWIT,
+    0, () => GetWebIdentityTokenRequest$, () => GetWebIdentityTokenResponse$
 ];
 
 class AssumeRoleCommand extends smithyClient.Command
@@ -4692,13 +4638,11 @@ const getRuntimeConfig = (config) => {
         authSchemePreference: config?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
         bodyLengthChecker: config?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
         credentialDefaultProvider: config?.credentialDefaultProvider ?? credential_provider_node_1.defaultProvider,
-        defaultUserAgentProvider: config?.defaultUserAgentProvider ??
-            (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
         httpAuthSchemes: config?.httpAuthSchemes ?? [
             {
                 schemeId: "aws.auth#sigv4",
-                identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") ||
-                    (async (idProps) => await (0, credential_provider_node_1.defaultProvider)(idProps?.__config || {})()),
+                identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await (0, credential_provider_node_1.defaultProvider)(idProps?.__config || {})()),
                 signer: new core_1.AwsSdkSigV4Signer(),
             },
             {
@@ -4708,8 +4652,7 @@ const getRuntimeConfig = (config) => {
             },
         ],
         maxAttempts: config?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
-        region: config?.region ??
-            (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        region: config?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
         requestHandler: node_http_handler_1.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
         retryMode: config?.retryMode ??
             (0, node_config_provider_1.loadConfig)({
@@ -45753,7 +45696,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.957.0","scripts":{"build":"concurrently \'yarn:build:types\' \'yarn:build:es\' && yarn build:cjs","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:e2e":"yarn g:vitest run -c vitest.config.e2e.mts --mode development","test:e2e:watch":"yarn g:vitest watch -c vitest.config.e2e.mts","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.957.0","@aws-sdk/credential-provider-node":"3.957.0","@aws-sdk/middleware-host-header":"3.957.0","@aws-sdk/middleware-logger":"3.957.0","@aws-sdk/middleware-recursion-detection":"3.957.0","@aws-sdk/middleware-user-agent":"3.957.0","@aws-sdk/region-config-resolver":"3.957.0","@aws-sdk/types":"3.957.0","@aws-sdk/util-endpoints":"3.957.0","@aws-sdk/util-user-agent-browser":"3.957.0","@aws-sdk/util-user-agent-node":"3.957.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.0","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.1","@smithy/middleware-retry":"^4.4.17","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.2","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.16","@smithy/util-defaults-mode-node":"^4.2.19","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.958.0","scripts":{"build":"concurrently \'yarn:build:types\' \'yarn:build:es\' && yarn build:cjs","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:e2e":"yarn g:vitest run -c vitest.config.e2e.mts --mode development","test:e2e:watch":"yarn g:vitest watch -c vitest.config.e2e.mts","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.957.0","@aws-sdk/credential-provider-node":"3.958.0","@aws-sdk/middleware-host-header":"3.957.0","@aws-sdk/middleware-logger":"3.957.0","@aws-sdk/middleware-recursion-detection":"3.957.0","@aws-sdk/middleware-user-agent":"3.957.0","@aws-sdk/region-config-resolver":"3.957.0","@aws-sdk/types":"3.957.0","@aws-sdk/util-endpoints":"3.957.0","@aws-sdk/util-user-agent-browser":"3.957.0","@aws-sdk/util-user-agent-node":"3.957.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.0","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.1","@smithy/middleware-retry":"^4.4.17","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.2","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.16","@smithy/util-defaults-mode-node":"^4.2.19","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"3.0.2","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ })
 
