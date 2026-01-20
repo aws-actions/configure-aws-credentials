@@ -28,7 +28,7 @@ const resolveCredentialSource = (credentialSource, profileName, logger) => {
         },
         Environment: async (options) => {
             logger?.debug("@aws-sdk/credential-provider-ini - credential_source is Environment");
-            const { fromEnv } = await __webpack_require__.e(/* import() */ 121).then(__webpack_require__.t.bind(__webpack_require__, 7121, 19));
+            const { fromEnv } = await Promise.resolve(/* import() */).then(__webpack_require__.t.bind(__webpack_require__, 5606, 19));
             return async () => fromEnv(options)().then(setNamedProvider);
         },
     };
