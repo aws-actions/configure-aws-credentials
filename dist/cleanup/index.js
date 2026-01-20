@@ -8883,62 +8883,13 @@ exports.parseXmlErrorBody = parseXmlErrorBody;
 
 /***/ }),
 
-/***/ 5606:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-var client = __nccwpck_require__(5152);
-var propertyProvider = __nccwpck_require__(1238);
-
-const ENV_KEY = "AWS_ACCESS_KEY_ID";
-const ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
-const ENV_SESSION = "AWS_SESSION_TOKEN";
-const ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
-const ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
-const ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
-const fromEnv = (init) => async () => {
-    init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
-    const accessKeyId = process.env[ENV_KEY];
-    const secretAccessKey = process.env[ENV_SECRET];
-    const sessionToken = process.env[ENV_SESSION];
-    const expiry = process.env[ENV_EXPIRATION];
-    const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
-    const accountId = process.env[ENV_ACCOUNT_ID];
-    if (accessKeyId && secretAccessKey) {
-        const credentials = {
-            accessKeyId,
-            secretAccessKey,
-            ...(sessionToken && { sessionToken }),
-            ...(expiry && { expiration: new Date(expiry) }),
-            ...(credentialScope && { credentialScope }),
-            ...(accountId && { accountId }),
-        };
-        client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
-        return credentials;
-    }
-    throw new propertyProvider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
-};
-
-exports.ENV_ACCOUNT_ID = ENV_ACCOUNT_ID;
-exports.ENV_CREDENTIAL_SCOPE = ENV_CREDENTIAL_SCOPE;
-exports.ENV_EXPIRATION = ENV_EXPIRATION;
-exports.ENV_KEY = ENV_KEY;
-exports.ENV_SECRET = ENV_SECRET;
-exports.ENV_SESSION = ENV_SESSION;
-exports.fromEnv = fromEnv;
-
-
-/***/ }),
-
 /***/ 5861:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 
-var credentialProviderEnv = __nccwpck_require__(5606);
+var credentialProviderEnv = __nccwpck_require__(6153);
 var propertyProvider = __nccwpck_require__(1238);
 var sharedIniFileLoader = __nccwpck_require__(4964);
 
@@ -9086,6 +9037,55 @@ const credentialsTreatedAsExpired = (credentials) => credentials?.expiration !==
 exports.credentialsTreatedAsExpired = credentialsTreatedAsExpired;
 exports.credentialsWillNeedRefresh = credentialsWillNeedRefresh;
 exports.defaultProvider = defaultProvider;
+
+
+/***/ }),
+
+/***/ 6153:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var client = __nccwpck_require__(5152);
+var propertyProvider = __nccwpck_require__(1238);
+
+const ENV_KEY = "AWS_ACCESS_KEY_ID";
+const ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+const ENV_SESSION = "AWS_SESSION_TOKEN";
+const ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+const ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+const ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+const fromEnv = (init) => async () => {
+    init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+    const accessKeyId = process.env[ENV_KEY];
+    const secretAccessKey = process.env[ENV_SECRET];
+    const sessionToken = process.env[ENV_SESSION];
+    const expiry = process.env[ENV_EXPIRATION];
+    const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+    const accountId = process.env[ENV_ACCOUNT_ID];
+    if (accessKeyId && secretAccessKey) {
+        const credentials = {
+            accessKeyId,
+            secretAccessKey,
+            ...(sessionToken && { sessionToken }),
+            ...(expiry && { expiration: new Date(expiry) }),
+            ...(credentialScope && { credentialScope }),
+            ...(accountId && { accountId }),
+        };
+        client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
+        return credentials;
+    }
+    throw new propertyProvider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+};
+
+exports.ENV_ACCOUNT_ID = ENV_ACCOUNT_ID;
+exports.ENV_CREDENTIAL_SCOPE = ENV_CREDENTIAL_SCOPE;
+exports.ENV_EXPIRATION = ENV_EXPIRATION;
+exports.ENV_KEY = ENV_KEY;
+exports.ENV_SECRET = ENV_SECRET;
+exports.ENV_SESSION = ENV_SESSION;
+exports.fromEnv = fromEnv;
 
 
 /***/ }),
@@ -11743,6 +11743,13 @@ class CborShapeSerializer extends protocols.SerdeContext {
                     const [k, v] = sourceObject.$unknown;
                     newObject[k] = v;
                 }
+                else if (typeof sourceObject.__type === "string") {
+                    for (const [k, v] of Object.entries(sourceObject)) {
+                        if (!(k in newObject)) {
+                            newObject[k] = this.serialize(15, v);
+                        }
+                    }
+                }
             }
             else if (ns.isDocumentSchema()) {
                 for (const key of Object.keys(sourceObject)) {
@@ -11846,6 +11853,13 @@ class CborShapeDeserializer extends protocols.SerdeContext {
                 if (isUnion && keys?.size === 1 && Object.keys(newObject).length === 0) {
                     const k = keys.values().next().value;
                     newObject.$unknown = [k, value[k]];
+                }
+                else if (typeof value.__type === "string") {
+                    for (const [k, v] of Object.entries(value)) {
+                        if (!(k in newObject)) {
+                            newObject[k] = v;
+                        }
+                    }
                 }
             }
             else if (value instanceof serde.NumericValue) {
@@ -12167,6 +12181,9 @@ class HttpBindingProtocol extends HttpProtocol {
             const memberTraits = memberNs.getMergedTraits() ?? {};
             const inputMemberValue = input[memberName];
             if (inputMemberValue == null && !memberNs.isIdempotencyToken()) {
+                if (memberTraits.httpLabel) {
+                    throw new Error(`No value provided for input HTTP label: ${memberName}.`);
+                }
                 continue;
             }
             if (memberTraits.httpPayload) {
@@ -19969,29 +19986,80 @@ function modeOf(chunk, allowBuffer = true) {
 
 /***/ }),
 
+/***/ 3492:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getAwsChunkedEncodingStream = void 0;
+const getAwsChunkedEncodingStream = (readableStream, options) => {
+    const { base64Encoder, bodyLengthChecker, checksumAlgorithmFn, checksumLocationName, streamHasher } = options;
+    const checksumRequired = base64Encoder !== undefined &&
+        bodyLengthChecker !== undefined &&
+        checksumAlgorithmFn !== undefined &&
+        checksumLocationName !== undefined &&
+        streamHasher !== undefined;
+    const digest = checksumRequired ? streamHasher(checksumAlgorithmFn, readableStream) : undefined;
+    const reader = readableStream.getReader();
+    return new ReadableStream({
+        async pull(controller) {
+            const { value, done } = await reader.read();
+            if (done) {
+                controller.enqueue(`0\r\n`);
+                if (checksumRequired) {
+                    const checksum = base64Encoder(await digest);
+                    controller.enqueue(`${checksumLocationName}:${checksum}\r\n`);
+                    controller.enqueue(`\r\n`);
+                }
+                controller.close();
+            }
+            else {
+                controller.enqueue(`${(bodyLengthChecker(value) || 0).toString(16)}\r\n${value}\r\n`);
+            }
+        },
+    });
+};
+exports.getAwsChunkedEncodingStream = getAwsChunkedEncodingStream;
+
+
+/***/ }),
+
 /***/ 6522:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getAwsChunkedEncodingStream = void 0;
-const stream_1 = __nccwpck_require__(2203);
-const getAwsChunkedEncodingStream = (readableStream, options) => {
+exports.getAwsChunkedEncodingStream = getAwsChunkedEncodingStream;
+const node_stream_1 = __nccwpck_require__(7075);
+const getAwsChunkedEncodingStream_browser_1 = __nccwpck_require__(3492);
+const stream_type_check_1 = __nccwpck_require__(4414);
+function getAwsChunkedEncodingStream(stream, options) {
+    const readable = stream;
+    const readableStream = stream;
+    if ((0, stream_type_check_1.isReadableStream)(readableStream)) {
+        return (0, getAwsChunkedEncodingStream_browser_1.getAwsChunkedEncodingStream)(readableStream, options);
+    }
     const { base64Encoder, bodyLengthChecker, checksumAlgorithmFn, checksumLocationName, streamHasher } = options;
     const checksumRequired = base64Encoder !== undefined &&
         checksumAlgorithmFn !== undefined &&
         checksumLocationName !== undefined &&
         streamHasher !== undefined;
-    const digest = checksumRequired ? streamHasher(checksumAlgorithmFn, readableStream) : undefined;
-    const awsChunkedEncodingStream = new stream_1.Readable({ read: () => { } });
-    readableStream.on("data", (data) => {
+    const digest = checksumRequired ? streamHasher(checksumAlgorithmFn, readable) : undefined;
+    const awsChunkedEncodingStream = new node_stream_1.Readable({
+        read: () => { },
+    });
+    readable.on("data", (data) => {
         const length = bodyLengthChecker(data) || 0;
+        if (length === 0) {
+            return;
+        }
         awsChunkedEncodingStream.push(`${length.toString(16)}\r\n`);
         awsChunkedEncodingStream.push(data);
         awsChunkedEncodingStream.push("\r\n");
     });
-    readableStream.on("end", async () => {
+    readable.on("end", async () => {
         awsChunkedEncodingStream.push(`0\r\n`);
         if (checksumRequired) {
             const checksum = base64Encoder(await digest);
@@ -20001,8 +20069,7 @@ const getAwsChunkedEncodingStream = (readableStream, options) => {
         awsChunkedEncodingStream.push(null);
     });
     return awsChunkedEncodingStream;
-};
-exports.getAwsChunkedEncodingStream = getAwsChunkedEncodingStream;
+}
 
 
 /***/ }),
@@ -20138,6 +20205,14 @@ class Uint8ArrayBlobAdapter extends Uint8Array {
     }
 }
 
+Object.defineProperty(exports, "isBlob", ({
+    enumerable: true,
+    get: function () { return streamTypeCheck.isBlob; }
+}));
+Object.defineProperty(exports, "isReadableStream", ({
+    enumerable: true,
+    get: function () { return streamTypeCheck.isReadableStream; }
+}));
 exports.Uint8ArrayBlobAdapter = Uint8ArrayBlobAdapter;
 Object.keys(ChecksumStream).forEach(function (k) {
     if (k !== 'default' && !Object.prototype.hasOwnProperty.call(exports, k)) Object.defineProperty(exports, k, {
@@ -20179,12 +20254,6 @@ Object.keys(splitStream).forEach(function (k) {
     if (k !== 'default' && !Object.prototype.hasOwnProperty.call(exports, k)) Object.defineProperty(exports, k, {
         enumerable: true,
         get: function () { return splitStream[k]; }
-    });
-});
-Object.keys(streamTypeCheck).forEach(function (k) {
-    if (k !== 'default' && !Object.prototype.hasOwnProperty.call(exports, k)) Object.defineProperty(exports, k, {
-        enumerable: true,
-        get: function () { return streamTypeCheck[k]; }
     });
 });
 
