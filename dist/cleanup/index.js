@@ -3991,12 +3991,12 @@ var webIdentityTokenType = [0, n0, _wITT, 8, 0];
 var AssumedRoleUser$ = [3, n0, _ARU,
     0,
     [_ARI, _A],
-    [0, 0]
+    [0, 0], 2
 ];
 var AssumeRoleRequest$ = [3, n0, _ARR,
     0,
     [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC],
-    [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType]
+    [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType], 2
 ];
 var AssumeRoleResponse$ = [3, n0, _ARRs,
     0,
@@ -4006,7 +4006,7 @@ var AssumeRoleResponse$ = [3, n0, _ARRs,
 var AssumeRoleWithSAMLRequest$ = [3, n0, _ARWSAMLR,
     0,
     [_RA, _PAr, _SAMLA, _PA, _P, _DS],
-    [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType, 0, 1]
+    [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType, 0, 1], 3
 ];
 var AssumeRoleWithSAMLResponse$ = [3, n0, _ARWSAMLRs,
     0,
@@ -4016,7 +4016,7 @@ var AssumeRoleWithSAMLResponse$ = [3, n0, _ARWSAMLRs,
 var AssumeRoleWithWebIdentityRequest$ = [3, n0, _ARWWIR,
     0,
     [_RA, _RSN, _WIT, _PI, _PA, _P, _DS],
-    [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1]
+    [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1], 3
 ];
 var AssumeRoleWithWebIdentityResponse$ = [3, n0, _ARWWIRs,
     0,
@@ -4026,7 +4026,7 @@ var AssumeRoleWithWebIdentityResponse$ = [3, n0, _ARWWIRs,
 var AssumeRootRequest$ = [3, n0, _ARRss,
     0,
     [_TP, _TPA, _DS],
-    [0, () => PolicyDescriptorType$, 1]
+    [0, () => PolicyDescriptorType$, 1], 2
 ];
 var AssumeRootResponse$ = [3, n0, _ARRssu,
     0,
@@ -4036,12 +4036,12 @@ var AssumeRootResponse$ = [3, n0, _ARRssu,
 var Credentials$ = [3, n0, _C,
     0,
     [_AKI, _SAK, _STe, _E],
-    [0, [() => accessKeySecretType, 0], 0, 4]
+    [0, [() => accessKeySecretType, 0], 0, 4], 4
 ];
 var DecodeAuthorizationMessageRequest$ = [3, n0, _DAMR,
     0,
     [_EM],
-    [0]
+    [0], 1
 ];
 var DecodeAuthorizationMessageResponse$ = [3, n0, _DAMRe,
     0,
@@ -4063,12 +4063,12 @@ schema.TypeRegistry.for(n0).registerError(ExpiredTradeInTokenException$, Expired
 var FederatedUser$ = [3, n0, _FU,
     0,
     [_FUI, _A],
-    [0, 0]
+    [0, 0], 2
 ];
 var GetAccessKeyInfoRequest$ = [3, n0, _GAKIR,
     0,
     [_AKI],
-    [0]
+    [0], 1
 ];
 var GetAccessKeyInfoResponse$ = [3, n0, _GAKIRe,
     0,
@@ -4088,7 +4088,7 @@ var GetCallerIdentityResponse$ = [3, n0, _GCIRe,
 var GetDelegatedAccessTokenRequest$ = [3, n0, _GDATR,
     0,
     [_TIT],
-    [[() => tradeInTokenType, 0]]
+    [[() => tradeInTokenType, 0]], 1
 ];
 var GetDelegatedAccessTokenResponse$ = [3, n0, _GDATRe,
     0,
@@ -4098,7 +4098,7 @@ var GetDelegatedAccessTokenResponse$ = [3, n0, _GDATRe,
 var GetFederationTokenRequest$ = [3, n0, _GFTR,
     0,
     [_N, _P, _PA, _DS, _T],
-    [0, 0, () => policyDescriptorListType, 1, () => tagListType]
+    [0, 0, () => policyDescriptorListType, 1, () => tagListType], 1
 ];
 var GetFederationTokenResponse$ = [3, n0, _GFTRe,
     0,
@@ -4117,8 +4117,8 @@ var GetSessionTokenResponse$ = [3, n0, _GSTRe,
 ];
 var GetWebIdentityTokenRequest$ = [3, n0, _GWITR,
     0,
-    [_Au, _DS, _SA, _T],
-    [64 | 0, 1, 0, () => tagListType]
+    [_Au, _SA, _DS, _T],
+    [64 | 0, 0, 1, () => tagListType], 2
 ];
 var GetWebIdentityTokenResponse$ = [3, n0, _GWITRe,
     0,
@@ -4198,7 +4198,7 @@ schema.TypeRegistry.for(n0).registerError(SessionDurationEscalationException$, S
 var Tag$ = [3, n0, _Ta,
     0,
     [_K, _V],
-    [0, 0]
+    [0, 0], 2
 ];
 var STSServiceException$ = [-3, _s, "STSServiceException", 0, [], []];
 schema.TypeRegistry.for(_s).registerError(STSServiceException$, STSServiceException);
@@ -5492,23 +5492,41 @@ class JsonShapeDeserializer extends SerdeContextConfig {
         const ns = schema.NormalizedSchema.of(schema$1);
         if (isObject) {
             if (ns.isStructSchema()) {
+                const record = value;
                 const union = ns.isUnionSchema();
                 const out = {};
+                let nameMap = void 0;
+                const { jsonName } = this.settings;
+                if (jsonName) {
+                    nameMap = {};
+                }
                 let unionSerde;
                 if (union) {
-                    unionSerde = new UnionSerde(value, out);
+                    unionSerde = new UnionSerde(record, out);
                 }
-                for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
-                    const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
+                for (const [memberName, memberSchema] of deserializingStructIterator(ns, record, jsonName ? "jsonName" : false)) {
+                    let fromKey = memberName;
+                    if (jsonName) {
+                        fromKey = memberSchema.getMergedTraits().jsonName ?? fromKey;
+                        nameMap[fromKey] = memberName;
+                    }
                     if (union) {
                         unionSerde.mark(fromKey);
                     }
-                    if (value[fromKey] != null) {
-                        out[memberName] = this._read(memberSchema, value[fromKey]);
+                    if (record[fromKey] != null) {
+                        out[memberName] = this._read(memberSchema, record[fromKey]);
                     }
                 }
                 if (union) {
                     unionSerde.writeUnknown();
+                }
+                else if (typeof record.__type === "string") {
+                    for (const [k, v] of Object.entries(record)) {
+                        const t = jsonName ? nameMap[k] ?? k : k;
+                        if (!(t in out)) {
+                            out[t] = v;
+                        }
+                    }
                 }
                 return out;
             }
@@ -5688,20 +5706,37 @@ class JsonShapeSerializer extends SerdeContextConfig {
         const ns = schema.NormalizedSchema.of(schema$1);
         if (isObject) {
             if (ns.isStructSchema()) {
+                const record = value;
                 const out = {};
-                for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
-                    const serializableValue = this._write(memberSchema, value[memberName], ns);
+                const { jsonName } = this.settings;
+                let nameMap = void 0;
+                if (jsonName) {
+                    nameMap = {};
+                }
+                for (const [memberName, memberSchema] of serializingStructIterator(ns, record)) {
+                    const serializableValue = this._write(memberSchema, record[memberName], ns);
                     if (serializableValue !== undefined) {
-                        const jsonName = memberSchema.getMergedTraits().jsonName;
-                        const targetKey = this.settings.jsonName ? jsonName ?? memberName : memberName;
+                        let targetKey = memberName;
+                        if (jsonName) {
+                            targetKey = memberSchema.getMergedTraits().jsonName ?? memberName;
+                            nameMap[memberName] = targetKey;
+                        }
                         out[targetKey] = serializableValue;
                     }
                 }
                 if (ns.isUnionSchema() && Object.keys(out).length === 0) {
-                    const { $unknown } = value;
+                    const { $unknown } = record;
                     if (Array.isArray($unknown)) {
                         const [k, v] = $unknown;
                         out[k] = this._write(15, v);
+                    }
+                }
+                else if (typeof record.__type === "string") {
+                    for (const [k, v] of Object.entries(record)) {
+                        const targetKey = jsonName ? nameMap[k] ?? k : k;
+                        if (!(targetKey in out)) {
+                            out[targetKey] = this._write(15, v);
+                        }
                     }
                 }
                 return out;
@@ -7422,23 +7457,41 @@ class JsonShapeDeserializer extends SerdeContextConfig {
         const ns = schema.NormalizedSchema.of(schema$1);
         if (isObject) {
             if (ns.isStructSchema()) {
+                const record = value;
                 const union = ns.isUnionSchema();
                 const out = {};
+                let nameMap = void 0;
+                const { jsonName } = this.settings;
+                if (jsonName) {
+                    nameMap = {};
+                }
                 let unionSerde;
                 if (union) {
-                    unionSerde = new UnionSerde(value, out);
+                    unionSerde = new UnionSerde(record, out);
                 }
-                for (const [memberName, memberSchema] of deserializingStructIterator(ns, value, this.settings.jsonName ? "jsonName" : false)) {
-                    const fromKey = this.settings.jsonName ? memberSchema.getMergedTraits().jsonName ?? memberName : memberName;
+                for (const [memberName, memberSchema] of deserializingStructIterator(ns, record, jsonName ? "jsonName" : false)) {
+                    let fromKey = memberName;
+                    if (jsonName) {
+                        fromKey = memberSchema.getMergedTraits().jsonName ?? fromKey;
+                        nameMap[fromKey] = memberName;
+                    }
                     if (union) {
                         unionSerde.mark(fromKey);
                     }
-                    if (value[fromKey] != null) {
-                        out[memberName] = this._read(memberSchema, value[fromKey]);
+                    if (record[fromKey] != null) {
+                        out[memberName] = this._read(memberSchema, record[fromKey]);
                     }
                 }
                 if (union) {
                     unionSerde.writeUnknown();
+                }
+                else if (typeof record.__type === "string") {
+                    for (const [k, v] of Object.entries(record)) {
+                        const t = jsonName ? nameMap[k] ?? k : k;
+                        if (!(t in out)) {
+                            out[t] = v;
+                        }
+                    }
                 }
                 return out;
             }
@@ -7618,20 +7671,37 @@ class JsonShapeSerializer extends SerdeContextConfig {
         const ns = schema.NormalizedSchema.of(schema$1);
         if (isObject) {
             if (ns.isStructSchema()) {
+                const record = value;
                 const out = {};
-                for (const [memberName, memberSchema] of serializingStructIterator(ns, value)) {
-                    const serializableValue = this._write(memberSchema, value[memberName], ns);
+                const { jsonName } = this.settings;
+                let nameMap = void 0;
+                if (jsonName) {
+                    nameMap = {};
+                }
+                for (const [memberName, memberSchema] of serializingStructIterator(ns, record)) {
+                    const serializableValue = this._write(memberSchema, record[memberName], ns);
                     if (serializableValue !== undefined) {
-                        const jsonName = memberSchema.getMergedTraits().jsonName;
-                        const targetKey = this.settings.jsonName ? jsonName ?? memberName : memberName;
+                        let targetKey = memberName;
+                        if (jsonName) {
+                            targetKey = memberSchema.getMergedTraits().jsonName ?? memberName;
+                            nameMap[memberName] = targetKey;
+                        }
                         out[targetKey] = serializableValue;
                     }
                 }
                 if (ns.isUnionSchema() && Object.keys(out).length === 0) {
-                    const { $unknown } = value;
+                    const { $unknown } = record;
                     if (Array.isArray($unknown)) {
                         const [k, v] = $unknown;
                         out[k] = this._write(15, v);
+                    }
+                }
+                else if (typeof record.__type === "string") {
+                    for (const [k, v] of Object.entries(record)) {
+                        const targetKey = jsonName ? nameMap[k] ?? k : k;
+                        if (!(targetKey in out)) {
+                            out[targetKey] = this._write(15, v);
+                        }
                     }
                 }
                 return out;
@@ -8883,13 +8953,62 @@ exports.parseXmlErrorBody = parseXmlErrorBody;
 
 /***/ }),
 
+/***/ 5606:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var client = __nccwpck_require__(5152);
+var propertyProvider = __nccwpck_require__(1238);
+
+const ENV_KEY = "AWS_ACCESS_KEY_ID";
+const ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
+const ENV_SESSION = "AWS_SESSION_TOKEN";
+const ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
+const ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
+const ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
+const fromEnv = (init) => async () => {
+    init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
+    const accessKeyId = process.env[ENV_KEY];
+    const secretAccessKey = process.env[ENV_SECRET];
+    const sessionToken = process.env[ENV_SESSION];
+    const expiry = process.env[ENV_EXPIRATION];
+    const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
+    const accountId = process.env[ENV_ACCOUNT_ID];
+    if (accessKeyId && secretAccessKey) {
+        const credentials = {
+            accessKeyId,
+            secretAccessKey,
+            ...(sessionToken && { sessionToken }),
+            ...(expiry && { expiration: new Date(expiry) }),
+            ...(credentialScope && { credentialScope }),
+            ...(accountId && { accountId }),
+        };
+        client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
+        return credentials;
+    }
+    throw new propertyProvider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+};
+
+exports.ENV_ACCOUNT_ID = ENV_ACCOUNT_ID;
+exports.ENV_CREDENTIAL_SCOPE = ENV_CREDENTIAL_SCOPE;
+exports.ENV_EXPIRATION = ENV_EXPIRATION;
+exports.ENV_KEY = ENV_KEY;
+exports.ENV_SECRET = ENV_SECRET;
+exports.ENV_SESSION = ENV_SESSION;
+exports.fromEnv = fromEnv;
+
+
+/***/ }),
+
 /***/ 5861:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 
-var credentialProviderEnv = __nccwpck_require__(6153);
+var credentialProviderEnv = __nccwpck_require__(5606);
 var propertyProvider = __nccwpck_require__(1238);
 var sharedIniFileLoader = __nccwpck_require__(4964);
 
@@ -9037,55 +9156,6 @@ const credentialsTreatedAsExpired = (credentials) => credentials?.expiration !==
 exports.credentialsTreatedAsExpired = credentialsTreatedAsExpired;
 exports.credentialsWillNeedRefresh = credentialsWillNeedRefresh;
 exports.defaultProvider = defaultProvider;
-
-
-/***/ }),
-
-/***/ 6153:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-var client = __nccwpck_require__(5152);
-var propertyProvider = __nccwpck_require__(1238);
-
-const ENV_KEY = "AWS_ACCESS_KEY_ID";
-const ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
-const ENV_SESSION = "AWS_SESSION_TOKEN";
-const ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION";
-const ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE";
-const ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID";
-const fromEnv = (init) => async () => {
-    init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
-    const accessKeyId = process.env[ENV_KEY];
-    const secretAccessKey = process.env[ENV_SECRET];
-    const sessionToken = process.env[ENV_SESSION];
-    const expiry = process.env[ENV_EXPIRATION];
-    const credentialScope = process.env[ENV_CREDENTIAL_SCOPE];
-    const accountId = process.env[ENV_ACCOUNT_ID];
-    if (accessKeyId && secretAccessKey) {
-        const credentials = {
-            accessKeyId,
-            secretAccessKey,
-            ...(sessionToken && { sessionToken }),
-            ...(expiry && { expiration: new Date(expiry) }),
-            ...(credentialScope && { credentialScope }),
-            ...(accountId && { accountId }),
-        };
-        client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
-        return credentials;
-    }
-    throw new propertyProvider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
-};
-
-exports.ENV_ACCOUNT_ID = ENV_ACCOUNT_ID;
-exports.ENV_CREDENTIAL_SCOPE = ENV_CREDENTIAL_SCOPE;
-exports.ENV_EXPIRATION = ENV_EXPIRATION;
-exports.ENV_KEY = ENV_KEY;
-exports.ENV_SECRET = ENV_SECRET;
-exports.ENV_SESSION = ENV_SESSION;
-exports.fromEnv = fromEnv;
 
 
 /***/ }),
@@ -9764,7 +9834,7 @@ var partitions = [
 		regionRegex: "^eusc\\-(de)\\-\\w+\\-\\d+$",
 		regions: {
 			"eusc-de-east-1": {
-				description: "EU (Germany)"
+				description: "AWS European Sovereign Cloud (Germany)"
 			}
 		}
 	},
@@ -45793,7 +45863,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.967.0","scripts":{"build":"concurrently \'yarn:build:types\' \'yarn:build:es\' && yarn build:cjs","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:e2e":"yarn g:vitest run -c vitest.config.e2e.mts --mode development","test:e2e:watch":"yarn g:vitest watch -c vitest.config.e2e.mts","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.967.0","@aws-sdk/credential-provider-node":"3.967.0","@aws-sdk/middleware-host-header":"3.965.0","@aws-sdk/middleware-logger":"3.965.0","@aws-sdk/middleware-recursion-detection":"3.965.0","@aws-sdk/middleware-user-agent":"3.967.0","@aws-sdk/region-config-resolver":"3.965.0","@aws-sdk/types":"3.965.0","@aws-sdk/util-endpoints":"3.965.0","@aws-sdk/util-user-agent-browser":"3.965.0","@aws-sdk/util-user-agent-node":"3.967.0","@smithy/config-resolver":"^4.4.5","@smithy/core":"^3.20.2","@smithy/fetch-http-handler":"^5.3.8","@smithy/hash-node":"^4.2.7","@smithy/invalid-dependency":"^4.2.7","@smithy/middleware-content-length":"^4.2.7","@smithy/middleware-endpoint":"^4.4.3","@smithy/middleware-retry":"^4.4.19","@smithy/middleware-serde":"^4.2.8","@smithy/middleware-stack":"^4.2.7","@smithy/node-config-provider":"^4.3.7","@smithy/node-http-handler":"^4.4.7","@smithy/protocol-http":"^5.3.7","@smithy/smithy-client":"^4.10.4","@smithy/types":"^4.11.0","@smithy/url-parser":"^4.2.7","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.18","@smithy/util-defaults-mode-node":"^4.2.21","@smithy/util-endpoints":"^3.2.7","@smithy/util-middleware":"^4.2.7","@smithy/util-retry":"^4.2.7","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node18":"18.2.4","@types/node":"^18.19.69","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"5.0.10","typescript":"~5.8.3"},"engines":{"node":">=18.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.971.0","scripts":{"build":"concurrently \'yarn:build:types\' \'yarn:build:es\' && yarn build:cjs","build:cjs":"node ../../scripts/compilation/inline client-sts","build:es":"tsc -p tsconfig.es.json","build:include:deps":"yarn g:turbo run build -F=\\"$npm_package_name\\"","build:types":"rimraf ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo","extract:docs":"api-extractor run --local","generate:client":"node ../../scripts/generate-clients/single-service --solo sts","test":"yarn g:vitest run","test:e2e":"yarn g:vitest run -c vitest.config.e2e.mts --mode development","test:e2e:watch":"yarn g:vitest watch -c vitest.config.e2e.mts","test:index":"tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs","test:watch":"yarn g:vitest watch"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"5.2.0","@aws-crypto/sha256-js":"5.2.0","@aws-sdk/core":"3.970.0","@aws-sdk/credential-provider-node":"3.971.0","@aws-sdk/middleware-host-header":"3.969.0","@aws-sdk/middleware-logger":"3.969.0","@aws-sdk/middleware-recursion-detection":"3.969.0","@aws-sdk/middleware-user-agent":"3.970.0","@aws-sdk/region-config-resolver":"3.969.0","@aws-sdk/types":"3.969.0","@aws-sdk/util-endpoints":"3.970.0","@aws-sdk/util-user-agent-browser":"3.969.0","@aws-sdk/util-user-agent-node":"3.971.0","@smithy/config-resolver":"^4.4.6","@smithy/core":"^3.20.6","@smithy/fetch-http-handler":"^5.3.9","@smithy/hash-node":"^4.2.8","@smithy/invalid-dependency":"^4.2.8","@smithy/middleware-content-length":"^4.2.8","@smithy/middleware-endpoint":"^4.4.7","@smithy/middleware-retry":"^4.4.23","@smithy/middleware-serde":"^4.2.9","@smithy/middleware-stack":"^4.2.8","@smithy/node-config-provider":"^4.3.8","@smithy/node-http-handler":"^4.4.8","@smithy/protocol-http":"^5.3.8","@smithy/smithy-client":"^4.10.8","@smithy/types":"^4.12.0","@smithy/url-parser":"^4.2.8","@smithy/util-base64":"^4.3.0","@smithy/util-body-length-browser":"^4.2.0","@smithy/util-body-length-node":"^4.2.1","@smithy/util-defaults-mode-browser":"^4.3.22","@smithy/util-defaults-mode-node":"^4.2.25","@smithy/util-endpoints":"^3.2.8","@smithy/util-middleware":"^4.2.8","@smithy/util-retry":"^4.2.8","@smithy/util-utf8":"^4.2.0","tslib":"^2.6.2"},"devDependencies":{"@tsconfig/node20":"20.1.8","@types/node":"^20.14.8","concurrently":"7.0.0","downlevel-dts":"0.10.1","rimraf":"5.0.10","typescript":"~5.8.3"},"engines":{"node":">=20.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*/**"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ })
 
