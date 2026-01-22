@@ -21,7 +21,7 @@
     "@smithy/property-provider": "^4.2.7",
     "@types/node": "^25.0.9",
     "@vercel/ncc": "^0.38.4",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^4.0.17",
     "aws-sdk-client-mock": "^4.1.0",
     "cpy-cli": "^6.0.0",
     "del-cli": "^7.0.0",
