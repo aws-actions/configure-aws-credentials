@@ -218,7 +218,7 @@ run.*
 
 The session will be tagged with the
 following tags: (Refer to [GitHub's documentation for `GITHUB_` environment
-variable definitions](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
+variable definitions](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables))
 
 | Key        | Value             |
 | ---------- | ----------------- |
@@ -238,12 +238,14 @@ will be replaced with an '*'._
 
 The action will use session tagging by default unless you are using OIDC.
 
-To forward session tags to subsequent sessions in a role chain, you can use the 
+To [forward session tags to subsequent sessions in a role chain](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html#id_session-tags_role-chaining), you can use the 
 `transitive-tag-keys` input to specify the keys of the tags to be passed. Eg.
+
+_Note that all subsequent roles in the chain must have `role-skip-session-tagging` set to `true`_
 ```yaml
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v5
       with:
-        transitive-tag-keys:
+        transitive-tag-keys: |
           Repository
           Workflow
           Action

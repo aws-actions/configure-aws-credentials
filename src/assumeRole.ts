@@ -9,6 +9,7 @@ import { errorMessage, isDefined, sanitizeGitHubVariables } from './helpers';
 
 async function assumeRoleWithOIDC(params: AssumeRoleCommandInput, client: STSClient, webIdentityToken: string) {
   delete params.Tags;
+  delete params.TransitiveTagKeys;
   core.info('Assuming role with OIDC');
   try {
     const creds = await client.send(
@@ -123,7 +124,10 @@ export async function assumeRole(params: assumeRoleParams) {
     core.debug(`${tags.length} role session tags are being used.`);
   }
 
-  const transitiveTagKeysArray = transitiveTagKeys?.filter((key) => tags?.some((tag) => tag.Key === key));
+  //only populate transitiveTagKeys array if user is actually using session tagging
+  const transitiveTagKeysArray = roleSkipSessionTagging
+    ? undefined
+    : transitiveTagKeys?.filter((key) => tags?.some((tag) => tag.Key === key));
 
   // Calculate role ARN from name and account ID (currently only supports `aws` partition)
   let roleArn = roleToAssume;
@@ -141,7 +145,7 @@ export async function assumeRole(params: assumeRoleParams) {
     RoleSessionName: roleSessionName,
     DurationSeconds: roleDuration,
     Tags: tags ? tags : undefined,
-    TransitiveTagKeys: transitiveTagKeysArray,
+    TransitiveTagKeys: transitiveTagKeysArray ? transitiveTagKeysArray : undefined,
     ExternalId: roleExternalId ? roleExternalId : undefined,
     Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
     PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
