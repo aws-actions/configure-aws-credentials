@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 5.1.1 (2026-01-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* Cleanup input handling. Changes invalid boolean input behavior (see #1445)
+
+### Features
+
+* Add global timeout support ([#1487](https://github.com/aws-actions/configure-aws-credentials/issues/1487)) ([a87e741](https://github.com/aws-actions/configure-aws-credentials/commit/a87e741eba2a15d8003213e1c0643f277fb9ea43))
+* Add global timeout support ([#1487](https://github.com/aws-actions/configure-aws-credentials/issues/1487)) ([1584b8b](https://github.com/aws-actions/configure-aws-credentials/commit/1584b8b0e2062557287c28fbe9b8920df434e866))
+* add no-proxy support ([#1482](https://github.com/aws-actions/configure-aws-credentials/issues/1482)) ([c8eae42](https://github.com/aws-actions/configure-aws-credentials/commit/c8eae4284289449aa7eff6e9a70aa26eed909a3a))
+* add no-proxy support ([#1482](https://github.com/aws-actions/configure-aws-credentials/issues/1482)) ([dde9b22](https://github.com/aws-actions/configure-aws-credentials/commit/dde9b22a8e889a0821997a21a2c5a38020ee8de3))
+* add skip OIDC option ([#1458](https://github.com/aws-actions/configure-aws-credentials/issues/1458)) ([4f0bc4e](https://github.com/aws-actions/configure-aws-credentials/commit/4f0bc4ee1c5aa81c21470c7a13af6d3b30e266a4))
+* add skip OIDC option ([#1458](https://github.com/aws-actions/configure-aws-credentials/issues/1458)) ([8c45f6b](https://github.com/aws-actions/configure-aws-credentials/commit/8c45f6b08196feb86cfdbe431541d5571d9ab2c2))
+* Cleanup input handling. Changes invalid boolean input behavior (see [#1445](https://github.com/aws-actions/configure-aws-credentials/issues/1445)) ([74b3e27](https://github.com/aws-actions/configure-aws-credentials/commit/74b3e27aa80db064b5bb8c04b22fc607e817acf7))
+* depenency update and feature cleanup ([#1414](https://github.com/aws-actions/configure-aws-credentials/issues/1414)) ([87ec0e2](https://github.com/aws-actions/configure-aws-credentials/commit/87ec0e2f9a6ec27b49c4ca1d87feb63559dc1b15)), closes [#1062](https://github.com/aws-actions/configure-aws-credentials/issues/1062) [#1191](https://github.com/aws-actions/configure-aws-credentials/issues/1191)
+* depenency update and feature cleanup ([#1414](https://github.com/aws-actions/configure-aws-credentials/issues/1414)) ([59489ba](https://github.com/aws-actions/configure-aws-credentials/commit/59489ba544930000b7b67412c167f5fe816568cf)), closes [#1062](https://github.com/aws-actions/configure-aws-credentials/issues/1062) [#1191](https://github.com/aws-actions/configure-aws-credentials/issues/1191)
+* Improve debug logging in retry logic ([#1485](https://github.com/aws-actions/configure-aws-credentials/issues/1485)) ([9aa437c](https://github.com/aws-actions/configure-aws-credentials/commit/9aa437c71f62a8d6f432ea8b7c1d339adaeb2df2))
+* Improve debug logging in retry logic ([#1485](https://github.com/aws-actions/configure-aws-credentials/issues/1485)) ([97ef425](https://github.com/aws-actions/configure-aws-credentials/commit/97ef425d73aa532439f54f90d0e83101a186c5a6))
+* support account id allowlist ([#1456](https://github.com/aws-actions/configure-aws-credentials/issues/1456)) ([9fb1716](https://github.com/aws-actions/configure-aws-credentials/commit/9fb1716cebd4099a7116e69abf22c2f329cb8fc3))
+* support account id allowlist ([#1456](https://github.com/aws-actions/configure-aws-credentials/issues/1456)) ([c4be498](https://github.com/aws-actions/configure-aws-credentials/commit/c4be498953fc1da2707a50ce4b761a53af3d02af))
+* support action inputs as environment variables ([#1338](https://github.com/aws-actions/configure-aws-credentials/issues/1338)) ([7b4c401](https://github.com/aws-actions/configure-aws-credentials/commit/7b4c4016d3f335c3d27cfd9176e1bb05e8a3c7b4))
+* updates for transitive tagging ([4f2ba7f](https://github.com/aws-actions/configure-aws-credentials/commit/4f2ba7fe9c2b189462fd846ba5a0ce5efdeccde4))
+
+
+### Bug Fixes
+
+* **docs:** readme samples versioning ([a16a4a6](https://github.com/aws-actions/configure-aws-credentials/commit/a16a4a650d59f8297105fe87f6fff317d6b8dcc4))
+* **docs:** readme samples versioning ([5b3c895](https://github.com/aws-actions/configure-aws-credentials/commit/5b3c89504689ea1ea2b6000b23a6a2aac463662a))
+* prioritize explicit inputs over environment variables ([3cb16d3](https://github.com/aws-actions/configure-aws-credentials/commit/3cb16d3813c74b934afb2a11e9176e2705a1a34d))
+* properly expose getProxyForUrl (introduced in [#1482](https://github.com/aws-actions/configure-aws-credentials/issues/1482)) ([#1486](https://github.com/aws-actions/configure-aws-credentials/issues/1486)) ([569add8](https://github.com/aws-actions/configure-aws-credentials/commit/569add8750468caa683e4c54e3909db17706f001))
+* properly expose getProxyForUrl (introduced in [#1482](https://github.com/aws-actions/configure-aws-credentials/issues/1482)) ([#1486](https://github.com/aws-actions/configure-aws-credentials/issues/1486)) ([cea4298](https://github.com/aws-actions/configure-aws-credentials/commit/cea42985ac88b42678fbc84c18066a7f07f05176))
+* properly set proxy environment variable ([e19fa45](https://github.com/aws-actions/configure-aws-credentials/commit/e19fa45bbe1e2369ab4c3cf0acdf9cd5120e8e72))
+* properly set proxy environment variable ([cbea708](https://github.com/aws-actions/configure-aws-credentials/commit/cbea70821e4ab985ad3be0e5a93390523e257cde))
+* role chaning on mulitple runs ([#1340](https://github.com/aws-actions/configure-aws-credentials/issues/1340)) ([7fab3c1](https://github.com/aws-actions/configure-aws-credentials/commit/7fab3c16520fb71daface0d6e418c5cf06da1dbf))
+* update readme to 4.3.1 ([#1424](https://github.com/aws-actions/configure-aws-credentials/issues/1424)) ([80ed412](https://github.com/aws-actions/configure-aws-credentials/commit/80ed412f2cb94a8ed20a779c0e7ff3bd0d685100))
+* update readme to 4.3.1 ([#1424](https://github.com/aws-actions/configure-aws-credentials/issues/1424)) ([be2e7ad](https://github.com/aws-actions/configure-aws-credentials/commit/be2e7ad815e27b890489a89ce2717b0f9e26b56e))
+
+
+### Miscellaneous Chores
+
+* release 4.3.0 ([0ec5ceb](https://github.com/aws-actions/configure-aws-credentials/commit/0ec5ceba1615f20d4c2723cca983b2f308bb8f9b))
+* release 4.3.0 ([3f7c218](https://github.com/aws-actions/configure-aws-credentials/commit/3f7c2187213bafaa1ea60a850b27082cbf55dda0))
+* release 5.1.1 ([26dce75](https://github.com/aws-actions/configure-aws-credentials/commit/26dce75391e68794ede202dc49f973cd473ceb7e))
+* release 5.1.1 ([56d6a58](https://github.com/aws-actions/configure-aws-credentials/commit/56d6a583f00f6bad6d19d91d53a7bc3b8143d0e9))
+
 ## [5.1.1](https://github.com/aws-actions/configure-aws-credentials/compare/v5.1.0...v5.1.1) (2025-11-24)
 
 
