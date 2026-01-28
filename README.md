@@ -141,6 +141,7 @@ See [action.yml](./action.yml) for more detail.
 | role-external-id          | The external ID of the role to assume. Only needed if your role requires it.                      |    No    |
 | role-session-name         | Defaults to "GitHubActions", but may be changed if required.                                      |    No    |
 | role-skip-session-tagging | Skips session tagging if set.                                                                     |    No    |
+| transitive-tag-keys       | Define a list of transitive tag keys to pass when assuming a role.                                |    No    |
 | inline-session-policy     | You may further restrict the assumed role policy by defining an inline policy here.               |    No    |
 | managed-session-policies  | You may further restrict the assumed role policy by specifying a managed policy here.             |    No    |
 | output-credentials        | When set, outputs fetched credentials as action step output. (Outputs aws-access-key-id, aws-secret-access-key, aws-session-token, aws-account-id, authenticated-arn, and aws-expiration). Defaults to false.                   |    No    |
@@ -217,7 +218,7 @@ run.*
 
 The session will be tagged with the
 following tags: (Refer to [GitHub's documentation for `GITHUB_` environment
-variable definitions](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables))
+variable definitions](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables))
 
 | Key        | Value             |
 | ---------- | ----------------- |
@@ -236,6 +237,20 @@ Particularly, `GITHUB_WORKFLOW` will be truncated if it's too long. If
 will be replaced with an '*'._
 
 The action will use session tagging by default unless you are using OIDC.
+
+To [forward session tags to subsequent sessions in a role chain](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html#id_session-tags_role-chaining), 
+you can use the `transitive-tag-keys` input to specify the keys of the tags to be passed.
+
+_Note that all subsequent roles in the chain must have `role-skip-session-tagging` set to `true`_
+```yaml
+      uses: aws-actions/configure-aws-credentials@v5
+      with:
+        transitive-tag-keys: |
+          Repository
+          Workflow
+          Action
+          Actor
+```
 
 ### Session policies
 Session policies are not required, but they allow you to limit the scope of the

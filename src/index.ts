@@ -38,6 +38,7 @@ export async function run() {
       Number.parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTagging = getBooleanInput('role-skip-session-tagging', { required: false });
+    const transitiveTagKeys = core.getMultilineInput('transitive-tag-keys', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false }) || process.env.HTTP_PROXY;
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
     const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false }).map((p) => {
@@ -189,6 +190,7 @@ export async function run() {
               roleDuration,
               roleSessionName,
               roleSkipSessionTagging,
+              transitiveTagKeys,
               webIdentityTokenFile,
               webIdentityToken,
               inlineSessionPolicy,
