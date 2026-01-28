@@ -214,6 +214,7 @@ const client_sts_1 = __nccwpck_require__(1695);
 const helpers_1 = __nccwpck_require__(2918);
 async function assumeRoleWithOIDC(params, client, webIdentityToken) {
     delete params.Tags;
+    delete params.TransitiveTagKeys;
     core.info('Assuming role with OIDC');
     try {
         const creds = await client.send(new client_sts_1.AssumeRoleWithWebIdentityCommand({
@@ -259,7 +260,7 @@ async function assumeRoleWithCredentials(params, client) {
     }
 }
 async function assumeRole(params) {
-    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies, } = { ...params };
+    const { credentialsClient, sourceAccountId, roleToAssume, roleExternalId, roleDuration, roleSessionName, roleSkipSessionTagging, transitiveTagKeys, webIdentityTokenFile, webIdentityToken, inlineSessionPolicy, managedSessionPolicies, } = { ...params };
     // Load GitHub environment variables
     const { GITHUB_REPOSITORY, GITHUB_WORKFLOW, GITHUB_ACTION, GITHUB_ACTOR, GITHUB_SHA, GITHUB_WORKSPACE } = process.env;
     if (!GITHUB_REPOSITORY || !GITHUB_WORKFLOW || !GITHUB_ACTION || !GITHUB_ACTOR || !GITHUB_SHA || !GITHUB_WORKSPACE) {
@@ -287,6 +288,10 @@ async function assumeRole(params) {
     else {
         core.debug(`${tags.length} role session tags are being used.`);
     }
+    //only populate transitiveTagKeys array if user is actually using session tagging
+    const transitiveTagKeysArray = roleSkipSessionTagging
+        ? undefined
+        : transitiveTagKeys?.filter((key) => tags?.some((tag) => tag.Key === key));
     // Calculate role ARN from name and account ID (currently only supports `aws` partition)
     let roleArn = roleToAssume;
     if (!roleArn.startsWith('arn:aws')) {
@@ -299,6 +304,7 @@ async function assumeRole(params) {
         RoleSessionName: roleSessionName,
         DurationSeconds: roleDuration,
         Tags: tags ? tags : undefined,
+        TransitiveTagKeys: transitiveTagKeysArray ? transitiveTagKeysArray : undefined,
         ExternalId: roleExternalId ? roleExternalId : undefined,
         Policy: inlineSessionPolicy ? inlineSessionPolicy : undefined,
         PolicyArns: managedSessionPolicies?.length ? managedSessionPolicies : undefined,
@@ -397,6 +403,7 @@ function translateEnvVariables() {
         'ROLE_EXTERNAL_ID',
         'ROLE_SESSION_NAME',
         'ROLE_SKIP_SESSION_TAGGING',
+        'TRANSITIVE_TAG_KEYS',
         'INLINE_SESSION_POLICY',
         'MANAGED_SESSION_POLICIES',
         'OUTPUT_CREDENTIALS',
@@ -679,6 +686,7 @@ async function run() {
         const roleDuration = Number.parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
         const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
         const roleSkipSessionTagging = (0, helpers_1.getBooleanInput)('role-skip-session-tagging', { required: false });
+        const transitiveTagKeys = core.getMultilineInput('transitive-tag-keys', { required: false });
         const proxyServer = core.getInput('http-proxy', { required: false }) || process.env.HTTP_PROXY;
         const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
         const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false }).map((p) => {
@@ -814,6 +822,7 @@ async function run() {
                         roleDuration,
                         roleSessionName,
                         roleSkipSessionTagging,
+                        transitiveTagKeys,
                         webIdentityTokenFile,
                         webIdentityToken,
                         inlineSessionPolicy,

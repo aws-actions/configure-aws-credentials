@@ -43718,6 +43718,7 @@ function translateEnvVariables() {
         'ROLE_EXTERNAL_ID',
         'ROLE_SESSION_NAME',
         'ROLE_SKIP_SESSION_TAGGING',
+        'TRANSITIVE_TAG_KEYS',
         'INLINE_SESSION_POLICY',
         'MANAGED_SESSION_POLICIES',
         'OUTPUT_CREDENTIALS',
