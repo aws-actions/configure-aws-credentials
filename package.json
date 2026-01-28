@@ -43,7 +43,7 @@
     "github-action"
   ],
   "engines": {
-    "node": ">= 14.0.0"
+    "node": ">= 16.3.0"
   },
   "main": "build/index.js",
   "license": "MIT",
