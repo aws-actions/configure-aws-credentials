@@ -2,7 +2,7 @@
 name: '"Configure AWS Credentials" Action for GitHub Actions'
 description: Configures AWS credentials for use in subsequent steps in a GitHub Action workflow
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
   post: dist/cleanup/index.js
 branding:
@@ -70,7 +70,7 @@ inputs:
   output-env-credentials:
     description: Whether to export credentials as environment variables. If you set this to false, you probably want to use output-credentials.
     required: false
-    default: true
+    default: "true"
   unset-current-credentials:
     description: Whether to unset the existing credentials in your runner. May be useful if you run this action multiple times in the same job
     required: false
