@@ -36,9 +36,10 @@ class CredentialsClient {
                 httpAgent: handler,
             });
         }
+        this.roleChaining = props.roleChaining;
     }
     get stsClient() {
-        if (!this._stsClient) {
+        if (!this._stsClient || this.roleChaining) {
             const config = { customUserAgent: USER_AGENT };
             if (this.region !== undefined)
                 config.region = this.region;
@@ -756,7 +757,10 @@ async function run() {
         }
         (0, helpers_1.exportRegion)(region, outputEnvCredentials);
         // Instantiate credentials client
-        const clientProps = { region };
+        const clientProps = {
+            region,
+            roleChaining,
+        };
         if (proxyServer)
             clientProps.proxyServer = proxyServer;
         if (noProxy)
