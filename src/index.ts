@@ -121,7 +121,10 @@ export async function run() {
     exportRegion(region, outputEnvCredentials);
 
     // Instantiate credentials client
-    const clientProps: { region: string; proxyServer?: string; noProxy?: string } = { region };
+    const clientProps: { region: string; proxyServer?: string; noProxy?: string; roleChaining: boolean } = {
+      region,
+      roleChaining,
+    };
     if (proxyServer) clientProps.proxyServer = proxyServer;
     if (noProxy) clientProps.noProxy = noProxy;
     const credentialsClient = new CredentialsClient(clientProps);
