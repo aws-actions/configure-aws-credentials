@@ -1,12 +1,13 @@
 name: Run pre-release integ tests
 on: 
     pull_request_target:
+    workflow_dispatch:
 permissions:
     contents: read
 
 jobs:
   oidc:
-    if: ${{ (github.event.pull_request.user.login == 'aws-sdk-osds' || github.event.pull_request.user.login == 'lehmanmj') && github.repository == 'aws-actions/configure-aws-credentials' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
     permissions: 
         id-token: write
     strategy: 
@@ -32,7 +33,7 @@ jobs:
 
   #can cut this test out if it's not necessary
   static_assumeRole:
-    if: ${{ (github.event.pull_request.user.login == 'aws-sdk-osds' || github.event.pull_request.user.login == 'lehmanmj') && github.repository == 'aws-actions/configure-aws-credentials' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
     strategy: 
         fail-fast: false
         matrix:
@@ -57,7 +58,7 @@ jobs:
           aws sts get-caller-identity
 
   role_chaining:
-    if: ${{ (github.event.pull_request.user.login == 'aws-sdk-osds' || github.event.pull_request.user.login == 'lehmanmj') && github.repository == 'aws-actions/configure-aws-credentials' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
     permissions: 
         id-token: write
     strategy: 
@@ -91,7 +92,7 @@ jobs:
           aws sts get-caller-identity
 
   inline_policy:
-    if: ${{ (github.event.pull_request.user.login == 'aws-sdk-osds' || github.event.pull_request.user.login == 'lehmanmj') && github.repository == 'aws-actions/configure-aws-credentials' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
     permissions: 
         id-token: write
     strategy: 
@@ -129,7 +130,7 @@ jobs:
         run: exit 1
 
   http-proxy:
-    if: ${{ (github.event.pull_request.user.login == 'aws-sdk-osds' || github.event.pull_request.user.login == 'lehmanmj') && github.repository == 'aws-actions/configure-aws-credentials' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
     permissions:
         id-token: write
     runs-on: ubuntu-latest
@@ -163,7 +164,7 @@ jobs:
         run: exit 1
 
   token-file:
-    if: ${{ (github.event.pull_request.user.login == 'aws-sdk-osds' || github.event.pull_request.user.login == 'lehmanmj') && github.repository == 'aws-actions/configure-aws-credentials' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
     permissions:
         id-token: write
     strategy: 
