@@ -34,11 +34,16 @@ jobs:
   #can cut this test out if it's not necessary
   static_assumeRole:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
+    permissions:
+        id-token: write
     strategy: 
         fail-fast: false
         matrix:
             os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    defaults: 
+        run:
+            shell: bash
     name: Static IAM creds test
     steps:
       - name: checkout
@@ -46,16 +51,40 @@ jobs:
         with:
             fetch-depth: 0
             persist-credentials: false
-      - name: Configure AWS credentials
+      - name: assume creator Role
         uses: ./
         with:
             aws-region: us-west-2
-            aws-access-key-id: ${{ secrets.STATIC_ak_id }}
-            aws-secret-access-key: ${{ secrets.STATIC_secret_ak }}
-            role-to-assume: ${{ secrets.STATIC_role }}
-      - name: Get Caller Identity
+            role-to-assume: ${{ secrets.STATIC_USER_CREATION_ROLE }}
+      - name: create and mask access key
+        id: create-key
+        run: | 
+            AK_OUTPUT=$(aws iam create-access-key --user-name integ-test-static-user-${{ runner.os }})
+            AK_ID=$(echo $AK_OUTPUT | jq -r '.AccessKey.AccessKeyId')
+            SECRET_AK=$(echo $AK_OUTPUT | jq -r '.AccessKey.SecretAccessKey')
+            echo "::add-mask::$AK_ID"
+            echo "::add-mask::$SECRET_AK"
+            echo "STATIC_ACCESS_KEY_ID=$AK_ID" >> $GITHUB_OUTPUT
+            echo "STATIC_SECRET_ACCESS_KEY=$SECRET_AK" >> $GITHUB_OUTPUT
+      - name: sleep so key can propagate
+        run: sleep 30
+      - name: assume role with static creds
+        uses: ./
+        with:
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.STATIC_TEST_TARGET_ROLE }}
+            aws-access-key-id: ${{ steps.create-key.outputs.STATIC_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ steps.create-key.outputs.STATIC_SECRET_ACCESS_KEY }}
+      - name: check account
+        run: aws sts get-caller-identity
+      - name: log back into creator role
+        uses: ./
+        with:
+            aws-region: us-west-2
+            role-to-assume: ${{ secrets.STATIC_USER_CREATION_ROLE }}
+      - name: delete access key
         run: |
-          aws sts get-caller-identity
+            aws iam delete-access-key --user-name integ-test-static-user-${{ runner.os }} --access-key-id ${{ steps.create-key.outputs.STATIC_ACCESS_KEY_ID }}
 
   role_chaining:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.user.login == 'aws-sdk-osds' && github.repository == 'aws-actions/configure-aws-credentials') }}
