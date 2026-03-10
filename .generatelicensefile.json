@@ -1,0 +1,6 @@
+{
+  "inputs": ["./package.json"],
+  "output": "./THIRD-PARTY",
+  "overwrite": true,
+  "ci": true
+}
