@@ -16,24 +16,24 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.972.8",
-    "@biomejs/biome": "2.4.2",
-    "@smithy/property-provider": "^4.2.7",
-    "@types/node": "^25.2.3",
+    "@aws-sdk/credential-provider-env": "^3.972.17",
+    "@biomejs/biome": "2.4.6",
+    "@smithy/property-provider": "^4.2.11",
+    "@types/node": "^25.4.0",
     "@vercel/ncc": "^0.38.4",
     "@vitest/coverage-v8": "^3.2.4",
     "aws-sdk-client-mock": "^4.1.0",
     "cpy-cli": "^7.0.0",
     "del-cli": "^7.0.0",
     "json-schema": "^0.4.0",
-    "memfs": "^4.56.10",
+    "memfs": "^4.56.11",
     "standard-version": "^9.5.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "@actions/core": "^2.0.2",
-    "@aws-sdk/client-sts": "^3.991.0",
+    "@aws-sdk/client-sts": "^3.1005.0",
     "@smithy/node-http-handler": "^4.4.7",
     "proxy-agent": "^6.5.0"
   },
