@@ -78,11 +78,13 @@ jobs:
       - name: check account
         run: aws sts get-caller-identity
       - name: log back into creator role
+        if: success() || failure()
         uses: ./
         with:
             aws-region: us-west-2
             role-to-assume: ${{ secrets.STATIC_USER_CREATION_ROLE }}
       - name: delete access key
+        if: success() || failure()
         run: |
             aws iam delete-access-key --user-name integ-test-static-user-${{ runner.os }} --access-key-id ${{ steps.create-key.outputs.STATIC_ACCESS_KEY_ID }}
 
