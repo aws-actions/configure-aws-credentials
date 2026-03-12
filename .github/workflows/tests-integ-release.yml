@@ -211,7 +211,7 @@ jobs:
             fetch-depth: 0
             persist-credentials: false
       - name: fetch token and write to file
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
