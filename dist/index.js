@@ -417,7 +417,7 @@ var require_tunnel = __commonJS({
         connectOptions.headers = connectOptions.headers || {};
         connectOptions.headers["Proxy-Authorization"] = "Basic " + new Buffer(connectOptions.proxyAuth).toString("base64");
       }
-      debug5("making CONNECT request");
+      debug4("making CONNECT request");
       var connectReq = self2.request(connectOptions);
       connectReq.useChunkedEncodingByDefault = false;
       connectReq.once("response", onResponse);
@@ -437,7 +437,7 @@ var require_tunnel = __commonJS({
         connectReq.removeAllListeners();
         socket.removeAllListeners();
         if (res.statusCode !== 200) {
-          debug5(
+          debug4(
             "tunneling socket could not be established, statusCode=%d",
             res.statusCode
           );
@@ -449,7 +449,7 @@ var require_tunnel = __commonJS({
           return;
         }
         if (head.length > 0) {
-          debug5("got illegal response body from proxy");
+          debug4("got illegal response body from proxy");
           socket.destroy();
           var error2 = new Error("got illegal response body from proxy");
           error2.code = "ECONNRESET";
@@ -457,13 +457,13 @@ var require_tunnel = __commonJS({
           self2.removeSocket(placeholder);
           return;
         }
-        debug5("tunneling connection has established");
+        debug4("tunneling connection has established");
         self2.sockets[self2.sockets.indexOf(placeholder)] = socket;
         return cb(socket);
       }
       function onError(cause) {
         connectReq.removeAllListeners();
-        debug5(
+        debug4(
           "tunneling socket could not be established, cause=%s\n",
           cause.message,
           cause.stack
@@ -525,9 +525,9 @@ var require_tunnel = __commonJS({
       }
       return target;
     }
-    var debug5;
+    var debug4;
     if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
-      debug5 = function() {
+      debug4 = function() {
         var args = Array.prototype.slice.call(arguments);
         if (typeof args[0] === "string") {
           args[0] = "TUNNEL: " + args[0];
@@ -537,10 +537,10 @@ var require_tunnel = __commonJS({
         console.error.apply(console, args);
       };
     } else {
-      debug5 = function() {
+      debug4 = function() {
       };
     }
-    exports2.debug = debug5;
+    exports2.debug = debug4;
   }
 });
 
@@ -21428,7 +21428,7 @@ var require_core = __commonJS({
     exports2.setCommandEcho = setCommandEcho;
     exports2.setFailed = setFailed2;
     exports2.isDebug = isDebug;
-    exports2.debug = debug5;
+    exports2.debug = debug4;
     exports2.error = error2;
     exports2.warning = warning;
     exports2.notice = notice2;
@@ -21517,7 +21517,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     function isDebug() {
       return process.env["RUNNER_DEBUG"] === "1";
     }
-    function debug5(message) {
+    function debug4(message) {
       (0, command_1.issueCommand)("debug", {}, message);
     }
     function error2(message, properties = {}) {
@@ -31071,7 +31071,7 @@ var require_dist_cjs24 = __commonJS({
         });
         return expandedMiddlewareList;
       };
-      const getMiddlewareList = (debug5 = false) => {
+      const getMiddlewareList = (debug4 = false) => {
         const normalizedAbsoluteEntries = [];
         const normalizedRelativeEntries = [];
         const normalizedEntriesNameMap = {};
@@ -31101,7 +31101,7 @@ var require_dist_cjs24 = __commonJS({
           if (entry.toMiddleware) {
             const toMiddleware = normalizedEntriesNameMap[entry.toMiddleware];
             if (toMiddleware === void 0) {
-              if (debug5) {
+              if (debug4) {
                 return;
               }
               throw new Error(`${entry.toMiddleware} is not found when adding ${getMiddlewareNameWithAliases(entry.name, entry.aliases)} middleware ${entry.relation} ${entry.toMiddleware}`);
@@ -45486,11 +45486,11 @@ var require_common = __commonJS({
         let enableOverride = null;
         let namespacesCache;
         let enabledCache;
-        function debug5(...args) {
-          if (!debug5.enabled) {
+        function debug4(...args) {
+          if (!debug4.enabled) {
             return;
           }
-          const self2 = debug5;
+          const self2 = debug4;
           const curr = Number(/* @__PURE__ */ new Date());
           const ms = curr - (prevTime || curr);
           self2.diff = ms;
@@ -45520,12 +45520,12 @@ var require_common = __commonJS({
           const logFn = self2.log || createDebug.log;
           logFn.apply(self2, args);
         }
-        debug5.namespace = namespace;
-        debug5.useColors = createDebug.useColors();
-        debug5.color = createDebug.selectColor(namespace);
-        debug5.extend = extend;
-        debug5.destroy = createDebug.destroy;
-        Object.defineProperty(debug5, "enabled", {
+        debug4.namespace = namespace;
+        debug4.useColors = createDebug.useColors();
+        debug4.color = createDebug.selectColor(namespace);
+        debug4.extend = extend;
+        debug4.destroy = createDebug.destroy;
+        Object.defineProperty(debug4, "enabled", {
           enumerable: true,
           configurable: false,
           get: () => {
@@ -45543,9 +45543,9 @@ var require_common = __commonJS({
           }
         });
         if (typeof createDebug.init === "function") {
-          createDebug.init(debug5);
+          createDebug.init(debug4);
         }
-        return debug5;
+        return debug4;
       }
       function extend(namespace, delimiter) {
         const newDebug = createDebug(this.namespace + (typeof delimiter === "undefined" ? ":" : delimiter) + namespace);
@@ -46070,11 +46070,11 @@ var require_node = __commonJS({
     function load() {
       return process.env.DEBUG;
     }
-    function init(debug5) {
-      debug5.inspectOpts = {};
+    function init(debug4) {
+      debug4.inspectOpts = {};
       const keys = Object.keys(exports2.inspectOpts);
       for (let i5 = 0; i5 < keys.length; i5++) {
-        debug5.inspectOpts[keys[i5]] = exports2.inspectOpts[keys[i5]];
+        debug4.inspectOpts[keys[i5]] = exports2.inspectOpts[keys[i5]];
       }
     }
     module2.exports = require_common()(exports2);
@@ -46213,13 +46213,13 @@ var require_dist2 = __commonJS({
     var events_1 = require("events");
     var agent_base_1 = require_dist();
     var url_1 = require("url");
-    var debug5 = (0, debug_1.default)("http-proxy-agent");
+    var debug4 = (0, debug_1.default)("http-proxy-agent");
     var HttpProxyAgent = class extends agent_base_1.Agent {
       constructor(proxy, opts) {
         super(opts);
         this.proxy = typeof proxy === "string" ? new url_1.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
-        debug5("Creating new HttpProxyAgent instance: %o", this.proxy.href);
+        debug4("Creating new HttpProxyAgent instance: %o", this.proxy.href);
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
@@ -46265,21 +46265,21 @@ var require_dist2 = __commonJS({
         }
         let first;
         let endOfHeaders;
-        debug5("Regenerating stored HTTP header string for request");
+        debug4("Regenerating stored HTTP header string for request");
         req._implicitHeader();
         if (req.outputData && req.outputData.length > 0) {
-          debug5("Patching connection write() output buffer with updated header");
+          debug4("Patching connection write() output buffer with updated header");
           first = req.outputData[0].data;
           endOfHeaders = first.indexOf("\r\n\r\n") + 4;
           req.outputData[0].data = req._header + first.substring(endOfHeaders);
-          debug5("Output buffer: %o", req.outputData[0].data);
+          debug4("Output buffer: %o", req.outputData[0].data);
         }
         let socket;
         if (this.proxy.protocol === "https:") {
-          debug5("Creating `tls.Socket`: %o", this.connectOpts);
+          debug4("Creating `tls.Socket`: %o", this.connectOpts);
           socket = tls.connect(this.connectOpts);
         } else {
-          debug5("Creating `net.Socket`: %o", this.connectOpts);
+          debug4("Creating `net.Socket`: %o", this.connectOpts);
           socket = net.connect(this.connectOpts);
         }
         await (0, events_1.once)(socket, "connect");
@@ -46311,7 +46311,7 @@ var require_parse_proxy_response = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.parseProxyResponse = void 0;
     var debug_1 = __importDefault2(require_src());
-    var debug5 = (0, debug_1.default)("https-proxy-agent:parse-proxy-response");
+    var debug4 = (0, debug_1.default)("https-proxy-agent:parse-proxy-response");
     function parseProxyResponse(socket) {
       return new Promise((resolve, reject) => {
         let buffersLength = 0;
@@ -46330,12 +46330,12 @@ var require_parse_proxy_response = __commonJS({
         }
         function onend() {
           cleanup();
-          debug5("onend");
+          debug4("onend");
           reject(new Error("Proxy connection ended before receiving CONNECT response"));
         }
         function onerror(err) {
           cleanup();
-          debug5("onerror %o", err);
+          debug4("onerror %o", err);
           reject(err);
         }
         function ondata(b5) {
@@ -46344,7 +46344,7 @@ var require_parse_proxy_response = __commonJS({
           const buffered = Buffer.concat(buffers, buffersLength);
           const endOfHeaders = buffered.indexOf("\r\n\r\n");
           if (endOfHeaders === -1) {
-            debug5("have not received end of HTTP headers yet...");
+            debug4("have not received end of HTTP headers yet...");
             read();
             return;
           }
@@ -46377,7 +46377,7 @@ var require_parse_proxy_response = __commonJS({
               headers[key] = value;
             }
           }
-          debug5("got proxy server response: %o %o", firstLine, headers);
+          debug4("got proxy server response: %o %o", firstLine, headers);
           cleanup();
           resolve({
             connect: {
@@ -46440,7 +46440,7 @@ var require_dist3 = __commonJS({
     var agent_base_1 = require_dist();
     var url_1 = require("url");
     var parse_proxy_response_1 = require_parse_proxy_response();
-    var debug5 = (0, debug_1.default)("https-proxy-agent");
+    var debug4 = (0, debug_1.default)("https-proxy-agent");
     var setServernameFromNonIpHost = (options) => {
       if (options.servername === void 0 && options.host && !net.isIP(options.host)) {
         return {
@@ -46456,7 +46456,7 @@ var require_dist3 = __commonJS({
         this.options = { path: void 0 };
         this.proxy = typeof proxy === "string" ? new url_1.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
-        debug5("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
+        debug4("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
@@ -46478,10 +46478,10 @@ var require_dist3 = __commonJS({
         }
         let socket;
         if (proxy.protocol === "https:") {
-          debug5("Creating `tls.Socket`: %o", this.connectOpts);
+          debug4("Creating `tls.Socket`: %o", this.connectOpts);
           socket = tls.connect(setServernameFromNonIpHost(this.connectOpts));
         } else {
-          debug5("Creating `net.Socket`: %o", this.connectOpts);
+          debug4("Creating `net.Socket`: %o", this.connectOpts);
           socket = net.connect(this.connectOpts);
         }
         const headers = typeof this.proxyHeaders === "function" ? this.proxyHeaders() : { ...this.proxyHeaders };
@@ -46509,7 +46509,7 @@ var require_dist3 = __commonJS({
         if (connect.statusCode === 200) {
           req.once("socket", resume);
           if (opts.secureEndpoint) {
-            debug5("Upgrading socket connection to TLS");
+            debug4("Upgrading socket connection to TLS");
             return tls.connect({
               ...omit(setServernameFromNonIpHost(opts), "host", "path", "port"),
               socket
@@ -46521,7 +46521,7 @@ var require_dist3 = __commonJS({
         const fakeSocket = new net.Socket({ writable: false });
         fakeSocket.readable = true;
         req.once("socket", (s5) => {
-          debug5("Replaying proxy buffer for failed request");
+          debug4("Replaying proxy buffer for failed request");
           (0, assert_1.default)(s5.listenerCount("data") > 0);
           s5.push(buffered);
           s5.push(null);
@@ -50346,7 +50346,7 @@ var require_dist4 = __commonJS({
     var net = __importStar2(require("net"));
     var tls = __importStar2(require("tls"));
     var url_1 = require("url");
-    var debug5 = (0, debug_1.default)("socks-proxy-agent");
+    var debug4 = (0, debug_1.default)("socks-proxy-agent");
     var setServernameFromNonIpHost = (options) => {
       if (options.servername === void 0 && options.host && !net.isIP(options.host)) {
         return {
@@ -50453,21 +50453,21 @@ var require_dist4 = __commonJS({
           if (tlsSocket)
             tlsSocket.destroy();
         };
-        debug5("Creating socks proxy connection: %o", socksOpts);
+        debug4("Creating socks proxy connection: %o", socksOpts);
         const { socket } = await socks_1.SocksClient.createConnection(socksOpts);
-        debug5("Successfully created socks proxy connection");
+        debug4("Successfully created socks proxy connection");
         if (timeout !== null) {
           socket.setTimeout(timeout);
           socket.on("timeout", () => cleanup());
         }
         if (opts.secureEndpoint) {
-          debug5("Upgrading socket connection to TLS");
+          debug4("Upgrading socket connection to TLS");
           const tlsSocket = tls.connect({
             ...omit(setServernameFromNonIpHost(opts), "host", "path", "port"),
             socket
           });
           tlsSocket.once("error", (error2) => {
-            debug5("Socket TLS error", error2.message);
+            debug4("Socket TLS error", error2.message);
             cleanup(tlsSocket);
           });
           return tlsSocket;
@@ -50599,7 +50599,7 @@ var require_data = __commonJS({
     var crypto_1 = require("crypto");
     var data_uri_to_buffer_1 = require_node2();
     var notmodified_1 = __importDefault2(require_notmodified());
-    var debug5 = (0, debug_1.default)("get-uri:data");
+    var debug4 = (0, debug_1.default)("get-uri:data");
     var DataReadable = class extends stream_1.Readable {
       constructor(hash, buf) {
         super();
@@ -50612,12 +50612,12 @@ var require_data = __commonJS({
       const shasum = (0, crypto_1.createHash)("sha1");
       shasum.update(uri);
       const hash = shasum.digest("hex");
-      debug5('generated SHA1 hash for "data:" URI: %o', hash);
+      debug4('generated SHA1 hash for "data:" URI: %o', hash);
       if (cache5?.hash === hash) {
-        debug5("got matching cache SHA1 hash: %o", hash);
+        debug4("got matching cache SHA1 hash: %o", hash);
         throw new notmodified_1.default();
       } else {
-        debug5('creating Readable stream from "data:" URI buffer');
+        debug4('creating Readable stream from "data:" URI buffer');
         const { buffer } = (0, data_uri_to_buffer_1.dataUriToBuffer)(uri);
         return new DataReadable(hash, Buffer.from(buffer));
       }
@@ -50655,7 +50655,7 @@ var require_file2 = __commonJS({
     var notfound_1 = __importDefault2(require_notfound());
     var notmodified_1 = __importDefault2(require_notmodified());
     var url_1 = require("url");
-    var debug5 = (0, debug_1.default)("get-uri:file");
+    var debug4 = (0, debug_1.default)("get-uri:file");
     var file = async ({ href: uri }, opts = {}) => {
       const {
         cache: cache5,
@@ -50665,7 +50665,7 @@ var require_file2 = __commonJS({
       } = opts;
       try {
         const filepath = (0, url_1.fileURLToPath)(uri);
-        debug5("Normalized pathname: %o", filepath);
+        debug4("Normalized pathname: %o", filepath);
         const fdHandle = await fs_1.promises.open(filepath, flags, mode);
         const fd = fdHandle.fd;
         const stat = await fdHandle.stat();
@@ -52687,7 +52687,7 @@ var require_ftp = __commonJS({
     var debug_1 = __importDefault2(require_src());
     var notfound_1 = __importDefault2(require_notfound());
     var notmodified_1 = __importDefault2(require_notmodified());
-    var debug5 = (0, debug_1.default)("get-uri:ftp");
+    var debug4 = (0, debug_1.default)("get-uri:ftp");
     var ftp = async (url, opts = {}) => {
       const { cache: cache5 } = opts;
       const filepath = decodeURIComponent(url.pathname);
@@ -52733,7 +52733,7 @@ var require_ftp = __commonJS({
         const stream = new stream_1.PassThrough();
         const rs = stream;
         client.downloadTo(stream, filepath).then((result) => {
-          debug5(result.message);
+          debug4(result.message);
           client.close();
         });
         rs.lastModified = lastModified;
@@ -52786,27 +52786,27 @@ var require_http = __commonJS({
     var http_error_1 = __importDefault2(require_http_error());
     var notfound_1 = __importDefault2(require_notfound());
     var notmodified_1 = __importDefault2(require_notmodified());
-    var debug5 = (0, debug_1.default)("get-uri:http");
+    var debug4 = (0, debug_1.default)("get-uri:http");
     var http = async (url, opts = {}) => {
-      debug5("GET %o", url.href);
+      debug4("GET %o", url.href);
       const cache5 = getCache(url, opts.cache);
       if (cache5 && isFresh(cache5) && typeof cache5.statusCode === "number") {
         const type2 = cache5.statusCode / 100 | 0;
         if (type2 === 3 && cache5.headers.location) {
-          debug5("cached redirect");
+          debug4("cached redirect");
           throw new Error("TODO: implement cached redirects!");
         }
         throw new notmodified_1.default();
       }
       const maxRedirects = typeof opts.maxRedirects === "number" ? opts.maxRedirects : 5;
-      debug5("allowing %o max redirects", maxRedirects);
+      debug4("allowing %o max redirects", maxRedirects);
       let mod;
       if (opts.http) {
         mod = opts.http;
-        debug5("using secure `https` core module");
+        debug4("using secure `https` core module");
       } else {
         mod = http_1.default;
-        debug5("using `http` core module");
+        debug4("using `http` core module");
       }
       const options = { ...opts };
       if (cache5) {
@@ -52816,12 +52816,12 @@ var require_http = __commonJS({
         const lastModified = cache5.headers["last-modified"];
         if (lastModified) {
           options.headers["If-Modified-Since"] = lastModified;
-          debug5('added "If-Modified-Since" request header: %o', lastModified);
+          debug4('added "If-Modified-Since" request header: %o', lastModified);
         }
         const etag = cache5.headers.etag;
         if (etag) {
           options.headers["If-None-Match"] = etag;
-          debug5('added "If-None-Match" request header: %o', etag);
+          debug4('added "If-None-Match" request header: %o', etag);
         }
       }
       const req = mod.get(url, options);
@@ -52829,7 +52829,7 @@ var require_http = __commonJS({
       const code = res.statusCode || 0;
       res.date = Date.now();
       res.parsed = url;
-      debug5("got %o response status code", code);
+      debug4("got %o response status code", code);
       const type = code / 100 | 0;
       const location = res.headers.location;
       if (type === 3 && location) {
@@ -52837,13 +52837,13 @@ var require_http = __commonJS({
           opts.redirects = [];
         const redirects = opts.redirects;
         if (redirects.length < maxRedirects) {
-          debug5('got a "redirect" status code with Location: %o', location);
+          debug4('got a "redirect" status code with Location: %o', location);
           res.resume();
           redirects.push(res);
           const newUri = new URL(location, url.href);
-          debug5("resolved redirect URL: %o", newUri.href);
+          debug4("resolved redirect URL: %o", newUri.href);
           const left = maxRedirects - redirects.length;
-          debug5("%o more redirects allowed after this one", left);
+          debug4("%o more redirects allowed after this one", left);
           if (newUri.protocol !== url.protocol) {
             opts.http = newUri.protocol === "https:" ? https_1.default : void 0;
           }
@@ -52870,7 +52870,7 @@ var require_http = __commonJS({
       let expires = parseInt(cache5.headers.expires || "", 10);
       const cacheControl = cache5.headers["cache-control"];
       if (cacheControl) {
-        debug5("Cache-Control: %o", cacheControl);
+        debug4("Cache-Control: %o", cacheControl);
         const parts = cacheControl.split(/,\s*?\b/);
         for (let i5 = 0; i5 < parts.length; i5++) {
           const part = parts[i5];
@@ -52881,24 +52881,24 @@ var require_http = __commonJS({
               expires = (cache5.date || 0) + parseInt(subparts[1], 10) * 1e3;
               fresh = Date.now() < expires;
               if (fresh) {
-                debug5('cache is "fresh" due to previous %o Cache-Control param', part);
+                debug4('cache is "fresh" due to previous %o Cache-Control param', part);
               }
               return fresh;
             case "must-revalidate":
               break;
             case "no-cache":
             case "no-store":
-              debug5('cache is "stale" due to explicit %o Cache-Control param', name);
+              debug4('cache is "stale" due to explicit %o Cache-Control param', name);
               return false;
             default:
               break;
           }
         }
       } else if (expires) {
-        debug5("Expires: %o", expires);
+        debug4("Expires: %o", expires);
         fresh = Date.now() < expires;
         if (fresh) {
-          debug5('cache is "fresh" due to previous Expires response header');
+          debug4('cache is "fresh" due to previous Expires response header');
         }
         return fresh;
       }
@@ -52956,7 +52956,7 @@ var require_dist6 = __commonJS({
     var ftp_1 = require_ftp();
     var http_1 = require_http();
     var https_1 = require_https();
-    var debug5 = (0, debug_1.default)("get-uri");
+    var debug4 = (0, debug_1.default)("get-uri");
     exports2.protocols = {
       data: data_1.data,
       file: file_1.file,
@@ -52970,7 +52970,7 @@ var require_dist6 = __commonJS({
     }
     exports2.isValidProtocol = isValidProtocol;
     async function getUri(uri, opts) {
-      debug5("getUri(%o)", uri);
+      debug4("getUri(%o)", uri);
       if (!uri) {
         throw new TypeError('Must pass in a URI to "getUri()"');
       }
@@ -71044,7 +71044,7 @@ var require_dist10 = __commonJS({
     var get_uri_1 = require_dist6();
     var pac_resolver_1 = require_dist8();
     var quickjs_emscripten_1 = require_dist9();
-    var debug5 = (0, debug_1.default)("pac-proxy-agent");
+    var debug4 = (0, debug_1.default)("pac-proxy-agent");
     var setServernameFromNonIpHost = (options) => {
       if (options.servername === void 0 && options.host && !net.isIP(options.host)) {
         return {
@@ -71062,7 +71062,7 @@ var require_dist10 = __commonJS({
         };
         const uriStr = typeof uri === "string" ? uri : uri.href;
         this.uri = new url_1.URL(uriStr.replace(/^pac\+/i, ""));
-        debug5("Creating PacProxyAgent with URI %o", this.uri.href);
+        debug4("Creating PacProxyAgent with URI %o", this.uri.href);
         this.opts = { ...opts };
         this.cache = void 0;
         this.resolver = void 0;
@@ -71091,16 +71091,16 @@ var require_dist10 = __commonJS({
           ]);
           const hash = crypto2.createHash("sha1").update(code).digest("hex");
           if (this.resolver && this.resolverHash === hash) {
-            debug5("Same sha1 hash for code - contents have not changed, reusing previous proxy resolver");
+            debug4("Same sha1 hash for code - contents have not changed, reusing previous proxy resolver");
             return this.resolver;
           }
-          debug5("Creating new proxy resolver instance");
+          debug4("Creating new proxy resolver instance");
           this.resolver = (0, pac_resolver_1.createPacResolver)(qjs, code, this.opts);
           this.resolverHash = hash;
           return this.resolver;
         } catch (err) {
           if (this.resolver && err.code === "ENOTMODIFIED") {
-            debug5("Got ENOTMODIFIED response, reusing previous proxy resolver");
+            debug4("Got ENOTMODIFIED response, reusing previous proxy resolver");
             return this.resolver;
           }
           throw err;
@@ -71112,12 +71112,12 @@ var require_dist10 = __commonJS({
        * @api private
        */
       async loadPacFile() {
-        debug5("Loading PAC file: %o", this.uri);
+        debug4("Loading PAC file: %o", this.uri);
         const rs = await (0, get_uri_1.getUri)(this.uri, { ...this.opts, cache: this.cache });
-        debug5("Got `Readable` instance for URI");
+        debug4("Got `Readable` instance for URI");
         this.cache = rs;
         const buf = await (0, agent_base_1.toBuffer)(rs);
-        debug5("Read %o byte PAC file from URI", buf.length);
+        debug4("Read %o byte PAC file from URI", buf.length);
         return buf.toString("utf8");
       }
       /**
@@ -71131,7 +71131,7 @@ var require_dist10 = __commonJS({
         const host = opts.host && net.isIPv6(opts.host) ? `[${opts.host}]` : opts.host;
         const defaultPort = secureEndpoint ? 443 : 80;
         const url = Object.assign(new url_1.URL(req.path, `${protocol}//${host}`), defaultPort ? void 0 : { port: opts.port });
-        debug5("url: %s", url);
+        debug4("url: %s", url);
         let result = await resolver(url);
         if (!result) {
           result = "DIRECT";
@@ -71144,7 +71144,7 @@ var require_dist10 = __commonJS({
           let agent = null;
           let socket = null;
           const [type, target] = proxy.split(/\s+/);
-          debug5("Attempting to use proxy: %o", proxy);
+          debug4("Attempting to use proxy: %o", proxy);
           if (type === "DIRECT") {
             if (secureEndpoint) {
               socket = tls.connect(setServernameFromNonIpHost(opts));
@@ -71183,7 +71183,7 @@ var require_dist10 = __commonJS({
             }
             throw new Error(`Could not determine proxy type for: ${proxy}`);
           } catch (err) {
-            debug5("Got error for proxy %o: %o", proxy, err);
+            debug4("Got error for proxy %o: %o", proxy, err);
             req.emit("proxy", { proxy, error: err });
           }
         }
@@ -71244,7 +71244,7 @@ var require_dist11 = __commonJS({
     var agent_base_1 = require_dist();
     var debug_1 = __importDefault2(require_src());
     var proxy_from_env_1 = require_proxy_from_env();
-    var debug5 = (0, debug_1.default)("proxy-agent");
+    var debug4 = (0, debug_1.default)("proxy-agent");
     var wellKnownAgents = {
       http: async () => (await Promise.resolve().then(() => __importStar2(require_dist2()))).HttpProxyAgent,
       https: async () => (await Promise.resolve().then(() => __importStar2(require_dist3()))).HttpsProxyAgent,
@@ -71275,7 +71275,7 @@ var require_dist11 = __commonJS({
           max: 20,
           dispose: (agent) => agent.destroy()
         });
-        debug5("Creating new ProxyAgent instance: %o", opts);
+        debug4("Creating new ProxyAgent instance: %o", opts);
         this.connectOpts = opts;
         this.httpAgent = opts?.httpAgent || new http.Agent(opts);
         this.httpsAgent = opts?.httpsAgent || new https.Agent(opts);
@@ -71289,11 +71289,11 @@ var require_dist11 = __commonJS({
         const url = new url_1.URL(req.path, `${protocol}//${host}`).href;
         const proxy = await this.getProxyForUrl(url, req);
         if (!proxy) {
-          debug5("Proxy not enabled for URL: %o", url);
+          debug4("Proxy not enabled for URL: %o", url);
           return secureEndpoint ? this.httpsAgent : this.httpAgent;
         }
-        debug5("Request URL: %o", url);
-        debug5("Proxy URL: %o", proxy);
+        debug4("Request URL: %o", url);
+        debug4("Proxy URL: %o", proxy);
         const cacheKey = `${protocol}+${proxy}`;
         let agent = this.cache.get(cacheKey);
         if (!agent) {
@@ -71306,7 +71306,7 @@ var require_dist11 = __commonJS({
           agent = new ctor(proxy, this.connectOpts);
           this.cache.set(cacheKey, agent);
         } else {
-          debug5("Cache hit for proxy URL: %o", proxy);
+          debug4("Cache hit for proxy URL: %o", proxy);
         }
         return agent;
       }
@@ -72195,17 +72195,14 @@ async function run() {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
       }
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
-      core4.debug("using predefined ak_id, I exported credentials");
     } else if (!webIdentityTokenFile && !roleChaining) {
       await credentialsClient.validateCredentials(void 0, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
     if (AccessKeyId || roleChaining) {
-      core4.debug("attempting to verify credentials bc of ak_id");
       await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
-    core4.debug("credentials have been verified");
     if (roleToAssume) {
       let roleCredentials;
       do {

@@ -21621,7 +21621,9 @@ function cleanup() {
       core2.exportVariable("AWS_SESSION_TOKEN", "");
       core2.exportVariable("AWS_DEFAULT_REGION", "");
       core2.exportVariable("AWS_REGION", "");
-      core2.exportVariable("AWS_PROFILE", "");
+      if (getBooleanInput("aws-profile", { required: false, default: false })) {
+        core2.exportVariable("AWS_PROFILE", "");
+      }
     } catch (error) {
       core2.setFailed(errorMessage(error));
     }
