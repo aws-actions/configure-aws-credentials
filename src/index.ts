@@ -120,7 +120,6 @@ export async function run() {
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
-
     exportRegion(region, outputEnvCredentials);
 
     // Instantiate credentials client
@@ -168,6 +167,7 @@ export async function run() {
       // the source credentials to already be masked as secrets
       // in any error messages.
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+      core.debug('using predefined ak_id, I exported credentials');
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
@@ -178,10 +178,12 @@ export async function run() {
       // Validate that the SDK can actually pick up credentials.
       // This validates cases where this action is using existing environment credentials,
       // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
+      core.debug('attempting to verify credentials bc of ak_id');
       await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
 
+    core.debug('credentials have been verified');
     // Get role credentials if configured to do so
     if (roleToAssume) {
       let roleCredentials: AssumeRoleCommandOutput;
