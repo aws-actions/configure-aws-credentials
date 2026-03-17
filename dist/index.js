@@ -22015,10 +22015,10 @@ var init_invoke_store = __esm({
     };
     (function(InvokeStore2) {
       let instance = null;
-      async function getInstanceAsync() {
+      async function getInstanceAsync(forceInvokeStoreMulti) {
         if (!instance) {
           instance = (async () => {
-            const isMulti = "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
+            const isMulti = forceInvokeStoreMulti === true || "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
             const newInstance = isMulti ? await InvokeStoreMulti.create() : new InvokeStoreSingle();
             if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
               return globalThis.awslambda.InvokeStore;
@@ -36645,20 +36645,13 @@ var require_dist_cjs37 = __commonJS({
       default: utilRetry.DEFAULT_MAX_ATTEMPTS
     };
     var resolveRetryConfig5 = (input) => {
-      const { retryStrategy, retryMode: _retryMode, maxAttempts: _maxAttempts } = input;
-      const maxAttempts = utilMiddleware.normalizeProvider(_maxAttempts ?? utilRetry.DEFAULT_MAX_ATTEMPTS);
+      const { retryStrategy, retryMode } = input;
+      const maxAttempts = utilMiddleware.normalizeProvider(input.maxAttempts ?? utilRetry.DEFAULT_MAX_ATTEMPTS);
+      let controller = retryStrategy ? Promise.resolve(retryStrategy) : void 0;
+      const getDefault = async () => await utilMiddleware.normalizeProvider(retryMode)() === utilRetry.RETRY_MODES.ADAPTIVE ? new utilRetry.AdaptiveRetryStrategy(maxAttempts) : new utilRetry.StandardRetryStrategy(maxAttempts);
       return Object.assign(input, {
         maxAttempts,
-        retryStrategy: async () => {
-          if (retryStrategy) {
-            return retryStrategy;
-          }
-          const retryMode = await utilMiddleware.normalizeProvider(_retryMode)();
-          if (retryMode === utilRetry.RETRY_MODES.ADAPTIVE) {
-            return new utilRetry.AdaptiveRetryStrategy(maxAttempts);
-          }
-          return new utilRetry.StandardRetryStrategy(maxAttempts);
-        }
+        retryStrategy: () => controller ??= getDefault()
       });
     };
     var ENV_RETRY_MODE = "AWS_RETRY_MODE";
@@ -36915,7 +36908,7 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1005.0",
+      version: "3.1010.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
         "build:cjs": "node ../../scripts/compilation/inline client-sts",
@@ -36941,46 +36934,46 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.973.19",
-        "@aws-sdk/credential-provider-node": "^3.972.19",
-        "@aws-sdk/middleware-host-header": "^3.972.7",
-        "@aws-sdk/middleware-logger": "^3.972.7",
-        "@aws-sdk/middleware-recursion-detection": "^3.972.7",
-        "@aws-sdk/middleware-user-agent": "^3.972.20",
-        "@aws-sdk/region-config-resolver": "^3.972.7",
-        "@aws-sdk/types": "^3.973.5",
-        "@aws-sdk/util-endpoints": "^3.996.4",
-        "@aws-sdk/util-user-agent-browser": "^3.972.7",
-        "@aws-sdk/util-user-agent-node": "^3.973.5",
-        "@smithy/config-resolver": "^4.4.10",
-        "@smithy/core": "^3.23.9",
-        "@smithy/fetch-http-handler": "^5.3.13",
-        "@smithy/hash-node": "^4.2.11",
-        "@smithy/invalid-dependency": "^4.2.11",
-        "@smithy/middleware-content-length": "^4.2.11",
-        "@smithy/middleware-endpoint": "^4.4.23",
-        "@smithy/middleware-retry": "^4.4.40",
-        "@smithy/middleware-serde": "^4.2.12",
-        "@smithy/middleware-stack": "^4.2.11",
-        "@smithy/node-config-provider": "^4.3.11",
-        "@smithy/node-http-handler": "^4.4.14",
-        "@smithy/protocol-http": "^5.3.11",
-        "@smithy/smithy-client": "^4.12.3",
-        "@smithy/types": "^4.13.0",
-        "@smithy/url-parser": "^4.2.11",
+        "@aws-sdk/core": "^3.973.20",
+        "@aws-sdk/credential-provider-node": "^3.972.21",
+        "@aws-sdk/middleware-host-header": "^3.972.8",
+        "@aws-sdk/middleware-logger": "^3.972.8",
+        "@aws-sdk/middleware-recursion-detection": "^3.972.8",
+        "@aws-sdk/middleware-user-agent": "^3.972.21",
+        "@aws-sdk/region-config-resolver": "^3.972.8",
+        "@aws-sdk/types": "^3.973.6",
+        "@aws-sdk/util-endpoints": "^3.996.5",
+        "@aws-sdk/util-user-agent-browser": "^3.972.8",
+        "@aws-sdk/util-user-agent-node": "^3.973.7",
+        "@smithy/config-resolver": "^4.4.11",
+        "@smithy/core": "^3.23.11",
+        "@smithy/fetch-http-handler": "^5.3.15",
+        "@smithy/hash-node": "^4.2.12",
+        "@smithy/invalid-dependency": "^4.2.12",
+        "@smithy/middleware-content-length": "^4.2.12",
+        "@smithy/middleware-endpoint": "^4.4.25",
+        "@smithy/middleware-retry": "^4.4.42",
+        "@smithy/middleware-serde": "^4.2.14",
+        "@smithy/middleware-stack": "^4.2.12",
+        "@smithy/node-config-provider": "^4.3.12",
+        "@smithy/node-http-handler": "^4.4.16",
+        "@smithy/protocol-http": "^5.3.12",
+        "@smithy/smithy-client": "^4.12.5",
+        "@smithy/types": "^4.13.1",
+        "@smithy/url-parser": "^4.2.12",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.39",
-        "@smithy/util-defaults-mode-node": "^4.2.42",
-        "@smithy/util-endpoints": "^3.3.2",
-        "@smithy/util-middleware": "^4.2.11",
-        "@smithy/util-retry": "^4.2.11",
+        "@smithy/util-defaults-mode-browser": "^4.3.41",
+        "@smithy/util-defaults-mode-node": "^4.2.44",
+        "@smithy/util-endpoints": "^3.3.3",
+        "@smithy/util-middleware": "^4.2.12",
+        "@smithy/util-retry": "^4.2.12",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@smithy/snapshot-testing": "^1.0.10",
+        "@smithy/snapshot-testing": "^2.0.2",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -37696,7 +37689,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.996.8",
+      version: "3.996.10",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -37725,40 +37718,40 @@ var init_package = __esm({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.973.19",
-        "@aws-sdk/middleware-host-header": "^3.972.7",
-        "@aws-sdk/middleware-logger": "^3.972.7",
-        "@aws-sdk/middleware-recursion-detection": "^3.972.7",
-        "@aws-sdk/middleware-user-agent": "^3.972.20",
-        "@aws-sdk/region-config-resolver": "^3.972.7",
-        "@aws-sdk/types": "^3.973.5",
-        "@aws-sdk/util-endpoints": "^3.996.4",
-        "@aws-sdk/util-user-agent-browser": "^3.972.7",
-        "@aws-sdk/util-user-agent-node": "^3.973.5",
-        "@smithy/config-resolver": "^4.4.10",
-        "@smithy/core": "^3.23.9",
-        "@smithy/fetch-http-handler": "^5.3.13",
-        "@smithy/hash-node": "^4.2.11",
-        "@smithy/invalid-dependency": "^4.2.11",
-        "@smithy/middleware-content-length": "^4.2.11",
-        "@smithy/middleware-endpoint": "^4.4.23",
-        "@smithy/middleware-retry": "^4.4.40",
-        "@smithy/middleware-serde": "^4.2.12",
-        "@smithy/middleware-stack": "^4.2.11",
-        "@smithy/node-config-provider": "^4.3.11",
-        "@smithy/node-http-handler": "^4.4.14",
-        "@smithy/protocol-http": "^5.3.11",
-        "@smithy/smithy-client": "^4.12.3",
-        "@smithy/types": "^4.13.0",
-        "@smithy/url-parser": "^4.2.11",
+        "@aws-sdk/core": "^3.973.20",
+        "@aws-sdk/middleware-host-header": "^3.972.8",
+        "@aws-sdk/middleware-logger": "^3.972.8",
+        "@aws-sdk/middleware-recursion-detection": "^3.972.8",
+        "@aws-sdk/middleware-user-agent": "^3.972.21",
+        "@aws-sdk/region-config-resolver": "^3.972.8",
+        "@aws-sdk/types": "^3.973.6",
+        "@aws-sdk/util-endpoints": "^3.996.5",
+        "@aws-sdk/util-user-agent-browser": "^3.972.8",
+        "@aws-sdk/util-user-agent-node": "^3.973.7",
+        "@smithy/config-resolver": "^4.4.11",
+        "@smithy/core": "^3.23.11",
+        "@smithy/fetch-http-handler": "^5.3.15",
+        "@smithy/hash-node": "^4.2.12",
+        "@smithy/invalid-dependency": "^4.2.12",
+        "@smithy/middleware-content-length": "^4.2.12",
+        "@smithy/middleware-endpoint": "^4.4.25",
+        "@smithy/middleware-retry": "^4.4.42",
+        "@smithy/middleware-serde": "^4.2.14",
+        "@smithy/middleware-stack": "^4.2.12",
+        "@smithy/node-config-provider": "^4.3.12",
+        "@smithy/node-http-handler": "^4.4.16",
+        "@smithy/protocol-http": "^5.3.12",
+        "@smithy/smithy-client": "^4.12.5",
+        "@smithy/types": "^4.13.1",
+        "@smithy/url-parser": "^4.2.12",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.39",
-        "@smithy/util-defaults-mode-node": "^4.2.42",
-        "@smithy/util-endpoints": "^3.3.2",
-        "@smithy/util-middleware": "^4.2.11",
-        "@smithy/util-retry": "^4.2.11",
+        "@smithy/util-defaults-mode-browser": "^4.3.41",
+        "@smithy/util-defaults-mode-node": "^4.2.44",
+        "@smithy/util-endpoints": "^3.3.3",
+        "@smithy/util-middleware": "^4.2.12",
+        "@smithy/util-retry": "^4.2.12",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
@@ -37850,6 +37843,7 @@ var require_dist_cjs41 = __commonJS({
     "use strict";
     var node_os = require("node:os");
     var node_process = require("node:process");
+    var utilConfigProvider = require_dist_cjs30();
     var promises = require("node:fs/promises");
     var node_path = require("node:path");
     var middlewareUserAgent = require_dist_cjs29();
@@ -37862,6 +37856,20 @@ var require_dist_cjs41 = __commonJS({
       }
       return ["md/nodejs", node_process.versions.node];
     };
+    var getNodeModulesParentDirs = (dirname) => {
+      const cwd = process.cwd();
+      if (!dirname) {
+        return [cwd];
+      }
+      const normalizedPath = node_path.normalize(dirname);
+      const parts = normalizedPath.split(node_path.sep);
+      const nodeModulesIndex = parts.indexOf("node_modules");
+      const parentDir = nodeModulesIndex !== -1 ? parts.slice(0, nodeModulesIndex).join(node_path.sep) : normalizedPath;
+      if (cwd === parentDir) {
+        return [cwd];
+      }
+      return [parentDir, cwd];
+    };
     var SEMVER_REGEX = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?$/;
     var getSanitizedTypeScriptVersion = (version = "") => {
       const match = version.match(SEMVER_REGEX);
@@ -37871,45 +37879,83 @@ var require_dist_cjs41 = __commonJS({
       const [major, minor, patch, prerelease] = [match[1], match[2], match[3], match[4]];
       return prerelease ? `${major}.${minor}.${patch}-${prerelease}` : `${major}.${minor}.${patch}`;
     };
-    var typescriptPackageJsonPath = node_path.join("node_modules", "typescript", "package.json");
-    var getTypeScriptPackageJsonPaths = (dirname) => {
-      const cwdPath = node_path.join(process.cwd(), typescriptPackageJsonPath);
-      if (!dirname) {
-        return [cwdPath];
+    var ALLOWED_PREFIXES = ["^", "~", ">=", "<=", ">", "<"];
+    var ALLOWED_DIST_TAGS = ["latest", "beta", "dev", "rc", "insiders", "next"];
+    var getSanitizedDevTypeScriptVersion = (version = "") => {
+      if (ALLOWED_DIST_TAGS.includes(version)) {
+        return version;
       }
-      const normalizedPath = node_path.normalize(dirname);
-      const parts = normalizedPath.split(node_path.sep);
-      const nodeModulesIndex = parts.indexOf("node_modules");
-      const parentDir = nodeModulesIndex !== -1 ? parts.slice(0, nodeModulesIndex).join(node_path.sep) : dirname;
-      const parentDirPath = node_path.join(parentDir, typescriptPackageJsonPath);
-      if (cwdPath === parentDirPath) {
-        return [cwdPath];
+      const prefix = ALLOWED_PREFIXES.find((p5) => version.startsWith(p5)) ?? "";
+      const sanitizedTypeScriptVersion = getSanitizedTypeScriptVersion(version.slice(prefix.length));
+      if (!sanitizedTypeScriptVersion) {
+        return void 0;
       }
-      return [parentDirPath, cwdPath];
+      return `${prefix}${sanitizedTypeScriptVersion}`;
     };
     var tscVersion;
+    var TS_PACKAGE_JSON = node_path.join("node_modules", "typescript", "package.json");
     var getTypeScriptUserAgentPair = async () => {
       if (tscVersion === null) {
         return void 0;
       } else if (typeof tscVersion === "string") {
         return ["md/tsc", tscVersion];
       }
+      let isTypeScriptDetectionDisabled = false;
+      try {
+        isTypeScriptDetectionDisabled = utilConfigProvider.booleanSelector(process.env, "AWS_SDK_JS_TYPESCRIPT_DETECTION_DISABLED", utilConfigProvider.SelectorType.ENV) || false;
+      } catch {
+      }
+      if (isTypeScriptDetectionDisabled) {
+        tscVersion = null;
+        return void 0;
+      }
       const dirname = typeof __dirname !== "undefined" ? __dirname : void 0;
-      for (const typescriptPackageJsonPath2 of getTypeScriptPackageJsonPaths(dirname)) {
+      const nodeModulesParentDirs = getNodeModulesParentDirs(dirname);
+      let versionFromApp;
+      for (const nodeModulesParentDir of nodeModulesParentDirs) {
         try {
-          const packageJson = await promises.readFile(typescriptPackageJsonPath2, "utf-8");
-          const { version } = JSON.parse(packageJson);
-          const sanitizedVersion = getSanitizedTypeScriptVersion(version);
-          if (typeof sanitizedVersion !== "string") {
+          const appPackageJsonPath = node_path.join(nodeModulesParentDir, "package.json");
+          const packageJson = await promises.readFile(appPackageJsonPath, "utf-8");
+          const { dependencies, devDependencies } = JSON.parse(packageJson);
+          const version = devDependencies?.typescript ?? dependencies?.typescript;
+          if (typeof version !== "string") {
             continue;
           }
-          tscVersion = sanitizedVersion;
-          return ["md/tsc", tscVersion];
+          versionFromApp = version;
+          break;
         } catch {
         }
       }
-      tscVersion = null;
-      return void 0;
+      if (!versionFromApp) {
+        tscVersion = null;
+        return void 0;
+      }
+      let versionFromNodeModules;
+      for (const nodeModulesParentDir of nodeModulesParentDirs) {
+        try {
+          const tsPackageJsonPath = node_path.join(nodeModulesParentDir, TS_PACKAGE_JSON);
+          const packageJson = await promises.readFile(tsPackageJsonPath, "utf-8");
+          const { version } = JSON.parse(packageJson);
+          const sanitizedVersion2 = getSanitizedTypeScriptVersion(version);
+          if (typeof sanitizedVersion2 !== "string") {
+            continue;
+          }
+          versionFromNodeModules = sanitizedVersion2;
+          break;
+        } catch {
+        }
+      }
+      if (versionFromNodeModules) {
+        tscVersion = versionFromNodeModules;
+        return ["md/tsc", tscVersion];
+      }
+      const sanitizedVersion = getSanitizedDevTypeScriptVersion(versionFromApp);
+      if (typeof sanitizedVersion !== "string") {
+        tscVersion = null;
+        return void 0;
+      }
+      tscVersion = `dev_${sanitizedVersion}`;
+      return ["md/tsc", tscVersion];
     };
     var crtAvailability = {
       isCrtAvailable: false
