@@ -22238,109 +22238,10 @@ var init_getHttpAuthSchemeEndpointRuleSetPlugin = __esm({
   }
 });
 
-// node_modules/@smithy/middleware-serde/dist-cjs/index.js
-var require_dist_cjs7 = __commonJS({
-  "node_modules/@smithy/middleware-serde/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var protocolHttp = require_dist_cjs2();
-    var deserializerMiddleware = (options, deserializer) => (next, context) => async (args) => {
-      const { response } = await next(args);
-      try {
-        const parsed = await deserializer(response, options);
-        return {
-          response,
-          output: parsed
-        };
-      } catch (error2) {
-        Object.defineProperty(error2, "$response", {
-          value: response,
-          enumerable: false,
-          writable: false,
-          configurable: false
-        });
-        if (!("$metadata" in error2)) {
-          const hint = `Deserialization error: to see the raw response, inspect the hidden field {error}.$response on this object.`;
-          try {
-            error2.message += "\n  " + hint;
-          } catch (e5) {
-            if (!context.logger || context.logger?.constructor?.name === "NoOpLogger") {
-              console.warn(hint);
-            } else {
-              context.logger?.warn?.(hint);
-            }
-          }
-          if (typeof error2.$responseBodyText !== "undefined") {
-            if (error2.$response) {
-              error2.$response.body = error2.$responseBodyText;
-            }
-          }
-          try {
-            if (protocolHttp.HttpResponse.isInstance(response)) {
-              const { headers = {} } = response;
-              const headerEntries = Object.entries(headers);
-              error2.$metadata = {
-                httpStatusCode: response.statusCode,
-                requestId: findHeader2(/^x-[\w-]+-request-?id$/, headerEntries),
-                extendedRequestId: findHeader2(/^x-[\w-]+-id-2$/, headerEntries),
-                cfId: findHeader2(/^x-[\w-]+-cf-id$/, headerEntries)
-              };
-            }
-          } catch (e5) {
-          }
-        }
-        throw error2;
-      }
-    };
-    var findHeader2 = (pattern, headers) => {
-      return (headers.find(([k5]) => {
-        return k5.match(pattern);
-      }) || [void 0, void 0])[1];
-    };
-    var serializerMiddleware = (options, serializer) => (next, context) => async (args) => {
-      const endpointConfig = options;
-      const endpoint = context.endpointV2?.url && endpointConfig.urlParser ? async () => endpointConfig.urlParser(context.endpointV2.url) : endpointConfig.endpoint;
-      if (!endpoint) {
-        throw new Error("No valid endpoint provider available.");
-      }
-      const request = await serializer(args.input, { ...options, endpoint });
-      return next({
-        ...args,
-        request
-      });
-    };
-    var deserializerMiddlewareOption2 = {
-      name: "deserializerMiddleware",
-      step: "deserialize",
-      tags: ["DESERIALIZER"],
-      override: true
-    };
-    var serializerMiddlewareOption3 = {
-      name: "serializerMiddleware",
-      step: "serialize",
-      tags: ["SERIALIZER"],
-      override: true
-    };
-    function getSerdePlugin(config, serializer, deserializer) {
-      return {
-        applyToStack: (commandStack) => {
-          commandStack.add(deserializerMiddleware(config, deserializer), deserializerMiddlewareOption2);
-          commandStack.add(serializerMiddleware(config, serializer), serializerMiddlewareOption3);
-        }
-      };
-    }
-    exports2.deserializerMiddleware = deserializerMiddleware;
-    exports2.deserializerMiddlewareOption = deserializerMiddlewareOption2;
-    exports2.getSerdePlugin = getSerdePlugin;
-    exports2.serializerMiddleware = serializerMiddleware;
-    exports2.serializerMiddlewareOption = serializerMiddlewareOption3;
-  }
-});
-
 // node_modules/@smithy/core/dist-es/middleware-http-auth-scheme/getHttpAuthSchemePlugin.js
-var import_middleware_serde, httpAuthSchemeMiddlewareOptions, getHttpAuthSchemePlugin;
+var httpAuthSchemeMiddlewareOptions, getHttpAuthSchemePlugin;
 var init_getHttpAuthSchemePlugin = __esm({
   "node_modules/@smithy/core/dist-es/middleware-http-auth-scheme/getHttpAuthSchemePlugin.js"() {
-    import_middleware_serde = __toESM(require_dist_cjs7());
     init_httpAuthSchemeMiddleware();
     httpAuthSchemeMiddlewareOptions = {
       step: "serialize",
@@ -22348,7 +22249,7 @@ var init_getHttpAuthSchemePlugin = __esm({
       name: "httpAuthSchemeMiddleware",
       override: true,
       relation: "before",
-      toMiddleware: import_middleware_serde.serializerMiddlewareOption.name
+      toMiddleware: "serializerMiddleware"
     };
     getHttpAuthSchemePlugin = (config, { httpAuthSchemeParametersProvider, identityProviderConfigProvider }) => ({
       applyToStack: (clientStack) => {
@@ -22492,7 +22393,7 @@ var init_createPaginator = __esm({
 });
 
 // node_modules/@smithy/is-array-buffer/dist-cjs/index.js
-var require_dist_cjs8 = __commonJS({
+var require_dist_cjs7 = __commonJS({
   "node_modules/@smithy/is-array-buffer/dist-cjs/index.js"(exports2) {
     "use strict";
     var isArrayBuffer = (arg) => typeof ArrayBuffer === "function" && arg instanceof ArrayBuffer || Object.prototype.toString.call(arg) === "[object ArrayBuffer]";
@@ -22501,10 +22402,10 @@ var require_dist_cjs8 = __commonJS({
 });
 
 // node_modules/@smithy/util-buffer-from/dist-cjs/index.js
-var require_dist_cjs9 = __commonJS({
+var require_dist_cjs8 = __commonJS({
   "node_modules/@smithy/util-buffer-from/dist-cjs/index.js"(exports2) {
     "use strict";
-    var isArrayBuffer = require_dist_cjs8();
+    var isArrayBuffer = require_dist_cjs7();
     var buffer = require("buffer");
     var fromArrayBuffer = (input, offset = 0, length = input.byteLength - offset) => {
       if (!isArrayBuffer.isArrayBuffer(input)) {
@@ -22529,7 +22430,7 @@ var require_fromBase64 = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.fromBase64 = void 0;
-    var util_buffer_from_1 = require_dist_cjs9();
+    var util_buffer_from_1 = require_dist_cjs8();
     var BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
     var fromBase649 = (input) => {
       if (input.length * 3 % 4 !== 0) {
@@ -22546,10 +22447,10 @@ var require_fromBase64 = __commonJS({
 });
 
 // node_modules/@smithy/util-utf8/dist-cjs/index.js
-var require_dist_cjs10 = __commonJS({
+var require_dist_cjs9 = __commonJS({
   "node_modules/@smithy/util-utf8/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilBufferFrom = require_dist_cjs9();
+    var utilBufferFrom = require_dist_cjs8();
     var fromUtf88 = (input) => {
       const buf = utilBufferFrom.fromString(input, "utf8");
       return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength / Uint8Array.BYTES_PER_ELEMENT);
@@ -22584,8 +22485,8 @@ var require_toBase64 = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.toBase64 = void 0;
-    var util_buffer_from_1 = require_dist_cjs9();
-    var util_utf8_1 = require_dist_cjs10();
+    var util_buffer_from_1 = require_dist_cjs8();
+    var util_utf8_1 = require_dist_cjs9();
     var toBase649 = (_input) => {
       let input;
       if (typeof _input === "string") {
@@ -22603,7 +22504,7 @@ var require_toBase64 = __commonJS({
 });
 
 // node_modules/@smithy/util-base64/dist-cjs/index.js
-var require_dist_cjs11 = __commonJS({
+var require_dist_cjs10 = __commonJS({
   "node_modules/@smithy/util-base64/dist-cjs/index.js"(exports2) {
     "use strict";
     var fromBase649 = require_fromBase64();
@@ -22631,7 +22532,7 @@ var require_ChecksumStream = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.ChecksumStream = void 0;
-    var util_base64_1 = require_dist_cjs11();
+    var util_base64_1 = require_dist_cjs10();
     var stream_1 = require("stream");
     var ChecksumStream = class extends stream_1.Duplex {
       expectedChecksum;
@@ -22726,7 +22627,7 @@ var require_createChecksumStream_browser = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.createChecksumStream = void 0;
-    var util_base64_1 = require_dist_cjs11();
+    var util_base64_1 = require_dist_cjs10();
     var stream_type_check_1 = require_stream_type_check();
     var ChecksumStream_browser_1 = require_ChecksumStream_browser();
     var createChecksumStream = ({ expectedChecksum, checksum, source, checksumSourceLocation, base64Encoder }) => {
@@ -23170,7 +23071,7 @@ var require_headStream = __commonJS({
 });
 
 // node_modules/@smithy/util-uri-escape/dist-cjs/index.js
-var require_dist_cjs12 = __commonJS({
+var require_dist_cjs11 = __commonJS({
   "node_modules/@smithy/util-uri-escape/dist-cjs/index.js"(exports2) {
     "use strict";
     var escapeUri = (uri) => encodeURIComponent(uri).replace(/[!'()*]/g, hexEncode);
@@ -23182,10 +23083,10 @@ var require_dist_cjs12 = __commonJS({
 });
 
 // node_modules/@smithy/querystring-builder/dist-cjs/index.js
-var require_dist_cjs13 = __commonJS({
+var require_dist_cjs12 = __commonJS({
   "node_modules/@smithy/querystring-builder/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilUriEscape = require_dist_cjs12();
+    var utilUriEscape = require_dist_cjs11();
     function buildQueryString(query) {
       const parts = [];
       for (let key of Object.keys(query).sort()) {
@@ -23210,20 +23111,22 @@ var require_dist_cjs13 = __commonJS({
 });
 
 // node_modules/@smithy/node-http-handler/dist-cjs/index.js
-var require_dist_cjs14 = __commonJS({
+var require_dist_cjs13 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
     "use strict";
     var protocolHttp = require_dist_cjs2();
-    var querystringBuilder = require_dist_cjs13();
-    var http = require("http");
-    var https = require("https");
-    var stream = require("stream");
-    var http2 = require("http2");
+    var querystringBuilder = require_dist_cjs12();
+    var node_https = require("node:https");
+    var node_stream = require("node:stream");
+    var http2 = require("node:http2");
     function buildAbortError(abortSignal) {
       const reason = abortSignal && typeof abortSignal === "object" && "reason" in abortSignal ? abortSignal.reason : void 0;
       if (reason) {
         if (reason instanceof Error) {
-          return reason;
+          const abortError3 = new Error("Request aborted");
+          abortError3.name = "AbortError";
+          abortError3.cause = reason;
+          return abortError3;
         }
         const abortError2 = new Error(String(reason));
         abortError2.name = "AbortError";
@@ -23371,7 +23274,7 @@ var require_dist_cjs14 = __commonJS({
       }
     }
     function writeBody(httpRequest, body) {
-      if (body instanceof stream.Readable) {
+      if (body instanceof node_stream.Readable) {
         body.pipe(httpRequest);
         return;
       }
@@ -23397,6 +23300,8 @@ var require_dist_cjs14 = __commonJS({
       httpRequest.end();
     }
     var DEFAULT_REQUEST_TIMEOUT = 0;
+    var hAgent = void 0;
+    var hRequest = void 0;
     var NodeHttpHandler2 = class _NodeHttpHandler {
       config;
       configProvider;
@@ -23443,33 +23348,6 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           }
         });
       }
-      resolveDefaultConfig(options) {
-        const { requestTimeout, connectionTimeout, socketTimeout, socketAcquisitionWarningTimeout, httpAgent, httpsAgent, throwOnRequestTimeout, logger: logger2 } = options || {};
-        const keepAlive = true;
-        const maxSockets = 50;
-        return {
-          connectionTimeout,
-          requestTimeout,
-          socketTimeout,
-          socketAcquisitionWarningTimeout,
-          throwOnRequestTimeout,
-          httpAgent: (() => {
-            if (httpAgent instanceof http.Agent || typeof httpAgent?.destroy === "function") {
-              this.externalAgent = true;
-              return httpAgent;
-            }
-            return new http.Agent({ keepAlive, maxSockets, ...httpAgent });
-          })(),
-          httpsAgent: (() => {
-            if (httpsAgent instanceof https.Agent || typeof httpsAgent?.destroy === "function") {
-              this.externalAgent = true;
-              return httpsAgent;
-            }
-            return new https.Agent({ keepAlive, maxSockets, ...httpsAgent });
-          })(),
-          logger: logger2
-        };
-      }
       destroy() {
         this.config?.httpAgent?.destroy();
         this.config?.httpsAgent?.destroy();
@@ -23478,8 +23356,12 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         if (!this.config) {
           this.config = await this.configProvider;
         }
+        const config = this.config;
+        const isSSL = request.protocol === "https:";
+        if (!isSSL && !this.config.httpAgent) {
+          this.config.httpAgent = await this.config.httpAgentProvider();
+        }
         return new Promise((_resolve, _reject) => {
-          const config = this.config;
           let writeRequestBodyPromise = void 0;
           const timeouts = [];
           const resolve = async (arg) => {
@@ -23497,12 +23379,11 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             reject(abortError);
             return;
           }
-          const isSSL = request.protocol === "https:";
           const headers = request.headers ?? {};
           const expectContinue = (headers.Expect ?? headers.expect) === "100-continue";
           let agent = isSSL ? config.httpsAgent : config.httpAgent;
           if (expectContinue && !this.externalAgent) {
-            agent = new (isSSL ? https.Agent : http.Agent)({
+            agent = new (isSSL ? node_https.Agent : hAgent)({
               keepAlive: false,
               maxSockets: Infinity
             });
@@ -23539,7 +23420,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             agent,
             auth
           };
-          const requestFunc = isSSL ? https.request : http.request;
+          const requestFunc = isSSL ? node_https.request : hRequest;
           const req = requestFunc(nodeHttpsOptions, (res) => {
             const httpResponse = new protocolHttp.HttpResponse({
               statusCode: res.statusCode || -1,
@@ -23598,6 +23479,36 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
       httpHandlerConfigs() {
         return this.config ?? {};
+      }
+      resolveDefaultConfig(options) {
+        const { requestTimeout, connectionTimeout, socketTimeout, socketAcquisitionWarningTimeout, httpAgent, httpsAgent, throwOnRequestTimeout, logger: logger2 } = options || {};
+        const keepAlive = true;
+        const maxSockets = 50;
+        return {
+          connectionTimeout,
+          requestTimeout,
+          socketTimeout,
+          socketAcquisitionWarningTimeout,
+          throwOnRequestTimeout,
+          httpAgentProvider: async () => {
+            const { Agent, request } = await import("node:http");
+            hRequest = request;
+            hAgent = Agent;
+            if (httpAgent instanceof hAgent || typeof httpAgent?.destroy === "function") {
+              this.externalAgent = true;
+              return httpAgent;
+            }
+            return new hAgent({ keepAlive, maxSockets, ...httpAgent });
+          },
+          httpsAgent: (() => {
+            if (httpsAgent instanceof node_https.Agent || typeof httpsAgent?.destroy === "function") {
+              this.externalAgent = true;
+              return httpsAgent;
+            }
+            return new node_https.Agent({ keepAlive, maxSockets, ...httpsAgent });
+          })(),
+          logger: logger2
+        };
       }
     };
     var NodeHttp2ConnectionPool = class {
@@ -23872,21 +23783,21 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         }
       }
     };
-    var Collector = class extends stream.Writable {
+    var Collector = class extends node_stream.Writable {
       bufferedBytes = [];
       _write(chunk, encoding, callback) {
         this.bufferedBytes.push(chunk);
         callback();
       }
     };
-    var streamCollector5 = (stream2) => {
-      if (isReadableStreamInstance(stream2)) {
-        return collectReadableStream(stream2);
+    var streamCollector5 = (stream) => {
+      if (isReadableStreamInstance(stream)) {
+        return collectReadableStream(stream);
       }
       return new Promise((resolve, reject) => {
         const collector = new Collector();
-        stream2.pipe(collector);
-        stream2.on("error", (err) => {
+        stream.pipe(collector);
+        stream.on("error", (err) => {
           collector.end();
           reject(err);
         });
@@ -23897,10 +23808,10 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         });
       });
     };
-    var isReadableStreamInstance = (stream2) => typeof ReadableStream === "function" && stream2 instanceof ReadableStream;
-    async function collectReadableStream(stream2) {
+    var isReadableStreamInstance = (stream) => typeof ReadableStream === "function" && stream instanceof ReadableStream;
+    async function collectReadableStream(stream) {
       const chunks = [];
-      const reader = stream2.getReader();
+      const reader = stream.getReader();
       let isDone = false;
       let length = 0;
       while (!isDone) {
@@ -23927,12 +23838,12 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
 });
 
 // node_modules/@smithy/fetch-http-handler/dist-cjs/index.js
-var require_dist_cjs15 = __commonJS({
+var require_dist_cjs14 = __commonJS({
   "node_modules/@smithy/fetch-http-handler/dist-cjs/index.js"(exports2) {
     "use strict";
     var protocolHttp = require_dist_cjs2();
-    var querystringBuilder = require_dist_cjs13();
-    var utilBase64 = require_dist_cjs11();
+    var querystringBuilder = require_dist_cjs12();
+    var utilBase64 = require_dist_cjs10();
     function createRequest(url, requestOptions) {
       return new Request(url, requestOptions);
     }
@@ -24085,7 +23996,10 @@ var require_dist_cjs15 = __commonJS({
       const reason = abortSignal && typeof abortSignal === "object" && "reason" in abortSignal ? abortSignal.reason : void 0;
       if (reason) {
         if (reason instanceof Error) {
-          return reason;
+          const abortError3 = new Error("Request aborted");
+          abortError3.name = "AbortError";
+          abortError3.cause = reason;
+          return abortError3;
         }
         const abortError2 = new Error(String(reason));
         abortError2.name = "AbortError";
@@ -24154,7 +24068,7 @@ var require_dist_cjs15 = __commonJS({
 });
 
 // node_modules/@smithy/util-hex-encoding/dist-cjs/index.js
-var require_dist_cjs16 = __commonJS({
+var require_dist_cjs15 = __commonJS({
   "node_modules/@smithy/util-hex-encoding/dist-cjs/index.js"(exports2) {
     "use strict";
     var SHORT_TO_HEX = {};
@@ -24200,10 +24114,10 @@ var require_sdk_stream_mixin_browser = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.sdkStreamMixin = void 0;
-    var fetch_http_handler_1 = require_dist_cjs15();
-    var util_base64_1 = require_dist_cjs11();
-    var util_hex_encoding_1 = require_dist_cjs16();
-    var util_utf8_1 = require_dist_cjs10();
+    var fetch_http_handler_1 = require_dist_cjs14();
+    var util_base64_1 = require_dist_cjs10();
+    var util_hex_encoding_1 = require_dist_cjs15();
+    var util_utf8_1 = require_dist_cjs9();
     var stream_type_check_1 = require_stream_type_check();
     var ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED = "The stream has already been transformed.";
     var sdkStreamMixin2 = (stream) => {
@@ -24267,8 +24181,8 @@ var require_sdk_stream_mixin = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.sdkStreamMixin = void 0;
-    var node_http_handler_1 = require_dist_cjs14();
-    var util_buffer_from_1 = require_dist_cjs9();
+    var node_http_handler_1 = require_dist_cjs13();
+    var util_buffer_from_1 = require_dist_cjs8();
     var stream_1 = require("stream");
     var sdk_stream_mixin_browser_1 = require_sdk_stream_mixin_browser();
     var ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED = "The stream has already been transformed.";
@@ -24358,11 +24272,11 @@ var require_splitStream = __commonJS({
 });
 
 // node_modules/@smithy/util-stream/dist-cjs/index.js
-var require_dist_cjs17 = __commonJS({
+var require_dist_cjs16 = __commonJS({
   "node_modules/@smithy/util-stream/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilBase64 = require_dist_cjs11();
-    var utilUtf8 = require_dist_cjs10();
+    var utilBase64 = require_dist_cjs10();
+    var utilUtf8 = require_dist_cjs9();
     var ChecksumStream = require_ChecksumStream();
     var createChecksumStream = require_createChecksumStream();
     var createBufferedReadable = require_createBufferedReadable();
@@ -24451,7 +24365,7 @@ var require_dist_cjs17 = __commonJS({
 var import_util_stream, collectBody;
 var init_collect_stream_body = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/collect-stream-body.js"() {
-    import_util_stream = __toESM(require_dist_cjs17());
+    import_util_stream = __toESM(require_dist_cjs16());
     collectBody = async (streamBody = new Uint8Array(), context) => {
       if (streamBody instanceof Uint8Array) {
         return import_util_stream.Uint8ArrayBlobAdapter.mutate(streamBody);
@@ -24571,16 +24485,107 @@ var init_schemaDeserializationMiddleware = __esm({
   }
 });
 
+// node_modules/@smithy/querystring-parser/dist-cjs/index.js
+var require_dist_cjs17 = __commonJS({
+  "node_modules/@smithy/querystring-parser/dist-cjs/index.js"(exports2) {
+    "use strict";
+    function parseQueryString(querystring) {
+      const query = {};
+      querystring = querystring.replace(/^\?/, "");
+      if (querystring) {
+        for (const pair of querystring.split("&")) {
+          let [key, value = null] = pair.split("=");
+          key = decodeURIComponent(key);
+          if (value) {
+            value = decodeURIComponent(value);
+          }
+          if (!(key in query)) {
+            query[key] = value;
+          } else if (Array.isArray(query[key])) {
+            query[key].push(value);
+          } else {
+            query[key] = [query[key], value];
+          }
+        }
+      }
+      return query;
+    }
+    exports2.parseQueryString = parseQueryString;
+  }
+});
+
+// node_modules/@smithy/url-parser/dist-cjs/index.js
+var require_dist_cjs18 = __commonJS({
+  "node_modules/@smithy/url-parser/dist-cjs/index.js"(exports2) {
+    "use strict";
+    var querystringParser = require_dist_cjs17();
+    var parseUrl6 = (url) => {
+      if (typeof url === "string") {
+        return parseUrl6(new URL(url));
+      }
+      const { hostname, pathname, port, protocol, search } = url;
+      let query;
+      if (search) {
+        query = querystringParser.parseQueryString(search);
+      }
+      return {
+        hostname,
+        port: port ? parseInt(port) : void 0,
+        protocol,
+        path: pathname,
+        query
+      };
+    };
+    exports2.parseUrl = parseUrl6;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/endpoints/toEndpointV1.js
+var import_url_parser, toEndpointV1;
+var init_toEndpointV1 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/endpoints/toEndpointV1.js"() {
+    import_url_parser = __toESM(require_dist_cjs18());
+    toEndpointV1 = (endpoint) => {
+      if (typeof endpoint === "object") {
+        if ("url" in endpoint) {
+          const v1Endpoint = (0, import_url_parser.parseUrl)(endpoint.url);
+          if (endpoint.headers) {
+            v1Endpoint.headers = {};
+            for (const [name, values] of Object.entries(endpoint.headers)) {
+              v1Endpoint.headers[name.toLowerCase()] = values.join(", ");
+            }
+          }
+          return v1Endpoint;
+        }
+        return endpoint;
+      }
+      return (0, import_url_parser.parseUrl)(endpoint);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/endpoints/index.js
+var endpoints_exports = {};
+__export(endpoints_exports, {
+  toEndpointV1: () => toEndpointV1
+});
+var init_endpoints = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/endpoints/index.js"() {
+    init_toEndpointV1();
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaSerializationMiddleware.js
 var import_util_middleware4, schemaSerializationMiddleware;
 var init_schemaSerializationMiddleware = __esm({
   "node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaSerializationMiddleware.js"() {
+    init_endpoints();
     import_util_middleware4 = __toESM(require_dist_cjs6());
     init_operation();
     schemaSerializationMiddleware = (config) => (next, context) => async (args) => {
       const { operationSchema } = (0, import_util_middleware4.getSmithyContext)(context);
       const [, ns, n5, t5, i5, o5] = operationSchema ?? [];
-      const endpoint = context.endpointV2?.url && config.urlParser ? async () => config.urlParser(context.endpointV2.url) : config.endpoint;
+      const endpoint = context.endpointV2 ? async () => toEndpointV1(context.endpointV2) : config.endpoint;
       const request = await config.protocol.serializeRequest(operation(ns, n5, t5, i5, o5), args.input, {
         ...config,
         ...context,
@@ -24598,13 +24603,13 @@ var init_schemaSerializationMiddleware = __esm({
 function getSchemaSerdePlugin(config) {
   return {
     applyToStack: (commandStack) => {
-      commandStack.add(schemaSerializationMiddleware(config), serializerMiddlewareOption2);
+      commandStack.add(schemaSerializationMiddleware(config), serializerMiddlewareOption);
       commandStack.add(schemaDeserializationMiddleware(config), deserializerMiddlewareOption);
       config.protocol.setSerdeContext(config);
     }
   };
 }
-var deserializerMiddlewareOption, serializerMiddlewareOption2;
+var deserializerMiddlewareOption, serializerMiddlewareOption;
 var init_getSchemaSerdePlugin = __esm({
   "node_modules/@smithy/core/dist-es/submodules/schema/middleware/getSchemaSerdePlugin.js"() {
     init_schemaDeserializationMiddleware();
@@ -24615,7 +24620,7 @@ var init_getSchemaSerdePlugin = __esm({
       tags: ["DESERIALIZER"],
       override: true
     };
-    serializerMiddlewareOption2 = {
+    serializerMiddlewareOption = {
       name: "serializerMiddleware",
       step: "serialize",
       tags: ["SERIALIZER"],
@@ -24769,6 +24774,9 @@ function translateTraits(indicator) {
     return indicator;
   }
   indicator = indicator | 0;
+  if (traitsCache[indicator]) {
+    return traitsCache[indicator];
+  }
   const traits = {};
   let i5 = 0;
   for (const trait of [
@@ -24784,10 +24792,12 @@ function translateTraits(indicator) {
       traits[trait] = 1;
     }
   }
-  return traits;
+  return traitsCache[indicator] = traits;
 }
+var traitsCache;
 var init_translateTraits = __esm({
   "node_modules/@smithy/core/dist-es/submodules/schema/schemas/translateTraits.js"() {
+    traitsCache = [];
   }
 });
 
@@ -24802,14 +24812,17 @@ function member(memberSchema, memberName) {
   const internalCtorAccess = NormalizedSchema;
   return new internalCtorAccess(memberSchema, memberName);
 }
-var anno, NormalizedSchema, isMemberSchema, isStaticSchema;
+var anno, simpleSchemaCacheN, simpleSchemaCacheS, NormalizedSchema, isMemberSchema, isStaticSchema;
 var init_NormalizedSchema = __esm({
   "node_modules/@smithy/core/dist-es/submodules/schema/schemas/NormalizedSchema.js"() {
     init_deref();
     init_translateTraits();
     anno = {
-      it: /* @__PURE__ */ Symbol.for("@smithy/nor-struct-it")
+      it: /* @__PURE__ */ Symbol.for("@smithy/nor-struct-it"),
+      ns: /* @__PURE__ */ Symbol.for("@smithy/ns")
     };
+    simpleSchemaCacheN = [];
+    simpleSchemaCacheS = {};
     NormalizedSchema = class _NormalizedSchema {
       ref;
       memberName;
@@ -24872,19 +24885,43 @@ var init_NormalizedSchema = __esm({
         return isPrototype;
       }
       static of(ref) {
+        const keyAble = typeof ref === "function" || typeof ref === "object" && ref !== null;
+        if (typeof ref === "number") {
+          if (simpleSchemaCacheN[ref]) {
+            return simpleSchemaCacheN[ref];
+          }
+        } else if (typeof ref === "string") {
+          if (simpleSchemaCacheS[ref]) {
+            return simpleSchemaCacheS[ref];
+          }
+        } else if (keyAble) {
+          if (ref[anno.ns]) {
+            return ref[anno.ns];
+          }
+        }
         const sc = deref(ref);
         if (sc instanceof _NormalizedSchema) {
           return sc;
         }
         if (isMemberSchema(sc)) {
-          const [ns, traits] = sc;
-          if (ns instanceof _NormalizedSchema) {
-            Object.assign(ns.getMergedTraits(), translateTraits(traits));
-            return ns;
+          const [ns2, traits] = sc;
+          if (ns2 instanceof _NormalizedSchema) {
+            Object.assign(ns2.getMergedTraits(), translateTraits(traits));
+            return ns2;
           }
           throw new Error(`@smithy/core/schema - may not init unwrapped member schema=${JSON.stringify(ref, null, 2)}.`);
         }
-        return new _NormalizedSchema(sc);
+        const ns = new _NormalizedSchema(sc);
+        if (keyAble) {
+          return ref[anno.ns] = ns;
+        }
+        if (typeof sc === "string") {
+          return simpleSchemaCacheS[sc] = ns;
+        }
+        if (typeof sc === "number") {
+          return simpleSchemaCacheN[sc] = ns;
+        }
+        return ns;
       }
       getSchema() {
         const sc = this.schema;
@@ -25216,10 +25253,13 @@ __export(schema_exports, {
   map: () => map,
   op: () => op,
   operation: () => operation,
-  serializerMiddlewareOption: () => serializerMiddlewareOption2,
+  serializerMiddlewareOption: () => serializerMiddlewareOption,
   sim: () => sim,
   simAdapter: () => simAdapter,
+  simpleSchemaCacheN: () => simpleSchemaCacheN,
+  simpleSchemaCacheS: () => simpleSchemaCacheS,
   struct: () => struct,
+  traitsCache: () => traitsCache,
   translateTraits: () => translateTraits
 });
 var init_schema = __esm({
@@ -26210,7 +26250,7 @@ var require_randomUUID = __commonJS({
 });
 
 // node_modules/@smithy/uuid/dist-cjs/index.js
-var require_dist_cjs18 = __commonJS({
+var require_dist_cjs19 = __commonJS({
   "node_modules/@smithy/uuid/dist-cjs/index.js"(exports2) {
     "use strict";
     var randomUUID = require_randomUUID();
@@ -26233,7 +26273,7 @@ var require_dist_cjs18 = __commonJS({
 var import_uuid;
 var init_generateIdempotencyToken = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/generateIdempotencyToken.js"() {
-    import_uuid = __toESM(require_dist_cjs18());
+    import_uuid = __toESM(require_dist_cjs19());
   }
 });
 
@@ -26569,7 +26609,7 @@ var init_SerdeContext = __esm({
 var import_util_utf8, EventStreamSerde;
 var init_EventStreamSerde = __esm({
   "node_modules/@smithy/core/dist-es/submodules/event-streams/EventStreamSerde.js"() {
-    import_util_utf8 = __toESM(require_dist_cjs10());
+    import_util_utf8 = __toESM(require_dist_cjs9());
     EventStreamSerde = class {
       marshaller;
       serializer;
@@ -26865,6 +26905,11 @@ var init_HttpProtocol = __esm({
           for (const [k5, v5] of endpoint.url.searchParams.entries()) {
             request.query[k5] = v5;
           }
+          if (endpoint.headers) {
+            for (const [name, values] of Object.entries(endpoint.headers)) {
+              request.headers[name] = values.join(", ");
+            }
+          }
           return request;
         } else {
           request.protocol = endpoint.protocol;
@@ -26874,6 +26919,11 @@ var init_HttpProtocol = __esm({
           request.query = {
             ...endpoint.query
           };
+          if (endpoint.headers) {
+            for (const [name, value] of Object.entries(endpoint.headers)) {
+              request.headers[name] = value;
+            }
+          }
           return request;
         }
       }
@@ -26961,7 +27011,7 @@ var init_HttpBindingProtocol = __esm({
     init_schema();
     init_serde();
     import_protocol_http4 = __toESM(require_dist_cjs2());
-    import_util_stream2 = __toESM(require_dist_cjs17());
+    import_util_stream2 = __toESM(require_dist_cjs16());
     init_collect_stream_body();
     init_extended_encode_uri_component();
     init_HttpProtocol();
@@ -27288,7 +27338,7 @@ var init_RpcProtocol = __esm({
             payload2 = serializer.flush();
           }
         }
-        request.headers = headers;
+        request.headers = Object.assign(request.headers, headers);
         request.query = query;
         request.body = payload2;
         request.method = "POST";
@@ -27449,8 +27499,8 @@ var init_FromStringShapeDeserializer = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/serde/FromStringShapeDeserializer.js"() {
     init_schema();
     init_serde();
-    import_util_base64 = __toESM(require_dist_cjs11());
-    import_util_utf82 = __toESM(require_dist_cjs10());
+    import_util_base64 = __toESM(require_dist_cjs10());
+    import_util_utf82 = __toESM(require_dist_cjs9());
     init_SerdeContext();
     init_determineTimestampFormat();
     FromStringShapeDeserializer = class extends SerdeContext {
@@ -27521,7 +27571,7 @@ var import_util_utf83, HttpInterceptingShapeDeserializer;
 var init_HttpInterceptingShapeDeserializer = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeDeserializer.js"() {
     init_schema();
-    import_util_utf83 = __toESM(require_dist_cjs10());
+    import_util_utf83 = __toESM(require_dist_cjs9());
     init_SerdeContext();
     init_FromStringShapeDeserializer();
     HttpInterceptingShapeDeserializer = class extends SerdeContext {
@@ -27570,7 +27620,7 @@ var init_ToStringShapeSerializer = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/serde/ToStringShapeSerializer.js"() {
     init_schema();
     init_serde();
-    import_util_base642 = __toESM(require_dist_cjs11());
+    import_util_base642 = __toESM(require_dist_cjs10());
     init_SerdeContext();
     init_determineTimestampFormat();
     ToStringShapeSerializer = class extends SerdeContext {
@@ -27963,7 +28013,7 @@ var init_dist_es = __esm({
 });
 
 // node_modules/@smithy/util-endpoints/dist-cjs/index.js
-var require_dist_cjs19 = __commonJS({
+var require_dist_cjs20 = __commonJS({
   "node_modules/@smithy/util-endpoints/dist-cjs/index.js"(exports2) {
     "use strict";
     var types = require_dist_cjs();
@@ -28392,67 +28442,12 @@ var require_dist_cjs19 = __commonJS({
   }
 });
 
-// node_modules/@smithy/querystring-parser/dist-cjs/index.js
-var require_dist_cjs20 = __commonJS({
-  "node_modules/@smithy/querystring-parser/dist-cjs/index.js"(exports2) {
-    "use strict";
-    function parseQueryString(querystring) {
-      const query = {};
-      querystring = querystring.replace(/^\?/, "");
-      if (querystring) {
-        for (const pair of querystring.split("&")) {
-          let [key, value = null] = pair.split("=");
-          key = decodeURIComponent(key);
-          if (value) {
-            value = decodeURIComponent(value);
-          }
-          if (!(key in query)) {
-            query[key] = value;
-          } else if (Array.isArray(query[key])) {
-            query[key].push(value);
-          } else {
-            query[key] = [query[key], value];
-          }
-        }
-      }
-      return query;
-    }
-    exports2.parseQueryString = parseQueryString;
-  }
-});
-
-// node_modules/@smithy/url-parser/dist-cjs/index.js
-var require_dist_cjs21 = __commonJS({
-  "node_modules/@smithy/url-parser/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var querystringParser = require_dist_cjs20();
-    var parseUrl5 = (url) => {
-      if (typeof url === "string") {
-        return parseUrl5(new URL(url));
-      }
-      const { hostname, pathname, port, protocol, search } = url;
-      let query;
-      if (search) {
-        query = querystringParser.parseQueryString(search);
-      }
-      return {
-        hostname,
-        port: port ? parseInt(port) : void 0,
-        protocol,
-        path: pathname,
-        query
-      };
-    };
-    exports2.parseUrl = parseUrl5;
-  }
-});
-
 // node_modules/@aws-sdk/util-endpoints/dist-cjs/index.js
-var require_dist_cjs22 = __commonJS({
+var require_dist_cjs21 = __commonJS({
   "node_modules/@aws-sdk/util-endpoints/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilEndpoints = require_dist_cjs19();
-    var urlParser = require_dist_cjs21();
+    var utilEndpoints = require_dist_cjs20();
+    var urlParser = require_dist_cjs18();
     var isVirtualHostableS3Bucket = (value, allowSubDomains = false) => {
       if (allowSubDomains) {
         for (const label of value.split(".")) {
@@ -28824,7 +28819,7 @@ var require_dist_cjs22 = __commonJS({
       const { endpoint } = input;
       if (endpoint === void 0) {
         input.endpoint = async () => {
-          return toEndpointV1(input.endpointProvider({
+          return toEndpointV12(input.endpointProvider({
             Region: typeof input.region === "function" ? await input.region() : input.region,
             UseDualStack: typeof input.useDualstackEndpoint === "function" ? await input.useDualstackEndpoint() : input.useDualstackEndpoint,
             UseFIPS: typeof input.useFipsEndpoint === "function" ? await input.useFipsEndpoint() : input.useFipsEndpoint,
@@ -28834,7 +28829,7 @@ var require_dist_cjs22 = __commonJS({
       }
       return input;
     };
-    var toEndpointV1 = (endpoint) => urlParser.parseUrl(endpoint.url);
+    var toEndpointV12 = (endpoint) => urlParser.parseUrl(endpoint.url);
     exports2.EndpointError = utilEndpoints.EndpointError;
     exports2.isIpAddress = utilEndpoints.isIpAddress;
     exports2.resolveEndpoint = utilEndpoints.resolveEndpoint;
@@ -28843,7 +28838,7 @@ var require_dist_cjs22 = __commonJS({
     exports2.partition = partition;
     exports2.resolveDefaultAwsRegionalEndpointsConfig = resolveDefaultAwsRegionalEndpointsConfig;
     exports2.setPartitionInfo = setPartitionInfo;
-    exports2.toEndpointV1 = toEndpointV1;
+    exports2.toEndpointV1 = toEndpointV12;
     exports2.useDefaultPartitionInfo = useDefaultPartitionInfo;
   }
 });
@@ -29131,7 +29126,7 @@ var init_NODE_AUTH_SCHEME_PREFERENCE_OPTIONS = __esm({
 });
 
 // node_modules/@smithy/property-provider/dist-cjs/index.js
-var require_dist_cjs23 = __commonJS({
+var require_dist_cjs22 = __commonJS({
   "node_modules/@smithy/property-provider/dist-cjs/index.js"(exports2) {
     "use strict";
     var ProviderError2 = class _ProviderError extends Error {
@@ -29248,7 +29243,7 @@ var import_property_provider, resolveAwsSdkSigV4AConfig, NODE_SIGV4A_CONFIG_OPTI
 var init_resolveAwsSdkSigV4AConfig = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4AConfig.js"() {
     init_dist_es();
-    import_property_provider = __toESM(require_dist_cjs23());
+    import_property_provider = __toESM(require_dist_cjs22());
     resolveAwsSdkSigV4AConfig = (config) => {
       config.sigv4aSigningRegionSet = normalizeProvider(config.sigv4aSigningRegionSet);
       return config;
@@ -29276,15 +29271,15 @@ var init_resolveAwsSdkSigV4AConfig = __esm({
 });
 
 // node_modules/@smithy/signature-v4/dist-cjs/index.js
-var require_dist_cjs24 = __commonJS({
+var require_dist_cjs23 = __commonJS({
   "node_modules/@smithy/signature-v4/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilHexEncoding = require_dist_cjs16();
-    var utilUtf8 = require_dist_cjs10();
-    var isArrayBuffer = require_dist_cjs8();
+    var utilHexEncoding = require_dist_cjs15();
+    var utilUtf8 = require_dist_cjs9();
+    var isArrayBuffer = require_dist_cjs7();
     var protocolHttp = require_dist_cjs2();
     var utilMiddleware = require_dist_cjs6();
-    var utilUriEscape = require_dist_cjs12();
+    var utilUriEscape = require_dist_cjs11();
     var ALGORITHM_QUERY_PARAM = "X-Amz-Algorithm";
     var CREDENTIAL_QUERY_PARAM = "X-Amz-Credential";
     var AMZ_DATE_QUERY_PARAM = "X-Amz-Date";
@@ -29833,7 +29828,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4Config.js"() {
     init_client();
     init_dist_es();
-    import_signature_v4 = __toESM(require_dist_cjs24());
+    import_signature_v4 = __toESM(require_dist_cjs23());
     resolveAwsSdkSigV4Config = (config) => {
       let inputCredentials = config.credentials;
       let isUserSupplied = !!config.credentials;
@@ -30392,7 +30387,7 @@ var import_util_utf84, USE_TEXT_DECODER, USE_BUFFER, payload, dataView, textDeco
 var init_cbor_decode = __esm({
   "node_modules/@smithy/core/dist-es/submodules/cbor/cbor-decode.js"() {
     init_serde();
-    import_util_utf84 = __toESM(require_dist_cjs10());
+    import_util_utf84 = __toESM(require_dist_cjs9());
     init_cbor_types();
     USE_TEXT_DECODER = typeof TextDecoder !== "undefined";
     USE_BUFFER = typeof Buffer !== "undefined";
@@ -30601,7 +30596,7 @@ var import_util_utf85, USE_BUFFER2, initialSize, data, dataView2, cursor;
 var init_cbor_encode = __esm({
   "node_modules/@smithy/core/dist-es/submodules/cbor/cbor-encode.js"() {
     init_serde();
-    import_util_utf85 = __toESM(require_dist_cjs10());
+    import_util_utf85 = __toESM(require_dist_cjs9());
     init_cbor_types();
     USE_BUFFER2 = typeof Buffer !== "undefined";
     initialSize = 2048;
@@ -30685,7 +30680,7 @@ var init_CborCodec = __esm({
     init_schema();
     init_serde();
     init_serde();
-    import_util_base643 = __toESM(require_dist_cjs11());
+    import_util_base643 = __toESM(require_dist_cjs10());
     init_cbor();
     init_parseCborBody();
     CborCodec = class extends SerdeContext {
@@ -30990,7 +30985,7 @@ var init_cbor2 = __esm({
 });
 
 // node_modules/@smithy/middleware-stack/dist-cjs/index.js
-var require_dist_cjs25 = __commonJS({
+var require_dist_cjs24 = __commonJS({
   "node_modules/@smithy/middleware-stack/dist-cjs/index.js"(exports2) {
     "use strict";
     var getAllAliases = (name, aliases) => {
@@ -31261,10 +31256,10 @@ var require_dist_cjs25 = __commonJS({
 });
 
 // node_modules/@smithy/smithy-client/dist-cjs/index.js
-var require_dist_cjs26 = __commonJS({
+var require_dist_cjs25 = __commonJS({
   "node_modules/@smithy/smithy-client/dist-cjs/index.js"(exports2) {
     "use strict";
-    var middlewareStack = require_dist_cjs25();
+    var middlewareStack = require_dist_cjs24();
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
     var types = require_dist_cjs();
     var schema = (init_schema(), __toCommonJS(schema_exports));
@@ -31867,7 +31862,7 @@ var import_smithy_client, ProtocolLib;
 var init_ProtocolLib = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/ProtocolLib.js"() {
     init_schema();
-    import_smithy_client = __toESM(require_dist_cjs26());
+    import_smithy_client = __toESM(require_dist_cjs25());
     ProtocolLib = class {
       queryCompat;
       constructor(queryCompat = false) {
@@ -32171,8 +32166,8 @@ var init_jsonReviver = __esm({
 var import_smithy_client2, import_util_utf86, collectBodyString;
 var init_common = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/common.js"() {
-    import_smithy_client2 = __toESM(require_dist_cjs26());
-    import_util_utf86 = __toESM(require_dist_cjs10());
+    import_smithy_client2 = __toESM(require_dist_cjs25());
+    import_util_utf86 = __toESM(require_dist_cjs9());
     collectBodyString = (streamBody, context) => (0, import_smithy_client2.collectBody)(streamBody, context).then((body) => (context?.utf8Encoder ?? import_util_utf86.toUtf8)(body));
   }
 });
@@ -32244,7 +32239,7 @@ var init_JsonShapeDeserializer = __esm({
     init_protocols();
     init_schema();
     init_serde();
-    import_util_base644 = __toESM(require_dist_cjs11());
+    import_util_base644 = __toESM(require_dist_cjs10());
     init_ConfigurableSerdeContext();
     init_UnionSerde();
     init_jsonReviver();
@@ -32450,7 +32445,7 @@ var init_JsonShapeSerializer = __esm({
     init_protocols();
     init_schema();
     init_serde();
-    import_util_base645 = __toESM(require_dist_cjs11());
+    import_util_base645 = __toESM(require_dist_cjs10());
     init_ConfigurableSerdeContext();
     init_jsonReplacer();
     JsonShapeSerializer = class extends SerdeContextConfig {
@@ -32878,7 +32873,7 @@ var init_AwsRestJsonProtocol = __esm({
 var import_smithy_client3, awsExpectUnion;
 var init_awsExpectUnion = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/awsExpectUnion.js"() {
-    import_smithy_client3 = __toESM(require_dist_cjs26());
+    import_smithy_client3 = __toESM(require_dist_cjs25());
     awsExpectUnion = (value) => {
       if (value == null) {
         return void 0;
@@ -33796,7 +33791,7 @@ var require_xml_parser = __commonJS({
 });
 
 // node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
-var require_dist_cjs27 = __commonJS({
+var require_dist_cjs26 = __commonJS({
   "node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports2) {
     "use strict";
     var xmlParser = require_xml_parser();
@@ -33911,11 +33906,11 @@ var require_dist_cjs27 = __commonJS({
 var import_xml_builder, import_smithy_client4, import_util_utf87, XmlShapeDeserializer;
 var init_XmlShapeDeserializer = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeDeserializer.js"() {
-    import_xml_builder = __toESM(require_dist_cjs27());
+    import_xml_builder = __toESM(require_dist_cjs26());
     init_protocols();
     init_schema();
-    import_smithy_client4 = __toESM(require_dist_cjs26());
-    import_util_utf87 = __toESM(require_dist_cjs10());
+    import_smithy_client4 = __toESM(require_dist_cjs25());
+    import_util_utf87 = __toESM(require_dist_cjs9());
     init_ConfigurableSerdeContext();
     init_UnionSerde();
     XmlShapeDeserializer = class extends SerdeContextConfig {
@@ -34067,8 +34062,8 @@ var init_QueryShapeSerializer = __esm({
     init_protocols();
     init_schema();
     init_serde();
-    import_smithy_client5 = __toESM(require_dist_cjs26());
-    import_util_base646 = __toESM(require_dist_cjs11());
+    import_smithy_client5 = __toESM(require_dist_cjs25());
+    import_util_base646 = __toESM(require_dist_cjs10());
     init_ConfigurableSerdeContext();
     QueryShapeSerializer = class extends SerdeContextConfig {
       settings;
@@ -34421,8 +34416,8 @@ var init_QuerySerializerSettings = __esm({
 var import_xml_builder2, import_smithy_client6, parseXmlBody, parseXmlErrorBody, loadRestXmlErrorCode;
 var init_parseXmlBody = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/parseXmlBody.js"() {
-    import_xml_builder2 = __toESM(require_dist_cjs27());
-    import_smithy_client6 = __toESM(require_dist_cjs26());
+    import_xml_builder2 = __toESM(require_dist_cjs26());
+    import_smithy_client6 = __toESM(require_dist_cjs25());
     init_common();
     parseXmlBody = (streamBody, context) => collectBodyString(streamBody, context).then((encoded) => {
       if (encoded.length) {
@@ -34473,12 +34468,12 @@ var init_parseXmlBody = __esm({
 var import_xml_builder3, import_smithy_client7, import_util_base647, XmlShapeSerializer;
 var init_XmlShapeSerializer = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeSerializer.js"() {
-    import_xml_builder3 = __toESM(require_dist_cjs27());
+    import_xml_builder3 = __toESM(require_dist_cjs26());
     init_protocols();
     init_schema();
     init_serde();
-    import_smithy_client7 = __toESM(require_dist_cjs26());
-    import_util_base647 = __toESM(require_dist_cjs11());
+    import_smithy_client7 = __toESM(require_dist_cjs25());
+    import_util_base647 = __toESM(require_dist_cjs10());
     init_ConfigurableSerdeContext();
     XmlShapeSerializer = class extends SerdeContextConfig {
       settings;
@@ -34977,7 +34972,7 @@ var init_dist_es2 = __esm({
 });
 
 // node_modules/@smithy/service-error-classification/dist-cjs/index.js
-var require_dist_cjs28 = __commonJS({
+var require_dist_cjs27 = __commonJS({
   "node_modules/@smithy/service-error-classification/dist-cjs/index.js"(exports2) {
     "use strict";
     var CLOCK_SKEW_ERROR_CODES = [
@@ -35048,10 +35043,10 @@ var require_dist_cjs28 = __commonJS({
 });
 
 // node_modules/@smithy/util-retry/dist-cjs/index.js
-var require_dist_cjs29 = __commonJS({
+var require_dist_cjs28 = __commonJS({
   "node_modules/@smithy/util-retry/dist-cjs/index.js"(exports2) {
     "use strict";
-    var serviceErrorClassification = require_dist_cjs28();
+    var serviceErrorClassification = require_dist_cjs27();
     exports2.RETRY_MODES = void 0;
     (function(RETRY_MODES) {
       RETRY_MODES["STANDARD"] = "standard";
@@ -35315,14 +35310,14 @@ var require_dist_cjs29 = __commonJS({
 });
 
 // node_modules/@aws-sdk/middleware-user-agent/dist-cjs/index.js
-var require_dist_cjs30 = __commonJS({
+var require_dist_cjs29 = __commonJS({
   "node_modules/@aws-sdk/middleware-user-agent/dist-cjs/index.js"(exports2) {
     "use strict";
     var core4 = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var utilEndpoints = require_dist_cjs22();
+    var utilEndpoints = require_dist_cjs21();
     var protocolHttp = require_dist_cjs2();
     var core$1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
-    var utilRetry = require_dist_cjs29();
+    var utilRetry = require_dist_cjs28();
     var DEFAULT_UA_APP_ID = void 0;
     function isValidUserAgentAppId(appId) {
       if (appId === void 0) {
@@ -35496,7 +35491,7 @@ var require_dist_cjs30 = __commonJS({
 });
 
 // node_modules/@smithy/util-config-provider/dist-cjs/index.js
-var require_dist_cjs31 = __commonJS({
+var require_dist_cjs30 = __commonJS({
   "node_modules/@smithy/util-config-provider/dist-cjs/index.js"(exports2) {
     "use strict";
     var booleanSelector = (obj, key, type) => {
@@ -35528,12 +35523,12 @@ var require_dist_cjs31 = __commonJS({
 });
 
 // node_modules/@smithy/config-resolver/dist-cjs/index.js
-var require_dist_cjs32 = __commonJS({
+var require_dist_cjs31 = __commonJS({
   "node_modules/@smithy/config-resolver/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilConfigProvider = require_dist_cjs31();
+    var utilConfigProvider = require_dist_cjs30();
     var utilMiddleware = require_dist_cjs6();
-    var utilEndpoints = require_dist_cjs19();
+    var utilEndpoints = require_dist_cjs20();
     var ENV_USE_DUALSTACK_ENDPOINT = "AWS_USE_DUALSTACK_ENDPOINT";
     var CONFIG_USE_DUALSTACK_ENDPOINT = "use_dualstack_endpoint";
     var DEFAULT_USE_DUALSTACK_ENDPOINT = false;
@@ -35690,7 +35685,7 @@ var require_dist_cjs32 = __commonJS({
 });
 
 // node_modules/@smithy/middleware-content-length/dist-cjs/index.js
-var require_dist_cjs33 = __commonJS({
+var require_dist_cjs32 = __commonJS({
   "node_modules/@smithy/middleware-content-length/dist-cjs/index.js"(exports2) {
     "use strict";
     var protocolHttp = require_dist_cjs2();
@@ -35828,7 +35823,7 @@ var require_readFile = __commonJS({
 });
 
 // node_modules/@smithy/shared-ini-file-loader/dist-cjs/index.js
-var require_dist_cjs34 = __commonJS({
+var require_dist_cjs33 = __commonJS({
   "node_modules/@smithy/shared-ini-file-loader/dist-cjs/index.js"(exports2) {
     "use strict";
     var getHomeDir = require_getHomeDir();
@@ -35994,11 +35989,11 @@ var require_dist_cjs34 = __commonJS({
 });
 
 // node_modules/@smithy/node-config-provider/dist-cjs/index.js
-var require_dist_cjs35 = __commonJS({
+var require_dist_cjs34 = __commonJS({
   "node_modules/@smithy/node-config-provider/dist-cjs/index.js"(exports2) {
     "use strict";
-    var propertyProvider = require_dist_cjs23();
-    var sharedIniFileLoader = require_dist_cjs34();
+    var propertyProvider = require_dist_cjs22();
+    var sharedIniFileLoader = require_dist_cjs33();
     function getSelectorName(functionString) {
       try {
         const constants = new Set(Array.from(functionString.match(/([A-Z_]){3,}/g) ?? []));
@@ -36055,7 +36050,7 @@ var require_getEndpointUrlConfig = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getEndpointUrlConfig = void 0;
-    var shared_ini_file_loader_1 = require_dist_cjs34();
+    var shared_ini_file_loader_1 = require_dist_cjs33();
     var ENV_ENDPOINT_URL = "AWS_ENDPOINT_URL";
     var CONFIG_ENDPOINT_URL = "endpoint_url";
     var getEndpointUrlConfig = (serviceId) => ({
@@ -36096,10 +36091,109 @@ var require_getEndpointFromConfig = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getEndpointFromConfig = void 0;
-    var node_config_provider_1 = require_dist_cjs35();
+    var node_config_provider_1 = require_dist_cjs34();
     var getEndpointUrlConfig_1 = require_getEndpointUrlConfig();
     var getEndpointFromConfig = async (serviceId) => (0, node_config_provider_1.loadConfig)((0, getEndpointUrlConfig_1.getEndpointUrlConfig)(serviceId ?? ""))();
     exports2.getEndpointFromConfig = getEndpointFromConfig;
+  }
+});
+
+// node_modules/@smithy/middleware-serde/dist-cjs/index.js
+var require_dist_cjs35 = __commonJS({
+  "node_modules/@smithy/middleware-serde/dist-cjs/index.js"(exports2) {
+    "use strict";
+    var protocolHttp = require_dist_cjs2();
+    var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
+    var deserializerMiddleware = (options, deserializer) => (next, context) => async (args) => {
+      const { response } = await next(args);
+      try {
+        const parsed = await deserializer(response, options);
+        return {
+          response,
+          output: parsed
+        };
+      } catch (error2) {
+        Object.defineProperty(error2, "$response", {
+          value: response,
+          enumerable: false,
+          writable: false,
+          configurable: false
+        });
+        if (!("$metadata" in error2)) {
+          const hint = `Deserialization error: to see the raw response, inspect the hidden field {error}.$response on this object.`;
+          try {
+            error2.message += "\n  " + hint;
+          } catch (e5) {
+            if (!context.logger || context.logger?.constructor?.name === "NoOpLogger") {
+              console.warn(hint);
+            } else {
+              context.logger?.warn?.(hint);
+            }
+          }
+          if (typeof error2.$responseBodyText !== "undefined") {
+            if (error2.$response) {
+              error2.$response.body = error2.$responseBodyText;
+            }
+          }
+          try {
+            if (protocolHttp.HttpResponse.isInstance(response)) {
+              const { headers = {} } = response;
+              const headerEntries = Object.entries(headers);
+              error2.$metadata = {
+                httpStatusCode: response.statusCode,
+                requestId: findHeader2(/^x-[\w-]+-request-?id$/, headerEntries),
+                extendedRequestId: findHeader2(/^x-[\w-]+-id-2$/, headerEntries),
+                cfId: findHeader2(/^x-[\w-]+-cf-id$/, headerEntries)
+              };
+            }
+          } catch (e5) {
+          }
+        }
+        throw error2;
+      }
+    };
+    var findHeader2 = (pattern, headers) => {
+      return (headers.find(([k5]) => {
+        return k5.match(pattern);
+      }) || [void 0, void 0])[1];
+    };
+    var serializerMiddleware = (options, serializer) => (next, context) => async (args) => {
+      const endpointConfig = options;
+      const endpoint = context.endpointV2 ? async () => endpoints.toEndpointV1(context.endpointV2) : endpointConfig.endpoint;
+      if (!endpoint) {
+        throw new Error("No valid endpoint provider available.");
+      }
+      const request = await serializer(args.input, { ...options, endpoint });
+      return next({
+        ...args,
+        request
+      });
+    };
+    var deserializerMiddlewareOption2 = {
+      name: "deserializerMiddleware",
+      step: "deserialize",
+      tags: ["DESERIALIZER"],
+      override: true
+    };
+    var serializerMiddlewareOption2 = {
+      name: "serializerMiddleware",
+      step: "serialize",
+      tags: ["SERIALIZER"],
+      override: true
+    };
+    function getSerdePlugin(config, serializer, deserializer) {
+      return {
+        applyToStack: (commandStack) => {
+          commandStack.add(deserializerMiddleware(config, deserializer), deserializerMiddlewareOption2);
+          commandStack.add(serializerMiddleware(config, serializer), serializerMiddlewareOption2);
+        }
+      };
+    }
+    exports2.deserializerMiddleware = deserializerMiddleware;
+    exports2.deserializerMiddlewareOption = deserializerMiddlewareOption2;
+    exports2.getSerdePlugin = getSerdePlugin;
+    exports2.serializerMiddleware = serializerMiddleware;
+    exports2.serializerMiddlewareOption = serializerMiddlewareOption2;
   }
 });
 
@@ -36108,10 +36202,10 @@ var require_dist_cjs36 = __commonJS({
   "node_modules/@smithy/middleware-endpoint/dist-cjs/index.js"(exports2) {
     "use strict";
     var getEndpointFromConfig = require_getEndpointFromConfig();
-    var urlParser = require_dist_cjs21();
+    var urlParser = require_dist_cjs18();
     var core4 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var utilMiddleware = require_dist_cjs6();
-    var middlewareSerde = require_dist_cjs7();
+    var middlewareSerde = require_dist_cjs35();
     var resolveParamsForS3 = async (endpointParams) => {
       const bucket = endpointParams?.Bucket || "";
       if (typeof endpointParams.Bucket === "string") {
@@ -36192,10 +36286,17 @@ var require_dist_cjs36 = __commonJS({
       }
       return configProvider;
     };
-    var toEndpointV1 = (endpoint) => {
+    var toEndpointV12 = (endpoint) => {
       if (typeof endpoint === "object") {
         if ("url" in endpoint) {
-          return urlParser.parseUrl(endpoint.url);
+          const v1Endpoint = urlParser.parseUrl(endpoint.url);
+          if (endpoint.headers) {
+            v1Endpoint.headers = {};
+            for (const [name, values] of Object.entries(endpoint.headers)) {
+              v1Endpoint.headers[name.toLowerCase()] = values.join(", ");
+            }
+          }
+          return v1Endpoint;
         }
         return endpoint;
       }
@@ -36210,7 +36311,7 @@ var require_dist_cjs36 = __commonJS({
           endpointFromConfig = await getEndpointFromConfig.getEndpointFromConfig(clientConfig.serviceId);
         }
         if (endpointFromConfig) {
-          clientConfig.endpoint = () => Promise.resolve(toEndpointV1(endpointFromConfig));
+          clientConfig.endpoint = () => Promise.resolve(toEndpointV12(endpointFromConfig));
           clientConfig.isCustomEndpoint = true;
         }
       }
@@ -36219,6 +36320,15 @@ var require_dist_cjs36 = __commonJS({
         throw new Error("config.endpointProvider is not set.");
       }
       const endpoint = clientConfig.endpointProvider(endpointParams, context);
+      if (clientConfig.isCustomEndpoint && clientConfig.endpoint) {
+        const customEndpoint = await clientConfig.endpoint();
+        if (customEndpoint?.headers) {
+          endpoint.headers ??= {};
+          for (const [name, value] of Object.entries(customEndpoint.headers)) {
+            endpoint.headers[name] = Array.isArray(value) ? value : [value];
+          }
+        }
+      }
       return endpoint;
     };
     var resolveParams = async (commandInput, instructionsSupplier, clientConfig) => {
@@ -36303,7 +36413,7 @@ var require_dist_cjs36 = __commonJS({
     var resolveEndpointConfig5 = (input) => {
       const tls = input.tls ?? true;
       const { endpoint, useDualstackEndpoint, useFipsEndpoint } = input;
-      const customEndpointProvider = endpoint != null ? async () => toEndpointV1(await utilMiddleware.normalizeProvider(endpoint)()) : void 0;
+      const customEndpointProvider = endpoint != null ? async () => toEndpointV12(await utilMiddleware.normalizeProvider(endpoint)()) : void 0;
       const isCustomEndpoint = !!endpoint;
       const resolvedConfig = Object.assign(input, {
         endpoint: customEndpointProvider,
@@ -36337,7 +36447,7 @@ var require_dist_cjs36 = __commonJS({
     exports2.resolveEndpointConfig = resolveEndpointConfig5;
     exports2.resolveEndpointRequiredConfig = resolveEndpointRequiredConfig;
     exports2.resolveParams = resolveParams;
-    exports2.toEndpointV1 = toEndpointV1;
+    exports2.toEndpointV1 = toEndpointV12;
   }
 });
 
@@ -36357,12 +36467,12 @@ var require_isStreamingPayload = __commonJS({
 var require_dist_cjs37 = __commonJS({
   "node_modules/@smithy/middleware-retry/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilRetry = require_dist_cjs29();
+    var utilRetry = require_dist_cjs28();
     var protocolHttp = require_dist_cjs2();
-    var serviceErrorClassification = require_dist_cjs28();
-    var uuid = require_dist_cjs18();
+    var serviceErrorClassification = require_dist_cjs27();
+    var uuid = require_dist_cjs19();
     var utilMiddleware = require_dist_cjs6();
-    var smithyClient = require_dist_cjs26();
+    var smithyClient = require_dist_cjs25();
     var isStreamingPayload = require_isStreamingPayload();
     var getDefaultRetryQuota = (initialRetryTokens, options) => {
       const MAX_CAPACITY = initialRetryTokens;
@@ -36918,7 +37028,7 @@ var require_dist_cjs38 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js"(exports2) {
     "use strict";
     var client = (init_client(), __toCommonJS(client_exports));
-    var propertyProvider = require_dist_cjs23();
+    var propertyProvider = require_dist_cjs22();
     var ENV_KEY = "AWS_ACCESS_KEY_ID";
     var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
     var ENV_SESSION = "AWS_SESSION_TOKEN";
@@ -36961,12 +37071,12 @@ var require_dist_cjs38 = __commonJS({
 var require_dist_cjs39 = __commonJS({
   "node_modules/@smithy/credential-provider-imds/dist-cjs/index.js"(exports2) {
     "use strict";
-    var propertyProvider = require_dist_cjs23();
+    var propertyProvider = require_dist_cjs22();
     var url = require("url");
     var buffer = require("buffer");
     var http = require("http");
-    var nodeConfigProvider = require_dist_cjs35();
-    var urlParser = require_dist_cjs21();
+    var nodeConfigProvider = require_dist_cjs34();
+    var urlParser = require_dist_cjs18();
     function httpRequest(options) {
       return new Promise((resolve, reject) => {
         const req = http.request({
@@ -37309,7 +37419,7 @@ var require_checkUrl = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.checkUrl = void 0;
-    var property_provider_1 = require_dist_cjs23();
+    var property_provider_1 = require_dist_cjs22();
     var ECS_CONTAINER_HOST = "169.254.170.2";
     var EKS_CONTAINER_HOST_IPv4 = "169.254.170.23";
     var EKS_CONTAINER_HOST_IPv6 = "[fd00:ec2::23]";
@@ -37353,10 +37463,10 @@ var require_requestHelpers = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.createGetRequest = createGetRequest;
     exports2.getCredentials = getCredentials;
-    var property_provider_1 = require_dist_cjs23();
+    var property_provider_1 = require_dist_cjs22();
     var protocol_http_1 = require_dist_cjs2();
-    var smithy_client_1 = require_dist_cjs26();
-    var util_stream_1 = require_dist_cjs17();
+    var smithy_client_1 = require_dist_cjs25();
+    var util_stream_1 = require_dist_cjs16();
     function createGetRequest(url) {
       return new protocol_http_1.HttpRequest({
         protocol: url.protocol,
@@ -37431,8 +37541,8 @@ var require_fromHttp = __commonJS({
     exports2.fromHttp = void 0;
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
     var client_1 = (init_client(), __toCommonJS(client_exports));
-    var node_http_handler_1 = require_dist_cjs14();
-    var property_provider_1 = require_dist_cjs23();
+    var node_http_handler_1 = require_dist_cjs13();
+    var property_provider_1 = require_dist_cjs22();
     var promises_1 = tslib_1.__importDefault(require("node:fs/promises"));
     var checkUrl_1 = require_checkUrl();
     var requestHelpers_1 = require_requestHelpers();
@@ -37742,7 +37852,7 @@ var require_dist_cjs41 = __commonJS({
     var node_process = require("node:process");
     var promises = require("node:fs/promises");
     var node_path = require("node:path");
-    var middlewareUserAgent = require_dist_cjs30();
+    var middlewareUserAgent = require_dist_cjs29();
     var getRuntimeUserAgentPair = () => {
       const runtimesToCheck = ["deno", "bun", "llrt"];
       for (const runtime of runtimesToCheck) {
@@ -37861,8 +37971,8 @@ var require_dist_cjs41 = __commonJS({
 var require_dist_cjs42 = __commonJS({
   "node_modules/@smithy/hash-node/dist-cjs/index.js"(exports2) {
     "use strict";
-    var utilBufferFrom = require_dist_cjs9();
-    var utilUtf8 = require_dist_cjs10();
+    var utilBufferFrom = require_dist_cjs8();
+    var utilUtf8 = require_dist_cjs9();
     var buffer = require("buffer");
     var crypto2 = require("crypto");
     var Hash5 = class {
@@ -37934,9 +38044,9 @@ var require_dist_cjs43 = __commonJS({
 var require_dist_cjs44 = __commonJS({
   "node_modules/@smithy/util-defaults-mode-node/dist-cjs/index.js"(exports2) {
     "use strict";
-    var configResolver = require_dist_cjs32();
-    var nodeConfigProvider = require_dist_cjs35();
-    var propertyProvider = require_dist_cjs23();
+    var configResolver = require_dist_cjs31();
+    var nodeConfigProvider = require_dist_cjs34();
+    var propertyProvider = require_dist_cjs22();
     var AWS_EXECUTION_ENV = "AWS_EXECUTION_ENV";
     var AWS_REGION_ENV = "AWS_REGION";
     var AWS_DEFAULT_REGION_ENV = "AWS_DEFAULT_REGION";
@@ -38139,8 +38249,8 @@ var init_ruleset = __esm({
 var import_util_endpoints, import_util_endpoints2, cache, defaultEndpointResolver;
 var init_endpointResolver = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/endpointResolver.js"() {
-    import_util_endpoints = __toESM(require_dist_cjs22());
-    import_util_endpoints2 = __toESM(require_dist_cjs19());
+    import_util_endpoints = __toESM(require_dist_cjs21());
+    import_util_endpoints2 = __toESM(require_dist_cjs20());
     init_ruleset();
     cache = new import_util_endpoints2.EndpointCache({
       size: 50,
@@ -38160,7 +38270,7 @@ var init_endpointResolver = __esm({
 var import_smithy_client8, SSOOIDCServiceException;
 var init_SSOOIDCServiceException = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/SSOOIDCServiceException.js"() {
-    import_smithy_client8 = __toESM(require_dist_cjs26());
+    import_smithy_client8 = __toESM(require_dist_cjs25());
     SSOOIDCServiceException = class _SSOOIDCServiceException extends import_smithy_client8.ServiceException {
       constructor(options) {
         super(options);
@@ -38503,16 +38613,16 @@ var init_schemas_0 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.shared.js
-var import_smithy_client9, import_url_parser, import_util_base648, import_util_utf88, getRuntimeConfig;
+var import_smithy_client9, import_url_parser2, import_util_base648, import_util_utf88, getRuntimeConfig;
 var init_runtimeConfig_shared = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.shared.js"() {
     init_dist_es2();
     init_protocols2();
     init_dist_es();
-    import_smithy_client9 = __toESM(require_dist_cjs26());
-    import_url_parser = __toESM(require_dist_cjs21());
-    import_util_base648 = __toESM(require_dist_cjs11());
-    import_util_utf88 = __toESM(require_dist_cjs10());
+    import_smithy_client9 = __toESM(require_dist_cjs25());
+    import_url_parser2 = __toESM(require_dist_cjs18());
+    import_util_base648 = __toESM(require_dist_cjs10());
+    import_util_utf88 = __toESM(require_dist_cjs9());
     init_httpAuthSchemeProvider();
     init_endpointResolver();
     init_schemas_0();
@@ -38546,7 +38656,7 @@ var init_runtimeConfig_shared = __esm({
           serviceTarget: "AWSSSOOIDCService"
         },
         serviceId: config?.serviceId ?? "SSO OIDC",
-        urlParser: config?.urlParser ?? import_url_parser.parseUrl,
+        urlParser: config?.urlParser ?? import_url_parser2.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? import_util_utf88.fromUtf8,
         utf8Encoder: config?.utf8Encoder ?? import_util_utf88.toUtf8
       };
@@ -38561,15 +38671,15 @@ var init_runtimeConfig = __esm({
     init_package();
     init_dist_es2();
     import_util_user_agent_node = __toESM(require_dist_cjs41());
-    import_config_resolver = __toESM(require_dist_cjs32());
+    import_config_resolver = __toESM(require_dist_cjs31());
     import_hash_node = __toESM(require_dist_cjs42());
     import_middleware_retry = __toESM(require_dist_cjs37());
-    import_node_config_provider = __toESM(require_dist_cjs35());
-    import_node_http_handler = __toESM(require_dist_cjs14());
-    import_smithy_client10 = __toESM(require_dist_cjs26());
+    import_node_config_provider = __toESM(require_dist_cjs34());
+    import_node_http_handler = __toESM(require_dist_cjs13());
+    import_smithy_client10 = __toESM(require_dist_cjs25());
     import_util_body_length_node = __toESM(require_dist_cjs43());
     import_util_defaults_mode_node = __toESM(require_dist_cjs44());
-    import_util_retry = __toESM(require_dist_cjs29());
+    import_util_retry = __toESM(require_dist_cjs28());
     init_runtimeConfig_shared();
     getRuntimeConfig2 = (config) => {
       (0, import_smithy_client10.emitWarningIfUnsupportedVersion)(process.version);
@@ -38613,8 +38723,8 @@ var require_stsRegionDefaultResolver = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.warning = void 0;
     exports2.stsRegionDefaultResolver = stsRegionDefaultResolver2;
-    var config_resolver_1 = require_dist_cjs32();
-    var node_config_provider_1 = require_dist_cjs35();
+    var config_resolver_1 = require_dist_cjs31();
+    var node_config_provider_1 = require_dist_cjs34();
     function stsRegionDefaultResolver2(loaderConfig = {}) {
       return (0, node_config_provider_1.loadConfig)({
         ...config_resolver_1.NODE_REGION_CONFIG_OPTIONS,
@@ -38637,7 +38747,7 @@ var require_dist_cjs45 = __commonJS({
   "node_modules/@aws-sdk/region-config-resolver/dist-cjs/index.js"(exports2) {
     "use strict";
     var stsRegionDefaultResolver2 = require_stsRegionDefaultResolver();
-    var configResolver = require_dist_cjs32();
+    var configResolver = require_dist_cjs31();
     var getAwsRegionExtensionConfiguration5 = (runtimeConfig) => {
       return {
         setRegion(region) {
@@ -38720,7 +38830,7 @@ var init_runtimeExtensions = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeExtensions.js"() {
     import_region_config_resolver = __toESM(require_dist_cjs45());
     import_protocol_http12 = __toESM(require_dist_cjs2());
-    import_smithy_client11 = __toESM(require_dist_cjs26());
+    import_smithy_client11 = __toESM(require_dist_cjs25());
     init_httpAuthExtensionConfiguration();
     resolveRuntimeExtensions = (runtimeConfig, extensions) => {
       const extensionConfiguration = Object.assign((0, import_region_config_resolver.getAwsRegionExtensionConfiguration)(runtimeConfig), (0, import_smithy_client11.getDefaultExtensionConfiguration)(runtimeConfig), (0, import_protocol_http12.getHttpHandlerExtensionConfiguration)(runtimeConfig), getHttpAuthExtensionConfiguration(runtimeConfig));
@@ -38737,14 +38847,14 @@ var init_SSOOIDCClient = __esm({
     import_middleware_host_header = __toESM(require_dist_cjs3());
     import_middleware_logger = __toESM(require_dist_cjs4());
     import_middleware_recursion_detection = __toESM(require_dist_cjs5());
-    import_middleware_user_agent = __toESM(require_dist_cjs30());
-    import_config_resolver2 = __toESM(require_dist_cjs32());
+    import_middleware_user_agent = __toESM(require_dist_cjs29());
+    import_config_resolver2 = __toESM(require_dist_cjs31());
     init_dist_es();
     init_schema();
-    import_middleware_content_length = __toESM(require_dist_cjs33());
+    import_middleware_content_length = __toESM(require_dist_cjs32());
     import_middleware_endpoint = __toESM(require_dist_cjs36());
     import_middleware_retry2 = __toESM(require_dist_cjs37());
-    import_smithy_client12 = __toESM(require_dist_cjs26());
+    import_smithy_client12 = __toESM(require_dist_cjs25());
     init_httpAuthSchemeProvider();
     init_EndpointParameters();
     init_runtimeConfig();
@@ -38791,7 +38901,7 @@ var import_middleware_endpoint2, import_smithy_client13, CreateTokenCommand;
 var init_CreateTokenCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js"() {
     import_middleware_endpoint2 = __toESM(require_dist_cjs36());
-    import_smithy_client13 = __toESM(require_dist_cjs26());
+    import_smithy_client13 = __toESM(require_dist_cjs25());
     init_EndpointParameters();
     init_schemas_0();
     CreateTokenCommand = class extends import_smithy_client13.Command.classBuilder().ep(commonParams).m(function(Command, cs, config, o5) {
@@ -38805,7 +38915,7 @@ var init_CreateTokenCommand = __esm({
 var import_smithy_client14, commands, SSOOIDC;
 var init_SSOOIDC = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDC.js"() {
-    import_smithy_client14 = __toESM(require_dist_cjs26());
+    import_smithy_client14 = __toESM(require_dist_cjs25());
     init_CreateTokenCommand();
     init_SSOOIDCClient();
     commands = {
@@ -38904,8 +39014,8 @@ var require_dist_cjs46 = __commonJS({
     "use strict";
     var client = (init_client(), __toCommonJS(client_exports));
     var httpAuthSchemes = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
-    var propertyProvider = require_dist_cjs23();
-    var sharedIniFileLoader = require_dist_cjs34();
+    var propertyProvider = require_dist_cjs22();
+    var sharedIniFileLoader = require_dist_cjs33();
     var node_fs = require("node:fs");
     var fromEnvSigningName = ({ logger: logger2, signingName } = {}) => async () => {
       logger2?.debug?.("@aws-sdk/token-providers - fromEnvSigningName");
@@ -39257,8 +39367,8 @@ var init_ruleset2 = __esm({
 var import_util_endpoints3, import_util_endpoints4, cache2, defaultEndpointResolver2;
 var init_endpointResolver2 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/endpointResolver.js"() {
-    import_util_endpoints3 = __toESM(require_dist_cjs22());
-    import_util_endpoints4 = __toESM(require_dist_cjs19());
+    import_util_endpoints3 = __toESM(require_dist_cjs21());
+    import_util_endpoints4 = __toESM(require_dist_cjs20());
     init_ruleset2();
     cache2 = new import_util_endpoints4.EndpointCache({
       size: 50,
@@ -39278,7 +39388,7 @@ var init_endpointResolver2 = __esm({
 var import_smithy_client15, SSOServiceException;
 var init_SSOServiceException = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/SSOServiceException.js"() {
-    import_smithy_client15 = __toESM(require_dist_cjs26());
+    import_smithy_client15 = __toESM(require_dist_cjs25());
     SSOServiceException = class _SSOServiceException extends import_smithy_client15.ServiceException {
       constructor(options) {
         super(options);
@@ -39439,16 +39549,16 @@ var init_schemas_02 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.shared.js
-var import_smithy_client16, import_url_parser2, import_util_base649, import_util_utf89, getRuntimeConfig3;
+var import_smithy_client16, import_url_parser3, import_util_base649, import_util_utf89, getRuntimeConfig3;
 var init_runtimeConfig_shared2 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.shared.js"() {
     init_dist_es2();
     init_protocols2();
     init_dist_es();
-    import_smithy_client16 = __toESM(require_dist_cjs26());
-    import_url_parser2 = __toESM(require_dist_cjs21());
-    import_util_base649 = __toESM(require_dist_cjs11());
-    import_util_utf89 = __toESM(require_dist_cjs10());
+    import_smithy_client16 = __toESM(require_dist_cjs25());
+    import_url_parser3 = __toESM(require_dist_cjs18());
+    import_util_base649 = __toESM(require_dist_cjs10());
+    import_util_utf89 = __toESM(require_dist_cjs9());
     init_httpAuthSchemeProvider2();
     init_endpointResolver2();
     init_schemas_02();
@@ -39482,7 +39592,7 @@ var init_runtimeConfig_shared2 = __esm({
           serviceTarget: "SWBPortalService"
         },
         serviceId: config?.serviceId ?? "SSO",
-        urlParser: config?.urlParser ?? import_url_parser2.parseUrl,
+        urlParser: config?.urlParser ?? import_url_parser3.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? import_util_utf89.fromUtf8,
         utf8Encoder: config?.utf8Encoder ?? import_util_utf89.toUtf8
       };
@@ -39497,15 +39607,15 @@ var init_runtimeConfig2 = __esm({
     init_package();
     init_dist_es2();
     import_util_user_agent_node2 = __toESM(require_dist_cjs41());
-    import_config_resolver3 = __toESM(require_dist_cjs32());
+    import_config_resolver3 = __toESM(require_dist_cjs31());
     import_hash_node2 = __toESM(require_dist_cjs42());
     import_middleware_retry3 = __toESM(require_dist_cjs37());
-    import_node_config_provider2 = __toESM(require_dist_cjs35());
-    import_node_http_handler2 = __toESM(require_dist_cjs14());
-    import_smithy_client17 = __toESM(require_dist_cjs26());
+    import_node_config_provider2 = __toESM(require_dist_cjs34());
+    import_node_http_handler2 = __toESM(require_dist_cjs13());
+    import_smithy_client17 = __toESM(require_dist_cjs25());
     import_util_body_length_node2 = __toESM(require_dist_cjs43());
     import_util_defaults_mode_node2 = __toESM(require_dist_cjs44());
-    import_util_retry2 = __toESM(require_dist_cjs29());
+    import_util_retry2 = __toESM(require_dist_cjs28());
     init_runtimeConfig_shared2();
     getRuntimeConfig4 = (config) => {
       (0, import_smithy_client17.emitWarningIfUnsupportedVersion)(process.version);
@@ -39592,7 +39702,7 @@ var init_runtimeExtensions2 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeExtensions.js"() {
     import_region_config_resolver2 = __toESM(require_dist_cjs45());
     import_protocol_http13 = __toESM(require_dist_cjs2());
-    import_smithy_client18 = __toESM(require_dist_cjs26());
+    import_smithy_client18 = __toESM(require_dist_cjs25());
     init_httpAuthExtensionConfiguration2();
     resolveRuntimeExtensions2 = (runtimeConfig, extensions) => {
       const extensionConfiguration = Object.assign((0, import_region_config_resolver2.getAwsRegionExtensionConfiguration)(runtimeConfig), (0, import_smithy_client18.getDefaultExtensionConfiguration)(runtimeConfig), (0, import_protocol_http13.getHttpHandlerExtensionConfiguration)(runtimeConfig), getHttpAuthExtensionConfiguration2(runtimeConfig));
@@ -39609,14 +39719,14 @@ var init_SSOClient = __esm({
     import_middleware_host_header2 = __toESM(require_dist_cjs3());
     import_middleware_logger2 = __toESM(require_dist_cjs4());
     import_middleware_recursion_detection2 = __toESM(require_dist_cjs5());
-    import_middleware_user_agent2 = __toESM(require_dist_cjs30());
-    import_config_resolver4 = __toESM(require_dist_cjs32());
+    import_middleware_user_agent2 = __toESM(require_dist_cjs29());
+    import_config_resolver4 = __toESM(require_dist_cjs31());
     init_dist_es();
     init_schema();
-    import_middleware_content_length2 = __toESM(require_dist_cjs33());
+    import_middleware_content_length2 = __toESM(require_dist_cjs32());
     import_middleware_endpoint3 = __toESM(require_dist_cjs36());
     import_middleware_retry4 = __toESM(require_dist_cjs37());
-    import_smithy_client19 = __toESM(require_dist_cjs26());
+    import_smithy_client19 = __toESM(require_dist_cjs25());
     init_httpAuthSchemeProvider2();
     init_EndpointParameters2();
     init_runtimeConfig2();
@@ -39663,7 +39773,7 @@ var import_middleware_endpoint4, import_smithy_client20, GetRoleCredentialsComma
 var init_GetRoleCredentialsCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js"() {
     import_middleware_endpoint4 = __toESM(require_dist_cjs36());
-    import_smithy_client20 = __toESM(require_dist_cjs26());
+    import_smithy_client20 = __toESM(require_dist_cjs25());
     init_EndpointParameters2();
     init_schemas_02();
     GetRoleCredentialsCommand = class extends import_smithy_client20.Command.classBuilder().ep(commonParams2).m(function(Command, cs, config, o5) {
@@ -39677,7 +39787,7 @@ var init_GetRoleCredentialsCommand = __esm({
 var import_smithy_client21, commands2, SSO;
 var init_SSO = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSO.js"() {
-    import_smithy_client21 = __toESM(require_dist_cjs26());
+    import_smithy_client21 = __toESM(require_dist_cjs25());
     init_GetRoleCredentialsCommand();
     init_SSOClient();
     commands2 = {
@@ -39752,8 +39862,8 @@ var require_loadSso_BKDNrsal = __commonJS({
 var require_dist_cjs47 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-sso/dist-cjs/index.js"(exports2) {
     "use strict";
-    var propertyProvider = require_dist_cjs23();
-    var sharedIniFileLoader = require_dist_cjs34();
+    var propertyProvider = require_dist_cjs22();
+    var sharedIniFileLoader = require_dist_cjs33();
     var client = (init_client(), __toCommonJS(client_exports));
     var tokenProviders = require_dist_cjs46();
     var isSsoProfile = (arg) => arg && (typeof arg.sso_start_url === "string" || typeof arg.sso_account_id === "string" || typeof arg.sso_session === "string" || typeof arg.sso_region === "string" || typeof arg.sso_role_name === "string");
@@ -40167,8 +40277,8 @@ var init_ruleset3 = __esm({
 var import_util_endpoints5, import_util_endpoints6, cache3, defaultEndpointResolver3;
 var init_endpointResolver3 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js"() {
-    import_util_endpoints5 = __toESM(require_dist_cjs22());
-    import_util_endpoints6 = __toESM(require_dist_cjs19());
+    import_util_endpoints5 = __toESM(require_dist_cjs21());
+    import_util_endpoints6 = __toESM(require_dist_cjs20());
     init_ruleset3();
     cache3 = new import_util_endpoints6.EndpointCache({
       size: 50,
@@ -40188,7 +40298,7 @@ var init_endpointResolver3 = __esm({
 var import_smithy_client22, SigninServiceException;
 var init_SigninServiceException = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/SigninServiceException.js"() {
-    import_smithy_client22 = __toESM(require_dist_cjs26());
+    import_smithy_client22 = __toESM(require_dist_cjs25());
     SigninServiceException = class _SigninServiceException extends import_smithy_client22.ServiceException {
       constructor(options) {
         super(options);
@@ -40392,16 +40502,16 @@ var init_schemas_03 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js
-var import_smithy_client23, import_url_parser3, import_util_base6410, import_util_utf810, getRuntimeConfig5;
+var import_smithy_client23, import_url_parser4, import_util_base6410, import_util_utf810, getRuntimeConfig5;
 var init_runtimeConfig_shared3 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js"() {
     init_dist_es2();
     init_protocols2();
     init_dist_es();
-    import_smithy_client23 = __toESM(require_dist_cjs26());
-    import_url_parser3 = __toESM(require_dist_cjs21());
-    import_util_base6410 = __toESM(require_dist_cjs11());
-    import_util_utf810 = __toESM(require_dist_cjs10());
+    import_smithy_client23 = __toESM(require_dist_cjs25());
+    import_url_parser4 = __toESM(require_dist_cjs18());
+    import_util_base6410 = __toESM(require_dist_cjs10());
+    import_util_utf810 = __toESM(require_dist_cjs9());
     init_httpAuthSchemeProvider3();
     init_endpointResolver3();
     init_schemas_03();
@@ -40435,7 +40545,7 @@ var init_runtimeConfig_shared3 = __esm({
           serviceTarget: "Signin"
         },
         serviceId: config?.serviceId ?? "Signin",
-        urlParser: config?.urlParser ?? import_url_parser3.parseUrl,
+        urlParser: config?.urlParser ?? import_url_parser4.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? import_util_utf810.fromUtf8,
         utf8Encoder: config?.utf8Encoder ?? import_util_utf810.toUtf8
       };
@@ -40450,15 +40560,15 @@ var init_runtimeConfig3 = __esm({
     init_package();
     init_dist_es2();
     import_util_user_agent_node3 = __toESM(require_dist_cjs41());
-    import_config_resolver5 = __toESM(require_dist_cjs32());
+    import_config_resolver5 = __toESM(require_dist_cjs31());
     import_hash_node3 = __toESM(require_dist_cjs42());
     import_middleware_retry5 = __toESM(require_dist_cjs37());
-    import_node_config_provider3 = __toESM(require_dist_cjs35());
-    import_node_http_handler3 = __toESM(require_dist_cjs14());
-    import_smithy_client24 = __toESM(require_dist_cjs26());
+    import_node_config_provider3 = __toESM(require_dist_cjs34());
+    import_node_http_handler3 = __toESM(require_dist_cjs13());
+    import_smithy_client24 = __toESM(require_dist_cjs25());
     import_util_body_length_node3 = __toESM(require_dist_cjs43());
     import_util_defaults_mode_node3 = __toESM(require_dist_cjs44());
-    import_util_retry3 = __toESM(require_dist_cjs29());
+    import_util_retry3 = __toESM(require_dist_cjs28());
     init_runtimeConfig_shared3();
     getRuntimeConfig6 = (config) => {
       (0, import_smithy_client24.emitWarningIfUnsupportedVersion)(process.version);
@@ -40545,7 +40655,7 @@ var init_runtimeExtensions3 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeExtensions.js"() {
     import_region_config_resolver3 = __toESM(require_dist_cjs45());
     import_protocol_http14 = __toESM(require_dist_cjs2());
-    import_smithy_client25 = __toESM(require_dist_cjs26());
+    import_smithy_client25 = __toESM(require_dist_cjs25());
     init_httpAuthExtensionConfiguration3();
     resolveRuntimeExtensions3 = (runtimeConfig, extensions) => {
       const extensionConfiguration = Object.assign((0, import_region_config_resolver3.getAwsRegionExtensionConfiguration)(runtimeConfig), (0, import_smithy_client25.getDefaultExtensionConfiguration)(runtimeConfig), (0, import_protocol_http14.getHttpHandlerExtensionConfiguration)(runtimeConfig), getHttpAuthExtensionConfiguration3(runtimeConfig));
@@ -40562,14 +40672,14 @@ var init_SigninClient = __esm({
     import_middleware_host_header3 = __toESM(require_dist_cjs3());
     import_middleware_logger3 = __toESM(require_dist_cjs4());
     import_middleware_recursion_detection3 = __toESM(require_dist_cjs5());
-    import_middleware_user_agent3 = __toESM(require_dist_cjs30());
-    import_config_resolver6 = __toESM(require_dist_cjs32());
+    import_middleware_user_agent3 = __toESM(require_dist_cjs29());
+    import_config_resolver6 = __toESM(require_dist_cjs31());
     init_dist_es();
     init_schema();
-    import_middleware_content_length3 = __toESM(require_dist_cjs33());
+    import_middleware_content_length3 = __toESM(require_dist_cjs32());
     import_middleware_endpoint5 = __toESM(require_dist_cjs36());
     import_middleware_retry6 = __toESM(require_dist_cjs37());
-    import_smithy_client26 = __toESM(require_dist_cjs26());
+    import_smithy_client26 = __toESM(require_dist_cjs25());
     init_httpAuthSchemeProvider3();
     init_EndpointParameters3();
     init_runtimeConfig3();
@@ -40616,7 +40726,7 @@ var import_middleware_endpoint6, import_smithy_client27, CreateOAuth2TokenComman
 var init_CreateOAuth2TokenCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js"() {
     import_middleware_endpoint6 = __toESM(require_dist_cjs36());
-    import_smithy_client27 = __toESM(require_dist_cjs26());
+    import_smithy_client27 = __toESM(require_dist_cjs25());
     init_EndpointParameters3();
     init_schemas_03();
     CreateOAuth2TokenCommand = class extends import_smithy_client27.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o5) {
@@ -40630,7 +40740,7 @@ var init_CreateOAuth2TokenCommand = __esm({
 var import_smithy_client28, commands3, Signin;
 var init_Signin = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/Signin.js"() {
-    import_smithy_client28 = __toESM(require_dist_cjs26());
+    import_smithy_client28 = __toESM(require_dist_cjs25());
     init_CreateOAuth2TokenCommand();
     init_SigninClient();
     commands3 = {
@@ -40715,8 +40825,8 @@ var require_dist_cjs48 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports2) {
     "use strict";
     var client = (init_client(), __toCommonJS(client_exports));
-    var propertyProvider = require_dist_cjs23();
-    var sharedIniFileLoader = require_dist_cjs34();
+    var propertyProvider = require_dist_cjs22();
+    var sharedIniFileLoader = require_dist_cjs33();
     var protocolHttp = require_dist_cjs2();
     var node_crypto = require("node:crypto");
     var node_fs = require("node:fs");
@@ -41259,8 +41369,8 @@ var init_ruleset4 = __esm({
 var import_util_endpoints7, import_util_endpoints8, cache4, defaultEndpointResolver4;
 var init_endpointResolver4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js"() {
-    import_util_endpoints7 = __toESM(require_dist_cjs22());
-    import_util_endpoints8 = __toESM(require_dist_cjs19());
+    import_util_endpoints7 = __toESM(require_dist_cjs21());
+    import_util_endpoints8 = __toESM(require_dist_cjs20());
     init_ruleset4();
     cache4 = new import_util_endpoints8.EndpointCache({
       size: 50,
@@ -41280,7 +41390,7 @@ var init_endpointResolver4 = __esm({
 var import_smithy_client29, STSServiceException;
 var init_STSServiceException = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js"() {
-    import_smithy_client29 = __toESM(require_dist_cjs26());
+    import_smithy_client29 = __toESM(require_dist_cjs25());
     STSServiceException = class _STSServiceException extends import_smithy_client29.ServiceException {
       constructor(options) {
         super(options);
@@ -41582,16 +41692,16 @@ var init_schemas_04 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js
-var import_smithy_client30, import_url_parser4, import_util_base6411, import_util_utf811, getRuntimeConfig7;
+var import_smithy_client30, import_url_parser5, import_util_base6411, import_util_utf811, getRuntimeConfig7;
 var init_runtimeConfig_shared4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js"() {
     init_dist_es2();
     init_protocols2();
     init_dist_es();
-    import_smithy_client30 = __toESM(require_dist_cjs26());
-    import_url_parser4 = __toESM(require_dist_cjs21());
-    import_util_base6411 = __toESM(require_dist_cjs11());
-    import_util_utf811 = __toESM(require_dist_cjs10());
+    import_smithy_client30 = __toESM(require_dist_cjs25());
+    import_url_parser5 = __toESM(require_dist_cjs18());
+    import_util_base6411 = __toESM(require_dist_cjs10());
+    import_util_utf811 = __toESM(require_dist_cjs9());
     init_httpAuthSchemeProvider4();
     init_endpointResolver4();
     init_schemas_04();
@@ -41626,7 +41736,7 @@ var init_runtimeConfig_shared4 = __esm({
           serviceTarget: "AWSSecurityTokenServiceV20110615"
         },
         serviceId: config?.serviceId ?? "STS",
-        urlParser: config?.urlParser ?? import_url_parser4.parseUrl,
+        urlParser: config?.urlParser ?? import_url_parser5.parseUrl,
         utf8Decoder: config?.utf8Decoder ?? import_util_utf811.fromUtf8,
         utf8Encoder: config?.utf8Encoder ?? import_util_utf811.toUtf8
       };
@@ -41641,16 +41751,16 @@ var init_runtimeConfig4 = __esm({
     init_package();
     init_dist_es2();
     import_util_user_agent_node4 = __toESM(require_dist_cjs41());
-    import_config_resolver7 = __toESM(require_dist_cjs32());
+    import_config_resolver7 = __toESM(require_dist_cjs31());
     init_dist_es();
     import_hash_node4 = __toESM(require_dist_cjs42());
     import_middleware_retry7 = __toESM(require_dist_cjs37());
-    import_node_config_provider4 = __toESM(require_dist_cjs35());
-    import_node_http_handler4 = __toESM(require_dist_cjs14());
-    import_smithy_client31 = __toESM(require_dist_cjs26());
+    import_node_config_provider4 = __toESM(require_dist_cjs34());
+    import_node_http_handler4 = __toESM(require_dist_cjs13());
+    import_smithy_client31 = __toESM(require_dist_cjs25());
     import_util_body_length_node4 = __toESM(require_dist_cjs43());
     import_util_defaults_mode_node4 = __toESM(require_dist_cjs44());
-    import_util_retry4 = __toESM(require_dist_cjs29());
+    import_util_retry4 = __toESM(require_dist_cjs28());
     init_runtimeConfig_shared4();
     getRuntimeConfig8 = (config) => {
       (0, import_smithy_client31.emitWarningIfUnsupportedVersion)(process.version);
@@ -41749,7 +41859,7 @@ var init_runtimeExtensions4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js"() {
     import_region_config_resolver4 = __toESM(require_dist_cjs45());
     import_protocol_http15 = __toESM(require_dist_cjs2());
-    import_smithy_client32 = __toESM(require_dist_cjs26());
+    import_smithy_client32 = __toESM(require_dist_cjs25());
     init_httpAuthExtensionConfiguration4();
     resolveRuntimeExtensions4 = (runtimeConfig, extensions) => {
       const extensionConfiguration = Object.assign((0, import_region_config_resolver4.getAwsRegionExtensionConfiguration)(runtimeConfig), (0, import_smithy_client32.getDefaultExtensionConfiguration)(runtimeConfig), (0, import_protocol_http15.getHttpHandlerExtensionConfiguration)(runtimeConfig), getHttpAuthExtensionConfiguration4(runtimeConfig));
@@ -41766,14 +41876,14 @@ var init_STSClient = __esm({
     import_middleware_host_header4 = __toESM(require_dist_cjs3());
     import_middleware_logger4 = __toESM(require_dist_cjs4());
     import_middleware_recursion_detection4 = __toESM(require_dist_cjs5());
-    import_middleware_user_agent4 = __toESM(require_dist_cjs30());
-    import_config_resolver8 = __toESM(require_dist_cjs32());
+    import_middleware_user_agent4 = __toESM(require_dist_cjs29());
+    import_config_resolver8 = __toESM(require_dist_cjs31());
     init_dist_es();
     init_schema();
-    import_middleware_content_length4 = __toESM(require_dist_cjs33());
+    import_middleware_content_length4 = __toESM(require_dist_cjs32());
     import_middleware_endpoint7 = __toESM(require_dist_cjs36());
     import_middleware_retry8 = __toESM(require_dist_cjs37());
-    import_smithy_client33 = __toESM(require_dist_cjs26());
+    import_smithy_client33 = __toESM(require_dist_cjs25());
     init_httpAuthSchemeProvider4();
     init_EndpointParameters4();
     init_runtimeConfig4();
@@ -41820,7 +41930,7 @@ var import_middleware_endpoint8, import_smithy_client34, AssumeRoleCommand;
 var init_AssumeRoleCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js"() {
     import_middleware_endpoint8 = __toESM(require_dist_cjs36());
-    import_smithy_client34 = __toESM(require_dist_cjs26());
+    import_smithy_client34 = __toESM(require_dist_cjs25());
     init_EndpointParameters4();
     init_schemas_04();
     AssumeRoleCommand = class extends import_smithy_client34.Command.classBuilder().ep(commonParams4).m(function(Command, cs, config, o5) {
@@ -41835,7 +41945,7 @@ var import_middleware_endpoint9, import_smithy_client35, AssumeRoleWithWebIdenti
 var init_AssumeRoleWithWebIdentityCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js"() {
     import_middleware_endpoint9 = __toESM(require_dist_cjs36());
-    import_smithy_client35 = __toESM(require_dist_cjs26());
+    import_smithy_client35 = __toESM(require_dist_cjs25());
     init_EndpointParameters4();
     init_schemas_04();
     AssumeRoleWithWebIdentityCommand = class extends import_smithy_client35.Command.classBuilder().ep(commonParams4).m(function(Command, cs, config, o5) {
@@ -41849,7 +41959,7 @@ var init_AssumeRoleWithWebIdentityCommand = __esm({
 var import_smithy_client36, commands4, STS;
 var init_STS = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js"() {
-    import_smithy_client36 = __toESM(require_dist_cjs26());
+    import_smithy_client36 = __toESM(require_dist_cjs25());
     init_AssumeRoleCommand();
     init_AssumeRoleWithWebIdentityCommand();
     init_STSClient();
@@ -42072,8 +42182,8 @@ var init_sts = __esm({
 var require_dist_cjs49 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports2) {
     "use strict";
-    var sharedIniFileLoader = require_dist_cjs34();
-    var propertyProvider = require_dist_cjs23();
+    var sharedIniFileLoader = require_dist_cjs33();
+    var propertyProvider = require_dist_cjs22();
     var node_child_process = require("node:child_process");
     var node_util = require("node:util");
     var client = (init_client(), __toCommonJS(client_exports));
@@ -42223,8 +42333,8 @@ var require_fromTokenFile = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.fromTokenFile = void 0;
     var client_1 = (init_client(), __toCommonJS(client_exports));
-    var property_provider_1 = require_dist_cjs23();
-    var shared_ini_file_loader_1 = require_dist_cjs34();
+    var property_provider_1 = require_dist_cjs22();
+    var shared_ini_file_loader_1 = require_dist_cjs33();
     var node_fs_1 = require("node:fs");
     var fromWebToken_1 = require_fromWebToken();
     var ENV_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
@@ -42282,8 +42392,8 @@ var require_dist_cjs50 = __commonJS({
 var require_dist_cjs51 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js"(exports2) {
     "use strict";
-    var sharedIniFileLoader = require_dist_cjs34();
-    var propertyProvider = require_dist_cjs23();
+    var sharedIniFileLoader = require_dist_cjs33();
+    var propertyProvider = require_dist_cjs22();
     var client = (init_client(), __toCommonJS(client_exports));
     var credentialProviderLogin = require_dist_cjs48();
     var resolveCredentialSource = (credentialSource, profileName, logger2) => {
@@ -42474,8 +42584,8 @@ var require_dist_cjs52 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-node/dist-cjs/index.js"(exports2) {
     "use strict";
     var credentialProviderEnv = require_dist_cjs38();
-    var propertyProvider = require_dist_cjs23();
-    var sharedIniFileLoader = require_dist_cjs34();
+    var propertyProvider = require_dist_cjs22();
+    var sharedIniFileLoader = require_dist_cjs33();
     var ENV_IMDS_DISABLED = "AWS_EC2_METADATA_DISABLED";
     var remoteProvider = async (init) => {
       const { ENV_CMDS_FULL_URI, ENV_CMDS_RELATIVE_URI, fromContainerMetadata, fromInstanceMetadata } = await Promise.resolve().then(() => __toESM(require_dist_cjs39()));
@@ -42670,8 +42780,8 @@ var require_endpointResolver = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.defaultEndpointResolver = void 0;
-    var util_endpoints_1 = require_dist_cjs22();
-    var util_endpoints_2 = require_dist_cjs19();
+    var util_endpoints_1 = require_dist_cjs21();
+    var util_endpoints_2 = require_dist_cjs20();
     var ruleset_1 = require_ruleset();
     var cache5 = new util_endpoints_2.EndpointCache({
       size: 50,
@@ -42694,7 +42804,7 @@ var require_STSServiceException = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.STSServiceException = exports2.__ServiceException = void 0;
-    var smithy_client_1 = require_dist_cjs26();
+    var smithy_client_1 = require_dist_cjs25();
     Object.defineProperty(exports2, "__ServiceException", { enumerable: true, get: function() {
       return smithy_client_1.ServiceException;
     } });
@@ -43477,10 +43587,10 @@ var require_runtimeConfig_shared = __commonJS({
     var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
     var protocols_1 = (init_protocols2(), __toCommonJS(protocols_exports2));
     var core_2 = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var smithy_client_1 = require_dist_cjs26();
-    var url_parser_1 = require_dist_cjs21();
-    var util_base64_1 = require_dist_cjs11();
-    var util_utf8_1 = require_dist_cjs10();
+    var smithy_client_1 = require_dist_cjs25();
+    var url_parser_1 = require_dist_cjs18();
+    var util_base64_1 = require_dist_cjs10();
+    var util_utf8_1 = require_dist_cjs9();
     var httpAuthSchemeProvider_1 = require_httpAuthSchemeProvider();
     var endpointResolver_1 = require_endpointResolver();
     var schemas_0_1 = require_schemas_0();
@@ -43535,16 +43645,16 @@ var require_runtimeConfig = __commonJS({
     var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
     var credential_provider_node_1 = require_dist_cjs52();
     var util_user_agent_node_1 = require_dist_cjs41();
-    var config_resolver_1 = require_dist_cjs32();
+    var config_resolver_1 = require_dist_cjs31();
     var core_2 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var hash_node_1 = require_dist_cjs42();
     var middleware_retry_1 = require_dist_cjs37();
-    var node_config_provider_1 = require_dist_cjs35();
-    var node_http_handler_1 = require_dist_cjs14();
-    var smithy_client_1 = require_dist_cjs26();
+    var node_config_provider_1 = require_dist_cjs34();
+    var node_http_handler_1 = require_dist_cjs13();
+    var smithy_client_1 = require_dist_cjs25();
     var util_body_length_node_1 = require_dist_cjs43();
     var util_defaults_mode_node_1 = require_dist_cjs44();
-    var util_retry_1 = require_dist_cjs29();
+    var util_retry_1 = require_dist_cjs28();
     var runtimeConfig_shared_1 = require_runtimeConfig_shared();
     var getRuntimeConfig9 = (config) => {
       (0, smithy_client_1.emitWarningIfUnsupportedVersion)(process.version);
@@ -43651,7 +43761,7 @@ var require_runtimeExtensions = __commonJS({
     exports2.resolveRuntimeExtensions = void 0;
     var region_config_resolver_1 = require_dist_cjs45();
     var protocol_http_1 = require_dist_cjs2();
-    var smithy_client_1 = require_dist_cjs26();
+    var smithy_client_1 = require_dist_cjs25();
     var httpAuthExtensionConfiguration_1 = require_httpAuthExtensionConfiguration();
     var resolveRuntimeExtensions5 = (runtimeConfig, extensions) => {
       const extensionConfiguration = Object.assign((0, region_config_resolver_1.getAwsRegionExtensionConfiguration)(runtimeConfig), (0, smithy_client_1.getDefaultExtensionConfiguration)(runtimeConfig), (0, protocol_http_1.getHttpHandlerExtensionConfiguration)(runtimeConfig), (0, httpAuthExtensionConfiguration_1.getHttpAuthExtensionConfiguration)(runtimeConfig));
@@ -43671,14 +43781,14 @@ var require_STSClient = __commonJS({
     var middleware_host_header_1 = require_dist_cjs3();
     var middleware_logger_1 = require_dist_cjs4();
     var middleware_recursion_detection_1 = require_dist_cjs5();
-    var middleware_user_agent_1 = require_dist_cjs30();
-    var config_resolver_1 = require_dist_cjs32();
+    var middleware_user_agent_1 = require_dist_cjs29();
+    var config_resolver_1 = require_dist_cjs31();
     var core_1 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var schema_1 = (init_schema(), __toCommonJS(schema_exports));
-    var middleware_content_length_1 = require_dist_cjs33();
+    var middleware_content_length_1 = require_dist_cjs32();
     var middleware_endpoint_1 = require_dist_cjs36();
     var middleware_retry_1 = require_dist_cjs37();
-    var smithy_client_1 = require_dist_cjs26();
+    var smithy_client_1 = require_dist_cjs25();
     Object.defineProperty(exports2, "__Client", { enumerable: true, get: function() {
       return smithy_client_1.Client;
     } });
@@ -43729,7 +43839,7 @@ var require_dist_cjs53 = __commonJS({
   "node_modules/@aws-sdk/client-sts/dist-cjs/index.js"(exports2) {
     "use strict";
     var STSClient3 = require_STSClient();
-    var smithyClient = require_dist_cjs26();
+    var smithyClient = require_dist_cjs25();
     var middlewareEndpoint = require_dist_cjs36();
     var EndpointParameters = require_EndpointParameters();
     var schemas_0 = require_schemas_0();
@@ -45949,7 +46059,7 @@ var require_src = __commonJS({
 var require_proxy_from_env = __commonJS({
   "node_modules/proxy-from-env/index.js"(exports2) {
     "use strict";
-    var parseUrl5 = require("url").parse;
+    var parseUrl6 = require("url").parse;
     var DEFAULT_PORTS2 = {
       ftp: 21,
       gopher: 70,
@@ -45962,7 +46072,7 @@ var require_proxy_from_env = __commonJS({
       return s5.length <= this.length && this.indexOf(s5, this.length - s5.length) !== -1;
     };
     function getProxyForUrl(url) {
-      var parsedUrl = typeof url === "string" ? parseUrl5(url) : url || {};
+      var parsedUrl = typeof url === "string" ? parseUrl6(url) : url || {};
       var proto = parsedUrl.protocol;
       var hostname = parsedUrl.host;
       var port = parsedUrl.port;
@@ -71509,7 +71619,7 @@ async function assumeRole(params) {
 // src/CredentialsClient.ts
 var import_core24 = __toESM(require_core());
 var import_client_sts3 = __toESM(require_dist_cjs53());
-var import_node_http_handler5 = __toESM(require_dist_cjs14());
+var import_node_http_handler5 = __toESM(require_dist_cjs13());
 var import_proxy_agent = __toESM(require_dist11());
 
 // src/ProxyResolver.ts
