@@ -72159,8 +72159,7 @@ async function run() {
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
     }
-    const shouldExportRegionEnvVars = awsProfile ? true : outputEnvCredentials;
-    exportRegion(region, shouldExportRegionEnvVars);
+    exportRegion(region, outputEnvCredentials);
     const clientProps = {
       region,
       roleChaining
@@ -72195,8 +72194,7 @@ async function run() {
       if (!SecretAccessKey) {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
       }
-      const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, shouldExportEnvCreds);
+      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
     } else if (!webIdentityTokenFile && !roleChaining) {
       await credentialsClient.validateCredentials(void 0, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
@@ -72230,8 +72228,7 @@ async function run() {
         );
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core4.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-      const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
-      exportCredentials(roleCredentials.Credentials, outputCredentials, shouldExportEnvCreds);
+      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
       if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
         await credentialsClient.validateCredentials(
           roleCredentials.Credentials?.AccessKeyId,
