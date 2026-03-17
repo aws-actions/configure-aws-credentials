@@ -20,6 +20,7 @@
     "@aws-sdk/credential-provider-env": "^3.972.18",
     "@biomejs/biome": "2.4.7",
     "@smithy/property-provider": "^4.2.11",
+    "@types/ini": "^4.1.1",
     "@types/node": "^25.5.0",
     "@vitest/coverage-v8": "^3.2.4",
     "aws-sdk-client-mock": "^4.1.0",
@@ -35,6 +36,7 @@
     "@actions/core": "^2.0.2",
     "@aws-sdk/client-sts": "^3.1010.0",
     "@smithy/node-http-handler": "^4.4.7",
+    "ini": "^5.0.0",
     "proxy-agent": "^6.5.0"
   },
   "keywords": [
