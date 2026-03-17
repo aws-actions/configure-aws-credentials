@@ -121,10 +121,7 @@ export async function run() {
       throw new Error(`Region is not valid: ${region}`);
     }
 
-    // When using profile mode, always export region env vars
-    // When not using profile mode, respect outputEnvCredentials
-    const shouldExportRegionEnvVars = awsProfile ? true : outputEnvCredentials;
-    exportRegion(region, shouldExportRegionEnvVars);
+    exportRegion(region, outputEnvCredentials);
 
     // Instantiate credentials client
     const clientProps: { region: string; proxyServer?: string; noProxy?: string; roleChaining: boolean } = {
@@ -170,9 +167,7 @@ export async function run() {
       // Plus, in the assume role case, if the AssumeRole call fails, we want
       // the source credentials to already be masked as secrets
       // in any error messages.
-      // When using profile mode, we don't export to env vars (set to false) but still mask secrets
-      const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, shouldExportEnvCreds);
+      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
@@ -213,10 +208,7 @@ export async function run() {
         );
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-
-      // When using profile mode, we don't export credentials to env vars but still mask secrets and handle step outputs
-      const shouldExportEnvCreds = awsProfile ? false : outputEnvCredentials;
-      exportCredentials(roleCredentials.Credentials, outputCredentials, shouldExportEnvCreds);
+      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
