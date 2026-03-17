@@ -1,0 +1,32 @@
+name: Run post-release integration test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dist/**'  
+  workflow_dispatch:
+
+jobs:
+  package_and_test:
+    name: Package dist files
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Integation tests
+        uses: ./
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.CAWSC_integ_role }}
+          role-session-name: IntegTestCAWSC
+      - name: Get caller identity
+        run: |
+          aws sts get-caller-identity

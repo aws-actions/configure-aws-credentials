@@ -5,852 +5,821 @@ import {
   GetCallerIdentityCommand,
   STSClient,
 } from '@aws-sdk/client-sts';
-import { CredentialsProviderError } from '@smithy/property-provider';
 import { mockClient } from 'aws-sdk-client-mock';
-import { withsleep, reset } from '../src/helpers';
+import { fs, vol } from 'memfs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CredentialsClient } from '../src/CredentialsClient';
 import { run } from '../src/index';
+import mocks from './mockinputs.test';
 
-// #region
-const FAKE_ACCESS_KEY_ID = 'MYAWSACCESSKEYID';
-const FAKE_SECRET_ACCESS_KEY = 'MYAWSSECRETACCESSKEY';
-const FAKE_SESSION_TOKEN = 'MYAWSSESSIONTOKEN';
-const FAKE_STS_ACCESS_KEY_ID = 'STSAWSACCESSKEYID';
-const FAKE_STS_SECRET_ACCESS_KEY = 'STSAWSSECRETACCESSKEY';
-const FAKE_STS_SESSION_TOKEN = 'STSAWSSESSIONTOKEN';
-const FAKE_ASSUMED_ROLE_ID = 'AROAFAKEASSUMEDROLEID';
-const FAKE_REGION = 'fake-region-1';
-const FAKE_ACCOUNT_ID = '123456789012';
-const FAKE_ROLE_ACCOUNT_ID = '111111111111';
-const ROLE_NAME = 'MY-ROLE';
-const ROLE_ARN = 'arn:aws:iam::111111111111:role/MY-ROLE';
-const MANAGED_SESSION_POLICY_INPUT = [
-  'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess',
-  'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess',
-];
-const ENVIRONMENT_VARIABLE_OVERRIDES = {
-  SHOW_STACK_TRACE: 'false',
-  GITHUB_REPOSITORY: 'MY-REPOSITORY-NAME',
-  GITHUB_WORKFLOW: 'MY-WORKFLOW-ID',
-  GITHUB_ACTION: 'MY-ACTION-NAME',
-  GITHUB_ACTOR: 'MY-USERNAME[bot]',
-  GITHUB_SHA: 'MY-COMMIT-ID',
-  GITHUB_REF: 'MY-BRANCH',
-  GITHUB_WORKSPACE: '/home/github',
-};
-const GITHUB_ACTOR_SANITIZED = 'MY-USERNAME_bot_';
-const CREDS_INPUTS = {
-  'aws-access-key-id': FAKE_ACCESS_KEY_ID,
-  'aws-secret-access-key': FAKE_SECRET_ACCESS_KEY,
-};
-const DEFAULT_INPUTS = {
-  ...CREDS_INPUTS,
-  'aws-session-token': FAKE_SESSION_TOKEN,
-  'aws-region': FAKE_REGION,
-};
-const ASSUME_ROLE_INPUTS = { ...CREDS_INPUTS, 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION };
-// #endregion
+const mockedSTSClient = mockClient(STSClient);
 
-const mockedSTS = mockClient(STSClient);
-function mockGetInput(requestResponse: Record<string, string>) {
-  return function (name: string, _options: unknown): string {
-    return requestResponse[name]!;
-  };
-}
-
-function mockGetMultilineInput(requestResponse: Record<string, string[]>) {
-  return function (name: string, _options: unknown): string[] {
-    return requestResponse[name]!;
-  };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock('fs', () => ({
-  ...jest.requireActual('fs'),
-  existsSync: jest.fn(() => true),
-  readFileSync: jest.fn(() => 'testpayload'),
-}));
-
-const fromEnvMock = jest.fn();
-
-jest.mock('@aws-sdk/credential-provider-env', () => ({
-  fromEnv: fromEnvMock,
-}));
-
-describe('Configure AWS Credentials', () => {
-  const OLD_ENV = process.env;
-
+describe('Configure AWS Credentials', {}, () => {
   beforeEach(() => {
-    jest.resetModules();
-    process.env = { ...OLD_ENV, ...ENVIRONMENT_VARIABLE_OVERRIDES };
-    jest.clearAllMocks();
-    mockedSTS.reset();
-    fromEnvMock.mockReset();
-    jest.spyOn(core, 'getMultilineInput').mockImplementation(() => []);
-    jest.spyOn(core, 'getIDToken').mockImplementation(async () => Promise.resolve('testtoken'));
-    jest.spyOn(core, 'exportVariable').mockImplementation();
-    jest.spyOn(core, 'setSecret').mockImplementation();
-    jest.spyOn(core, 'setOutput').mockImplementation();
-    jest.spyOn(core, 'setFailed').mockImplementation();
-    jest.spyOn(core, 'debug').mockImplementation();
-    jest.spyOn(core, 'info').mockImplementation((string) => {
-      return string;
+    // Reset mock state
+    vi.restoreAllMocks();
+    mockedSTSClient.reset();
+    // Mock GitHub Actions core functions
+    vi.spyOn(core, 'exportVariable').mockImplementation((_n, _v) => {});
+    vi.spyOn(core, 'setSecret').mockImplementation((_s) => {});
+    vi.spyOn(core, 'setFailed').mockImplementation((_m) => {});
+    vi.spyOn(core, 'setOutput').mockImplementation((_n, _v) => {});
+    vi.spyOn(core, 'debug').mockImplementation((_m) => {});
+    vi.spyOn(core, 'info').mockImplementation((_m) => {});
+    vi.spyOn(core, 'notice').mockImplementation((_m) => {});
+    // Remove any existing environment variables before each test to prevent the
+    // SDK from picking them up
+    process.env = { ...mocks.envs };
+  });
+
+  describe('GitHub OIDC Authentication', {}, () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
     });
-    fromEnvMock.mockImplementation(() => () => {
-      return {
-        accessKeyId: FAKE_ACCESS_KEY_ID,
-        secretAccessKey: FAKE_SECRET_ACCESS_KEY,
-      };
+    it('exports environment variables', async () => {
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with OIDC');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(core.info).toHaveBeenCalledTimes(2);
+      expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledTimes(5);
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
-    mockedSTS
-      .on(GetCallerIdentityCommand)
-      .resolvesOnce({ Account: FAKE_ACCOUNT_ID })
-      .resolvesOnce({ Account: FAKE_ROLE_ACCOUNT_ID });
-    mockedSTS.on(AssumeRoleCommand).resolves({
-      Credentials: {
-        AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
-        SecretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
-        SessionToken: FAKE_STS_SESSION_TOKEN,
-        Expiration: new Date(8640000000000000),
-      },
-      AssumedRoleUser: {
-        AssumedRoleId: FAKE_ASSUMED_ROLE_ID,
-        Arn: ROLE_ARN,
-      },
-    });
-    mockedSTS.on(AssumeRoleWithWebIdentityCommand).resolves({
-      Credentials: {
-        AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
-        SecretAccessKey: FAKE_STS_SECRET_ACCESS_KEY,
-        SessionToken: FAKE_STS_SESSION_TOKEN,
-        Expiration: new Date(8640000000000000),
-      },
-      AssumedRoleUser: {
-        AssumedRoleId: FAKE_ASSUMED_ROLE_ID,
-        Arn: ROLE_ARN,
-      },
-    });
-    withsleep(async () => {
-      return Promise.resolve();
-    });
-  });
-
-  afterEach(() => {
-    process.env = OLD_ENV;
-    reset();
-  });
-
-  test('exports env vars', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
-    expect(core.exportVariable).toHaveBeenCalledTimes(5);
-    expect(core.setSecret).toHaveBeenCalledTimes(3);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_SECRET_ACCESS_KEY);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', FAKE_SESSION_TOKEN);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_SESSION_TOKEN);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', FAKE_REGION);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', FAKE_REGION);
-    expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-  });
-
-  test('action fails when github env vars are not set', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
-    delete process.env['GITHUB_SHA'];
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalledWith(
-      'Missing required environment variables. Are you running in GitHub Actions?'
-    );
-  });
-
-  test('action does not require GITHUB_REF env var', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-    delete process.env['GITHUB_REF'];
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalledTimes(0);
-  });
-
-  test('action with no accessible credentials fails', async () => {
-    const mockInputs = { 'aws-region': FAKE_REGION };
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    fromEnvMock.mockReset();
-    fromEnvMock.mockImplementation(() => () => {
-      throw new CredentialsProviderError('test');
-    });
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalledWith(
-      'Credentials could not be loaded, please check your action inputs: Could not load credentials from any providers'
-    );
-  });
-
-  test('action with empty credentials fails', async () => {
-    const mockInputs = { 'aws-region': FAKE_REGION };
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    fromEnvMock.mockReset();
-    fromEnvMock.mockImplementation(() => async () => Promise.resolve({ accessKeyId: '', secretAccessKey: '' }));
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalledWith(
-      'Credentials could not be loaded, please check your action inputs: Access key ID empty after loading credentials'
-    );
-  });
-
-  test('action fails when credentials are not set in the SDK correctly', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-    fromEnvMock.mockReset();
-    fromEnvMock.mockImplementationOnce(() => async () => Promise.resolve({ accessKeyId: '123' }));
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalledWith(
-      'Unexpected failure: Credentials loaded by the SDK do not match the access key ID configured by the action'
-    );
-  });
-
-  test('session token is optional', async () => {
-    const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'eu-west-1' };
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
-    expect(core.exportVariable).toHaveBeenCalledTimes(4);
-    expect(core.setSecret).toHaveBeenCalledTimes(2);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_SECRET_ACCESS_KEY);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
-    expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-  });
-
-  test('existing env var creds are cleared', async () => {
-    const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'eu-west-1' };
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-    process.env['AWS_ACCESS_KEY_ID'] = 'foo';
-    process.env['AWS_SECRET_ACCESS_KEY'] = 'bar';
-    process.env['AWS_SESSION_TOKEN'] = 'helloworld';
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
-    expect(core.exportVariable).toHaveBeenCalledTimes(5);
-    expect(core.setSecret).toHaveBeenCalledTimes(2);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_SECRET_ACCESS_KEY);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', '');
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'eu-west-1');
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'eu-west-1');
-    expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-  });
-
-  test('validates region name', async () => {
-    const mockInputs = { ...CREDS_INPUTS, 'aws-region': '$AWS_REGION' };
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalledWith('Region is not valid: $AWS_REGION');
-  });
-
-  test('throws error if access key id exists but missing secret access key', async () => {
-    const inputsWIthoutSecretKey = { ...DEFAULT_INPUTS };
-    //@ts-expect-error deleting a required property to test failure condition
-    delete inputsWIthoutSecretKey['aws-secret-access-key'];
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(inputsWIthoutSecretKey));
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalledWith(
-      "'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided"
-    );
-  });
-
-  test('can opt into masking account ID', async () => {
-    const mockInputs = { ...CREDS_INPUTS, 'aws-region': 'us-east-1', 'mask-aws-account-id': 'true' };
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(mockInputs));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)).toHaveLength(0);
-    expect(core.exportVariable).toHaveBeenCalledTimes(4);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', FAKE_ACCESS_KEY_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCESS_KEY_ID);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', FAKE_SECRET_ACCESS_KEY);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_SECRET_ACCESS_KEY);
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'us-east-1');
-    expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'us-east-1');
-    expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', FAKE_ACCOUNT_ID);
-    expect(core.setSecret).toHaveBeenCalledWith(FAKE_ACCOUNT_ID);
-    expect(core.setSecret).toHaveBeenCalledTimes(3);
-  });
-
-  test('error is caught by core.setFailed and caught', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(DEFAULT_INPUTS));
-    mockedSTS.reset();
-    mockedSTS.on(GetCallerIdentityCommand).rejects();
-
-    await run();
-
-    expect(core.setFailed).toHaveBeenCalled();
-  });
-
-  test('role assumption tags', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
+    it('handles the special character workaround', async () => {
+      mockedSTSClient
+        .on(AssumeRoleWithWebIdentityCommand)
+        .resolvesOnce(mocks.outputs.ODD_CHARACTER_CREDENTIALS)
+        .resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with OIDC');
+      expect(core.info).toHaveBeenCalledWith('Assuming role with OIDC');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(core.info).toHaveBeenCalledTimes(3);
+      expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledTimes(5);
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 
-  test('role assumption duration provided', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'role-duration-seconds': '5' }));
-
-    await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 5,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
+  describe('IAM User Authentication', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+    });
+    it('exports environment variables', async () => {
+      await run();
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'MYAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'MYAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledTimes(4);
+      expect(core.setSecret).toHaveBeenCalledWith('MYAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('MYAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledTimes(2);
+      expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
+      expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
+      expect(core.info).toHaveBeenCalledOnce();
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 
-  test('role assumption session name provided', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'role-session-name': 'MySessionName' }));
-
-    await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'MySessionName',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
+  describe('AssumeRole with IAM LTC', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
+      mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY }); // 3 times
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+    });
+    it('exports environment variables', async () => {
+      await run();
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'MYAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'MYAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledTimes(7);
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
+      expect(core.setSecret).toHaveBeenCalledWith('MYAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('MYAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledTimes(5);
+      expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(core.info).toHaveBeenCalledTimes(2);
     });
   });
 
-  test('role name provided instead of ARN', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...CREDS_INPUTS, 'role-to-assume': ROLE_NAME, 'aws-region': FAKE_REGION }));
-
-    await run();
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: 'arn:aws:iam::123456789012:role/MY-ROLE',
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
+  describe('AssumeRole with WebIdentityTokeFile', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.WEBIDENTITY_TOKEN_FILE_INPUTS));
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      vi.mock('node:fs');
+      vol.reset();
+      fs.mkdirSync('/home/github', { recursive: true });
+      fs.writeFileSync('/home/github/file.txt', 'test-token');
+    });
+    it('exports environment variables', async () => {
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with web identity token file');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(core.info).toHaveBeenCalledTimes(2);
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledTimes(5);
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
+      expect(core.setOutput).toHaveBeenCalledTimes(2);
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 
-  test('web identity token file provided with absolute path', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(
-      mockGetInput({
-        'role-to-assume': ROLE_ARN,
-        'aws-region': FAKE_REGION,
-        'web-identity-token-file': '/fake/token/file',
-      })
-    );
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
-      RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      WebIdentityToken: 'testpayload',
+  describe('Assume existing role', {}, () => {
+    beforeEach(() => {
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env = { ...mocks.envs };
+    });
+    it('exports environment variables from env variables', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.EXISTING_ROLE_INPUTS));
+      process.env.AWS_ACCESS_KEY_ID = 'MYAWSACCESSKEYID';
+      process.env.AWS_SECRET_ACCESS_KEY = 'MYAWSSECRETACCESSKEY';
+      process.env.AWS_SESSION_TOKEN = 'MYAWSSESSIONTOKEN';
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(core.info).toHaveBeenCalledTimes(2);
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledTimes(5);
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+    it('exports environment variables from inputs', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.EXISTING_ROLE_INPUTS,
+          'aws-access-key-id': 'MYAWSACCESSKEYID',
+          'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+          'aws-session-token': 'MYAWSSESSIONTOKEN',
+        }),
+      );
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({
+          accessKeyId: 'MYAWSACCESSKEYID',
+        })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(core.info).toHaveBeenCalledTimes(2);
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledTimes(8);
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSACCESSKEYID');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSECRETACCESSKEY');
+      expect(core.setSecret).toHaveBeenCalledWith('STSAWSSESSIONTOKEN');
+      expect(core.setSecret).toHaveBeenCalledTimes(6);
+      expect(core.setOutput).toHaveBeenCalledWith('aws-account-id', '111111111111');
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 
-  test('web identity token file provided with relative path', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(
-      mockGetInput({
-        'role-to-assume': ROLE_ARN,
-        'aws-region': FAKE_REGION,
-        'web-identity-token-file': 'fake/token/file',
-      })
-    );
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
-      RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      WebIdentityToken: 'testpayload',
+  describe('Odd inputs', {}, () => {
+    it('fails when github env vars are missing', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      delete process.env.GITHUB_REPOSITORY;
+      delete process.env.GITHUB_SHA;
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+    it('does not fail if GITHUB_REF is missing', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      delete process.env.GITHUB_REF;
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+    it('fails with an invalid region', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ 'aws-region': '$|<1B1D1 701L37' }));
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+    it('fails if access key id is provided without secret access key', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-secret-access-key': '' }),
+      );
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+    it('handles improper retry-max-attempts input', {}, async () => {
+      // This should mean we retry one time
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'retry-max-attempts': '-1',
+          'special-characters-workaround': 'false',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      mockedSTSClient
+        .on(AssumeRoleWithWebIdentityCommand)
+        .rejectsOnce(new Error('test error'))
+        .rejectsOnce(new Error('test error'))
+        .resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+    it('fails if doing OIDC without the ACTIONS_ID_TOKEN_REQUEST_TOKEN', {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+    });
+    it("gets new creds if told to reuse existing but they're invalid", {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).rejects();
+      await run();
+      expect(core.notice).toHaveBeenCalledWith('No valid credentials exist. Running as normal.');
+    });
+    it("doesn't get new creds if there are already valid ones and we said use them", {}, async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves(mocks.outputs.GET_CALLER_IDENTITY);
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+    it("doesn't export credentials as environment variables if told not to", {}, async () => {
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.exportVariable).toHaveBeenCalledTimes(0);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+    it('can export creds as step outputs without exporting as env variables', {}, async () => {
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.STEP_BUT_NO_ENV_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
+      expect(core.setSecret).toHaveBeenCalledTimes(3);
+      expect(core.exportVariable).toHaveBeenCalledTimes(0);
+      expect(core.setOutput).toHaveBeenCalledTimes(4);
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 
-  test('only role arn and region provided to use GH OIDC Token', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
-
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION }));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
-      RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      WebIdentityToken: 'testtoken',
-    });
-    expect(core.getIDToken).toHaveBeenCalledTimes(1);
-  });
-
-  test('getIDToken call retries when failing', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
-    jest.spyOn(core, 'getIDToken').mockImplementation(() => {
-      throw new Error('test error');
+  describe('Force Skip OIDC', {}, () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockedSTSClient.reset();
     });
 
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION }));
+    it('skips OIDC when force-skip-oidc is true with IAM credentials', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'force-skip-oidc': 'true',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
 
-    await run();
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-    expect(core.getIDToken).toHaveBeenCalledTimes(12);
-    expect(core.setFailed).toHaveBeenCalledWith('getIDToken call failed: test error');
-  });
+    it('skips OIDC when force-skip-oidc is true with web identity token file', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.WEBIDENTITY_TOKEN_FILE_INPUTS,
+          'force-skip-oidc': 'true',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      vi.mock('node:fs');
+      vol.reset();
+      fs.mkdirSync('/home/github', { recursive: true });
+      fs.writeFileSync('/home/github/file.txt', 'test-token');
 
-  test('GH OIDC With custom role duration', async () => {
-    const CUSTOM_ROLE_DURATION = '1234';
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
-    jest.spyOn(core, 'getInput').mockImplementation(
-      mockGetInput({
-        'role-to-assume': ROLE_ARN,
-        'aws-region': FAKE_REGION,
-        'role-duration-seconds': CUSTOM_ROLE_DURATION,
-      })
-    );
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with web identity token file');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-    await run();
+    it('fails when force-skip-oidc is true but no alternative credentials provided', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+          'aws-region': 'fake-region-1',
+          'force-skip-oidc': 'true',
+        }),
+      );
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
 
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand)[0]?.args[0].input).toEqual({
-      RoleArn: 'arn:aws:iam::111111111111:role/MY-ROLE',
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: parseInt(CUSTOM_ROLE_DURATION),
-      WebIdentityToken: 'testtoken',
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id' or 'web-identity-token-file' must be set",
+      );
+    });
+
+    it('allows force-skip-oidc without role-to-assume', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'force-skip-oidc': 'true',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('uses OIDC when force-skip-oidc is false (default behavior)', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'force-skip-oidc': 'false',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+      expect(core.getIDToken).toHaveBeenCalledWith('');
+      expect(core.info).toHaveBeenCalledWith('Assuming role with OIDC');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('uses OIDC when force-skip-oidc is not set (default behavior)', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+      expect(core.getIDToken).toHaveBeenCalledWith('');
+      expect(core.info).toHaveBeenCalledWith('Assuming role with OIDC');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('works with role chaining when force-skip-oidc is true', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.EXISTING_ROLE_INPUTS,
+          'force-skip-oidc': 'true',
+          'aws-access-key-id': 'MYAWSACCESSKEYID',
+          'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 
-  test('GH OIDC check fails if token is not set', async () => {
-    fromEnvMock.mockReset();
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
-    process.env['GITHUB_ACTIONS'] = 'true';
-    jest.spyOn(core, 'getInput').mockImplementation(
-      mockGetInput({
-        'role-to-assume': ROLE_ARN,
-        'aws-region': FAKE_REGION,
-      })
-    );
+  describe('Account ID Validation', {}, () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockedSTSClient.reset();
+    });
 
-    await run();
+    it('succeeds when account ID matches allowed list', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'allowed-account-ids': '111111111111',
+        }),
+      );
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
 
-    expect(core.info).toHaveBeenCalledWith(
-      'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?' +
-        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
-    );
-    expect(core.setFailed).toHaveBeenCalledWith(
-      expect.stringMatching(/Credentials could not be loaded, please check your action inputs: (.*?) is not a function/)
-    );
-  });
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
+    });
 
-  test('Assume role with existing credentials if nothing else set', async () => {
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = undefined;
-    process.env['AWS_ACCESS_KEY_ID'] = FAKE_ACCESS_KEY_ID;
-    process.env['AWS_SECRET_ACCESS_KEY'] = FAKE_SECRET_ACCESS_KEY;
-    jest.spyOn(core, 'getInput').mockImplementation(
-      mockGetInput({
-        'role-to-assume': ROLE_ARN,
-        'aws-region': FAKE_REGION,
-      })
-    );
+    it('succeeds with multiple allowed account IDs when account matches', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'allowed-account-ids': '999999999999,111111111111,222222222222',
+        }),
+      );
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
 
-    await run();
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-    expect(core.info).toHaveBeenCalledWith(
-      'It looks like you might be trying to authenticate with OIDC. Did you mean to set the `id-token` permission?' +
-        ' If you are not trying to authenticate with OIDC and the action is working successfully, you can ignore this message.'
-    );
-    expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(1);
-  });
+    it('fails when account ID does not match allowed list', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'allowed-account-ids': '999999999999',
+        }),
+      );
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
 
-  test('role assumption fails after maximum trials using OIDC provider', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION }));
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+      );
+    });
 
-    mockedSTS.reset();
-    mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
-
-    await run();
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(12);
-  });
-
-  test('role assumption fails after one trial when disabling retry', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(
-        mockGetInput({ 'role-to-assume': ROLE_ARN, 'aws-region': FAKE_REGION, 'disable-retry': 'true' })
+    it('fails when account ID does not match any in multiple allowed accounts', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'allowed-account-ids': '999999999999,888888888888',
+        }),
       );
 
-    mockedSTS.reset();
-    mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
-
-    await run();
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(1);
-  });
-
-  test('special character workaround works for AWS_ACCESS_KEY_ID', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'special-characters-workaround': 'true' }));
-
-    mockedSTS
-      .on(AssumeRoleCommand)
-      .resolvesOnce({
-        Credentials: {
-          AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
-          SecretAccessKey: 'asdf+',
-          SessionToken: FAKE_STS_SESSION_TOKEN,
-          Expiration: new Date(8640000000000000),
-        },
-      })
-      .resolves({
-        Credentials: {
-          AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
-          SecretAccessKey: 'asdf',
-          SessionToken: FAKE_STS_SESSION_TOKEN,
-          Expiration: new Date(8640000000000000),
-        },
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
       });
 
-    await run();
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999, 888888888888',
+      );
+    });
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(2);
-  });
+    it('works with assume role when account ID matches', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'allowed-account-ids': '111111111111',
+        }),
+      );
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
 
-  test('special character workaround works for AWS_SECRET_ACCESS_KEY', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'special-characters-workaround': 'true' }));
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+    });
 
-    mockedSTS
-      .on(AssumeRoleCommand)
-      .resolvesOnce({
-        Credentials: {
-          AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
-          SecretAccessKey: 'asdf+',
-          SessionToken: FAKE_STS_SESSION_TOKEN,
-          Expiration: new Date(8640000000000000),
-        },
-      })
-      .resolves({
-        Credentials: {
-          AccessKeyId: FAKE_STS_ACCESS_KEY_ID,
-          SecretAccessKey: 'asdf',
-          SessionToken: FAKE_STS_SESSION_TOKEN,
-          Expiration: new Date(8640000000000000),
-        },
+    it('works with OIDC when account ID matches', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'allowed-account-ids': '111111111111',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+    });
+
+    it('handles GetCallerIdentity API failure gracefully', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'allowed-account-ids': '111111111111',
+        }),
+      );
+      mockedSTSClient.on(GetCallerIdentityCommand).rejects(new Error('API Error'));
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
       });
 
-    await run();
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith('Could not validate account ID of credentials: API Error');
+    });
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand).length).toEqual(2);
-  });
+    it('ignores validation when allowed-account-ids is empty', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'allowed-account-ids': '',
+        }),
+      );
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
 
-  test('max retries is configurable', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
-    jest.spyOn(core, 'getInput').mockImplementation(
-      mockGetInput({
-        'role-to-assume': ROLE_ARN,
-        'aws-region': FAKE_REGION,
-        'retry-max-attempts': '15',
-      })
-    );
-    mockedSTS.reset();
-    mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Proceeding with IAM user credentials');
+    });
 
-    await run();
+    it('handles whitespace in allowed-account-ids input', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'allowed-account-ids': ' 111111111111 , 222222222222 ',
+        }),
+      );
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
 
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(15);
-    expect(core.setFailed).toHaveBeenCalledWith('Could not assume role with OIDC: ');
-  });
-
-  test('max retries negative input does not retry', async () => {
-    process.env['GITHUB_ACTIONS'] = 'true';
-    process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'] = 'test-token';
-    jest.spyOn(core, 'getInput').mockImplementation(
-      mockGetInput({
-        'role-to-assume': ROLE_ARN,
-        'aws-region': FAKE_REGION,
-        'retry-max-attempts': '-1',
-      })
-    );
-    mockedSTS.reset();
-    mockedSTS.on(AssumeRoleWithWebIdentityCommand).rejects();
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleWithWebIdentityCommand).length).toEqual(1);
-    expect(core.setFailed).toHaveBeenCalledWith('Could not assume role with OIDC: ');
-  });
-
-  test('role external ID provided', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'role-external-id': 'abcdef' }));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
-      ExternalId: 'abcdef',
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 
-  test('workflow name sanitized in role assumption tags', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+  describe('Global Timeout Configuration', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+    });
 
-    process.env = {
-      ...process.env,
-      GITHUB_WORKFLOW:
-        'Workflow!"#$%&\'()*+, -./:;<=>?@[]^_`{|}~🙂💥🍌1yFvMOeD3ZHYsHrGjCceOboMYzBPo0CRNFdcsVRG6UgR3A912a8KfcBtEVvkAS7kRBq80umGff8mux5IN1y55HQWPNBNyaruuVr4islFXte4FDQZexGJRUSMyHQpxJ8OmZnET84oDmbvmIjgxI6IBrdihX9PHMapT4gQvRYnLqNiKb18rEMWDNoZRy51UPX5sWK2GKPipgKSO9kqLckZai9D2AN2RlWCxtMqChNtxuxjqeqhoQZo0oaq39sjcRZgAAAAAAA',
-    };
+    it('sets timeout when action-timeout-s is provided', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'action-timeout-s': '30',
+        }),
+      );
 
-    const sanitizedWorkflowName =
-      'Workflow__________+_ -./:__=__@____________1yFvMOeD3ZHYsHrGjCceOboMYzBPo0CRNFdcsVRG6UgR3A912a8KfcBtEVvkAS7kRBq80umGff8mux5IN1y55HQWPNBNyaruuVr4islFXte4FDQZexGJRUSMyHQpxJ8OmZnET84oDmbvmIjgxI6IBrdihX9PHMapT4gQvRYnLqNiKb18rEMWDNoZRy51UPX5sWK2GKPipgKSO9kqLckZa';
+      await run();
 
-    await run();
+      expect(infoSpy).toHaveBeenCalledWith('Setting a global timeout of 30 seconds for the action');
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
+      expect(clearTimeoutSpy).toHaveBeenCalledWith(expect.any(Object));
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: sanitizedWorkflowName },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
+    it('does not set timeout when action-timeout-s is 0', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'action-timeout-s': '0',
+        }),
+      );
+
+      await run();
+
+      expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining('Setting a global timeout'));
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('does not set timeout when action-timeout-s is not provided', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const infoSpy = vi.spyOn(core, 'info');
+
+      await run();
+
+      expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining('Setting a global timeout'));
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('timeout callback calls setFailed and exits process', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+      const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'action-timeout-s': '5',
+        }),
+      );
+
+      await run();
+
+      // Get the timeout callback function
+      const timeoutCallback = setTimeoutSpy.mock.calls[0][0] as () => void;
+      
+      // Execute the timeout callback
+      timeoutCallback();
+
+      expect(core.setFailed).toHaveBeenCalledWith('Action timed out after 5 seconds');
+      expect(processExitSpy).toHaveBeenCalledWith(1);
     });
   });
 
-  test('skip tagging provided as true', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': 'true' }));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: undefined,
-    });
-  });
-
-  test('skip tagging provided as false', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'role-skip-session-tagging': 'false' }));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
-    });
-  });
-
-  test('skip tagging not provided', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS }));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
-    });
-  });
-
-  test('masks variables before exporting', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
-
-    const maskedValues: string[] = [];
-    const publicFields = ['AWS_REGION', 'AWS_DEFAULT_REGION'];
-    jest.spyOn(core, 'setSecret').mockImplementation((secret) => {
-      maskedValues.push(secret);
-    });
-    jest.spyOn(core, 'exportVariable').mockImplementation((name, value) => {
-      const val = String(value);
-      if (!maskedValues.includes(val) && !publicFields.includes(name)) {
-        throw new Error(`{value} for variable ${name} is not masked yet!`);
-      }
-      process.env[name] = val;
+  describe('HTTP Proxy Configuration', {}, () => {
+    beforeEach(() => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
     });
 
-    await run();
+    it('configures proxy from http-proxy input', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://proxy.example.com:8080',
+        }),
+      );
 
-    expect(core.exportVariable).toReturn();
-  });
+      await run();
 
-  test('inline policy and managed session policies are provided in assume role calls', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'inline-session-policy': 'inline' }));
-
-    jest
-      .spyOn(core, 'getMultilineInput')
-      .mockImplementation(mockGetMultilineInput({ 'managed-session-policies': MANAGED_SESSION_POLICY_INPUT }));
-
-    await run();
-
-    expect(mockedSTS.commandCalls(AssumeRoleCommand)[0]?.args[0].input).toEqual({
-      RoleArn: ROLE_ARN,
-      RoleSessionName: 'GitHubActions',
-      DurationSeconds: 3600,
-      Tags: [
-        { Key: 'GitHub', Value: 'Actions' },
-        { Key: 'Repository', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REPOSITORY },
-        { Key: 'Workflow', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_WORKFLOW },
-        { Key: 'Action', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_ACTION },
-        { Key: 'Actor', Value: GITHUB_ACTOR_SANITIZED },
-        { Key: 'Commit', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_SHA },
-        { Key: 'Branch', Value: ENVIRONMENT_VARIABLE_OVERRIDES.GITHUB_REF },
-      ],
-      Policy: 'inline',
-      PolicyArns: [
-        { arn: 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess' },
-        { arn: 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess' },
-      ],
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
-  });
 
-  test('prints assumed role id', async () => {
-    jest.spyOn(core, 'getInput').mockImplementation(mockGetInput(ASSUME_ROLE_INPUTS));
+    it('configures proxy from HTTP_PROXY environment variable', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      process.env.HTTP_PROXY = 'http://proxy.example.com:8080';
 
-    await run();
+      await run();
 
-    expect(core.info).toHaveBeenCalledWith(`Authenticated as assumedRoleId ${FAKE_ASSUMED_ROLE_ID}`);
-  });
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  test('unsets credentials if enabled', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'unset-current-credentials': 'true' }));
+    it('configures proxy from HTTPS_PROXY environment variable', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      process.env.HTTPS_PROXY = 'https://proxy.example.com:8080';
 
-    await run();
+      await run();
 
-    expect(core.exportVariable).toHaveBeenCalledTimes(12);
-  });
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  test('sets credentials as output if enabled', async () => {
-    jest
-      .spyOn(core, 'getInput')
-      .mockImplementation(mockGetInput({ ...ASSUME_ROLE_INPUTS, 'output-credentials': 'true' }));
+    it('prioritizes http-proxy input over environment variables', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+      process.env.HTTP_PROXY = 'http://env-proxy.example.com:8080';
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://input-proxy.example.com:8080',
+        }),
+      );
 
-    await run();
+      await run();
 
-    expect(core.setOutput).toHaveBeenCalledTimes(4);
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('properly configures proxy agent in STS client', async () => {
+      const infoSpy = vi.spyOn(core, 'info');
+
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://proxy.example.com:8080',
+        }),
+      );
+
+      await run();
+
+      expect(infoSpy).toHaveBeenCalledWith('Configuring proxy handler for STS client');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('configures no-proxy setting', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://proxy.example.com:8080',
+          'no-proxy': 'localhost,127.0.0.1',
+        }),
+      );
+
+      await run();
+
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('works without proxy configuration', async () => {
+      await run();
+
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
   });
 });

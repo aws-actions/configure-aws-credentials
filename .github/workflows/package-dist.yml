@@ -17,7 +17,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
@@ -28,7 +28,7 @@ jobs:
           npm test
           npm run package
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
@@ -39,7 +39,7 @@ jobs:
         with:
           parse-json-secrets: true
           secret-ids: |
-            OSDS,arn:aws:secretsmanager:us-west-2:206735643321:secret:github-aws-sdk-osds-automation-gebs9n
+            ${{ secrets.OSDS_PACKAGING_ROLE }}
       - name: Commit
         run: |
           echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}"
@@ -47,5 +47,6 @@ jobs:
           git config user.email "github-aws-sdk-osds-automation@amazon.com"
           git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
           git add dist
+          git add THIRD-PARTY
           git commit -m "chore: Update dist" || echo "No changes to commit"
-          git push origin
+          git push --force origin

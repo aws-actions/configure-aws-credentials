@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { errorMessage } from '../helpers';
+import { errorMessage, getBooleanInput } from '../helpers';
 
 /**
  * When the GitHub Actions job is done, clean up any environment variables that
@@ -13,20 +13,24 @@ import { errorMessage } from '../helpers';
  */
 
 export function cleanup() {
-  try {
-    // The GitHub Actions toolkit does not have an option to completely unset
-    // environment variables, so we overwrite the current value with an empty
-    // string. The AWS CLI and AWS SDKs will behave correctly: they treat an
-    // empty string value as if the environment variable does not exist.
-    core.exportVariable('AWS_ACCESS_KEY_ID', '');
-    core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
-    core.exportVariable('AWS_SESSION_TOKEN', '');
-    core.exportVariable('AWS_DEFAULT_REGION', '');
-    core.exportVariable('AWS_REGION', '');
-  } catch (error) {
-    core.setFailed(errorMessage(error));
+  // Only attempt to change environment variables if we changed them in the first place
+  if (getBooleanInput('output-env-credentials', { required: false, default: true })) {
+    try {
+      // The GitHub Actions toolkit does not have an option to completely unset
+      // environment variables, so we overwrite the current value with an empty
+      // string. The AWS CLI and AWS SDKs will behave correctly: they treat an
+      // empty string value as if the environment variable does not exist.
+      core.exportVariable('AWS_ACCESS_KEY_ID', '');
+      core.exportVariable('AWS_SECRET_ACCESS_KEY', '');
+      core.exportVariable('AWS_SESSION_TOKEN', '');
+      core.exportVariable('AWS_DEFAULT_REGION', '');
+      core.exportVariable('AWS_REGION', '');
+    } catch (error) {
+      core.setFailed(errorMessage(error));
+    }
   }
 }
+
 /* c8 ignore start */
 if (require.main === module) {
   try {
