@@ -387,9 +387,9 @@ Without a subject (`sub`) condition, any GitHub user or repository could
 potentially assume the role. The subject can be scoped to a GitHub organization
 and repository as shown in the CloudFormation template. However, scoping it down
 to your org and repo may cause the role assumption to fail in some cases. See
-[Example subject claims](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#example-subject-claims)
+[Example subject claims](https://docs.github.com/en/actions/reference/security/oidc#example-subject-claims)
 for specific details on what the subject value will be depending on your
-workflow. You can also [customize your subject claim](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-token-claims)
+workflow. You can also [customize your subject claim](https://docs.github.com/en/actions/reference/security/oidc#customizing-the-token-claims)
 if you want full control over the information you can filter for in your trust
 policy. If you aren't sure what your subject (`sub`) key is, you can add the
 [`actions-oidc-debugger`](https://github.com/github/actions-oidc-debugger)
