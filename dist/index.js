@@ -1248,7 +1248,7 @@ var require_util = __commonJS({
     var net = require("node:net");
     var { Blob: Blob2 } = require("node:buffer");
     var nodeUtil = require("node:util");
-    var { stringify: stringify2 } = require("node:querystring");
+    var { stringify } = require("node:querystring");
     var { EventEmitter: EE } = require("node:events");
     var { InvalidArgumentError } = require_errors();
     var { headerNameLowerCasedRecord } = require_constants();
@@ -1308,7 +1308,7 @@ var require_util = __commonJS({
       if (url.includes("?") || url.includes("#")) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
       }
-      const stringified = stringify2(queryParams);
+      const stringified = stringify(queryParams);
       if (stringified) {
         url += "?" + stringified;
       }
@@ -16205,7 +16205,7 @@ var require_util6 = __commonJS({
         throw new Error("Invalid cookie max-age");
       }
     }
-    function stringify2(cookie) {
+    function stringify(cookie) {
       if (cookie.name.length === 0) {
         return null;
       }
@@ -16259,7 +16259,7 @@ var require_util6 = __commonJS({
       validateCookiePath,
       validateCookieValue,
       toIMFDate,
-      stringify: stringify2
+      stringify
     };
   }
 });
@@ -16409,7 +16409,7 @@ var require_cookies = __commonJS({
   "node_modules/undici/lib/web/cookies/index.js"(exports2, module2) {
     "use strict";
     var { parseSetCookie } = require_parse();
-    var { stringify: stringify2 } = require_util6();
+    var { stringify } = require_util6();
     var { webidl } = require_webidl();
     var { Headers: Headers2 } = require_headers();
     function getCookies(headers) {
@@ -16452,7 +16452,7 @@ var require_cookies = __commonJS({
       webidl.argumentLengthCheck(arguments, 2, "setCookie");
       webidl.brandCheck(headers, Headers2, { strict: false });
       cookie = webidl.converters.Cookie(cookie);
-      const str = stringify2(cookie);
+      const str = stringify(cookie);
       if (str) {
         headers.append("Set-Cookie", str);
       }
@@ -35856,7 +35856,7 @@ var require_dist_cjs33 = __commonJS({
     var getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || path3.join(getHomeDir.getHomeDir(), ".aws", "credentials");
     var prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@\+\.%:/]+)\2$/;
     var profileNameBlockList = ["__proto__", "profile __proto__"];
-    var parseIni = (iniData) => {
+    var parseIni2 = (iniData) => {
       const map2 = {};
       let currentSection;
       let currentSubSection;
@@ -35917,10 +35917,10 @@ var require_dist_cjs33 = __commonJS({
       const parsedFiles = await Promise.all([
         readFile.readFile(resolvedConfigFilepath, {
           ignoreCache: init.ignoreCache
-        }).then(parseIni).then(getConfigData).catch(swallowError$1),
+        }).then(parseIni2).then(getConfigData).catch(swallowError$1),
         readFile.readFile(resolvedFilepath, {
           ignoreCache: init.ignoreCache
-        }).then(parseIni).catch(swallowError$1)
+        }).then(parseIni2).catch(swallowError$1)
       ]);
       return {
         configFile: parsedFiles[0],
@@ -35929,7 +35929,7 @@ var require_dist_cjs33 = __commonJS({
     };
     var getSsoSessionData = (data2) => Object.entries(data2).filter(([key]) => key.startsWith(types.IniSectionType.SSO_SESSION + CONFIG_PREFIX_SEPARATOR)).reduce((acc, [key, value]) => ({ ...acc, [key.substring(key.indexOf(CONFIG_PREFIX_SEPARATOR) + 1)]: value }), {});
     var swallowError = () => ({});
-    var loadSsoSessionData = async (init = {}) => readFile.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError);
+    var loadSsoSessionData = async (init = {}) => readFile.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni2).then(getSsoSessionData).catch(swallowError);
     var mergeConfigFiles = (...files) => {
       const merged = {};
       for (const file of files) {
@@ -45351,7 +45351,7 @@ var require_ms = __commonJS({
       options = options || {};
       var type = typeof val;
       if (type === "string" && val.length > 0) {
-        return parse2(val);
+        return parse(val);
       } else if (type === "number" && isFinite(val)) {
         return options.long ? fmtLong(val) : fmtShort(val);
       }
@@ -45359,7 +45359,7 @@ var require_ms = __commonJS({
         "val is not a non-empty string or a valid number. val=" + JSON.stringify(val)
       );
     };
-    function parse2(str) {
+    function parse(str) {
       str = String(str);
       if (str.length > 100) {
         return;
@@ -55784,7 +55784,7 @@ var require_escodegen = __commonJS({
   "node_modules/escodegen/escodegen.js"(exports2) {
     (function() {
       "use strict";
-      var Syntax, Precedence, BinaryPrecedence, SourceNode, estraverse, esutils, base, indent, json, renumber, hexadecimal, quotes, escapeless, newline, space, parentheses, semicolons, safeConcatenation, directive, extra, parse2, sourceMap, sourceCode, preserveBlankLines, FORMAT_MINIFY, FORMAT_DEFAULTS;
+      var Syntax, Precedence, BinaryPrecedence, SourceNode, estraverse, esutils, base, indent, json, renumber, hexadecimal, quotes, escapeless, newline, space, parentheses, semicolons, safeConcatenation, directive, extra, parse, sourceMap, sourceCode, preserveBlankLines, FORMAT_MINIFY, FORMAT_DEFAULTS;
       estraverse = require_estraverse();
       esutils = require_utils4();
       Syntax = estraverse.Syntax;
@@ -57607,9 +57607,9 @@ var require_escodegen = __commonJS({
         },
         Literal: function(expr, precedence, flags) {
           var raw;
-          if (expr.hasOwnProperty("raw") && parse2 && extra.raw) {
+          if (expr.hasOwnProperty("raw") && parse && extra.raw) {
             try {
-              raw = parse2(expr.raw).body[0].expression;
+              raw = parse(expr.raw).body[0].expression;
               if (raw.type === Syntax.Literal) {
                 if (raw.value === expr.value) {
                   return expr.raw;
@@ -57806,7 +57806,7 @@ var require_escodegen = __commonJS({
         semicolons = options.format.semicolons;
         safeConcatenation = options.format.safeConcatenation;
         directive = options.directive;
-        parse2 = json ? null : options.parse;
+        parse = json ? null : options.parse;
         sourceMap = options.sourceMap;
         sourceCode = options.sourceCode;
         preserveBlankLines = options.format.preserveBlankLines && sourceCode !== null;
@@ -57910,7 +57910,7 @@ var require_esprima = __commonJS({
             var jsx_parser_1 = __webpack_require__(3);
             var parser_1 = __webpack_require__(8);
             var tokenizer_1 = __webpack_require__(15);
-            function parse2(code, options, delegate) {
+            function parse(code, options, delegate) {
               var commentHandler = null;
               var proxyDelegate = function(node, metadata) {
                 if (delegate) {
@@ -57955,17 +57955,17 @@ var require_esprima = __commonJS({
               }
               return ast;
             }
-            exports3.parse = parse2;
+            exports3.parse = parse;
             function parseModule(code, options, delegate) {
               var parsingOptions = options || {};
               parsingOptions.sourceType = "module";
-              return parse2(code, parsingOptions, delegate);
+              return parse(code, parsingOptions, delegate);
             }
             exports3.parseModule = parseModule;
             function parseScript(code, options, delegate) {
               var parsingOptions = options || {};
               parsingOptions.sourceType = "script";
-              return parse2(code, parsingOptions, delegate);
+              return parse(code, parsingOptions, delegate);
             }
             exports3.parseScript = parseScript;
             function tokenize(code, options, delegate) {
@@ -71321,218 +71321,6 @@ var require_dist11 = __commonJS({
   }
 });
 
-// node_modules/ini/lib/ini.js
-var require_ini = __commonJS({
-  "node_modules/ini/lib/ini.js"(exports2, module2) {
-    var { hasOwnProperty } = Object.prototype;
-    var encode2 = (obj, opt = {}) => {
-      if (typeof opt === "string") {
-        opt = { section: opt };
-      }
-      opt.align = opt.align === true;
-      opt.newline = opt.newline === true;
-      opt.sort = opt.sort === true;
-      opt.whitespace = opt.whitespace === true || opt.align === true;
-      opt.platform = opt.platform || typeof process !== "undefined" && process.platform;
-      opt.bracketedArray = opt.bracketedArray !== false;
-      const eol = opt.platform === "win32" ? "\r\n" : "\n";
-      const separator = opt.whitespace ? " = " : "=";
-      const children = [];
-      const keys = opt.sort ? Object.keys(obj).sort() : Object.keys(obj);
-      let padToChars = 0;
-      if (opt.align) {
-        padToChars = safe(
-          keys.filter((k5) => obj[k5] === null || Array.isArray(obj[k5]) || typeof obj[k5] !== "object").map((k5) => Array.isArray(obj[k5]) ? `${k5}[]` : k5).concat([""]).reduce((a5, b5) => safe(a5).length >= safe(b5).length ? a5 : b5)
-        ).length;
-      }
-      let out = "";
-      const arraySuffix = opt.bracketedArray ? "[]" : "";
-      for (const k5 of keys) {
-        const val = obj[k5];
-        if (val && Array.isArray(val)) {
-          for (const item of val) {
-            out += safe(`${k5}${arraySuffix}`).padEnd(padToChars, " ") + separator + safe(item) + eol;
-          }
-        } else if (val && typeof val === "object") {
-          children.push(k5);
-        } else {
-          out += safe(k5).padEnd(padToChars, " ") + separator + safe(val) + eol;
-        }
-      }
-      if (opt.section && out.length) {
-        out = "[" + safe(opt.section) + "]" + (opt.newline ? eol + eol : eol) + out;
-      }
-      for (const k5 of children) {
-        const nk = splitSections(k5, ".").join("\\.");
-        const section = (opt.section ? opt.section + "." : "") + nk;
-        const child = encode2(obj[k5], {
-          ...opt,
-          section
-        });
-        if (out.length && child.length) {
-          out += eol;
-        }
-        out += child;
-      }
-      return out;
-    };
-    function splitSections(str, separator) {
-      var lastMatchIndex = 0;
-      var lastSeparatorIndex = 0;
-      var nextIndex = 0;
-      var sections = [];
-      do {
-        nextIndex = str.indexOf(separator, lastMatchIndex);
-        if (nextIndex !== -1) {
-          lastMatchIndex = nextIndex + separator.length;
-          if (nextIndex > 0 && str[nextIndex - 1] === "\\") {
-            continue;
-          }
-          sections.push(str.slice(lastSeparatorIndex, nextIndex));
-          lastSeparatorIndex = nextIndex + separator.length;
-        }
-      } while (nextIndex !== -1);
-      sections.push(str.slice(lastSeparatorIndex));
-      return sections;
-    }
-    var decode2 = (str, opt = {}) => {
-      opt.bracketedArray = opt.bracketedArray !== false;
-      const out = /* @__PURE__ */ Object.create(null);
-      let p5 = out;
-      let section = null;
-      const re = /^\[([^\]]*)\]\s*$|^([^=]+)(=(.*))?$/i;
-      const lines = str.split(/[\r\n]+/g);
-      const duplicates = {};
-      for (const line of lines) {
-        if (!line || line.match(/^\s*[;#]/) || line.match(/^\s*$/)) {
-          continue;
-        }
-        const match = line.match(re);
-        if (!match) {
-          continue;
-        }
-        if (match[1] !== void 0) {
-          section = unsafe(match[1]);
-          if (section === "__proto__") {
-            p5 = /* @__PURE__ */ Object.create(null);
-            continue;
-          }
-          p5 = out[section] = out[section] || /* @__PURE__ */ Object.create(null);
-          continue;
-        }
-        const keyRaw = unsafe(match[2]);
-        let isArray;
-        if (opt.bracketedArray) {
-          isArray = keyRaw.length > 2 && keyRaw.slice(-2) === "[]";
-        } else {
-          duplicates[keyRaw] = (duplicates?.[keyRaw] || 0) + 1;
-          isArray = duplicates[keyRaw] > 1;
-        }
-        const key = isArray && keyRaw.endsWith("[]") ? keyRaw.slice(0, -2) : keyRaw;
-        if (key === "__proto__") {
-          continue;
-        }
-        const valueRaw = match[3] ? unsafe(match[4]) : true;
-        const value = valueRaw === "true" || valueRaw === "false" || valueRaw === "null" ? JSON.parse(valueRaw) : valueRaw;
-        if (isArray) {
-          if (!hasOwnProperty.call(p5, key)) {
-            p5[key] = [];
-          } else if (!Array.isArray(p5[key])) {
-            p5[key] = [p5[key]];
-          }
-        }
-        if (Array.isArray(p5[key])) {
-          p5[key].push(value);
-        } else {
-          p5[key] = value;
-        }
-      }
-      const remove = [];
-      for (const k5 of Object.keys(out)) {
-        if (!hasOwnProperty.call(out, k5) || typeof out[k5] !== "object" || Array.isArray(out[k5])) {
-          continue;
-        }
-        const parts = splitSections(k5, ".");
-        p5 = out;
-        const l5 = parts.pop();
-        const nl = l5.replace(/\\\./g, ".");
-        for (const part of parts) {
-          if (part === "__proto__") {
-            continue;
-          }
-          if (!hasOwnProperty.call(p5, part) || typeof p5[part] !== "object") {
-            p5[part] = /* @__PURE__ */ Object.create(null);
-          }
-          p5 = p5[part];
-        }
-        if (p5 === out && nl === l5) {
-          continue;
-        }
-        p5[nl] = out[k5];
-        remove.push(k5);
-      }
-      for (const del of remove) {
-        delete out[del];
-      }
-      return out;
-    };
-    var isQuoted = (val) => {
-      return val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'");
-    };
-    var safe = (val) => {
-      if (typeof val !== "string" || val.match(/[=\r\n]/) || val.match(/^\[/) || val.length > 1 && isQuoted(val) || val !== val.trim()) {
-        return JSON.stringify(val);
-      }
-      return val.split(";").join("\\;").split("#").join("\\#");
-    };
-    var unsafe = (val) => {
-      val = (val || "").trim();
-      if (isQuoted(val)) {
-        if (val.charAt(0) === "'") {
-          val = val.slice(1, -1);
-        }
-        try {
-          val = JSON.parse(val);
-        } catch {
-        }
-      } else {
-        let esc = false;
-        let unesc = "";
-        for (let i5 = 0, l5 = val.length; i5 < l5; i5++) {
-          const c5 = val.charAt(i5);
-          if (esc) {
-            if ("\\;#".indexOf(c5) !== -1) {
-              unesc += c5;
-            } else {
-              unesc += "\\" + c5;
-            }
-            esc = false;
-          } else if (";#".indexOf(c5) !== -1) {
-            break;
-          } else if (c5 === "\\") {
-            esc = true;
-          } else {
-            unesc += c5;
-          }
-        }
-        if (esc) {
-          unesc += "\\";
-        }
-        return unesc.trim();
-      }
-      return val;
-    };
-    module2.exports = {
-      parse: decode2,
-      decode: decode2,
-      stringify: encode2,
-      encode: encode2,
-      safe,
-      unsafe
-    };
-  }
-});
-
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
@@ -72009,7 +71797,48 @@ var fs2 = __toESM(require("node:fs"));
 var os = __toESM(require("node:os"));
 var path2 = __toESM(require("node:path"));
 var core3 = __toESM(require_core());
-var ini = __toESM(require_ini());
+function parseIni(iniData) {
+  const result = {};
+  let currentSection;
+  for (const line of iniData.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith(";") || trimmed.startsWith("#")) {
+      continue;
+    }
+    const sectionMatch = trimmed.match(/^\[([^\]]*)\]$/);
+    if (sectionMatch) {
+      currentSection = sectionMatch[1];
+      if (currentSection === "__proto__") {
+        currentSection = void 0;
+        continue;
+      }
+      result[currentSection] = result[currentSection] || {};
+      continue;
+    }
+    if (currentSection) {
+      const eqIndex = trimmed.indexOf("=");
+      if (eqIndex > 0) {
+        const key = trimmed.substring(0, eqIndex).trim();
+        const value = trimmed.substring(eqIndex + 1).trim();
+        if (key !== "__proto__") {
+          result[currentSection][key] = value;
+        }
+      }
+    }
+  }
+  return result;
+}
+function stringifyIni(data2) {
+  const sections = [];
+  for (const [sectionName, sectionData] of Object.entries(data2)) {
+    const lines = [`[${sectionName}]`];
+    for (const [key, value] of Object.entries(sectionData)) {
+      lines.push(`${key}=${value}`);
+    }
+    sections.push(lines.join("\n"));
+  }
+  return sections.join("\n\n") + "\n";
+}
 function getProfileFilePaths() {
   const credentialsPath = process.env.AWS_SHARED_CREDENTIALS_FILE || path2.join(os.homedir(), ".aws", "credentials");
   const configPath = process.env.AWS_CONFIG_FILE || path2.join(os.homedir(), ".aws", "config");
@@ -72044,11 +71873,11 @@ function mergeProfileSection(filePath, sectionName, data2) {
   if (fs2.existsSync(filePath)) {
     core3.debug(`Reading existing file: ${filePath}`);
     const fileContent = fs2.readFileSync(filePath, "utf-8");
-    existingContent = ini.parse(fileContent);
+    existingContent = parseIni(fileContent);
   }
   existingContent[sectionName] = data2;
   const tempFile = `${filePath}.tmp`;
-  const content = ini.stringify(existingContent);
+  const content = stringifyIni(existingContent);
   core3.debug(`Writing profile to ${filePath}`);
   fs2.writeFileSync(tempFile, content, { mode: 384 });
   fs2.renameSync(tempFile, filePath);

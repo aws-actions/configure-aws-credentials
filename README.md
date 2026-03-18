@@ -8,7 +8,7 @@ Quick Start (OIDC, recommended)
 1. Create an IAM Identity Provider in your AWS account for GitHub OIDC. (See 
 [OIDC configuration](#oidc-configuration) below for details.)
 2. Create an IAM Role in your AWS account with a trust policy that allows GitHub
-Actions to assume it:
+Actions to assume it. (Expand the sections below)
     <details>
     <summary>GitHub OIDC Trust Policy</summary>
 
@@ -78,8 +78,10 @@ Security Recommendations
 * Store sensitive information in a secure way, such as using
   [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) or
   [GitHub Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+* Be especially careful about running Actions in non-ephemeral environments, or
+  triggering workflows on `pull_request_target` events.
 
-Other Authentication Scenarios
+Non-OIDC Authentication Options
 ------------------------------
 This action supports five different authentication methods that are configured
 by specifying different inputs.
@@ -122,7 +124,7 @@ adjust examples here to match your environment.*
 Additional Options
 ------------------
 ### Options
-See [action.yml](./action.yml) for more detail.
+The options list can be expanded below. See [action.yml](./action.yml) for more detail.
 <details>
 <summary>Options list and descriptions</summary>
 
@@ -179,17 +181,25 @@ By default, this action exports credentials as environment variables
 (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc.). However, you can use the
 `aws-profile` input to configure named AWS profiles instead. When `aws-profile`
 is provided, credentials are written to `~/.aws/credentials` and
-`~/.aws/config` files, allowing you to:
-
-- Configure multiple AWS profiles in a single workflow
-- Use the `--profile` flag with AWS CLI and SDKs
-- Work naturally with tools like Terraform and AWS CDK that read from AWS config files
+`~/.aws/config` files. 
 
 When using profiles:
 - Credentials are **not** exported as environment variables (AWS_ACCESS_KEY_ID, etc.)
 - The `AWS_PROFILE` environment variable is set (unless `output-env-credentials: false`)
 - The `AWS_REGION` environment variable is always set for convenience
 - All authentication methods (OIDC, static credentials, role assumption) are supported
+
+Before modifying `~/.aws/credentials` or `~/.aws/config`, the action creates a
+daily backup of each file (e.g. `~/.aws/credentials.backup-1742256000`). This is
+especially useful on **self-hosted runners** where the workspace is not
+ephemeral and existing AWS configuration may be present.
+
+To disable backups, set the `AWS_DISABLE_CONFIG_BACKUP` environment variable in 
+your workflow configuration.
+```yaml
+    env:
+      AWS_DISABLE_CONFIG_BACKUP: "true"
+```
 
 See the [Examples](#examples) section for usage examples.
 
@@ -334,8 +344,8 @@ And we can pass multiple managed policies likes this:
 ```
 </details>
 
-OIDC Configuration
--------------------
+OIDC Configuration Details
+--------------------------
 We recommend using [GitHub's OIDC
 provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 to get short-lived AWS credentials needed for your actions. When using OIDC, you
