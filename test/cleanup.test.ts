@@ -31,12 +31,21 @@ describe('Configure AWS Credentials cleanup', {}, () => {
   it('replaces AWS credential and region environment variables with empty strings', {}, () => {
     cleanup();
     expect(core.setFailed).toHaveBeenCalledTimes(0);
-    expect(core.exportVariable).toHaveBeenCalledTimes(6);
+    expect(core.exportVariable).toHaveBeenCalledTimes(5);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', '');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', '');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', '');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', '');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', '');
+  });
+  it('also clears AWS_PROFILE when aws-profile was set', {}, () => {
+    vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
+      if (name === 'aws-profile') return 'my-profile';
+      return '';
+    });
+    cleanup();
+    expect(core.setFailed).toHaveBeenCalledTimes(0);
+    expect(core.exportVariable).toHaveBeenCalledTimes(6);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', '');
   });
   it('handles errors', {}, () => {

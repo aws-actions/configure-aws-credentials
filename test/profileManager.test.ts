@@ -153,8 +153,8 @@ describe('Profile Manager', {}, () => {
 
       const paths = getProfileFilePaths();
 
-      expect(paths.credentials).toMatch(/\.aws\/credentials$/);
-      expect(paths.config).toMatch(/\.aws\/config$/);
+      expect(paths.credentials).toMatch(/\.aws[/\\]credentials$/);
+      expect(paths.config).toMatch(/\.aws[/\\]config$/);
     });
 
     it('respects AWS_SHARED_CREDENTIALS_FILE env var', {}, () => {
