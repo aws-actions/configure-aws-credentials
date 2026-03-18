@@ -1,14 +1,15 @@
 {
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
-  "version": "5.1.1",
+  "version": "6.0.0",
   "scripts": {
     "build": "tsc",
     "lint": "biome check --error-on-warnings ./src",
     "lint:fix": "biome check --write ./src",
-    "package": "npm run build && ncc build --license THIRD-PARTY -o dist && ncc build src/cleanup/index.ts -o dist/cleanup && cpy dist/THIRD-PARTY . && del-cli dist/THIRD-PARTY",
+    "package": "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/index.js && esbuild src/cleanup/index.ts --bundle --platform=node --target=node24 --outfile=dist/cleanup/index.js && npm run license",
     "test": "npm run lint && vitest run && npm run build",
-    "clean": "del-cli coverage test-reports node_modules"
+    "clean": "del-cli coverage test-reports node_modules",
+    "license": "generate-license-file --config ./.generatelicensefile.json"
   },
   "author": {
     "name": "Amazon.com, Inc. or its affiliates",
@@ -16,27 +17,24 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.936.0",
-    "@biomejs/biome": "2.3.9",
-    "@smithy/property-provider": "^4.2.5",
-    "@types/ini": "^4.1.1",
-    "@types/node": "^25.0.2",
-    "@vercel/ncc": "^0.38.4",
+    "@aws-sdk/credential-provider-env": "^3.972.18",
+    "@biomejs/biome": "2.4.7",
+    "@smithy/property-provider": "^4.2.11",
+    "@types/node": "^25.5.0",
     "@vitest/coverage-v8": "^3.2.4",
     "aws-sdk-client-mock": "^4.1.0",
-    "cpy-cli": "^6.0.0",
-    "del-cli": "^7.0.0",
+    "esbuild": "^0.27.4",
+    "generate-license-file": "^4.1.1",
     "json-schema": "^0.4.0",
-    "memfs": "^4.51.1",
+    "memfs": "^4.56.11",
     "standard-version": "^9.5.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@actions/core": "^2.0.1",
-    "@aws-sdk/client-sts": "^3.952.0",
-    "@smithy/node-http-handler": "^4.4.5",
-    "ini": "^5.0.0",
+    "@actions/core": "^2.0.2",
+    "@aws-sdk/client-sts": "^3.1010.0",
+    "@smithy/node-http-handler": "^4.4.7",
     "proxy-agent": "^6.5.0"
   },
   "keywords": [
@@ -45,7 +43,7 @@
     "github-action"
   ],
   "engines": {
-    "node": ">= 14.0.0"
+    "node": ">= 16.3.0"
   },
   "main": "build/index.js",
   "license": "MIT",

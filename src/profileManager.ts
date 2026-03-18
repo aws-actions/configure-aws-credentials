@@ -3,7 +3,64 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { Credentials } from '@aws-sdk/client-sts';
-import * as ini from 'ini';
+
+/**
+ * Parse an INI-format string into a nested object.
+ * Preserves literal section names (e.g. "profile dev" stays as-is).
+ */
+export function parseIni(iniData: string): Record<string, Record<string, string>> {
+  const result: Record<string, Record<string, string>> = {};
+  let currentSection: string | undefined;
+
+  for (const line of iniData.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith(';') || trimmed.startsWith('#')) {
+      continue;
+    }
+
+    const sectionMatch = trimmed.match(/^\[([^\]]*)\]$/);
+    if (sectionMatch) {
+      currentSection = sectionMatch[1] as string;
+      if (currentSection === '__proto__') {
+        currentSection = undefined;
+        continue;
+      }
+      result[currentSection] = result[currentSection] || {};
+      continue;
+    }
+
+    if (currentSection) {
+      const eqIndex = trimmed.indexOf('=');
+      if (eqIndex > 0) {
+        const key = trimmed.substring(0, eqIndex).trim();
+        const value = trimmed.substring(eqIndex + 1).trim();
+        if (key !== '__proto__') {
+          const section = result[currentSection];
+          if (section) {
+            section[key] = value;
+          }
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Serialize a nested object into INI-format string.
+ */
+export function stringifyIni(data: Record<string, Record<string, string>>): string {
+  const sections: string[] = [];
+  for (const [sectionName, sectionData] of Object.entries(data)) {
+    const lines: string[] = [`[${sectionName}]`];
+    for (const [key, value] of Object.entries(sectionData)) {
+      lines.push(`${key} = ${value}`);
+    }
+    sections.push(lines.join('\n'));
+  }
+  return `${sections.join('\n\n')}\n`;
+}
 
 interface ProfileFilePaths {
   credentials: string;
@@ -61,29 +118,72 @@ export function validateProfileName(profileName: string): void {
 }
 
 /**
+ * Get a backup file path using today's date (truncated to start of day UTC).
+ * The same backup path is returned all day, so repeated runs overwrite instead of accumulating.
+ */
+function getBackupFilePath(filePath: string): string {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const timestamp = Math.floor(today.getTime() / 1000);
+  return `${filePath}.backup-${timestamp}`;
+}
+
+const backedUpFiles = new Set<string>();
+
+/** Reset backup tracking state. Exported for testing only. */
+export function resetBackupState(): void {
+  backedUpFiles.clear();
+}
+
+/**
+ * Back up an existing file before modifying it.
+ * Only backs up once per file per action run. Skipped if the file does not
+ * exist or if AWS_DISABLE_CONFIG_BACKUP is set.
+ */
+function backupFileIfNeeded(filePath: string): void {
+  if (backedUpFiles.has(filePath)) {
+    return;
+  }
+  backedUpFiles.add(filePath);
+
+  if (process.env.AWS_DISABLE_CONFIG_BACKUP) {
+    core.debug(`Skipping backup of ${filePath} (AWS_DISABLE_CONFIG_BACKUP is set)`);
+    return;
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const backupPath = getBackupFilePath(filePath);
+  core.debug(`Backing up ${filePath} to ${backupPath}`);
+  fs.copyFileSync(filePath, backupPath);
+}
+
+/**
  * Merge a profile section into an INI file
- * Reads existing file, updates the specified section, and writes back atomically
+ * Reads existing file, updates the specified section, and writes back
  */
 export function mergeProfileSection(filePath: string, sectionName: string, data: Record<string, string>): void {
   let existingContent: Record<string, Record<string, string>> = {};
+
+  // Back up existing file before first modification
+  backupFileIfNeeded(filePath);
 
   // Read existing file if it exists
   if (fs.existsSync(filePath)) {
     core.debug(`Reading existing file: ${filePath}`);
     const fileContent = fs.readFileSync(filePath, 'utf-8');
-    existingContent = ini.parse(fileContent);
+    existingContent = parseIni(fileContent);
   }
 
   // Merge: update existing profile or add new one
   existingContent[sectionName] = data;
 
-  // Atomic write: write to temp file, then rename
-  const tempFile = `${filePath}.tmp`;
-  const content = ini.stringify(existingContent);
+  const content = stringifyIni(existingContent);
 
   core.debug(`Writing profile to ${filePath}`);
-  fs.writeFileSync(tempFile, content, { mode: 0o600 });
-  fs.renameSync(tempFile, filePath);
+  fs.writeFileSync(filePath, content, { mode: 0o600 });
 }
 
 /**

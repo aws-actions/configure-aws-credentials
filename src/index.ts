@@ -40,6 +40,7 @@ export async function run() {
       Number.parseInt(core.getInput('role-duration-seconds', { required: false })) || DEFAULT_ROLE_DURATION;
     const roleSessionName = core.getInput('role-session-name', { required: false }) || ROLE_SESSION_NAME;
     const roleSkipSessionTagging = getBooleanInput('role-skip-session-tagging', { required: false });
+    const transitiveTagKeys = core.getMultilineInput('transitive-tag-keys', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false }) || process.env.HTTP_PROXY;
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
     const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false }).map((p) => {
@@ -126,7 +127,10 @@ export async function run() {
     exportRegion(region, shouldExportRegionEnvVars);
 
     // Instantiate credentials client
-    const clientProps: { region: string; proxyServer?: string; noProxy?: string } = { region };
+    const clientProps: { region: string; proxyServer?: string; noProxy?: string; roleChaining: boolean } = {
+      region,
+      roleChaining,
+    };
     if (proxyServer) clientProps.proxyServer = proxyServer;
     if (noProxy) clientProps.noProxy = noProxy;
     const credentialsClient = new CredentialsClient(clientProps);
@@ -182,7 +186,6 @@ export async function run() {
       await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
-
     // Get role credentials if configured to do so
     if (roleToAssume) {
       let roleCredentials: AssumeRoleCommandOutput;
@@ -197,6 +200,7 @@ export async function run() {
               roleDuration,
               roleSessionName,
               roleSkipSessionTagging,
+              transitiveTagKeys,
               webIdentityTokenFile,
               webIdentityToken,
               inlineSessionPolicy,

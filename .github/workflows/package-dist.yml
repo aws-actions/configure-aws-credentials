@@ -28,7 +28,7 @@ jobs:
           npm test
           npm run package
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
@@ -47,5 +47,6 @@ jobs:
           git config user.email "github-aws-sdk-osds-automation@amazon.com"
           git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
           git add dist
+          git add THIRD-PARTY
           git commit -m "chore: Update dist" || echo "No changes to commit"
           git push --force origin

@@ -12,12 +12,14 @@ export interface CredentialsClientProps {
   region?: string;
   proxyServer?: string;
   noProxy?: string;
+  roleChaining: boolean;
 }
 
 export class CredentialsClient {
   public region?: string;
   private _stsClient?: STSClient;
   private readonly requestHandler?: NodeHttpHandler;
+  private roleChaining?: boolean;
 
   constructor(props: CredentialsClientProps) {
     if (props.region !== undefined) {
@@ -39,10 +41,11 @@ export class CredentialsClient {
         httpAgent: handler,
       });
     }
+    this.roleChaining = props.roleChaining;
   }
 
   public get stsClient(): STSClient {
-    if (!this._stsClient) {
+    if (!this._stsClient || this.roleChaining) {
       const config = { customUserAgent: USER_AGENT } as {
         customUserAgent: string;
         region?: string;
