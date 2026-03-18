@@ -13,7 +13,7 @@ inputs:
     description: AWS Region, e.g. us-east-2
     required: true
   aws-profile:
-    description: Name of the AWS profile to configure. When provided, credentials and config are written to ~/.aws/credentials and ~/.aws/config files instead of environment variables.
+    description: Name of the AWS profile to configure. When provided, credentials are written to ~/.aws/credentials and ~/.aws/config files rather than credential environment variables.
     required: false
   role-to-assume:
     description: The Amazon Resource Name (ARN) of the role to assume. Use the provided credentials to assume an IAM role and configure the Actions environment with the assumed role credentials rather than with the provided credentials.
