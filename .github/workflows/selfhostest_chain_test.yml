@@ -7,14 +7,22 @@ jobs:
   test-ecs-runner:
     runs-on: [self-hosted, ecs]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials (uses ECS task role)
+      # Step 1: Pick up ECS container credentials and export to env
+      - name: Get ECS container credentials
         uses: kellertk/configure-aws-credentials@main
         with:
           aws-region: us-east-1
-          # No access keys needed - picks up the ECS task role
-          # automatically via the container credential provider
+
+      # Step 2: Use the exported env creds to assume the S3 role
+      - name: Assume S3 list role
+        uses: kellertk/configure-aws-credentials@main
+        with:
+          aws-region: us-east-1
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          role-to-assume: arn:aws:iam::570774169190:role/gh-actions-s3-list-role
+          role-skip-session-tagging: true
 
       - name: Verify credentials
         run: aws sts get-caller-identity
