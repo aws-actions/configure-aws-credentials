@@ -1,0 +1,23 @@
+name: ECS Self-Hosted Runner Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-ecs-runner:
+    runs-on: [self-hosted, ecs]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (uses ECS task role)
+        uses: kellertk/configure-aws-credentials@main
+        with:
+          aws-region: us-east-1
+          # No access keys needed - picks up the ECS task role
+          # automatically via the container credential provider
+
+      - name: Verify credentials
+        run: aws sts get-caller-identity
+
+      - name: Test S3 access
+        run: aws s3 ls
