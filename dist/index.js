@@ -31865,6 +31865,7 @@ var init_ProtocolLib = __esm({
     import_smithy_client = __toESM(require_dist_cjs25());
     ProtocolLib = class {
       queryCompat;
+      errorRegistry;
       constructor(queryCompat = false) {
         this.queryCompat = queryCompat;
       }
@@ -31896,29 +31897,45 @@ var init_ProtocolLib = __esm({
         }
       }
       async getErrorSchemaOrThrowBaseException(errorIdentifier, defaultNamespace, response, dataObject, metadata, getErrorSchema) {
-        let namespace = defaultNamespace;
         let errorName = errorIdentifier;
         if (errorIdentifier.includes("#")) {
-          [namespace, errorName] = errorIdentifier.split("#");
+          [, errorName] = errorIdentifier.split("#");
         }
         const errorMetadata = {
           $metadata: metadata,
           $fault: response.statusCode < 500 ? "client" : "server"
         };
-        const registry = TypeRegistry.for(namespace);
+        if (!this.errorRegistry) {
+          throw new Error("@aws-sdk/core/protocols - error handler not initialized.");
+        }
         try {
-          const errorSchema = getErrorSchema?.(registry, errorName) ?? registry.getSchema(errorIdentifier);
+          const errorSchema = getErrorSchema?.(this.errorRegistry, errorName) ?? this.errorRegistry.getSchema(errorIdentifier);
           return { errorSchema, errorMetadata };
         } catch (e5) {
           dataObject.message = dataObject.message ?? dataObject.Message ?? "UnknownError";
-          const synthetic = TypeRegistry.for("smithy.ts.sdk.synthetic." + namespace);
+          const synthetic = this.errorRegistry;
           const baseExceptionSchema = synthetic.getBaseException();
           if (baseExceptionSchema) {
             const ErrorCtor = synthetic.getErrorCtor(baseExceptionSchema) ?? Error;
             throw this.decorateServiceException(Object.assign(new ErrorCtor({ name: errorName }), errorMetadata), dataObject);
           }
-          throw this.decorateServiceException(Object.assign(new Error(errorName), errorMetadata), dataObject);
+          const d5 = dataObject;
+          const message = d5?.message ?? d5?.Message ?? d5?.Error?.Message ?? d5?.Error?.message;
+          throw this.decorateServiceException(Object.assign(new Error(message), {
+            name: errorName
+          }, errorMetadata), dataObject);
         }
+      }
+      compose(composite, errorIdentifier, defaultNamespace) {
+        let namespace = defaultNamespace;
+        if (errorIdentifier.includes("#")) {
+          [namespace] = errorIdentifier.split("#");
+        }
+        const staticRegistry = TypeRegistry.for(namespace);
+        const defaultSyntheticRegistry = TypeRegistry.for("smithy.ts.sdk.synthetic." + defaultNamespace);
+        composite.copyFrom(staticRegistry);
+        composite.copyFrom(defaultSyntheticRegistry);
+        this.errorRegistry = composite;
       }
       decorateServiceException(exception, additions = {}) {
         if (this.queryCompat) {
@@ -31990,8 +32007,8 @@ var init_AwsSmithyRpcV2CborProtocol = __esm({
     AwsSmithyRpcV2CborProtocol = class extends SmithyRpcV2CborProtocol {
       awsQueryCompatible;
       mixin;
-      constructor({ defaultNamespace, awsQueryCompatible }) {
-        super({ defaultNamespace });
+      constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5, awsQueryCompatible }) {
+        super({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5 });
         this.awsQueryCompatible = !!awsQueryCompatible;
         this.mixin = new ProtocolLib(this.awsQueryCompatible);
       }
@@ -32013,10 +32030,11 @@ var init_AwsSmithyRpcV2CborProtocol = __esm({
           }
           return loadSmithyRpcV2CborErrorCode(response, dataObject) ?? "Unknown";
         })();
+        this.mixin.compose(this.compositeErrorRegistry, errorName, this.options.defaultNamespace);
         const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorName, this.options.defaultNamespace, response, dataObject, metadata, this.awsQueryCompatible ? this.mixin.findQueryCompatibleError : void 0);
         const ns = NormalizedSchema.of(errorSchema);
-        const message = dataObject.message ?? dataObject.Message ?? "Unknown";
-        const ErrorCtor = TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
+        const message = dataObject.message ?? dataObject.Message ?? "UnknownError";
+        const ErrorCtor = this.compositeErrorRegistry.getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {};
         for (const [name, member2] of ns.structIterator()) {
@@ -32661,9 +32679,10 @@ var init_AwsJsonRpcProtocol = __esm({
       codec;
       mixin;
       awsQueryCompatible;
-      constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec }) {
+      constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5, serviceTarget, awsQueryCompatible, jsonCodec }) {
         super({
-          defaultNamespace
+          defaultNamespace,
+          errorTypeRegistries: errorTypeRegistries5
         });
         this.serviceTarget = serviceTarget;
         this.codec = jsonCodec ?? new JsonCodec({
@@ -32703,10 +32722,11 @@ var init_AwsJsonRpcProtocol = __esm({
           this.mixin.setQueryCompatError(dataObject, response);
         }
         const errorIdentifier = loadRestJsonErrorCode(response, dataObject) ?? "Unknown";
+        this.mixin.compose(this.compositeErrorRegistry, errorIdentifier, this.options.defaultNamespace);
         const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, dataObject, metadata, this.awsQueryCompatible ? this.mixin.findQueryCompatibleError : void 0);
         const ns = NormalizedSchema.of(errorSchema);
-        const message = dataObject.message ?? dataObject.Message ?? "Unknown";
-        const ErrorCtor = TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
+        const message = dataObject.message ?? dataObject.Message ?? "UnknownError";
+        const ErrorCtor = this.compositeErrorRegistry.getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {};
         for (const [name, member2] of ns.structIterator()) {
@@ -32732,9 +32752,10 @@ var init_AwsJson1_0Protocol = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_0Protocol.js"() {
     init_AwsJsonRpcProtocol();
     AwsJson1_0Protocol = class extends AwsJsonRpcProtocol {
-      constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec }) {
+      constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5, serviceTarget, awsQueryCompatible, jsonCodec }) {
         super({
           defaultNamespace,
+          errorTypeRegistries: errorTypeRegistries5,
           serviceTarget,
           awsQueryCompatible,
           jsonCodec
@@ -32759,9 +32780,10 @@ var init_AwsJson1_1Protocol = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_1Protocol.js"() {
     init_AwsJsonRpcProtocol();
     AwsJson1_1Protocol = class extends AwsJsonRpcProtocol {
-      constructor({ defaultNamespace, serviceTarget, awsQueryCompatible, jsonCodec }) {
+      constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5, serviceTarget, awsQueryCompatible, jsonCodec }) {
         super({
           defaultNamespace,
+          errorTypeRegistries: errorTypeRegistries5,
           serviceTarget,
           awsQueryCompatible,
           jsonCodec
@@ -32794,9 +32816,10 @@ var init_AwsRestJsonProtocol = __esm({
       deserializer;
       codec;
       mixin = new ProtocolLib();
-      constructor({ defaultNamespace }) {
+      constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5 }) {
         super({
-          defaultNamespace
+          defaultNamespace,
+          errorTypeRegistries: errorTypeRegistries5
         });
         const settings = {
           timestampFormat: {
@@ -32846,10 +32869,11 @@ var init_AwsRestJsonProtocol = __esm({
       }
       async handleError(operationSchema, context, response, dataObject, metadata) {
         const errorIdentifier = loadRestJsonErrorCode(response, dataObject) ?? "Unknown";
+        this.mixin.compose(this.compositeErrorRegistry, errorIdentifier, this.options.defaultNamespace);
         const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, dataObject, metadata);
         const ns = NormalizedSchema.of(errorSchema);
-        const message = dataObject.message ?? dataObject.Message ?? "Unknown";
-        const ErrorCtor = TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
+        const message = dataObject.message ?? dataObject.Message ?? "UnknownError";
+        const ErrorCtor = this.compositeErrorRegistry.getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         await this.deserializeHttpMessage(errorSchema, context, response, dataObject);
         const output = {};
@@ -34690,7 +34714,8 @@ var init_AwsQueryProtocol = __esm({
       mixin = new ProtocolLib();
       constructor(options) {
         super({
-          defaultNamespace: options.defaultNamespace
+          defaultNamespace: options.defaultNamespace,
+          errorTypeRegistries: options.errorTypeRegistries
         });
         this.options = options;
         const settings = {
@@ -34767,6 +34792,7 @@ var init_AwsQueryProtocol = __esm({
       }
       async handleError(operationSchema, context, response, dataObject, metadata) {
         const errorIdentifier = this.loadQueryErrorCode(response, dataObject) ?? "Unknown";
+        this.mixin.compose(this.compositeErrorRegistry, errorIdentifier, this.options.defaultNamespace);
         const errorData = this.loadQueryError(dataObject) ?? {};
         const message = this.loadQueryErrorMessage(dataObject);
         errorData.message = message;
@@ -34777,7 +34803,7 @@ var init_AwsQueryProtocol = __esm({
         };
         const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, errorData, metadata, this.mixin.findQueryCompatibleError);
         const ns = NormalizedSchema.of(errorSchema);
-        const ErrorCtor = TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
+        const ErrorCtor = this.compositeErrorRegistry.getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {
           Type: errorData.Error.Type,
@@ -35235,6 +35261,7 @@ var init_AwsRestXmlProtocol = __esm({
         this.codec = new XmlCodec(settings);
         this.serializer = new HttpInterceptingShapeSerializer(this.codec.createSerializer(), settings);
         this.deserializer = new HttpInterceptingShapeDeserializer(this.codec.createDeserializer(), settings);
+        this.compositeErrorRegistry;
       }
       getPayloadCodec() {
         return this.codec;
@@ -35261,6 +35288,7 @@ var init_AwsRestXmlProtocol = __esm({
       }
       async handleError(operationSchema, context, response, dataObject, metadata) {
         const errorIdentifier = loadRestXmlErrorCode(response, dataObject) ?? "Unknown";
+        this.mixin.compose(this.compositeErrorRegistry, errorIdentifier, this.options.defaultNamespace);
         if (dataObject.Error && typeof dataObject.Error === "object") {
           for (const key of Object.keys(dataObject.Error)) {
             dataObject[key] = dataObject.Error[key];
@@ -35274,8 +35302,8 @@ var init_AwsRestXmlProtocol = __esm({
         }
         const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorIdentifier, this.options.defaultNamespace, response, dataObject, metadata);
         const ns = NormalizedSchema.of(errorSchema);
-        const message = dataObject.Error?.message ?? dataObject.Error?.Message ?? dataObject.message ?? dataObject.Message ?? "Unknown";
-        const ErrorCtor = TypeRegistry.for(errorSchema[1]).getErrorCtor(errorSchema) ?? Error;
+        const message = dataObject.Error?.message ?? dataObject.Error?.Message ?? dataObject.message ?? dataObject.Message ?? "UnknownError";
+        const ErrorCtor = this.compositeErrorRegistry.getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         await this.deserializeHttpMessage(errorSchema, context, response, dataObject);
         const output = {};
