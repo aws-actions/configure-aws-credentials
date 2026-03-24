@@ -17,8 +17,8 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.972.18",
-    "@biomejs/biome": "2.4.7",
+    "@aws-sdk/credential-provider-env": "^3.972.22",
+    "@biomejs/biome": "2.4.8",
     "@smithy/property-provider": "^4.2.11",
     "@types/node": "^25.5.0",
     "@vitest/coverage-v8": "^3.2.4",
@@ -27,14 +27,14 @@
     "generate-license-file": "^4.1.1",
     "json-schema": "^0.4.0",
     "markdownlint-cli": "^0.48.0",
-    "memfs": "^4.56.11",
+    "memfs": "^4.57.1",
     "standard-version": "^9.5.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "@actions/core": "^2.0.2",
-    "@aws-sdk/client-sts": "^3.1010.0",
+    "@aws-sdk/client-sts": "^3.1015.0",
     "@smithy/node-http-handler": "^4.4.7",
     "proxy-agent": "^6.5.0"
   },
