@@ -36004,6 +36004,11 @@ var require_dist_cjs31 = __commonJS({
       configFileSelector: (profile) => utilConfigProvider.booleanSelector(profile, CONFIG_USE_DUALSTACK_ENDPOINT, utilConfigProvider.SelectorType.CONFIG),
       default: false
     };
+    var nodeDualstackConfigSelectors = {
+      environmentVariableSelector: (env) => utilConfigProvider.booleanSelector(env, ENV_USE_DUALSTACK_ENDPOINT, utilConfigProvider.SelectorType.ENV),
+      configFileSelector: (profile) => utilConfigProvider.booleanSelector(profile, CONFIG_USE_DUALSTACK_ENDPOINT, utilConfigProvider.SelectorType.CONFIG),
+      default: void 0
+    };
     var ENV_USE_FIPS_ENDPOINT = "AWS_USE_FIPS_ENDPOINT";
     var CONFIG_USE_FIPS_ENDPOINT = "use_fips_endpoint";
     var DEFAULT_USE_FIPS_ENDPOINT = false;
@@ -36011,6 +36016,11 @@ var require_dist_cjs31 = __commonJS({
       environmentVariableSelector: (env) => utilConfigProvider.booleanSelector(env, ENV_USE_FIPS_ENDPOINT, utilConfigProvider.SelectorType.ENV),
       configFileSelector: (profile) => utilConfigProvider.booleanSelector(profile, CONFIG_USE_FIPS_ENDPOINT, utilConfigProvider.SelectorType.CONFIG),
       default: false
+    };
+    var nodeFipsConfigSelectors = {
+      environmentVariableSelector: (env) => utilConfigProvider.booleanSelector(env, ENV_USE_FIPS_ENDPOINT, utilConfigProvider.SelectorType.ENV),
+      configFileSelector: (profile) => utilConfigProvider.booleanSelector(profile, CONFIG_USE_FIPS_ENDPOINT, utilConfigProvider.SelectorType.CONFIG),
+      default: void 0
     };
     var resolveCustomEndpointsConfig = (input) => {
       const { tls, endpoint, urlParser, useDualstackEndpoint } = input;
@@ -36145,6 +36155,8 @@ var require_dist_cjs31 = __commonJS({
     exports2.REGION_ENV_NAME = REGION_ENV_NAME;
     exports2.REGION_INI_NAME = REGION_INI_NAME;
     exports2.getRegionInfo = getRegionInfo;
+    exports2.nodeDualstackConfigSelectors = nodeDualstackConfigSelectors;
+    exports2.nodeFipsConfigSelectors = nodeFipsConfigSelectors;
     exports2.resolveCustomEndpointsConfig = resolveCustomEndpointsConfig;
     exports2.resolveEndpointsConfig = resolveEndpointsConfig;
     exports2.resolveRegionConfig = resolveRegionConfig5;
@@ -37375,7 +37387,7 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1010.0",
+      version: "3.1015.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
         "build:cjs": "node ../../scripts/compilation/inline client-sts",
@@ -37401,38 +37413,38 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.973.20",
-        "@aws-sdk/credential-provider-node": "^3.972.21",
+        "@aws-sdk/core": "^3.973.24",
+        "@aws-sdk/credential-provider-node": "^3.972.25",
         "@aws-sdk/middleware-host-header": "^3.972.8",
         "@aws-sdk/middleware-logger": "^3.972.8",
         "@aws-sdk/middleware-recursion-detection": "^3.972.8",
-        "@aws-sdk/middleware-user-agent": "^3.972.21",
-        "@aws-sdk/region-config-resolver": "^3.972.8",
+        "@aws-sdk/middleware-user-agent": "^3.972.25",
+        "@aws-sdk/region-config-resolver": "^3.972.9",
         "@aws-sdk/types": "^3.973.6",
         "@aws-sdk/util-endpoints": "^3.996.5",
         "@aws-sdk/util-user-agent-browser": "^3.972.8",
-        "@aws-sdk/util-user-agent-node": "^3.973.7",
-        "@smithy/config-resolver": "^4.4.11",
-        "@smithy/core": "^3.23.11",
+        "@aws-sdk/util-user-agent-node": "^3.973.11",
+        "@smithy/config-resolver": "^4.4.13",
+        "@smithy/core": "^3.23.12",
         "@smithy/fetch-http-handler": "^5.3.15",
         "@smithy/hash-node": "^4.2.12",
         "@smithy/invalid-dependency": "^4.2.12",
         "@smithy/middleware-content-length": "^4.2.12",
-        "@smithy/middleware-endpoint": "^4.4.25",
-        "@smithy/middleware-retry": "^4.4.42",
-        "@smithy/middleware-serde": "^4.2.14",
+        "@smithy/middleware-endpoint": "^4.4.27",
+        "@smithy/middleware-retry": "^4.4.44",
+        "@smithy/middleware-serde": "^4.2.15",
         "@smithy/middleware-stack": "^4.2.12",
         "@smithy/node-config-provider": "^4.3.12",
-        "@smithy/node-http-handler": "^4.4.16",
+        "@smithy/node-http-handler": "^4.5.0",
         "@smithy/protocol-http": "^5.3.12",
-        "@smithy/smithy-client": "^4.12.5",
+        "@smithy/smithy-client": "^4.12.7",
         "@smithy/types": "^4.13.1",
         "@smithy/url-parser": "^4.2.12",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.41",
-        "@smithy/util-defaults-mode-node": "^4.2.44",
+        "@smithy/util-defaults-mode-browser": "^4.3.43",
+        "@smithy/util-defaults-mode-node": "^4.2.47",
         "@smithy/util-endpoints": "^3.3.3",
         "@smithy/util-middleware": "^4.2.12",
         "@smithy/util-retry": "^4.2.12",
@@ -37440,7 +37452,7 @@ var require_package = __commonJS({
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@smithy/snapshot-testing": "^2.0.2",
+        "@smithy/snapshot-testing": "^2.0.3",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -38156,7 +38168,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.996.10",
+      version: "3.996.14",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -38185,37 +38197,37 @@ var init_package = __esm({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.973.20",
+        "@aws-sdk/core": "^3.973.24",
         "@aws-sdk/middleware-host-header": "^3.972.8",
         "@aws-sdk/middleware-logger": "^3.972.8",
         "@aws-sdk/middleware-recursion-detection": "^3.972.8",
-        "@aws-sdk/middleware-user-agent": "^3.972.21",
-        "@aws-sdk/region-config-resolver": "^3.972.8",
+        "@aws-sdk/middleware-user-agent": "^3.972.25",
+        "@aws-sdk/region-config-resolver": "^3.972.9",
         "@aws-sdk/types": "^3.973.6",
         "@aws-sdk/util-endpoints": "^3.996.5",
         "@aws-sdk/util-user-agent-browser": "^3.972.8",
-        "@aws-sdk/util-user-agent-node": "^3.973.7",
-        "@smithy/config-resolver": "^4.4.11",
-        "@smithy/core": "^3.23.11",
+        "@aws-sdk/util-user-agent-node": "^3.973.11",
+        "@smithy/config-resolver": "^4.4.13",
+        "@smithy/core": "^3.23.12",
         "@smithy/fetch-http-handler": "^5.3.15",
         "@smithy/hash-node": "^4.2.12",
         "@smithy/invalid-dependency": "^4.2.12",
         "@smithy/middleware-content-length": "^4.2.12",
-        "@smithy/middleware-endpoint": "^4.4.25",
-        "@smithy/middleware-retry": "^4.4.42",
-        "@smithy/middleware-serde": "^4.2.14",
+        "@smithy/middleware-endpoint": "^4.4.27",
+        "@smithy/middleware-retry": "^4.4.44",
+        "@smithy/middleware-serde": "^4.2.15",
         "@smithy/middleware-stack": "^4.2.12",
         "@smithy/node-config-provider": "^4.3.12",
-        "@smithy/node-http-handler": "^4.4.16",
+        "@smithy/node-http-handler": "^4.5.0",
         "@smithy/protocol-http": "^5.3.12",
-        "@smithy/smithy-client": "^4.12.5",
+        "@smithy/smithy-client": "^4.12.7",
         "@smithy/types": "^4.13.1",
         "@smithy/url-parser": "^4.2.12",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.41",
-        "@smithy/util-defaults-mode-node": "^4.2.44",
+        "@smithy/util-defaults-mode-browser": "^4.3.43",
+        "@smithy/util-defaults-mode-node": "^4.2.47",
         "@smithy/util-endpoints": "^3.3.3",
         "@smithy/util-middleware": "^4.2.12",
         "@smithy/util-retry": "^4.2.12",
