@@ -28,7 +28,7 @@
     "json-schema": "^0.4.0",
     "memfs": "^4.57.1",
     "standard-version": "^9.5.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vitest": "^3.2.4"
   },
   "dependencies": {
