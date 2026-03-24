@@ -72300,7 +72300,10 @@ function parseIni(iniData) {
         const key = trimmed.substring(0, eqIndex).trim();
         const value = trimmed.substring(eqIndex + 1).trim();
         if (key !== "__proto__") {
-          result[currentSection][key] = value;
+          const section = result[currentSection];
+          if (section) {
+            section[key] = value;
+          }
         }
       }
     }
@@ -72312,11 +72315,12 @@ function stringifyIni(data2) {
   for (const [sectionName, sectionData] of Object.entries(data2)) {
     const lines = [`[${sectionName}]`];
     for (const [key, value] of Object.entries(sectionData)) {
-      lines.push(`${key}=${value}`);
+      lines.push(`${key} = ${value}`);
     }
     sections.push(lines.join("\n"));
   }
-  return sections.join("\n\n") + "\n";
+  return `${sections.join("\n\n")}
+`;
 }
 function getProfileFilePaths() {
   const credentialsPath = process.env.AWS_SHARED_CREDENTIALS_FILE || path2.join(os.homedir(), ".aws", "credentials");
@@ -72347,19 +72351,41 @@ function validateProfileName(profileName) {
     throw new Error("aws-profile must not contain path separators");
   }
 }
+function getBackupFilePath(filePath) {
+  const today = /* @__PURE__ */ new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const timestamp = Math.floor(today.getTime() / 1e3);
+  return `${filePath}.backup-${timestamp}`;
+}
+var backedUpFiles = /* @__PURE__ */ new Set();
+function backupFileIfNeeded(filePath) {
+  if (backedUpFiles.has(filePath)) {
+    return;
+  }
+  backedUpFiles.add(filePath);
+  if (process.env.AWS_DISABLE_CONFIG_BACKUP) {
+    core3.debug(`Skipping backup of ${filePath} (AWS_DISABLE_CONFIG_BACKUP is set)`);
+    return;
+  }
+  if (!fs2.existsSync(filePath)) {
+    return;
+  }
+  const backupPath = getBackupFilePath(filePath);
+  core3.debug(`Backing up ${filePath} to ${backupPath}`);
+  fs2.copyFileSync(filePath, backupPath);
+}
 function mergeProfileSection(filePath, sectionName, data2) {
   let existingContent = {};
+  backupFileIfNeeded(filePath);
   if (fs2.existsSync(filePath)) {
     core3.debug(`Reading existing file: ${filePath}`);
     const fileContent = fs2.readFileSync(filePath, "utf-8");
     existingContent = parseIni(fileContent);
   }
   existingContent[sectionName] = data2;
-  const tempFile = `${filePath}.tmp`;
   const content = stringifyIni(existingContent);
   core3.debug(`Writing profile to ${filePath}`);
-  fs2.writeFileSync(tempFile, content, { mode: 384 });
-  fs2.renameSync(tempFile, filePath);
+  fs2.writeFileSync(filePath, content, { mode: 384 });
 }
 function writeProfileFiles(profileName, credentials, region) {
   try {
