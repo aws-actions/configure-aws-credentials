@@ -72358,6 +72358,9 @@ function mergeProfileSection(filePath, sectionName, data2) {
     const fileContent = fs2.readFileSync(filePath, "utf-8");
     existingContent = parseIni(fileContent);
   }
+  if (existingContent[sectionName]) {
+    throw new Error(`Profile with name "${sectionName}" already exists.`);
+  }
   existingContent[sectionName] = data2;
   const content = stringifyIni(existingContent);
   core3.debug(`Writing profile to ${filePath}`);

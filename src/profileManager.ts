@@ -131,6 +131,9 @@ export function mergeProfileSection(filePath: string, sectionName: string, data:
     existingContent = parseIni(fileContent);
   }
 
+  if (existingContent[sectionName]) {
+    throw new Error(`Profile with name "${sectionName}" already exists.`);
+  }
   // Merge: update existing profile or add new one
   existingContent[sectionName] = data;
 
