@@ -6,7 +6,6 @@ import {
   getProfileFilePaths,
   mergeProfileSection,
   parseIni,
-  resetBackupState,
   stringifyIni,
   validateProfileName,
   writeProfileFiles,
@@ -17,8 +16,6 @@ describe('Profile Manager', {}, () => {
     vi.restoreAllMocks();
     vi.mock('node:fs');
     vol.reset();
-    resetBackupState();
-    delete process.env.AWS_DISABLE_CONFIG_BACKUP;
     vi.spyOn(core, 'debug').mockImplementation(() => {});
     vi.spyOn(core, 'info').mockImplementation(() => {});
   });
@@ -460,55 +457,6 @@ describe('Profile Manager', {}, () => {
 
       expect(fs.existsSync('/custom/credentials')).toBe(true);
       expect(fs.existsSync('/custom/config')).toBe(true);
-    });
-
-    it('backs up pre-existing credentials and config files', {}, () => {
-      const credsPath = getProfileFilePaths().credentials;
-      const configPath = getProfileFilePaths().config;
-      const awsDir = require('node:path').dirname(credsPath);
-      fs.mkdirSync(awsDir, { recursive: true });
-      fs.writeFileSync(credsPath, '[personal]\naws_access_key_id = AKIA\n');
-      fs.writeFileSync(configPath, '[profile personal]\nregion = eu-west-1\n');
-
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
-        'us-east-1',
-      );
-
-      // Find backup files by listing directory
-      const dirEntries = fs.readdirSync(awsDir) as string[];
-      const credsBackups = dirEntries.filter((f: string) => f.startsWith('credentials.backup-'));
-      const configBackups = dirEntries.filter((f: string) => f.startsWith('config.backup-'));
-
-      expect(credsBackups).toHaveLength(1);
-      expect(configBackups).toHaveLength(1);
-
-      // Backups should contain the original content
-      expect(fs.readFileSync(require('node:path').join(awsDir, credsBackups[0]), 'utf-8')).toBe(
-        '[personal]\naws_access_key_id = AKIA\n',
-      );
-      expect(fs.readFileSync(require('node:path').join(awsDir, configBackups[0]), 'utf-8')).toBe(
-        '[profile personal]\nregion = eu-west-1\n',
-      );
-    });
-
-    it('does not create backups when AWS_DISABLE_CONFIG_BACKUP is set', {}, () => {
-      process.env.AWS_DISABLE_CONFIG_BACKUP = 'true';
-      const credsPath = getProfileFilePaths().credentials;
-      const awsDir = require('node:path').dirname(credsPath);
-      fs.mkdirSync(awsDir, { recursive: true });
-      fs.writeFileSync(credsPath, '[personal]\naws_access_key_id = AKIA\n');
-
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
-        'us-east-1',
-      );
-
-      const dirEntries = fs.readdirSync(awsDir) as string[];
-      const backups = dirEntries.filter((f: string) => f.includes('.backup-'));
-      expect(backups).toHaveLength(0);
     });
 
     it('logs info messages', {}, () => {

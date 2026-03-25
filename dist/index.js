@@ -72351,32 +72351,8 @@ function validateProfileName(profileName) {
     throw new Error("aws-profile must not contain path separators");
   }
 }
-function getBackupFilePath(filePath) {
-  const today = /* @__PURE__ */ new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  const timestamp = Math.floor(today.getTime() / 1e3);
-  return `${filePath}.backup-${timestamp}`;
-}
-var backedUpFiles = /* @__PURE__ */ new Set();
-function backupFileIfNeeded(filePath) {
-  if (backedUpFiles.has(filePath)) {
-    return;
-  }
-  backedUpFiles.add(filePath);
-  if (process.env.AWS_DISABLE_CONFIG_BACKUP) {
-    core3.debug(`Skipping backup of ${filePath} (AWS_DISABLE_CONFIG_BACKUP is set)`);
-    return;
-  }
-  if (!fs2.existsSync(filePath)) {
-    return;
-  }
-  const backupPath = getBackupFilePath(filePath);
-  core3.debug(`Backing up ${filePath} to ${backupPath}`);
-  fs2.copyFileSync(filePath, backupPath);
-}
 function mergeProfileSection(filePath, sectionName, data2) {
   let existingContent = {};
-  backupFileIfNeeded(filePath);
   if (fs2.existsSync(filePath)) {
     core3.debug(`Reading existing file: ${filePath}`);
     const fileContent = fs2.readFileSync(filePath, "utf-8");

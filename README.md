@@ -63,7 +63,7 @@ Authenticate to AWS in GitHub Actions! Works especially well with
 
     </details>
 
-    That's it! Your GitHub Actions workflow can now access AWS resources using
+  That's it! Your GitHub Actions workflow can now access AWS resources using
     the IAM Role you created. Other authentication scenarios are also supported
     (see below).
 
@@ -199,23 +199,12 @@ By default, this action exports credentials as environment variables
 (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc.). However, you can use the
 `aws-profile` input to configure named AWS profiles as well. When `aws-profile`
 is provided, credentials are written to `~/.aws/credentials` and `~/.aws/config`
-files (which are created if they don't already exist).
+files (which are created if they don't already exist). The default locations of
+these files will be overridden if the `AWS_SHARED_CREDENTIALS_FILE` and
+`AWS_CONFIG_FILE` environment variables are present.
 
 Note that profile names may not contain whitespace, square brackets, or
 forward or backslashes.
-
-Before modifying `~/.aws/credentials` or `~/.aws/config`, the action creates a
-daily backup of each file (e.g. `~/.aws/credentials.backup-1742256000`). This is
-especially useful on **self-hosted runners** where the workspace is not
-ephemeral and existing AWS configuration may be present.
-
-To disable backups, set the `AWS_DISABLE_CONFIG_BACKUP` environment variable in
-your workflow configuration.
-
-```yaml
-env:
-  AWS_DISABLE_CONFIG_BACKUP: "true"
-```
 
 See the [Examples](#examples) section for usage examples.
 
@@ -623,9 +612,9 @@ and passed to this action.
 
 This example shows how to configure multiple named AWS profiles in a single
 workflow. When using the `aws-profile` input, credentials are written to
-`~/.aws/credentials` and `~/.aws/config` files,
-allowing you to reference different profiles using the `--profile` flag with AWS
-CLI, SDKs, Terraform, and other tools.
+`~/.aws/credentials` and `~/.aws/config` files, allowing you to reference
+different profiles using the `--profile` flag with AWS CLI, SDKs, Terraform,
+and other tools.
 
 Each profile is independent and can authenticate to different AWS accounts or
 use different roles. This is particularly useful for multi-account deployments

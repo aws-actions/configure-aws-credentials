@@ -118,57 +118,11 @@ export function validateProfileName(profileName: string): void {
 }
 
 /**
- * Get a backup file path using today's date (truncated to start of day UTC).
- * The same backup path is returned all day, so repeated runs overwrite instead of accumulating.
- */
-function getBackupFilePath(filePath: string): string {
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  const timestamp = Math.floor(today.getTime() / 1000);
-  return `${filePath}.backup-${timestamp}`;
-}
-
-const backedUpFiles = new Set<string>();
-
-/** Reset backup tracking state. Exported for testing only. */
-export function resetBackupState(): void {
-  backedUpFiles.clear();
-}
-
-/**
- * Back up an existing file before modifying it.
- * Only backs up once per file per action run. Skipped if the file does not
- * exist or if AWS_DISABLE_CONFIG_BACKUP is set.
- */
-function backupFileIfNeeded(filePath: string): void {
-  if (backedUpFiles.has(filePath)) {
-    return;
-  }
-  backedUpFiles.add(filePath);
-
-  if (process.env.AWS_DISABLE_CONFIG_BACKUP) {
-    core.debug(`Skipping backup of ${filePath} (AWS_DISABLE_CONFIG_BACKUP is set)`);
-    return;
-  }
-
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
-
-  const backupPath = getBackupFilePath(filePath);
-  core.debug(`Backing up ${filePath} to ${backupPath}`);
-  fs.copyFileSync(filePath, backupPath);
-}
-
-/**
  * Merge a profile section into an INI file
  * Reads existing file, updates the specified section, and writes back
  */
 export function mergeProfileSection(filePath: string, sectionName: string, data: Record<string, string>): void {
   let existingContent: Record<string, Record<string, string>> = {};
-
-  // Back up existing file before first modification
-  backupFileIfNeeded(filePath);
 
   // Read existing file if it exists
   if (fs.existsSync(filePath)) {
