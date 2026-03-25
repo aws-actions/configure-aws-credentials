@@ -75,13 +75,6 @@ export function getProfileFilePaths(): ProfileFilePaths {
   const credentialsPath = process.env.AWS_SHARED_CREDENTIALS_FILE || path.join(os.homedir(), '.aws', 'credentials');
   const configPath = process.env.AWS_CONFIG_FILE || path.join(os.homedir(), '.aws', 'config');
 
-  core.debug('Provided Enviroment Variables:');
-  core.debug(`Credentials env var: ${process.env.AWS_SHARED_CREDENTIALS_FILE || 'no creds file provided'}`);
-  core.debug(`Config env var: ${process.env.AWS_CONFIG_FILE || 'no config file provided'}`);
-
-  core.debug(`Using credentials file: ${credentialsPath}`);
-  core.debug(`Using config file: ${configPath}`);
-
   return {
     credentials: credentialsPath,
     config: configPath,

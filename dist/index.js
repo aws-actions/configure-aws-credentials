@@ -72325,11 +72325,6 @@ function stringifyIni(data2) {
 function getProfileFilePaths() {
   const credentialsPath = process.env.AWS_SHARED_CREDENTIALS_FILE || path2.join(os.homedir(), ".aws", "credentials");
   const configPath = process.env.AWS_CONFIG_FILE || path2.join(os.homedir(), ".aws", "config");
-  core3.debug("Provided Enviroment Variables:");
-  core3.debug(`Credentials env var: ${process.env.AWS_SHARED_CREDENTIALS_FILE || "no creds file provided"}`);
-  core3.debug(`Config env var: ${process.env.AWS_CONFIG_FILE || "no config file provided"}`);
-  core3.debug(`Using credentials file: ${credentialsPath}`);
-  core3.debug(`Using config file: ${configPath}`);
   return {
     credentials: credentialsPath,
     config: configPath
