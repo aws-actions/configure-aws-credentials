@@ -121,7 +121,12 @@ export function validateProfileName(profileName: string): void {
  * Merge a profile section into an INI file
  * Reads existing file, updates the specified section, and writes back
  */
-export function mergeProfileSection(filePath: string, sectionName: string, data: Record<string, string>): void {
+export function mergeProfileSection(
+  filePath: string,
+  sectionName: string,
+  data: Record<string, string>,
+  overwriteAwsProfile: boolean,
+): void {
   let existingContent: Record<string, Record<string, string>> = {};
 
   // Read existing file if it exists
@@ -131,8 +136,10 @@ export function mergeProfileSection(filePath: string, sectionName: string, data:
     existingContent = parseIni(fileContent);
   }
 
-  if (existingContent[sectionName]) {
-    throw new Error(`Profile with name "${sectionName}" already exists.`);
+  if (existingContent[sectionName] && !overwriteAwsProfile) {
+    throw new Error(
+      `Profile with name "${sectionName}" already exists. Please use the overwrite-aws-profile input if you want to overwrite existing profiles.`,
+    );
   }
   // Merge: update existing profile or add new one
   existingContent[sectionName] = data;
@@ -151,7 +158,12 @@ export function mergeProfileSection(filePath: string, sectionName: string, data:
  * @param credentials - AWS credentials (access key, secret key, session token)
  * @param region - AWS region
  */
-export function writeProfileFiles(profileName: string, credentials: Partial<Credentials>, region: string): void {
+export function writeProfileFiles(
+  profileName: string,
+  credentials: Partial<Credentials>,
+  region: string,
+  overwriteAwsProfile: boolean,
+): void {
   try {
     // Validate profile name
     validateProfileName(profileName);
@@ -187,11 +199,11 @@ export function writeProfileFiles(profileName: string, credentials: Partial<Cred
 
     // Write to credentials file
     core.info(`Writing credentials to profile: ${profileName}`);
-    mergeProfileSection(paths.credentials, credsSectionName, credentialsData);
+    mergeProfileSection(paths.credentials, credsSectionName, credentialsData, overwriteAwsProfile);
 
     // Write to config file
     core.info(`Writing config to profile: ${profileName}`);
-    mergeProfileSection(paths.config, configSectionName, configData);
+    mergeProfileSection(paths.config, configSectionName, configData, overwriteAwsProfile);
 
     core.info(`✓ Successfully configured AWS profile: ${profileName}`);
   } catch (error) {

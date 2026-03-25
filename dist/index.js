@@ -71843,7 +71843,8 @@ function translateEnvVariables() {
     "RETRY_MAX_ATTEMPTS",
     "SPECIAL_CHARACTERS_WORKAROUND",
     "USE_EXISTING_CREDENTIALS",
-    "NO_PROXY"
+    "NO_PROXY",
+    "OVERWRITE_AWS_PROFILE"
   ];
   if (process.env.HTTPS_PROXY) process.env.HTTP_PROXY = process.env.HTTPS_PROXY;
   for (const envVar of envVars) {
@@ -72351,22 +72352,24 @@ function validateProfileName(profileName) {
     throw new Error("aws-profile must not contain path separators");
   }
 }
-function mergeProfileSection(filePath, sectionName, data2) {
+function mergeProfileSection(filePath, sectionName, data2, overwriteAwsProfile) {
   let existingContent = {};
   if (fs2.existsSync(filePath)) {
     core3.debug(`Reading existing file: ${filePath}`);
     const fileContent = fs2.readFileSync(filePath, "utf-8");
     existingContent = parseIni(fileContent);
   }
-  if (existingContent[sectionName]) {
-    throw new Error(`Profile with name "${sectionName}" already exists.`);
+  if (existingContent[sectionName] && !overwriteAwsProfile) {
+    throw new Error(
+      `Profile with name "${sectionName}" already exists. Please use the overwrite-aws-profile input if you want to overwrite existing profiles.`
+    );
   }
   existingContent[sectionName] = data2;
   const content = stringifyIni(existingContent);
   core3.debug(`Writing profile to ${filePath}`);
   fs2.writeFileSync(filePath, content, { mode: 384 });
 }
-function writeProfileFiles(profileName, credentials, region) {
+function writeProfileFiles(profileName, credentials, region, overwriteAwsProfile) {
   try {
     validateProfileName(profileName);
     const paths = getProfileFilePaths();
@@ -72388,9 +72391,9 @@ function writeProfileFiles(profileName, credentials, region) {
       region
     };
     core3.info(`Writing credentials to profile: ${profileName}`);
-    mergeProfileSection(paths.credentials, credsSectionName, credentialsData);
+    mergeProfileSection(paths.credentials, credsSectionName, credentialsData, overwriteAwsProfile);
     core3.info(`Writing config to profile: ${profileName}`);
-    mergeProfileSection(paths.config, configSectionName, configData);
+    mergeProfileSection(paths.config, configSectionName, configData, overwriteAwsProfile);
     core3.info(`\u2713 Successfully configured AWS profile: ${profileName}`);
   } catch (error2) {
     throw new Error(
@@ -72412,6 +72415,7 @@ async function run() {
     const SessionToken = sessionTokenInput === "" ? void 0 : sessionTokenInput;
     const region = core4.getInput("aws-region", { required: true });
     const awsProfile = core4.getInput("aws-profile", { required: false });
+    const overwriteAwsProfile = getBooleanInput("overwrite-aws-profile", { required: false });
     const roleToAssume = core4.getInput("role-to-assume", { required: false });
     const audience = core4.getInput("audience", { required: false });
     const maskAccountId = getBooleanInput("mask-aws-account-id", { required: false });
@@ -72553,7 +72557,7 @@ async function run() {
         await exportAccountId(credentialsClient, maskAccountId);
       }
       if (awsProfile) {
-        writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region);
+        writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
         if (outputEnvCredentials) {
           core4.exportVariable("AWS_PROFILE", awsProfile);
         }
@@ -72561,7 +72565,7 @@ async function run() {
     } else {
       core4.info("Proceeding with IAM user credentials");
       if (awsProfile) {
-        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region);
+        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
         if (outputEnvCredentials) {
           core4.exportVariable("AWS_PROFILE", awsProfile);
         }

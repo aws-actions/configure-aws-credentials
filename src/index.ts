@@ -31,6 +31,7 @@ export async function run() {
     const SessionToken = sessionTokenInput === '' ? undefined : sessionTokenInput;
     const region = core.getInput('aws-region', { required: true });
     const awsProfile = core.getInput('aws-profile', { required: false });
+    const overwriteAwsProfile = getBooleanInput('overwrite-aws-profile', { required: false });
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
     const maskAccountId = getBooleanInput('mask-aws-account-id', { required: false });
@@ -225,7 +226,7 @@ export async function run() {
 
       // Write profile files if profile mode is enabled
       if (awsProfile) {
-        writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region);
+        writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
 
         // Export AWS_PROFILE env var if outputEnvCredentials is true
         if (outputEnvCredentials) {
@@ -237,7 +238,7 @@ export async function run() {
 
       // Write profile files if profile mode is enabled (for IAM user credentials without role assumption)
       if (awsProfile) {
-        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region);
+        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
 
         // Export AWS_PROFILE env var if outputEnvCredentials is true
         if (outputEnvCredentials) {

@@ -199,7 +199,7 @@ describe('Profile Manager', {}, () => {
       mergeProfileSection(filePath, 'dev', {
         aws_access_key_id: 'AKIAIOSFODNN7EXAMPLE',
         aws_secret_access_key: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-      });
+      }, false);
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -217,13 +217,13 @@ describe('Profile Manager', {}, () => {
       mergeProfileSection(filePath, 'dev', {
         aws_access_key_id: 'AKIAIOSFODNN7EXAMPLE',
         aws_secret_access_key: 'devSecretKey',
-      });
+      }, false);
 
       // Add second profile
       mergeProfileSection(filePath, 'prod', {
         aws_access_key_id: 'AKIAPRODEXAMPLE',
         aws_secret_access_key: 'prodSecretKey',
-      });
+      }, false);
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -317,6 +317,7 @@ describe('Profile Manager', {}, () => {
           SessionToken: 'FwoGZXIvYXdzEBYaDEXAMPLE',
         },
         'us-east-1',
+        false,
       );
 
       // Check credentials file
@@ -346,6 +347,7 @@ describe('Profile Manager', {}, () => {
           SecretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
         },
         'us-west-2',
+        false,
       );
 
       // Check credentials file uses [default]
@@ -374,6 +376,7 @@ describe('Profile Manager', {}, () => {
           SecretAccessKey: 'devSecret',
         },
         'us-east-1',
+        false,
       );
 
       // Write second profile
@@ -385,6 +388,7 @@ describe('Profile Manager', {}, () => {
           SessionToken: 'prodToken',
         },
         'us-west-2',
+        false,
       );
 
       // Verify both profiles exist
@@ -406,6 +410,7 @@ describe('Profile Manager', {}, () => {
           SecretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
         },
         'us-east-1',
+        false,
       );
 
       const credsPath = getProfileFilePaths().credentials;
@@ -426,6 +431,7 @@ describe('Profile Manager', {}, () => {
             SecretAccessKey: 'secret',
           },
           'us-east-1',
+          false,
         ),
       ).toThrow('Failed to write AWS profile');
       expect(() =>
@@ -436,6 +442,7 @@ describe('Profile Manager', {}, () => {
             SecretAccessKey: 'secret',
           },
           'us-east-1',
+          false
         ),
       ).toThrow('whitespace');
     });
@@ -453,6 +460,7 @@ describe('Profile Manager', {}, () => {
           SecretAccessKey: 'secret',
         },
         'us-east-1',
+        false
       );
 
       expect(fs.existsSync('/custom/credentials')).toBe(true);
@@ -467,6 +475,7 @@ describe('Profile Manager', {}, () => {
           SecretAccessKey: 'secret',
         },
         'us-east-1',
+        false
       );
 
       expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: dev');
@@ -486,6 +495,7 @@ describe('Profile Manager', {}, () => {
         'dev',
         { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
         'us-east-1',
+        false,
       );
 
       const content = fs.readFileSync(credsPath, 'utf-8');
@@ -513,6 +523,7 @@ describe('Profile Manager', {}, () => {
         'dev',
         { AccessKeyId: 'AKIA', SecretAccessKey: 'secret' },
         'us-east-1',
+        false
       );
 
       const content = fs.readFileSync(configPath, 'utf-8');
@@ -538,6 +549,7 @@ describe('Profile Manager', {}, () => {
         'dev',
         { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
         'us-west-2',
+        false
       );
 
       const content = fs.readFileSync(credsPath, 'utf-8');
@@ -562,6 +574,7 @@ describe('Profile Manager', {}, () => {
         'dev',
         { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
         'us-east-1',
+        false
       );
 
       const content = fs.readFileSync(credsPath, 'utf-8') as string;
@@ -574,7 +587,7 @@ describe('Profile Manager', {}, () => {
     });
 
     it('writes empty section when credentials object has no keys', {}, () => {
-      writeProfileFiles('dev', {}, 'us-east-1');
+      writeProfileFiles('dev', {}, 'us-east-1', false);
 
       const credsPath = getProfileFilePaths().credentials;
       const credContent = fs.readFileSync(credsPath, 'utf-8');
@@ -600,6 +613,7 @@ describe('Profile Manager', {}, () => {
         'dev',
         { AccessKeyId: 'AKIA', SecretAccessKey: 'secret' },
         'us-east-1',
+        false
       );
 
       expect(fs.existsSync('/custom-creds/credentials')).toBe(true);
@@ -617,6 +631,7 @@ describe('Profile Manager', {}, () => {
           SessionToken: 'FwoGZXIvYXdzEBYaDEXAMPLE',
         },
         'us-east-1',
+        false
       );
 
       const credsPath = getProfileFilePaths().credentials;
@@ -646,11 +661,13 @@ describe('Profile Manager', {}, () => {
         'dev',
         { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
         'us-east-1',
+        false
       );
       writeProfileFiles(
         'prod',
         { AccessKeyId: 'AKIAPROD', SecretAccessKey: 'prodSecret', SessionToken: 'prodToken' },
         'us-west-2',
+        false
       );
 
       const credsPath = getProfileFilePaths().credentials;

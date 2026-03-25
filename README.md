@@ -146,6 +146,7 @@ detail.
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | aws-region                    | Which AWS region to use                                                                                                                                                                                                                                                                                                                                                                                                                                          | Yes      |
 | aws-profile                   | Name of the AWS profile to configure. When provided, credentials are written to `~/.aws/credentials` and `~/.aws/config` files. This enables configuring multiple profiles in a single workflow. Name cannot contain whitespace, square brackets, or slashes.                                                                                                                                                                                                    | No       |
+| overwrite-aws-profile         | Overwrite the given AWS profile if it already exists. When set to false or not set, an error will be thrown if the profile already exists.                                                                                                                                                                                                                                                                                                                       | No       |
 | role-to-assume                | Role for which to fetch credentials. Only required for some authentication types.                                                                                                                                                                                                                                                                                                                                                                                | No       |
 | aws-access-key-id             | AWS access key to use. Only required for some authentication types.                                                                                                                                                                                                                                                                                                                                                                                              | No       |
 | aws-secret-access-key         | AWS secret key to use. Only required for some authentication types.                                                                                                                                                                                                                                                                                                                                                                                              | No       |
@@ -203,8 +204,11 @@ files (which are created if they don't already exist). The default locations of
 these files will be overridden if the `AWS_SHARED_CREDENTIALS_FILE` and
 `AWS_CONFIG_FILE` environment variables are present.
 
-Note that profile names may not contain whitespace, square brackets, or
-forward or backslashes.
+Profile names may not contain whitespace, square brackets, or forward or
+backslashes.
+
+By default, the action will not overwrite existing profiles. If you would like
+to overwrite a profile, set the `overwrite-aws-profile` input to `true`.
 
 See the [Examples](#examples) section for usage examples.
 
