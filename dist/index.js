@@ -72512,6 +72512,9 @@ async function run() {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
       }
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+      if (awsProfile) {
+        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
+      }
     } else if (!webIdentityTokenFile && !roleChaining) {
       await credentialsClient.validateCredentials(void 0, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
@@ -72557,7 +72560,11 @@ async function run() {
         await exportAccountId(credentialsClient, maskAccountId);
       }
       if (awsProfile) {
-        writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
+        if (AccessKeyId) {
+          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
+        } else {
+          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
+        }
         if (outputEnvCredentials) {
           core4.exportVariable("AWS_PROFILE", awsProfile);
         }
@@ -72565,7 +72572,6 @@ async function run() {
     } else {
       core4.info("Proceeding with IAM user credentials");
       if (awsProfile) {
-        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
         if (outputEnvCredentials) {
           core4.exportVariable("AWS_PROFILE", awsProfile);
         }

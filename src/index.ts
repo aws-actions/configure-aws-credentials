@@ -171,6 +171,12 @@ export async function run() {
       // the source credentials to already be masked as secrets
       // in any error messages.
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+
+      //if using IAM User Credentials, write to profile now so that the assumeRole call can succeed (and also for
+      //credential validation before role assumption).
+      if (awsProfile) {
+        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
+      }
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
       await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
@@ -228,9 +234,14 @@ export async function run() {
 
       // Write profile files if profile mode is enabled
       if (awsProfile) {
-        writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
+        //if user provided IAM User Credentials and then we assumed a role, overwrite the profile file to add
+        //the session token. (this only overwrites the profile within a single run of the action).
+        if (AccessKeyId) {
+          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
+        } else {
+          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
+        }
 
-        // Export AWS_PROFILE env var if outputEnvCredentials is true
         if (outputEnvCredentials) {
           core.exportVariable('AWS_PROFILE', awsProfile);
         }
@@ -238,11 +249,7 @@ export async function run() {
     } else {
       core.info('Proceeding with IAM user credentials');
 
-      // Write profile files if profile mode is enabled (for IAM user credentials without role assumption)
       if (awsProfile) {
-        writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
-
-        // Export AWS_PROFILE env var if outputEnvCredentials is true
         if (outputEnvCredentials) {
           core.exportVariable('AWS_PROFILE', awsProfile);
         }
