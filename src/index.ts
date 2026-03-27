@@ -49,7 +49,9 @@ export async function run() {
     });
     const roleChaining = getBooleanInput('role-chaining', { required: false });
     const outputCredentials = getBooleanInput('output-credentials', { required: false });
-    const outputEnvCredentials = getBooleanInput('output-env-credentials', { required: false, default: true });
+    //default to always outputting environment credentials unless profile is specified. if profile is specified, default to
+    //no environment credentials (but still output them if the user specifically requests it).
+    const outputEnvCredentials = getBooleanInput('output-env-credentials', { required: false, default: !awsProfile });
     const unsetCurrentCredentials = getBooleanInput('unset-current-credentials', { required: false });
     let disableRetry = getBooleanInput('disable-retry', { required: false });
     const specialCharacterWorkaround = getBooleanInput('special-characters-workaround', { required: false });

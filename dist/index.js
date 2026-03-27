@@ -72432,7 +72432,7 @@ async function run() {
     });
     const roleChaining = getBooleanInput("role-chaining", { required: false });
     const outputCredentials = getBooleanInput("output-credentials", { required: false });
-    const outputEnvCredentials = getBooleanInput("output-env-credentials", { required: false, default: true });
+    const outputEnvCredentials = getBooleanInput("output-env-credentials", { required: false, default: !awsProfile });
     const unsetCurrentCredentials = getBooleanInput("unset-current-credentials", { required: false });
     let disableRetry = getBooleanInput("disable-retry", { required: false });
     const specialCharacterWorkaround = getBooleanInput("special-characters-workaround", { required: false });
