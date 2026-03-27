@@ -72562,6 +72562,8 @@ async function run() {
       if (awsProfile) {
         if (AccessKeyId) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
+          await setTimeout(() => {
+          }, 1e4);
           await credentialsClient.validateCredentials(
             roleCredentials.Credentials?.AccessKeyId,
             roleChaining,
