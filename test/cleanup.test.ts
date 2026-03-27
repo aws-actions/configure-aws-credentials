@@ -38,6 +38,16 @@ describe('Configure AWS Credentials cleanup', {}, () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', '');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', '');
   });
+  it('also clears AWS_PROFILE when aws-profile was set', {}, () => {
+    vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
+      if (name === 'aws-profile') return 'my-profile';
+      return '';
+    });
+    cleanup();
+    expect(core.setFailed).toHaveBeenCalledTimes(0);
+    expect(core.exportVariable).toHaveBeenCalledTimes(6);
+    expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', '');
+  });
   it('handles errors', {}, () => {
     vi.spyOn(core, 'exportVariable').mockImplementationOnce(() => {
       throw new Error('Test error');
