@@ -221,7 +221,7 @@ export async function run() {
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
       // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
-      if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
+      if (!process.env.GITHUB_ACTIONS || (AccessKeyId && !awsProfile)) {
         await credentialsClient.validateCredentials(
           roleCredentials.Credentials?.AccessKeyId,
           roleChaining,
@@ -236,8 +236,14 @@ export async function run() {
       if (awsProfile) {
         //if user provided IAM User Credentials and then we assumed a role, overwrite the profile file to add
         //the session token. (this only overwrites the profile within a single run of the action).
+        //we then validate the credentials to make sure they work.
         if (AccessKeyId) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
+          await credentialsClient.validateCredentials(
+            roleCredentials.Credentials?.AccessKeyId,
+            roleChaining,
+            expectedAccountIds,
+          );
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
         }

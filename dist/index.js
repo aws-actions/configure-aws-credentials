@@ -72549,7 +72549,7 @@ async function run() {
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core4.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
-      if (!process.env.GITHUB_ACTIONS || AccessKeyId) {
+      if (!process.env.GITHUB_ACTIONS || AccessKeyId && !awsProfile) {
         await credentialsClient.validateCredentials(
           roleCredentials.Credentials?.AccessKeyId,
           roleChaining,
@@ -72562,6 +72562,11 @@ async function run() {
       if (awsProfile) {
         if (AccessKeyId) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
+          await credentialsClient.validateCredentials(
+            roleCredentials.Credentials?.AccessKeyId,
+            roleChaining,
+            expectedAccountIds
+          );
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
         }
