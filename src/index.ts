@@ -239,12 +239,13 @@ export async function run() {
         //we then validate the credentials to make sure they work.
         if (AccessKeyId) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
-          await setTimeout(() => {}, 10000); //sleep to allow write to propagate?
-          await credentialsClient.validateCredentials(
-            roleCredentials.Credentials?.AccessKeyId,
-            roleChaining,
-            expectedAccountIds,
-          );
+          setTimeout(() => {
+            credentialsClient.validateCredentials(
+              roleCredentials.Credentials?.AccessKeyId,
+              roleChaining,
+              expectedAccountIds,
+            );
+          }, 10000); //sleep to allow write to propagate?
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
         }

@@ -72562,13 +72562,13 @@ async function run() {
       if (awsProfile) {
         if (AccessKeyId) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
-          await setTimeout(() => {
+          setTimeout(() => {
+            credentialsClient.validateCredentials(
+              roleCredentials.Credentials?.AccessKeyId,
+              roleChaining,
+              expectedAccountIds
+            );
           }, 1e4);
-          await credentialsClient.validateCredentials(
-            roleCredentials.Credentials?.AccessKeyId,
-            roleChaining,
-            expectedAccountIds
-          );
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
         }
