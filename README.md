@@ -372,6 +372,12 @@ aws iam create-open-id-connect-provider \
     --client-id-list sts.amazonaws.com 
 ```
 
+For GHES, please replace the following three places:
+
+Change the Url of GithubOidc from https://token.actions.githubusercontent.com to your GitHub Enterprise Server hostname https://<GHES_hostname>/_services/token. 
+
+Additionally, replace token.actions.githubusercontent.com in both StringEquals and StringLike with <GHES_hostname>.
+
 ### Claims and scoping permissions
 To align with the Amazon IAM best practice of [granting least
 privilege](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege),
