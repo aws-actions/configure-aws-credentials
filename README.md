@@ -51,7 +51,7 @@ Authenticate to AWS in GitHub Actions! Works especially well with
         runs-on: ubuntu-latest
         steps:
           - name: Configure AWS Credentials
-            uses: aws-actions/configure-aws-credentials@main # Or a specific version
+            uses: aws-actions/configure-aws-credentials@v6.1.0
             with:
               role-to-assume: <Role ARN you created in step 2>
               aws-region: <AWS Region you want to use>
@@ -145,7 +145,7 @@ detail.
 | Option                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Required |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | aws-region                    | Which AWS region to use                                                                                                                                                                                                                                                                                                                                                                                                                                          | Yes      |
-| aws-profile                   | Name of the AWS profile to configure. When provided, credentials are written to `~/.aws/credentials` and `~/.aws/config` files. This enables configuring multiple profiles in a single workflow. Name cannot contain whitespace, square brackets, or slashes.                                                                                                                                                                                                    | No       |
+| aws-profile                   | Name of the AWS profile to configure. When provided, credentials are written to `~/.aws/credentials` and `~/.aws/config` files. This enables configuring multiple profiles in a single workflow. Name cannot contain whitespace, square brackets, or slashes. When set, credentials will not be exported as environment variables unless `output-env-credentials` is manually set to true.                                                                       | No       |
 | overwrite-aws-profile         | Overwrite the given AWS profile if it already exists. When set to false or not set, an error will be thrown if the profile already exists.                                                                                                                                                                                                                                                                                                                       | No       |
 | role-to-assume                | Role for which to fetch credentials. Only required for some authentication types.                                                                                                                                                                                                                                                                                                                                                                                | No       |
 | aws-access-key-id             | AWS access key to use. Only required for some authentication types.                                                                                                                                                                                                                                                                                                                                                                                              | No       |
@@ -198,8 +198,8 @@ work around this issue.
 
 By default, this action exports credentials as environment variables
 (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc.). However, you can use the
-`aws-profile` input to configure named AWS profiles as well. When `aws-profile`
-is provided, credentials are written to `~/.aws/credentials` and `~/.aws/config`
+`aws-profile` input to configure named AWS profiles. When `aws-profile` is
+provided, credentials are written to `~/.aws/credentials` and `~/.aws/config`
 files (which are created if they don't already exist). The default locations of
 these files will be overridden if the `AWS_SHARED_CREDENTIALS_FILE` and
 `AWS_CONFIG_FILE` environment variables are present.
@@ -207,10 +207,61 @@ these files will be overridden if the `AWS_SHARED_CREDENTIALS_FILE` and
 Profile names may not contain whitespace, square brackets, or forward or
 backslashes.
 
+Writing to a profile will prevent credentials being written to the environment
+by default. Use `output-env-credentials: true` if you would like the
+credentials to also be exported as environment variables.
+
 By default, the action will not overwrite existing profiles. If you would like
 to overwrite a profile, set the `overwrite-aws-profile` input to `true`.
 
-See the [Examples](#examples) section for usage examples.
+_Note for using profiles with static IAM User Credentials or when using one
+role to assume another:_
+
+<details>
+
+If using static credentials, it's necessary to set `role-chaining: true` and
+specify the profile name as an environment variable in the job step:
+
+```yaml
+- name: Configure AWS Credentials
+  uses: aws-actions/configure-aws-credentials@v6.1.0
+  with: 
+    aws-region: us-east-1
+    role-to-assume: arn:aws:iam::123456789100:role/my-role
+    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    aws-profile: MyProfile1
+    role-chaining: true
+  env:
+    AWS_PROFILE: MyProfile1
+```
+
+If you are using one role to assume another while using profiles, the
+subsequent steps must set `role-chaining: true` and specify the prior profile's
+name as step environment variables:
+
+```yaml
+- name: Configure AWS credentials
+  uses: aws-actions/configure-aws-credentials@v6.1.0
+  with:
+    aws-region: us-east-1
+    role-to-assume: arn:aws:iam::123456789100:role/my-first-role
+    aws-profile: firstRoleInChain
+
+- name: assume second role
+  uses: aws-actions/configure-aws-credentials@v6.1.0
+  with:
+    aws-region: us-east-2
+    role-to-assume: arn:aws:iam::987654321000:role/my-second-role
+    role-chaining: true
+    aws-profile: secondRoleInChain
+  env:
+    AWS_PROFILE: firstRoleInChain
+```
+
+</details>
+
+See the [Examples](#examples) section for more usage examples.
 
 #### Use an HTTP proxy
 
@@ -223,7 +274,7 @@ this action will always consider the `HTTP_PROXY` environment variable.
 Manually configured proxy:
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.0.0
+uses: aws-actions/configure-aws-credentials@v6.1.0
 with:
   aws-region: us-east-2
   role-to-assume: my-github-actions-role
@@ -325,7 +376,7 @@ line.
 <summary>Inline session policy examples</summary>
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.0.0
+uses: aws-actions/configure-aws-credentials@v6.1.0
 with:
   inline-session-policy: '{"Version":"2012-10-17","Statement":[{"Sid":"Stmt1","Effect":"Allow","Action":"s3:List*","Resource":"*"}]}'
 ```
@@ -333,7 +384,7 @@ with:
 Or we can have a nicely formatted JSON as well:
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.0.0
+uses: aws-actions/configure-aws-credentials@v6.1.0
 with:
   inline-session-policy: >-
     {
@@ -361,7 +412,7 @@ the role.
 <summary>Managed session policy examples</summary>
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.0.0
+uses: aws-actions/configure-aws-credentials@v6.1.0
 with:
   managed-session-policies: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
 ```
@@ -369,7 +420,7 @@ with:
 And we can pass multiple managed policies likes this:
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.0.0
+uses: aws-actions/configure-aws-credentials@v6.1.0
 with:
   managed-session-policies: |
     arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
@@ -409,7 +460,7 @@ specify the audience through the `audience` input:
 
 ```yaml
 - name: Configure AWS Credentials for China region audience
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     audience: sts.amazonaws.com.cn
     aws-region: cn-northwest-1
@@ -494,7 +545,7 @@ For further information on OIDC and GitHub Actions, please see:
 
 ```yaml
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -510,13 +561,13 @@ environment variable and use it to assume the role
 
 ```yaml
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
     role-session-name: MySessionName
 - name: Configure other AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::987654321000:role/my-second-role
@@ -538,7 +589,7 @@ alternatively, the `TagSession` permission can be omitted if you are using the
 
 ```yaml
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -559,7 +610,7 @@ like `role-to-assume: my-github-actions-role`.
 ```yaml
 - name: Configure AWS Credentials 1
   id: creds
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -568,7 +619,7 @@ like `role-to-assume: my-github-actions-role`.
   run: |
     aws sts get-caller-identity
 - name: Configure AWS Credentials 2
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-region: us-east-2
     aws-access-key-id: ${{ steps.creds.outputs.aws-access-key-id }}
@@ -589,14 +640,14 @@ and passed to this action.
 
 ```yaml
 - name: Configure AWS Credentials for Dev
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-region: us-east-1
     role-to-assume: arn:aws:iam::111111111111:role/dev-role
     aws-profile: dev
 
 - name: Configure AWS Credentials for Prod
-  uses: aws-actions/configure-aws-credentials@v6.0.0
+  uses: aws-actions/configure-aws-credentials@v6.1.0
   with:
     aws-region: us-west-2
     role-to-assume: arn:aws:iam::222222222222:role/prod-role
@@ -610,15 +661,15 @@ and passed to this action.
     # Check caller identity for prod account
     aws sts get-caller-identity --profile prod
 
-    # Deploy to dev using Terraform
-    terraform apply -var="profile=dev"
+    # Deploy to dev using CDK
+    cdk deploy --profile dev
 ```
 
 This example shows how to configure multiple named AWS profiles in a single
 workflow. When using the `aws-profile` input, credentials are written to
 `~/.aws/credentials` and `~/.aws/config` files, allowing you to reference
-different profiles using the `--profile` flag with AWS CLI, SDKs, Terraform,
-and other tools.
+different profiles using the `--profile` flag with AWS CLI, SDKs, CDK, and
+other tools.
 
 Each profile is independent and can authenticate to different AWS accounts or
 use different roles. This is particularly useful for multi-account deployments

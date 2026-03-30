@@ -10,6 +10,7 @@ import { fs, vol } from 'memfs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialsClient } from '../src/CredentialsClient';
 import { run } from '../src/index';
+import * as profileManager from '../src/profileManager';
 import mocks from './mockinputs.test';
 
 const mockedSTSClient = mockClient(STSClient);
@@ -823,220 +824,201 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
-  // describe('AWS Profile Support', {}, () => {
-  //   beforeEach(() => {
-  //     vi.clearAllMocks();
-  //     mockedSTSClient.reset();
-  //     vi.mock('node:fs');
-  //     vol.reset();
-  //   });
+  describe('AWS Profile Support', {}, () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockedSTSClient.reset();
+      vi.mock('node:fs');
+      vol.reset();
+    });
 
-  //   it('writes profile files with OIDC authentication', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(
-  //       mocks.getInput({
-  //         ...mocks.GH_OIDC_INPUTS,
-  //         'aws-profile': 'dev',
-  //       }),
-  //     );
-  //     vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
-  //     mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+    it('writes profile files with OIDC authentication', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'aws-profile': 'dev',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
 
-  //     await run();
+      await run();
 
-  //     // Verify credentials were NOT exported to environment variables
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', expect.anything());
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', expect.anything());
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SESSION_TOKEN', expect.anything());
+      // Verify credentials were NOT exported to environment variables
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SESSION_TOKEN', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_PROFILE', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_REGION', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_DEFAULT_REGION', expect.anything());
 
-  //     // Verify AWS_PROFILE was exported
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', 'dev');
+      // Verify profile files were written
+      expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: dev');
+      expect(core.info).toHaveBeenCalledWith('Writing config to profile: dev');
+      expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: dev');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  //     // Verify region was still exported
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+    it('writes profile files with IAM user credentials', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'aws-profile': 'production',
+        }),
+      );
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
 
-  //     // Verify profile files were written
-  //     expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: dev');
-  //     expect(core.info).toHaveBeenCalledWith('Writing config to profile: dev');
-  //     expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: dev');
-  //     expect(core.setFailed).not.toHaveBeenCalled();
-  //   });
+      await run();
 
-  //   it('writes profile files with IAM user credentials', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(
-  //       mocks.getInput({
-  //         ...mocks.IAM_USER_INPUTS,
-  //         'aws-profile': 'production',
-  //       }),
-  //     );
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
-  //     vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
-  //       accessKeyId: 'MYAWSACCESSKEYID',
-  //     });
+      // Verify credentials were NOT exported to environment variables
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SESSION_TOKEN', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_PROFILE', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_REGION', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_DEFAULT_REGION', expect.anything());
 
-  //     await run();
+      // Verify profile files were written
+      expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: production');
+      expect(core.info).toHaveBeenCalledWith('Writing config to profile: production');
+      expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: production');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  //     // Verify credentials were NOT exported to env vars
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', expect.anything());
+    it('writes profile files with IAM user role assumption', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'aws-profile': 'assumed-role',
+        }),
+      );
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
 
-  //     // Verify AWS_PROFILE was exported
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', 'production');
+      vi.spyOn(profileManager, 'writeProfileFiles');
+      await run();
 
-  //     // Verify region was exported
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      // Verify credentials were NOT exported to environment variables
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SESSION_TOKEN', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_PROFILE', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_REGION', expect.anything());
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_DEFAULT_REGION', expect.anything());
 
-  //     // Verify profile files were written
-  //     expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: production');
-  //     expect(core.setFailed).not.toHaveBeenCalled();
-  //   });
+      // Verify profile files were written
+      expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: assumed-role');
+      expect(core.info).toHaveBeenCalledWith('Writing config to profile: assumed-role');
+      expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: assumed-role');
 
-  //   it('writes profile files with role assumption', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(
-  //       mocks.getInput({
-  //         ...mocks.IAM_ASSUMEROLE_INPUTS,
-  //         'aws-profile': 'assumed-role',
-  //       }),
-  //     );
-  //     mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
-  //     vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
-  //       .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
-  //       .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+      // Verify profile files were written twice (first to write access key id and access key, second to write
+      // actual session token after role assumption
+      expect(profileManager.writeProfileFiles).toHaveBeenCalledTimes(2);
 
-  //     await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  //     // Verify assumed role credentials were NOT exported to env vars
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+    it('respects output-env-credentials=true with profiles', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'aws-profile': 'dev',
+          'output-env-credentials': 'true',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
 
-  //     // Verify AWS_PROFILE was exported
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', 'assumed-role');
+      await run();
 
-  //     // Verify profile files were written
-  //     expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: assumed-role');
-  //     expect(core.setFailed).not.toHaveBeenCalled();
-  //   });
+      // verify that env vars were exported
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', 'dev');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
 
-  //   it('respects output-env-credentials=false for AWS_PROFILE', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(
-  //       mocks.getInput({
-  //         ...mocks.GH_OIDC_INPUTS,
-  //         'aws-profile': 'dev',
-  //         'output-env-credentials': 'false',
-  //       }),
-  //     );
-  //     vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
-  //     mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      // Verify profile files were still written
+      expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: dev');
+      expect(core.info).toHaveBeenCalledWith('Writing config to profile: dev');
+      expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: dev');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  //     await run();
+    it('maintains backward compatibility when aws-profile is not specified', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
 
-  //     // Verify AWS_PROFILE was NOT exported when output-env-credentials is false
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_PROFILE', expect.anything());
+      await run();
 
-  //     // Verify region is still exported (always exported in profile mode)
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      // Verify credentials WERE exported to environment variables (backward compatibility)
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
+      expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
 
-  //     // Verify profile files were still written
-  //     expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: dev');
-  //     expect(core.setFailed).not.toHaveBeenCalled();
-  //   });
+      // Verify AWS_PROFILE was NOT exported
+      expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_PROFILE', expect.anything());
 
-  //   it('maintains backward compatibility when aws-profile is not specified', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
-  //     vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
-  //     mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      // Verify profile files were NOT written
+      expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('Writing credentials to profile'));
+      expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('✓ Successfully configured AWS profile:'));
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  //     await run();
+    it('handles default profile correctly', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'aws-profile': 'default',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
 
-  //     // Verify credentials WERE exported to environment variables (backward compatibility)
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', 'STSAWSACCESSKEYID');
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', 'STSAWSSECRETACCESSKEY');
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', 'STSAWSSESSIONTOKEN');
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
+      await run();
 
-  //     // Verify AWS_PROFILE was NOT exported
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_PROFILE', expect.anything());
+      // Verify profile files were written for 'default' profile
+      expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: default');
+      expect(core.info).toHaveBeenCalledWith('Writing config to profile: default');
+      expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: default');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
 
-  //     // Verify profile files were NOT written
-  //     expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('Writing credentials to profile'));
-  //     expect(core.setFailed).not.toHaveBeenCalled();
-  //   });
+    it('rejects invalid profile names with whitespace', async () => {
+      vi.spyOn(core, 'getInput').mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'aws-profile': 'invalid profile',
+        }),
+      );
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
 
-  //   it('handles default profile correctly', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(
-  //       mocks.getInput({
-  //         ...mocks.GH_OIDC_INPUTS,
-  //         'aws-profile': 'default',
-  //       }),
-  //     );
-  //     vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
-  //     mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
 
-  //     await run();
-
-  //     // Verify profile files were written for 'default' profile
-  //     expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: default');
-  //     expect(core.info).toHaveBeenCalledWith('Writing config to profile: default');
-  //     expect(core.info).toHaveBeenCalledWith('✓ Successfully configured AWS profile: default');
-  //     expect(core.setFailed).not.toHaveBeenCalled();
-  //   });
-
-  //   it('rejects invalid profile names with whitespace', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(
-  //       mocks.getInput({
-  //         ...mocks.GH_OIDC_INPUTS,
-  //         'aws-profile': 'invalid profile',
-  //       }),
-  //     );
-  //     vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
-  //     mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
-
-  //     await run();
-
-  //     expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining('whitespace'));
-  //   });
-
-  //   it('always exports region in profile mode even with output-env-credentials=false', async () => {
-  //     vi.spyOn(core, 'getInput').mockImplementation(
-  //       mocks.getInput({
-  //         ...mocks.GH_OIDC_INPUTS,
-  //         'aws-profile': 'dev',
-  //         'output-env-credentials': 'false',
-  //       }),
-  //     );
-  //     vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
-  //     mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
-  //     mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
-  //     process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
-
-  //     await run();
-
-  //     // Verify region was exported even when output-env-credentials is false
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', 'fake-region-1');
-  //     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', 'fake-region-1');
-
-  //     // Verify credential env vars were NOT exported
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_ACCESS_KEY_ID', expect.anything());
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SECRET_ACCESS_KEY', expect.anything());
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_SESSION_TOKEN', expect.anything());
-
-  //     // Verify AWS_PROFILE was NOT exported (output-env-credentials=false)
-  //     expect(core.exportVariable).not.toHaveBeenCalledWith('AWS_PROFILE', expect.anything());
-
-  //     expect(core.setFailed).not.toHaveBeenCalled();
-  //   });
-  // });
+      expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining('whitespace'));
+    });
+  });
 });
