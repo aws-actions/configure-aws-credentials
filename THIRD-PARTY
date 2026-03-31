@@ -643,16 +643,16 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/client-sts@3.1015.0
+ - @aws-sdk/client-sts@3.1020.0
  - @aws-sdk/util-user-agent-browser@3.972.8
- - @aws-sdk/util-user-agent-node@3.973.11
- - @smithy/middleware-retry@4.4.44
+ - @aws-sdk/util-user-agent-node@3.973.13
+ - @smithy/middleware-retry@4.4.45
  - @smithy/querystring-builder@4.2.12
  - @smithy/querystring-parser@4.2.12
  - @smithy/service-error-classification@4.2.12
  - @smithy/url-parser@4.2.12
- - @smithy/util-defaults-mode-browser@4.3.43
- - @smithy/util-defaults-mode-node@4.2.47
+ - @smithy/util-defaults-mode-browser@4.3.44
+ - @smithy/util-defaults-mode-node@4.2.48
 
 These packages each contain the following license:
 
@@ -863,8 +863,8 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/middleware-host-header@3.972.8
- - @aws-sdk/middleware-recursion-detection@3.972.8
- - @aws-sdk/middleware-user-agent@3.972.25
+ - @aws-sdk/middleware-recursion-detection@3.972.9
+ - @aws-sdk/middleware-user-agent@3.972.27
  - @smithy/core@3.23.13
  - @smithy/invalid-dependency@4.2.12
  - @smithy/middleware-serde@4.2.16
@@ -1688,10 +1688,10 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/credential-provider-env@3.972.24
- - @aws-sdk/credential-provider-ini@3.972.24
- - @aws-sdk/credential-provider-node@3.972.25
- - @aws-sdk/region-config-resolver@3.972.9
- - @aws-sdk/token-providers@3.1015.0
+ - @aws-sdk/credential-provider-ini@3.972.27
+ - @aws-sdk/credential-provider-node@3.972.28
+ - @aws-sdk/region-config-resolver@3.972.10
+ - @aws-sdk/token-providers@3.1020.0
  - @aws-sdk/types@3.973.6
  - @aws-sdk/util-endpoints@3.996.5
  - @aws-sdk/util-locate-window@3.965.5
@@ -1929,9 +1929,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-process@3.972.22
- - @aws-sdk/credential-provider-sso@3.972.24
- - @aws-sdk/credential-provider-web-identity@3.972.24
+ - @aws-sdk/credential-provider-process@3.972.24
+ - @aws-sdk/credential-provider-sso@3.972.27
+ - @aws-sdk/credential-provider-web-identity@3.972.27
 
 These packages each contain the following license:
 
@@ -2565,9 +2565,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-http@3.972.24
- - @aws-sdk/credential-provider-login@3.972.24
- - @aws-sdk/nested-clients@3.996.14
+ - @aws-sdk/credential-provider-http@3.972.26
+ - @aws-sdk/credential-provider-login@3.972.27
+ - @aws-sdk/nested-clients@3.996.17
 
 These packages each contain the following license:
 
