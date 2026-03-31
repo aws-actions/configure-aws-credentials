@@ -27017,9 +27017,7 @@ var init_HttpBindingProtocol = __esm({
     init_HttpProtocol();
     HttpBindingProtocol = class extends HttpProtocol {
       async serializeRequest(operationSchema, _input, context) {
-        const input = {
-          ..._input ?? {}
-        };
+        const input = _input && typeof _input === "object" ? _input : {};
         const serializer = this.serializer;
         const query = {};
         const headers = {};
@@ -27084,7 +27082,6 @@ var init_HttpBindingProtocol = __esm({
               serializer.write(memberNs, inputMemberValue);
               payload2 = serializer.flush();
             }
-            delete input[memberName];
           } else if (memberTraits.httpLabel) {
             serializer.write(memberNs, inputMemberValue);
             const replacement = serializer.flush();
@@ -27093,21 +27090,17 @@ var init_HttpBindingProtocol = __esm({
             } else if (request.path.includes(`{${memberName}}`)) {
               request.path = request.path.replace(`{${memberName}}`, extendedEncodeURIComponent(replacement));
             }
-            delete input[memberName];
           } else if (memberTraits.httpHeader) {
             serializer.write(memberNs, inputMemberValue);
             headers[memberTraits.httpHeader.toLowerCase()] = String(serializer.flush());
-            delete input[memberName];
           } else if (typeof memberTraits.httpPrefixHeaders === "string") {
             for (const [key, val] of Object.entries(inputMemberValue)) {
               const amalgam = memberTraits.httpPrefixHeaders + key;
               serializer.write([memberNs.getValueSchema(), { httpHeader: amalgam }], val);
               headers[amalgam.toLowerCase()] = serializer.flush();
             }
-            delete input[memberName];
           } else if (memberTraits.httpQuery || memberTraits.httpQueryParams) {
             this.serializeQuery(memberNs, inputMemberValue, query);
-            delete input[memberName];
           } else {
             hasNonHttpBindingMember = true;
             payloadMemberNames.push(memberName);
@@ -27291,7 +27284,7 @@ var init_RpcProtocol = __esm({
     init_collect_stream_body();
     init_HttpProtocol();
     RpcProtocol = class extends HttpProtocol {
-      async serializeRequest(operationSchema, input, context) {
+      async serializeRequest(operationSchema, _input, context) {
         const serializer = this.serializer;
         const query = {};
         const headers = {};
@@ -27299,6 +27292,7 @@ var init_RpcProtocol = __esm({
         const ns = NormalizedSchema.of(operationSchema?.input);
         const schema = ns.getSchema();
         let payload2;
+        const input = _input && typeof _input === "object" ? _input : {};
         const request = new import_protocol_http5.HttpRequest({
           protocol: "",
           hostname: "",
@@ -27313,28 +27307,25 @@ var init_RpcProtocol = __esm({
           this.updateServiceEndpoint(request, endpoint);
           this.setHostPrefix(request, operationSchema, input);
         }
-        const _input = {
-          ...input
-        };
         if (input) {
           const eventStreamMember = ns.getEventStreamMember();
           if (eventStreamMember) {
-            if (_input[eventStreamMember]) {
+            if (input[eventStreamMember]) {
               const initialRequest = {};
               for (const [memberName, memberSchema] of ns.structIterator()) {
-                if (memberName !== eventStreamMember && _input[memberName]) {
-                  serializer.write(memberSchema, _input[memberName]);
+                if (memberName !== eventStreamMember && input[memberName]) {
+                  serializer.write(memberSchema, input[memberName]);
                   initialRequest[memberName] = serializer.flush();
                 }
               }
               payload2 = await this.serializeEventStream({
-                eventStream: _input[eventStreamMember],
+                eventStream: input[eventStreamMember],
                 requestSchema: ns,
                 initialRequest
               });
             }
           } else {
-            serializer.write(schema, _input);
+            serializer.write(schema, input);
             payload2 = serializer.flush();
           }
         }

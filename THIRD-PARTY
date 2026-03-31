@@ -865,11 +865,11 @@ The following npm packages may be included in this product:
  - @aws-sdk/middleware-host-header@3.972.8
  - @aws-sdk/middleware-recursion-detection@3.972.8
  - @aws-sdk/middleware-user-agent@3.972.25
- - @smithy/core@3.23.12
+ - @smithy/core@3.23.13
  - @smithy/invalid-dependency@4.2.12
- - @smithy/middleware-serde@4.2.15
+ - @smithy/middleware-serde@4.2.16
  - @smithy/protocol-http@5.3.12
- - @smithy/smithy-client@4.12.7
+ - @smithy/smithy-client@4.12.8
  - @smithy/types@4.13.1
 
 These packages each contain the following license:
@@ -1267,7 +1267,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.973.24
+ - @aws-sdk/core@3.973.26
 
 This package contains the following license:
 
@@ -1687,7 +1687,7 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.22
+ - @aws-sdk/credential-provider-env@3.972.24
  - @aws-sdk/credential-provider-ini@3.972.24
  - @aws-sdk/credential-provider-node@3.972.25
  - @aws-sdk/region-config-resolver@3.972.9
@@ -1695,8 +1695,7 @@ The following npm packages may be included in this product:
  - @aws-sdk/types@3.973.6
  - @aws-sdk/util-endpoints@3.996.5
  - @aws-sdk/util-locate-window@3.965.5
- - @aws-sdk/xml-builder@3.972.15
- - @smithy/abort-controller@4.2.12
+ - @aws-sdk/xml-builder@3.972.16
  - @smithy/config-resolver@4.4.13
  - @smithy/credential-provider-imds@4.2.12
  - @smithy/fetch-http-handler@5.3.15
@@ -1704,9 +1703,9 @@ The following npm packages may be included in this product:
  - @smithy/is-array-buffer@2.2.0
  - @smithy/is-array-buffer@4.2.2
  - @smithy/middleware-content-length@4.2.12
- - @smithy/middleware-endpoint@4.4.27
+ - @smithy/middleware-endpoint@4.4.28
  - @smithy/middleware-stack@4.2.12
- - @smithy/node-http-handler@4.5.0
+ - @smithy/node-http-handler@4.5.1
  - @smithy/property-provider@4.2.12
  - @smithy/shared-ini-file-loader@4.4.7
  - @smithy/signature-v4@5.3.12
@@ -1716,7 +1715,7 @@ The following npm packages may be included in this product:
  - @smithy/util-buffer-from@2.2.0
  - @smithy/util-buffer-from@4.2.2
  - @smithy/util-hex-encoding@4.2.2
- - @smithy/util-stream@4.5.20
+ - @smithy/util-stream@4.5.21
  - @smithy/util-uri-escape@4.2.2
  - @smithy/util-utf8@2.3.0
  - @smithy/util-utf8@4.2.2
