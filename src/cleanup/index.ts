@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { errorMessage } from '../helpers';
+import { errorMessage, getBooleanInput } from '../helpers';
 
 /**
  * When the GitHub Actions job is done, clean up any environment variables that
@@ -14,7 +14,8 @@ import { errorMessage } from '../helpers';
 
 export function cleanup() {
   // Only attempt to change environment variables if we changed them in the first place
-  if (core.getInput('output-env-credentials') !== 'false') {
+  const awsProfile = core.getInput('aws-profile', { required: false });
+  if (getBooleanInput('output-env-credentials', { required: false, default: !awsProfile })) {
     try {
       // The GitHub Actions toolkit does not have an option to completely unset
       // environment variables, so we overwrite the current value with an empty

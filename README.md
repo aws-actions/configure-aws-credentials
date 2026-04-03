@@ -82,11 +82,13 @@ Authenticate to AWS in GitHub Actions! Works especially well with
 - Periodically rotate any long-lived credentials that you use.
 - Store sensitive information in a secure way, such as using
   [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) or
-  [GitHub Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-  .
+  [GitHub Secrets][gh-secrets].
 - Be especially careful about running Actions in non-ephemeral environments, or
   [triggering workflows on `pull_request_target`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)
   events.
+
+[gh-secrets]:
+  https://docs.github.com/en/actions/security-guides/encrypted-secrets
 
 ## Non-OIDC Authentication Options
 
@@ -129,8 +131,8 @@ enabling this option._
 
 Additionally, **`aws-region`** is always required.
 
-_Note: If you use GitHub Enterprise Server, you must use the you may need to
-adjust examples here to match your environment._
+_Note: If you use GitHub Enterprise Server, you may need to adjust examples
+here to match your environment._
 
 ## Additional Options
 
@@ -163,7 +165,7 @@ detail.
 | inline-session-policy         | You may further restrict the assumed role policy by defining an inline policy here.                                                                                                                                                                                                                                                                                                                                                                              | No       |
 | managed-session-policies      | You may further restrict the assumed role policy by specifying a managed policy here.                                                                                                                                                                                                                                                                                                                                                                            | No       |
 | output-credentials            | When set, outputs fetched credentials as action step output. (Outputs aws-access-key-id, aws-secret-access-key, aws-session-token, aws-account-id, authenticated-arn, and aws-expiration). Defaults to false.                                                                                                                                                                                                                                                    | No       |
-| output-env-credentials        | When set, outputs fetched credentials as environment variables (AWS_REGION, AWS_DEFAULT_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, and AWS_PROFILE (if profile option is used)). Defaults to true. Set to false if you need to avoid setting/changing env variables. You'd probably want to use output-credentials if you disable this. (NOTE: Setting to false will prevent the aws-account-id from being exported as a step output). | No       |
+| output-env-credentials        | When set, outputs fetched credentials as environment variables (AWS_REGION, AWS_DEFAULT_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, and AWS_PROFILE (if profile option is used)). Defaults to true when `aws-profile` is not set, and false when `aws-profile` is set. Set to false to avoid setting env variables. (NOTE: Setting to false will prevent aws-account-id from being exported as a step output).                          | No       |
 | unset-current-credentials     | When set, attempts to unset any existing credentials in your action runner.                                                                                                                                                                                                                                                                                                                                                                                      | No       |
 | disable-retry                 | Disabled retry/backoff logic for assume role calls. By default, retries are enabled.                                                                                                                                                                                                                                                                                                                                                                             | No       |
 | retry-max-attempts            | Limits the number of retry attempts before giving up. Defaults to 12.                                                                                                                                                                                                                                                                                                                                                                                            | No       |
@@ -214,8 +216,18 @@ credentials to also be exported as environment variables.
 By default, the action will not overwrite existing profiles. If you would like
 to overwrite a profile, set the `overwrite-aws-profile` input to `true`.
 
-_Note for using profiles with static IAM User Credentials or when using one
-role to assume another:_
+_Note: When writing profiles, the action will preserve existing profile sections
+in the credentials and config files. However, comments in these files will not
+be preserved._
+
+_Caution: Writing to the AWS configuration file means that credentials will
+persist in the execution environment even after the action cleanup step. Use
+extreme care to ensure that this is safe in your environment and you do not leak
+valid credentials unintentionally. Writing to configuration files is intended
+for unusual authentication scenarios._
+
+For using profiles with static IAM User Credentials or when using one
+role to assume another, role chaining is needed:
 
 <details>
 

@@ -49,8 +49,8 @@ export async function run() {
     });
     const roleChaining = getBooleanInput('role-chaining', { required: false });
     const outputCredentials = getBooleanInput('output-credentials', { required: false });
-    //default to always outputting environment credentials unless profile is specified. if profile is specified, default to
-    //no environment credentials (but still output them if the user specifically requests it).
+    // Default to always outputting environment credentials unless profile is specified. If profile is specified, default to
+    // no environment credentials (but still output them if the user specifically requests it).
     const outputEnvCredentials = getBooleanInput('output-env-credentials', { required: false, default: !awsProfile });
     const unsetCurrentCredentials = getBooleanInput('unset-current-credentials', { required: false });
     let disableRetry = getBooleanInput('disable-retry', { required: false });
@@ -172,8 +172,8 @@ export async function run() {
       // in any error messages.
       exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
 
-      //if using IAM User Credentials, write to profile now so that the assumeRole call can succeed (and also for
-      //credential validation before role assumption).
+      // If using IAM User Credentials, write to profile now so that the assumeRole call can succeed (and also for
+      // credential validation before role assumption).
       if (awsProfile) {
         writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
       }
@@ -221,8 +221,8 @@ export async function run() {
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.
       // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
-      // if we are using a profile, don't validate credentials yet (since they most likely won't be in the environment).
-      // wait until after creds are written to the profile file to try validation.
+      // If we are using a profile, don't validate credentials yet (since they most likely won't be in the environment).
+      // Wait until after creds are written to the profile file to try validation.
       if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile) {
         await credentialsClient.validateCredentials(
           roleCredentials.Credentials?.AccessKeyId,
@@ -236,18 +236,21 @@ export async function run() {
 
       // Write profile files if profile mode is enabled
       if (awsProfile) {
-        //if user provided IAM User Credentials and then we assumed a role, overwrite the profile file to add
-        //the session token. (this only overwrites the profile within a single run of the action).
-        //we then validate the credentials to make sure they work.
+        if (!roleCredentials.Credentials) {
+          throw new Error('AssumeRole call succeeded but returned no credentials');
+        }
+        // If user provided IAM User Credentials and then we assumed a role, overwrite the profile file to add
+        // the session token. (this only overwrites the profile within a single run of the action).
+        // We then validate the credentials to make sure they work.
         if (AccessKeyId || !process.env.GITHUB_ACTIONS) {
-          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
+          writeProfileFiles(awsProfile, roleCredentials.Credentials, region, true);
           await credentialsClient.validateCredentials(
-            roleCredentials.Credentials?.AccessKeyId,
+            roleCredentials.Credentials.AccessKeyId,
             roleChaining,
             expectedAccountIds,
           );
         } else {
-          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
+          writeProfileFiles(awsProfile, roleCredentials.Credentials, region, overwriteAwsProfile);
         }
 
         if (outputEnvCredentials) {

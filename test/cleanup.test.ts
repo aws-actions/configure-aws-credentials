@@ -41,12 +41,22 @@ describe('Configure AWS Credentials cleanup', {}, () => {
   it('also clears AWS_PROFILE when aws-profile was set', {}, () => {
     vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
       if (name === 'aws-profile') return 'my-profile';
+      if (name === 'output-env-credentials') return 'true';
       return '';
     });
     cleanup();
     expect(core.setFailed).toHaveBeenCalledTimes(0);
     expect(core.exportVariable).toHaveBeenCalledTimes(6);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', '');
+  });
+  it('skips env cleanup when aws-profile is set without output-env-credentials', {}, () => {
+    vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
+      if (name === 'aws-profile') return 'my-profile';
+      return '';
+    });
+    cleanup();
+    expect(core.setFailed).toHaveBeenCalledTimes(0);
+    expect(core.exportVariable).toHaveBeenCalledTimes(0);
   });
   it('handles errors', {}, () => {
     vi.spyOn(core, 'exportVariable').mockImplementationOnce(() => {
