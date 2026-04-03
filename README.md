@@ -172,6 +172,16 @@ Sometimes, existing credentials in your runner can get in the way of the
 intended outcome. You can set the `unset-current-credentials` input to `true` to
 work around this issue.
 
+#### Skip the cleanup step
+By default, this action runs a post-job cleanup step that removes credentials
+from the environment. To skip this step, set the `AWS_SKIP_CLEANUP_STEP`
+environment variable to `true`:
+
+```yaml
+    env:
+      AWS_SKIP_CLEANUP_STEP: 'true'
+```
+
 #### Use an HTTP proxy
 
 If need use an HTTP proxy you can set it in the action manually. Additionally

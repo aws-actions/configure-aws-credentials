@@ -5,6 +5,7 @@ runs:
   using: node24
   main: dist/index.js
   post: dist/cleanup/index.js
+  post-if: env.AWS_SKIP_CLEANUP_STEP != 'true'
 branding:
   color: orange
   icon: cloud
