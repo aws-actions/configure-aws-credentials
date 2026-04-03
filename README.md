@@ -275,6 +275,16 @@ name as step environment variables:
 
 See the [Examples](#examples) section for more usage examples.
 
+#### Skip the cleanup step
+By default, this action runs a post-job cleanup step that removes credentials
+from the environment. To skip this step, set the `AWS_SKIP_CLEANUP_STEP`
+environment variable to `true`:
+
+```yaml
+    env:
+      AWS_SKIP_CLEANUP_STEP: 'true'
+```
+
 #### Use an HTTP proxy
 
 If need use an HTTP proxy you can set it in the action manually. Additionally
