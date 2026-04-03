@@ -4,8 +4,8 @@
   "version": "6.0.0",
   "scripts": {
     "build": "tsc",
-    "lint": "biome check --error-on-warnings ./src",
-    "lint:fix": "biome check --write ./src",
+    "lint": "biome check --error-on-warnings ./src && markdownlint -i node_modules -i CHANGELOG.md '**/*.md'",
+    "lint:fix": "biome check --write ./src && markdownlint -i node_modules -i CHANGELOG.md -f '**/*.md'",
     "package": "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/index.js && esbuild src/cleanup/index.ts --bundle --platform=node --target=node24 --outfile=dist/cleanup/index.js && npm run license",
     "test": "npm run lint && vitest run && npm run build",
     "clean": "del-cli coverage test-reports node_modules",
@@ -26,6 +26,7 @@
     "esbuild": "^0.27.4",
     "generate-license-file": "^4.1.1",
     "json-schema": "^0.4.0",
+    "markdownlint-cli": "^0.48.0",
     "memfs": "^4.57.1",
     "standard-version": "^9.5.0",
     "typescript": "^6.0.2",

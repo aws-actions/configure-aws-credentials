@@ -14,7 +14,8 @@ import { errorMessage, getBooleanInput } from '../helpers';
 
 export function cleanup() {
   // Only attempt to change environment variables if we changed them in the first place
-  if (getBooleanInput('output-env-credentials', { required: false, default: true })) {
+  const awsProfile = core.getInput('aws-profile', { required: false });
+  if (getBooleanInput('output-env-credentials', { required: false, default: !awsProfile })) {
     try {
       // The GitHub Actions toolkit does not have an option to completely unset
       // environment variables, so we overwrite the current value with an empty
@@ -25,6 +26,9 @@ export function cleanup() {
       core.exportVariable('AWS_SESSION_TOKEN', '');
       core.exportVariable('AWS_DEFAULT_REGION', '');
       core.exportVariable('AWS_REGION', '');
+      if (core.getInput('aws-profile')) {
+        core.exportVariable('AWS_PROFILE', '');
+      }
     } catch (error) {
       core.setFailed(errorMessage(error));
     }

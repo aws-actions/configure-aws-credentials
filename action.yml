@@ -13,6 +13,12 @@ inputs:
   aws-region:
     description: AWS Region, e.g. us-east-2
     required: true
+  aws-profile:
+    description: Name of the AWS profile to configure. When provided, credentials are written to ~/.aws/credentials and ~/.aws/config files instead of env variables (unless output-env-credentials is manually set to true). Name cannot contain whitespace, square brackets, or slashes.
+    required: false
+  overwrite-aws-profile:
+    description: Overwrite the given AWS profile if it already exists. Requires aws-profile. When set to false or not set, an error will be thrown if the profile already exists.
+    required: false
   role-to-assume:
     description: The Amazon Resource Name (ARN) of the role to assume. Use the provided credentials to assume an IAM role and configure the Actions environment with the assumed role credentials rather than with the provided credentials.
     required: false
@@ -71,7 +77,6 @@ inputs:
   output-env-credentials:
     description: Whether to export credentials as environment variables. If you set this to false, you probably want to use output-credentials.
     required: false
-    default: "true"
   unset-current-credentials:
     description: Whether to unset the existing credentials in your runner. May be useful if you run this action multiple times in the same job
     required: false

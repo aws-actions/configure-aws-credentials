@@ -1,11 +1,11 @@
-import { beforeEach } from 'node:test';
 import * as core from '@actions/core';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as helpers from '../src/helpers';
 
 describe('Configure AWS Credentials helpers', {}, () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(core, 'debug').mockImplementation(() => {});
   });
   it('removes brackets from GitHub Actor', {}, () => {
     const actor = 'actor[bot]';
@@ -91,6 +91,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
   });
 
   it('clears session token when not provided', {}, () => {
+    vi.spyOn(core, 'setSecret').mockImplementation(() => {});
     vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
     process.env.AWS_SESSION_TOKEN = 'old-token';
     helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test' }, false, true);
