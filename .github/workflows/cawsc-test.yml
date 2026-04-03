@@ -9,7 +9,7 @@ jobs:
       id-token: write
     steps:
       - name: CAWSC
-        uses: aws-actions/configure-aws-credentials@main
+        uses: aws-actions/configure-aws-credentials@51635dbf418c2cdd8b3e1497529334d8db7e4063 # main
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}
