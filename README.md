@@ -275,7 +275,8 @@ name as step environment variables:
 
 See the [Examples](#examples) section for more usage examples.
 
-#### Skip the cleanup step
+#### Skip the cleanup
+
 By default, this action runs a post-job cleanup step that removes credentials
 from the environment. To skip this step, set the `AWS_SKIP_CLEANUP_STEP`
 environment variable to `true`:
