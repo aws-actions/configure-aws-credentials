@@ -21420,7 +21420,7 @@ var require_core = __commonJS({
     exports2.addPath = addPath;
     exports2.getInput = getInput3;
     exports2.getMultilineInput = getMultilineInput;
-    exports2.getBooleanInput = getBooleanInput;
+    exports2.getBooleanInput = getBooleanInput2;
     exports2.setOutput = setOutput2;
     exports2.setCommandEcho = setCommandEcho;
     exports2.setFailed = setFailed2;
@@ -21485,7 +21485,7 @@ var require_core = __commonJS({
       }
       return inputs.map((input) => input.trim());
     }
-    function getBooleanInput(name, options) {
+    function getBooleanInput2(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
       const val = getInput3(name, options);
@@ -21597,10 +21597,25 @@ var core = __toESM(require_core());
 function errorMessage(error) {
   return error instanceof Error ? error.message : String(error);
 }
+function getBooleanInput(name, options) {
+  const trueValue = ["true", "True", "TRUE"];
+  const falseValue = ["false", "False", "FALSE"];
+  const optionsWithoutDefault = { ...options };
+  delete optionsWithoutDefault.default;
+  const val = core.getInput(name, optionsWithoutDefault);
+  if (trueValue.includes(val)) return true;
+  if (falseValue.includes(val)) return false;
+  if (val === "") return options?.default ?? false;
+  throw new TypeError(
+    `Input does not meet YAML 1.2 "Core Schema" specification: ${name}
+Support boolean input list: \`true | True | TRUE | false | False | FALSE\``
+  );
+}
 
 // src/cleanup/index.ts
 function cleanup() {
-  if (core2.getInput("output-env-credentials") !== "false") {
+  const awsProfile = core2.getInput("aws-profile", { required: false });
+  if (getBooleanInput("output-env-credentials", { required: false, default: !awsProfile })) {
     try {
       core2.exportVariable("AWS_ACCESS_KEY_ID", "");
       core2.exportVariable("AWS_SECRET_ACCESS_KEY", "");

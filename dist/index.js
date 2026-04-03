@@ -29258,7 +29258,7 @@ var require_dist_cjs23 = __commonJS({
 var require_dist_cjs24 = __commonJS({
   "node_modules/@aws-sdk/middleware-user-agent/dist-cjs/index.js"(exports2) {
     "use strict";
-    var core4 = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var core5 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var utilEndpoints = require_dist_cjs21();
     var protocolHttp = require_dist_cjs2();
     var client = (init_client(), __toCommonJS(client_exports));
@@ -29271,7 +29271,7 @@ var require_dist_cjs24 = __commonJS({
       return typeof appId === "string" && appId.length <= 50;
     }
     function resolveUserAgentConfig5(input) {
-      const normalizedAppIdProvider = core4.normalizeProvider(input.userAgentAppId ?? DEFAULT_UA_APP_ID);
+      const normalizedAppIdProvider = core5.normalizeProvider(input.userAgentAppId ?? DEFAULT_UA_APP_ID);
       const { customUserAgent } = input;
       return Object.assign(input, {
         customUserAgent: typeof customUserAgent === "string" ? [[customUserAgent]] : customUserAgent,
@@ -29879,14 +29879,14 @@ var require_readFile = __commonJS({
     var promises_1 = require("node:fs/promises");
     exports2.filePromises = {};
     exports2.fileIntercept = {};
-    var readFile = (path2, options) => {
-      if (exports2.fileIntercept[path2] !== void 0) {
-        return exports2.fileIntercept[path2];
+    var readFile = (path3, options) => {
+      if (exports2.fileIntercept[path3] !== void 0) {
+        return exports2.fileIntercept[path3];
       }
-      if (!exports2.filePromises[path2] || options?.ignoreCache) {
-        exports2.filePromises[path2] = (0, promises_1.readFile)(path2, "utf8");
+      if (!exports2.filePromises[path3] || options?.ignoreCache) {
+        exports2.filePromises[path3] = (0, promises_1.readFile)(path3, "utf8");
       }
-      return exports2.filePromises[path2];
+      return exports2.filePromises[path3];
     };
     exports2.readFile = readFile;
   }
@@ -29899,7 +29899,7 @@ var require_dist_cjs29 = __commonJS({
     var getHomeDir = require_getHomeDir();
     var getSSOTokenFilepath = require_getSSOTokenFilepath();
     var getSSOTokenFromFile = require_getSSOTokenFromFile();
-    var path2 = require("path");
+    var path3 = require("path");
     var types = require_dist_cjs();
     var readFile = require_readFile();
     var ENV_PROFILE = "AWS_PROFILE";
@@ -29921,12 +29921,12 @@ var require_dist_cjs29 = __commonJS({
       ...data2.default && { default: data2.default }
     });
     var ENV_CONFIG_PATH = "AWS_CONFIG_FILE";
-    var getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || path2.join(getHomeDir.getHomeDir(), ".aws", "config");
+    var getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || path3.join(getHomeDir.getHomeDir(), ".aws", "config");
     var ENV_CREDENTIALS_PATH = "AWS_SHARED_CREDENTIALS_FILE";
-    var getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || path2.join(getHomeDir.getHomeDir(), ".aws", "credentials");
+    var getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || path3.join(getHomeDir.getHomeDir(), ".aws", "credentials");
     var prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@\+\.%:/]+)\2$/;
     var profileNameBlockList = ["__proto__", "profile __proto__"];
-    var parseIni = (iniData) => {
+    var parseIni2 = (iniData) => {
       const map2 = {};
       let currentSection;
       let currentSubSection;
@@ -29978,19 +29978,19 @@ var require_dist_cjs29 = __commonJS({
       const relativeHomeDirPrefix = "~/";
       let resolvedFilepath = filepath;
       if (filepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedFilepath = path2.join(homeDir, filepath.slice(2));
+        resolvedFilepath = path3.join(homeDir, filepath.slice(2));
       }
       let resolvedConfigFilepath = configFilepath;
       if (configFilepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedConfigFilepath = path2.join(homeDir, configFilepath.slice(2));
+        resolvedConfigFilepath = path3.join(homeDir, configFilepath.slice(2));
       }
       const parsedFiles = await Promise.all([
         readFile.readFile(resolvedConfigFilepath, {
           ignoreCache: init.ignoreCache
-        }).then(parseIni).then(getConfigData).catch(swallowError$1),
+        }).then(parseIni2).then(getConfigData).catch(swallowError$1),
         readFile.readFile(resolvedFilepath, {
           ignoreCache: init.ignoreCache
-        }).then(parseIni).catch(swallowError$1)
+        }).then(parseIni2).catch(swallowError$1)
       ]);
       return {
         configFile: parsedFiles[0],
@@ -29999,7 +29999,7 @@ var require_dist_cjs29 = __commonJS({
     };
     var getSsoSessionData = (data2) => Object.entries(data2).filter(([key]) => key.startsWith(types.IniSectionType.SSO_SESSION + CONFIG_PREFIX_SEPARATOR)).reduce((acc, [key, value]) => ({ ...acc, [key.substring(key.indexOf(CONFIG_PREFIX_SEPARATOR) + 1)]: value }), {});
     var swallowError = () => ({});
-    var loadSsoSessionData = async (init = {}) => readFile.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError);
+    var loadSsoSessionData = async (init = {}) => readFile.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni2).then(getSsoSessionData).catch(swallowError);
     var mergeConfigFiles = (...files) => {
       const merged = {};
       for (const file of files) {
@@ -30021,8 +30021,8 @@ var require_dist_cjs29 = __commonJS({
       getFileRecord() {
         return readFile.fileIntercept;
       },
-      interceptFile(path3, contents) {
-        readFile.fileIntercept[path3] = Promise.resolve(contents);
+      interceptFile(path4, contents) {
+        readFile.fileIntercept[path4] = Promise.resolve(contents);
       },
       getTokenRecord() {
         return getSSOTokenFromFile.tokenIntercept;
@@ -30273,7 +30273,7 @@ var require_dist_cjs32 = __commonJS({
     "use strict";
     var getEndpointFromConfig = require_getEndpointFromConfig();
     var urlParser = require_dist_cjs18();
-    var core4 = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var core5 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var utilMiddleware = require_dist_cjs6();
     var middlewareSerde = require_dist_cjs31();
     var resolveParamsForS3 = async (endpointParams) => {
@@ -30347,8 +30347,8 @@ var require_dist_cjs32 = __commonJS({
               return endpoint.url.href;
             }
             if ("hostname" in endpoint) {
-              const { protocol, hostname, port, path: path2 } = endpoint;
-              return `${protocol}//${hostname}${port ? ":" + port : ""}${path2}`;
+              const { protocol, hostname, port, path: path3 } = endpoint;
+              return `${protocol}//${hostname}${port ? ":" + port : ""}${path3}`;
             }
           }
           return endpoint;
@@ -30434,7 +30434,7 @@ var require_dist_cjs32 = __commonJS({
     var endpointMiddleware = ({ config, instructions }) => {
       return (next, context) => async (args) => {
         if (config.isCustomEndpoint) {
-          core4.setFeature(context, "ENDPOINT_OVERRIDE", "N");
+          core5.setFeature(context, "ENDPOINT_OVERRIDE", "N");
         }
         const endpoint = await getEndpointFromInstructions(args.input, {
           getEndpointParameterInstructions() {
@@ -30608,7 +30608,7 @@ var require_dist_cjs33 = __commonJS({
         });
         return expandedMiddlewareList;
       };
-      const getMiddlewareList = (debug3 = false) => {
+      const getMiddlewareList = (debug4 = false) => {
         const normalizedAbsoluteEntries = [];
         const normalizedRelativeEntries = [];
         const normalizedEntriesNameMap = {};
@@ -30638,7 +30638,7 @@ var require_dist_cjs33 = __commonJS({
           if (entry.toMiddleware) {
             const toMiddleware = normalizedEntriesNameMap[entry.toMiddleware];
             if (toMiddleware === void 0) {
-              if (debug3) {
+              if (debug4) {
                 return;
               }
               throw new Error(`${entry.toMiddleware} is not found when adding ${getMiddlewareNameWithAliases(entry.name, entry.aliases)} middleware ${entry.relation} ${entry.toMiddleware}`);
@@ -33722,12 +33722,12 @@ var require_dist_cjs40 = __commonJS({
       }
       return ["md/nodejs", node_process.versions.node];
     };
-    var getNodeModulesParentDirs = (dirname) => {
+    var getNodeModulesParentDirs = (dirname2) => {
       const cwd = process.cwd();
-      if (!dirname) {
+      if (!dirname2) {
         return [cwd];
       }
-      const normalizedPath = node_path.normalize(dirname);
+      const normalizedPath = node_path.normalize(dirname2);
       const parts = normalizedPath.split(node_path.sep);
       const nodeModulesIndex = parts.indexOf("node_modules");
       const parentDir = nodeModulesIndex !== -1 ? parts.slice(0, nodeModulesIndex).join(node_path.sep) : normalizedPath;
@@ -33775,8 +33775,8 @@ var require_dist_cjs40 = __commonJS({
         tscVersion = null;
         return void 0;
       }
-      const dirname = typeof __dirname !== "undefined" ? __dirname : void 0;
-      const nodeModulesParentDirs = getNodeModulesParentDirs(dirname);
+      const dirname2 = typeof __dirname !== "undefined" ? __dirname : void 0;
+      const nodeModulesParentDirs = getNodeModulesParentDirs(dirname2);
       let versionFromApp;
       for (const nodeModulesParentDir of nodeModulesParentDirs) {
         try {
@@ -34979,7 +34979,7 @@ var init_SmithyRpcV2CborProtocol = __esm({
           }
         }
         const { service, operation: operation2 } = (0, import_util_middleware6.getSmithyContext)(context);
-        const path2 = `/service/${service}/operation/${operation2}`;
+        const path3 = `/service/${service}/operation/${operation2}`;
         if (request.path.endsWith("/")) {
           request.path += path3.slice(1);
         } else {
@@ -72504,15 +72504,18 @@ async function run() {
         await exportAccountId(credentialsClient, maskAccountId);
       }
       if (awsProfile) {
+        if (!roleCredentials.Credentials) {
+          throw new Error("AssumeRole call succeeded but returned no credentials");
+        }
         if (AccessKeyId || !process.env.GITHUB_ACTIONS) {
-          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, true);
+          writeProfileFiles(awsProfile, roleCredentials.Credentials, region, true);
           await credentialsClient.validateCredentials(
-            roleCredentials.Credentials?.AccessKeyId,
+            roleCredentials.Credentials.AccessKeyId,
             roleChaining,
             expectedAccountIds
           );
         } else {
-          writeProfileFiles(awsProfile, roleCredentials.Credentials || {}, region, overwriteAwsProfile);
+          writeProfileFiles(awsProfile, roleCredentials.Credentials, region, overwriteAwsProfile);
         }
         if (outputEnvCredentials) {
           core4.exportVariable("AWS_PROFILE", awsProfile);
