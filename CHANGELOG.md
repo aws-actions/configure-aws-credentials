@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v6.0.0...v6.1.0) (2026-04-06)
+
+
+### Features
+
+* add skip cleanup option ([#1716](https://github.com/aws-actions/configure-aws-credentials/issues/1716)) ([11b1c58](https://github.com/aws-actions/configure-aws-credentials/commit/11b1c58b24724e66aa52a847862a0c1b0c4b0c7b)), closes [#1545](https://github.com/aws-actions/configure-aws-credentials/issues/1545)
+* Support usage of AWS Profiles ([#1696](https://github.com/aws-actions/configure-aws-credentials/issues/1696)) ([a7f0c82](https://github.com/aws-actions/configure-aws-credentials/commit/a7f0c828ac76e0d049e34c920172c60f579f9eb3))
+
 ## [6.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v5.1.1...v6.0.0) (2026-02-04)
 
 
