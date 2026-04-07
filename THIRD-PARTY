@@ -643,16 +643,16 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/client-sts@3.1020.0
+ - @aws-sdk/client-sts@3.1025.0
  - @aws-sdk/util-user-agent-browser@3.972.8
- - @aws-sdk/util-user-agent-node@3.973.13
- - @smithy/middleware-retry@4.4.45
+ - @aws-sdk/util-user-agent-node@3.973.14
+ - @smithy/middleware-retry@4.5.0
  - @smithy/querystring-builder@4.2.13
- - @smithy/querystring-parser@4.2.12
- - @smithy/service-error-classification@4.2.12
- - @smithy/url-parser@4.2.12
- - @smithy/util-defaults-mode-browser@4.3.44
- - @smithy/util-defaults-mode-node@4.2.48
+ - @smithy/querystring-parser@4.2.13
+ - @smithy/service-error-classification@4.2.13
+ - @smithy/url-parser@4.2.13
+ - @smithy/util-defaults-mode-browser@4.3.45
+ - @smithy/util-defaults-mode-node@4.2.49
 
 These packages each contain the following license:
 
@@ -864,12 +864,12 @@ The following npm packages may be included in this product:
 
  - @aws-sdk/middleware-host-header@3.972.8
  - @aws-sdk/middleware-recursion-detection@3.972.9
- - @aws-sdk/middleware-user-agent@3.972.27
- - @smithy/core@3.23.13
- - @smithy/invalid-dependency@4.2.12
- - @smithy/middleware-serde@4.2.16
+ - @aws-sdk/middleware-user-agent@3.972.28
+ - @smithy/core@3.23.14
+ - @smithy/invalid-dependency@4.2.13
+ - @smithy/middleware-serde@4.2.17
  - @smithy/protocol-http@5.3.13
- - @smithy/smithy-client@4.12.8
+ - @smithy/smithy-client@4.12.9
  - @smithy/types@4.14.0
 
 These packages each contain the following license:
@@ -1689,26 +1689,26 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/credential-provider-env@3.972.24
- - @aws-sdk/credential-provider-ini@3.972.27
- - @aws-sdk/credential-provider-node@3.972.28
+ - @aws-sdk/credential-provider-ini@3.972.28
+ - @aws-sdk/credential-provider-node@3.972.29
  - @aws-sdk/region-config-resolver@3.972.10
- - @aws-sdk/token-providers@3.1020.0
+ - @aws-sdk/token-providers@3.1021.0
  - @aws-sdk/types@3.973.6
  - @aws-sdk/util-endpoints@3.996.5
  - @aws-sdk/util-locate-window@3.965.5
  - @aws-sdk/xml-builder@3.972.16
- - @smithy/config-resolver@4.4.13
- - @smithy/credential-provider-imds@4.2.12
- - @smithy/fetch-http-handler@5.3.15
- - @smithy/hash-node@4.2.12
+ - @smithy/config-resolver@4.4.14
+ - @smithy/credential-provider-imds@4.2.13
+ - @smithy/fetch-http-handler@5.3.16
+ - @smithy/hash-node@4.2.13
  - @smithy/is-array-buffer@2.2.0
  - @smithy/is-array-buffer@4.2.2
- - @smithy/middleware-content-length@4.2.12
- - @smithy/middleware-endpoint@4.4.28
- - @smithy/middleware-stack@4.2.12
+ - @smithy/middleware-content-length@4.2.13
+ - @smithy/middleware-endpoint@4.4.29
+ - @smithy/middleware-stack@4.2.13
  - @smithy/node-http-handler@4.5.2
  - @smithy/property-provider@4.2.13
- - @smithy/shared-ini-file-loader@4.4.7
+ - @smithy/shared-ini-file-loader@4.4.8
  - @smithy/signature-v4@5.3.12
  - @smithy/util-base64@4.3.2
  - @smithy/util-body-length-browser@4.2.2
@@ -1716,7 +1716,7 @@ The following npm packages may be included in this product:
  - @smithy/util-buffer-from@2.2.0
  - @smithy/util-buffer-from@4.2.2
  - @smithy/util-hex-encoding@4.2.2
- - @smithy/util-stream@4.5.21
+ - @smithy/util-stream@4.5.22
  - @smithy/util-uri-escape@4.2.2
  - @smithy/util-utf8@2.3.0
  - @smithy/util-utf8@4.2.2
@@ -1931,8 +1931,8 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/credential-provider-process@3.972.24
- - @aws-sdk/credential-provider-sso@3.972.27
- - @aws-sdk/credential-provider-web-identity@3.972.27
+ - @aws-sdk/credential-provider-sso@3.972.28
+ - @aws-sdk/credential-provider-web-identity@3.972.28
 
 These packages each contain the following license:
 
@@ -2143,7 +2143,7 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/middleware-logger@3.972.8
- - @smithy/node-config-provider@4.3.12
+ - @smithy/node-config-provider@4.3.13
  - @smithy/util-config-provider@4.2.2
 
 These packages each contain the following license:
@@ -2354,9 +2354,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @smithy/util-endpoints@3.3.3
- - @smithy/util-middleware@4.2.12
- - @smithy/util-retry@4.2.12
+ - @smithy/util-endpoints@3.3.4
+ - @smithy/util-middleware@4.2.13
+ - @smithy/util-retry@4.3.0
 
 These packages each contain the following license:
 
@@ -2567,8 +2567,8 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/credential-provider-http@3.972.26
- - @aws-sdk/credential-provider-login@3.972.27
- - @aws-sdk/nested-clients@3.996.17
+ - @aws-sdk/credential-provider-login@3.972.28
+ - @aws-sdk/nested-clients@3.996.18
 
 These packages each contain the following license:
 

@@ -29006,8 +29006,8 @@ var require_dist_cjs23 = __commonJS({
       minFillRate;
       scaleConstant;
       smooth;
-      currentCapacity = 0;
       enabled = false;
+      availableTokens = 0;
       lastMaxRate = 0;
       measuredTxRate = 0;
       requestCount = 0;
@@ -29023,43 +29023,20 @@ var require_dist_cjs23 = __commonJS({
         this.minFillRate = options?.minFillRate ?? 0.5;
         this.scaleConstant = options?.scaleConstant ?? 0.4;
         this.smooth = options?.smooth ?? 0.8;
-        const currentTimeInSeconds = this.getCurrentTimeInSeconds();
-        this.lastThrottleTime = currentTimeInSeconds;
+        this.lastThrottleTime = this.getCurrentTimeInSeconds();
         this.lastTxRateBucket = Math.floor(this.getCurrentTimeInSeconds());
         this.fillRate = this.minFillRate;
         this.maxCapacity = this.minCapacity;
       }
-      getCurrentTimeInSeconds() {
-        return Date.now() / 1e3;
-      }
       async getSendToken() {
         return this.acquireTokenBucket(1);
-      }
-      async acquireTokenBucket(amount) {
-        if (!this.enabled) {
-          return;
-        }
-        this.refillTokenBucket();
-        if (amount > this.currentCapacity) {
-          const delay = (amount - this.currentCapacity) / this.fillRate * 1e3;
-          await new Promise((resolve) => _DefaultRateLimiter.setTimeoutFn(resolve, delay));
-        }
-        this.currentCapacity = this.currentCapacity - amount;
-      }
-      refillTokenBucket() {
-        const timestamp = this.getCurrentTimeInSeconds();
-        if (!this.lastTimestamp) {
-          this.lastTimestamp = timestamp;
-          return;
-        }
-        const fillAmount = (timestamp - this.lastTimestamp) * this.fillRate;
-        this.currentCapacity = Math.min(this.maxCapacity, this.currentCapacity + fillAmount);
-        this.lastTimestamp = timestamp;
       }
       updateClientSendingRate(response) {
         let calculatedRate;
         this.updateMeasuredRate();
-        if (serviceErrorClassification.isThrottlingError(response)) {
+        const retryErrorInfo = response;
+        const isThrottling = retryErrorInfo?.errorType === "THROTTLING" || serviceErrorClassification.isThrottlingError(retryErrorInfo?.error ?? response);
+        if (isThrottling) {
           const rateToUse = !this.enabled ? this.measuredTxRate : Math.min(this.measuredTxRate, this.fillRate);
           this.lastMaxRate = rateToUse;
           this.calculateTimeWindow();
@@ -29072,6 +29049,30 @@ var require_dist_cjs23 = __commonJS({
         }
         const newRate = Math.min(calculatedRate, 2 * this.measuredTxRate);
         this.updateTokenBucketRate(newRate);
+      }
+      getCurrentTimeInSeconds() {
+        return Date.now() / 1e3;
+      }
+      async acquireTokenBucket(amount) {
+        if (!this.enabled) {
+          return;
+        }
+        this.refillTokenBucket();
+        if (amount > this.availableTokens) {
+          const delay = (amount - this.availableTokens) / this.fillRate * 1e3;
+          await new Promise((resolve) => _DefaultRateLimiter.setTimeoutFn(resolve, delay));
+        }
+        this.availableTokens = this.availableTokens - amount;
+      }
+      refillTokenBucket() {
+        const timestamp = this.getCurrentTimeInSeconds();
+        if (!this.lastTimestamp) {
+          this.lastTimestamp = timestamp;
+          return;
+        }
+        const fillAmount = (timestamp - this.lastTimestamp) * this.fillRate;
+        this.availableTokens = Math.min(this.maxCapacity, this.availableTokens + fillAmount);
+        this.lastTimestamp = timestamp;
       }
       calculateTimeWindow() {
         this.timeWindow = this.getPrecise(Math.pow(this.lastMaxRate * (1 - this.beta) / this.scaleConstant, 1 / 3));
@@ -29089,7 +29090,7 @@ var require_dist_cjs23 = __commonJS({
         this.refillTokenBucket();
         this.fillRate = Math.max(newRate, this.minFillRate);
         this.maxCapacity = Math.max(newRate, this.minCapacity);
-        this.currentCapacity = Math.min(this.currentCapacity, this.maxCapacity);
+        this.availableTokens = Math.min(this.availableTokens, this.maxCapacity);
       }
       updateMeasuredRate() {
         const t5 = this.getCurrentTimeInSeconds();
@@ -29115,64 +29116,106 @@ var require_dist_cjs23 = __commonJS({
     var NO_RETRY_INCREMENT = 1;
     var INVOCATION_ID_HEADER = "amz-sdk-invocation-id";
     var REQUEST_HEADER = "amz-sdk-request";
-    var getDefaultRetryBackoffStrategy = () => {
-      let delayBase = DEFAULT_RETRY_DELAY_BASE;
-      const computeNextBackoffDelay = (attempts) => {
-        return Math.floor(Math.min(MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase));
-      };
-      const setDelayBase = (delay) => {
-        delayBase = delay;
-      };
-      return {
-        computeNextBackoffDelay,
-        setDelayBase
-      };
+    var Retry = class _Retry {
+      static v2026 = typeof process !== "undefined" && process.env?.SMITHY_NEW_RETRIES_2026 === "true";
+      static delay() {
+        return _Retry.v2026 ? 50 : 100;
+      }
+      static throttlingDelay() {
+        return _Retry.v2026 ? 1e3 : 500;
+      }
+      static cost() {
+        return _Retry.v2026 ? 14 : 5;
+      }
+      static throttlingCost() {
+        return _Retry.v2026 ? 5 : 10;
+      }
+      static modifiedCostType() {
+        return _Retry.v2026 ? "THROTTLING" : "TRANSIENT";
+      }
     };
-    var createDefaultRetryToken = ({ retryDelay, retryCount, retryCost }) => {
-      const getRetryCount = () => retryCount;
-      const getRetryDelay = () => Math.min(MAXIMUM_RETRY_DELAY, retryDelay);
-      const getRetryCost = () => retryCost;
-      return {
-        getRetryCount,
-        getRetryDelay,
-        getRetryCost
-      };
+    var DefaultRetryBackoffStrategy = class {
+      x = Retry.delay();
+      computeNextBackoffDelay(i5) {
+        const b6 = Math.random();
+        const r5 = 2;
+        const t_i = b6 * Math.min(this.x * r5 ** i5, MAXIMUM_RETRY_DELAY);
+        return Math.floor(t_i);
+      }
+      setDelayBase(delay) {
+        this.x = delay;
+      }
+    };
+    var DefaultRetryToken = class {
+      delay;
+      count;
+      cost;
+      longPoll;
+      constructor(delay, count, cost, longPoll) {
+        this.delay = delay;
+        this.count = count;
+        this.cost = cost;
+        this.longPoll = longPoll;
+      }
+      getRetryCount() {
+        return this.count;
+      }
+      getRetryDelay() {
+        return Math.min(MAXIMUM_RETRY_DELAY, this.delay);
+      }
+      getRetryCost() {
+        return this.cost;
+      }
+      isLongPoll() {
+        return this.longPoll;
+      }
     };
     var StandardRetryStrategy = class {
-      maxAttempts;
       mode = exports2.RETRY_MODES.STANDARD;
       capacity = INITIAL_RETRY_TOKENS;
-      retryBackoffStrategy = getDefaultRetryBackoffStrategy();
+      retryBackoffStrategy;
       maxAttemptsProvider;
-      constructor(maxAttempts) {
-        this.maxAttempts = maxAttempts;
-        this.maxAttemptsProvider = typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts;
+      baseDelay;
+      constructor(arg1) {
+        if (typeof arg1 === "number") {
+          this.maxAttemptsProvider = async () => arg1;
+        } else if (typeof arg1 === "function") {
+          this.maxAttemptsProvider = arg1;
+        } else if (arg1 && typeof arg1 === "object") {
+          this.maxAttemptsProvider = async () => arg1.maxAttempts;
+          this.baseDelay = arg1.baseDelay;
+          this.retryBackoffStrategy = arg1.backoff;
+        }
+        this.maxAttemptsProvider ??= async () => DEFAULT_MAX_ATTEMPTS;
+        this.baseDelay ??= Retry.delay();
+        this.retryBackoffStrategy ??= new DefaultRetryBackoffStrategy();
       }
       async acquireInitialRetryToken(retryTokenScope) {
-        return createDefaultRetryToken({
-          retryDelay: DEFAULT_RETRY_DELAY_BASE,
-          retryCount: 0
-        });
+        return new DefaultRetryToken(Retry.delay(), 0, void 0, Retry.v2026 && retryTokenScope.includes(":longpoll"));
       }
       async refreshRetryTokenForRetry(token, errorInfo) {
         const maxAttempts = await this.getMaxAttempts();
-        if (this.shouldRetry(token, errorInfo, maxAttempts)) {
+        const shouldRetry = this.shouldRetry(token, errorInfo, maxAttempts);
+        if (shouldRetry || token.isLongPoll?.()) {
           const errorType = errorInfo.errorType;
-          this.retryBackoffStrategy.setDelayBase(errorType === "THROTTLING" ? THROTTLING_RETRY_DELAY_BASE : DEFAULT_RETRY_DELAY_BASE);
+          this.retryBackoffStrategy.setDelayBase(errorType === "THROTTLING" ? Retry.throttlingDelay() : this.baseDelay);
           const delayFromErrorType = this.retryBackoffStrategy.computeNextBackoffDelay(token.getRetryCount());
-          const retryDelay = errorInfo.retryAfterHint ? Math.max(errorInfo.retryAfterHint.getTime() - Date.now() || 0, delayFromErrorType) : delayFromErrorType;
-          const capacityCost = this.getCapacityCost(errorType);
-          this.capacity -= capacityCost;
-          return createDefaultRetryToken({
-            retryDelay,
-            retryCount: token.getRetryCount() + 1,
-            retryCost: capacityCost
-          });
+          let retryDelay = delayFromErrorType;
+          if (errorInfo.retryAfterHint instanceof Date) {
+            retryDelay = Math.max(delayFromErrorType, Math.min(errorInfo.retryAfterHint.getTime() - Date.now(), delayFromErrorType + 5e3));
+          }
+          if (!shouldRetry) {
+            throw Object.assign(new Error("No retry token available"), { $backoff: Retry.v2026 ? retryDelay : 0 });
+          } else {
+            const capacityCost = this.getCapacityCost(errorType);
+            this.capacity -= capacityCost;
+            return new DefaultRetryToken(retryDelay, token.getRetryCount() + 1, capacityCost, token.isLongPoll?.() ?? false);
+          }
         }
         throw new Error("No retry token available");
       }
       recordSuccess(token) {
-        this.capacity = Math.max(INITIAL_RETRY_TOKENS, this.capacity + (token.getRetryCost() ?? NO_RETRY_INCREMENT));
+        this.capacity = Math.min(INITIAL_RETRY_TOKENS, this.capacity + (token.getRetryCost() ?? NO_RETRY_INCREMENT));
       }
       getCapacity() {
         return this.capacity;
@@ -29190,22 +29233,23 @@ var require_dist_cjs23 = __commonJS({
         return attempts < maxAttempts && this.capacity >= this.getCapacityCost(errorInfo.errorType) && this.isRetryableError(errorInfo.errorType);
       }
       getCapacityCost(errorType) {
-        return errorType === "TRANSIENT" ? TIMEOUT_RETRY_COST : RETRY_COST;
+        return errorType === Retry.modifiedCostType() ? Retry.throttlingCost() : Retry.cost();
       }
       isRetryableError(errorType) {
         return errorType === "THROTTLING" || errorType === "TRANSIENT";
       }
     };
     var AdaptiveRetryStrategy = class {
-      maxAttemptsProvider;
+      mode = exports2.RETRY_MODES.ADAPTIVE;
       rateLimiter;
       standardRetryStrategy;
-      mode = exports2.RETRY_MODES.ADAPTIVE;
       constructor(maxAttemptsProvider, options) {
-        this.maxAttemptsProvider = maxAttemptsProvider;
         const { rateLimiter } = options ?? {};
         this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
-        this.standardRetryStrategy = new StandardRetryStrategy(maxAttemptsProvider);
+        this.standardRetryStrategy = options ? new StandardRetryStrategy({
+          maxAttempts: typeof maxAttemptsProvider === "number" ? maxAttemptsProvider : 3,
+          ...options
+        }) : new StandardRetryStrategy(maxAttemptsProvider);
       }
       async acquireInitialRetryToken(retryTokenScope) {
         await this.rateLimiter.getSendToken();
@@ -29222,7 +29266,7 @@ var require_dist_cjs23 = __commonJS({
     };
     var ConfiguredRetryStrategy = class extends StandardRetryStrategy {
       computeNextBackoffDelay;
-      constructor(maxAttempts, computeNextBackoffDelay = DEFAULT_RETRY_DELAY_BASE) {
+      constructor(maxAttempts, computeNextBackoffDelay = Retry.delay()) {
         super(typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts);
         if (typeof computeNextBackoffDelay === "number") {
           this.computeNextBackoffDelay = () => computeNextBackoffDelay;
@@ -29248,6 +29292,7 @@ var require_dist_cjs23 = __commonJS({
     exports2.NO_RETRY_INCREMENT = NO_RETRY_INCREMENT;
     exports2.REQUEST_HEADER = REQUEST_HEADER;
     exports2.RETRY_COST = RETRY_COST;
+    exports2.Retry = Retry;
     exports2.StandardRetryStrategy = StandardRetryStrategy;
     exports2.THROTTLING_RETRY_DELAY_BASE = THROTTLING_RETRY_DELAY_BASE;
     exports2.TIMEOUT_RETRY_COST = TIMEOUT_RETRY_COST;
@@ -30271,10 +30316,10 @@ var require_dist_cjs31 = __commonJS({
 var require_dist_cjs32 = __commonJS({
   "node_modules/@smithy/middleware-endpoint/dist-cjs/index.js"(exports2) {
     "use strict";
-    var getEndpointFromConfig = require_getEndpointFromConfig();
-    var urlParser = require_dist_cjs18();
     var core5 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var utilMiddleware = require_dist_cjs6();
+    var getEndpointFromConfig = require_getEndpointFromConfig();
+    var urlParser = require_dist_cjs18();
     var middlewareSerde = require_dist_cjs31();
     var resolveParamsForS3 = async (endpointParams) => {
       const bucket = endpointParams?.Bucket || "";
@@ -30797,10 +30842,10 @@ var require_dist_cjs34 = __commonJS({
   "node_modules/@smithy/smithy-client/dist-cjs/index.js"(exports2) {
     "use strict";
     var middlewareStack = require_dist_cjs33();
-    var protocols2 = (init_protocols(), __toCommonJS(protocols_exports));
     var types3 = require_dist_cjs();
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var serde = (init_serde(), __toCommonJS(serde_exports));
+    var protocols2 = (init_protocols(), __toCommonJS(protocols_exports));
     var Client2 = class {
       config;
       middlewareStack = middlewareStack.constructStack();
@@ -31417,6 +31462,16 @@ var require_dist_cjs35 = __commonJS({
     var utilMiddleware = require_dist_cjs6();
     var smithyClient = require_dist_cjs34();
     var isStreamingPayload = require_isStreamingPayload();
+    var serde = (init_serde(), __toCommonJS(serde_exports));
+    var asSdkError = (error2) => {
+      if (error2 instanceof Error)
+        return error2;
+      if (error2 instanceof Object)
+        return Object.assign(new Error(), error2);
+      if (typeof error2 === "string")
+        return new Error(error2);
+      return new Error(`AWS SDK error wrapper for ${error2}`);
+    };
     var getDefaultRetryQuota = (initialRetryTokens, options) => {
       const MAX_CAPACITY = initialRetryTokens;
       const noRetryIncrement = utilRetry.NO_RETRY_INCREMENT;
@@ -31449,15 +31504,6 @@ var require_dist_cjs35 = __commonJS({
         return false;
       }
       return serviceErrorClassification.isRetryableByTrait(error2) || serviceErrorClassification.isClockSkewError(error2) || serviceErrorClassification.isThrottlingError(error2) || serviceErrorClassification.isTransientError(error2);
-    };
-    var asSdkError = (error2) => {
-      if (error2 instanceof Error)
-        return error2;
-      if (error2 instanceof Object)
-        return Object.assign(new Error(), error2);
-      if (typeof error2 === "string")
-        return new Error(error2);
-      return new Error(`AWS SDK error wrapper for ${error2}`);
     };
     var StandardRetryStrategy = class {
       maxAttemptsProvider;
@@ -31624,12 +31670,54 @@ var require_dist_cjs35 = __commonJS({
         clientStack.addRelativeTo(omitRetryHeadersMiddleware(), omitRetryHeadersMiddlewareOptions);
       }
     });
+    function parseRetryAfterHeader(response, logger2) {
+      if (!protocolHttp.HttpResponse.isInstance(response)) {
+        return;
+      }
+      for (const header of Object.keys(response.headers)) {
+        const h5 = header.toLowerCase();
+        if (h5 === "retry-after") {
+          const retryAfter = response.headers[header];
+          let retryAfterSeconds = NaN;
+          if (retryAfter.endsWith("GMT")) {
+            try {
+              const date2 = serde.parseRfc7231DateTime(retryAfter);
+              retryAfterSeconds = (date2.getTime() - Date.now()) / 1e3;
+            } catch (e5) {
+              logger2?.trace?.("Failed to parse retry-after header");
+              logger2?.trace?.(e5);
+            }
+          } else if (retryAfter.match(/ GMT, ((\d+)|(\d+\.\d+))$/)) {
+            retryAfterSeconds = Number(retryAfter.match(/ GMT, ([\d.]+)$/)?.[1]);
+          } else if (retryAfter.match(/^((\d+)|(\d+\.\d+))$/)) {
+            retryAfterSeconds = Number(retryAfter);
+          } else if (Date.parse(retryAfter) >= Date.now()) {
+            retryAfterSeconds = (Date.parse(retryAfter) - Date.now()) / 1e3;
+          }
+          if (isNaN(retryAfterSeconds)) {
+            return;
+          }
+          return new Date(Date.now() + retryAfterSeconds * 1e3);
+        } else if (h5 === "x-amz-retry-after") {
+          const v5 = response.headers[header];
+          const backoffMilliseconds = Number(v5);
+          if (isNaN(backoffMilliseconds)) {
+            logger2?.trace?.(`Failed to parse x-amz-retry-after=${v5}`);
+            return;
+          }
+          return new Date(Date.now() + backoffMilliseconds);
+        }
+      }
+    }
+    function getRetryAfterHint(response, logger2) {
+      return parseRetryAfterHeader(response, logger2);
+    }
     var retryMiddleware = (options) => (next, context) => async (args) => {
       let retryStrategy = await options.retryStrategy();
       const maxAttempts = await options.maxAttempts();
       if (isRetryStrategyV2(retryStrategy)) {
         retryStrategy = retryStrategy;
-        let retryToken = await retryStrategy.acquireInitialRetryToken(context["partition_id"]);
+        let retryToken = await retryStrategy.acquireInitialRetryToken((context["partition_id"] ?? "") + (context.__retryLongPoll ? ":longpoll" : ""));
         let lastError = new Error();
         let attempts = 0;
         let totalRetryDelay = 0;
@@ -31649,7 +31737,7 @@ var require_dist_cjs35 = __commonJS({
             output.$metadata.totalRetryDelay = totalRetryDelay;
             return { response, output };
           } catch (e5) {
-            const retryErrorInfo = getRetryErrorInfo(e5);
+            const retryErrorInfo = getRetryErrorInfo(e5, options.logger);
             lastError = asSdkError(e5);
             if (isRequest && isStreamingPayload.isStreamingPayload(request)) {
               (context.logger instanceof smithyClient.NoOpLogger ? console : context.logger)?.warn("An error was encountered in a non-retryable streaming request.");
@@ -31658,6 +31746,9 @@ var require_dist_cjs35 = __commonJS({
             try {
               retryToken = await retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo);
             } catch (refreshError) {
+              if (typeof refreshError.$backoff === "number") {
+                await cooldown(refreshError.$backoff);
+              }
               if (!lastError.$metadata) {
                 lastError.$metadata = {};
               }
@@ -31668,23 +31759,25 @@ var require_dist_cjs35 = __commonJS({
             attempts = retryToken.getRetryCount();
             const delay = retryToken.getRetryDelay();
             totalRetryDelay += delay;
-            await new Promise((resolve) => setTimeout(resolve, delay));
+            await cooldown(delay);
           }
         }
       } else {
         retryStrategy = retryStrategy;
-        if (retryStrategy?.mode)
+        if (retryStrategy?.mode) {
           context.userAgent = [...context.userAgent || [], ["cfg/retry-mode", retryStrategy.mode]];
+        }
         return retryStrategy.retry(next, args);
       }
     };
+    var cooldown = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     var isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined";
-    var getRetryErrorInfo = (error2) => {
+    var getRetryErrorInfo = (error2, logger2) => {
       const errorInfo = {
         error: error2,
         errorType: getRetryErrorType(error2)
       };
-      const retryAfterHint = getRetryAfterHint(error2.$response);
+      const retryAfterHint = parseRetryAfterHeader(error2.$response, logger2);
       if (retryAfterHint) {
         errorInfo.retryAfterHint = retryAfterHint;
       }
@@ -31711,19 +31804,6 @@ var require_dist_cjs35 = __commonJS({
         clientStack.add(retryMiddleware(options), retryMiddlewareOptions);
       }
     });
-    var getRetryAfterHint = (response) => {
-      if (!protocolHttp.HttpResponse.isInstance(response))
-        return;
-      const retryAfterHeaderName = Object.keys(response.headers).find((key) => key.toLowerCase() === "retry-after");
-      if (!retryAfterHeaderName)
-        return;
-      const retryAfter = response.headers[retryAfterHeaderName];
-      const retryAfterSeconds = Number(retryAfter);
-      if (!Number.isNaN(retryAfterSeconds))
-        return new Date(retryAfterSeconds * 1e3);
-      const retryAfterDate = new Date(retryAfter);
-      return retryAfterDate;
-    };
     exports2.AdaptiveRetryStrategy = AdaptiveRetryStrategy;
     exports2.CONFIG_MAX_ATTEMPTS = CONFIG_MAX_ATTEMPTS;
     exports2.CONFIG_RETRY_MODE = CONFIG_RETRY_MODE;
@@ -32774,7 +32854,7 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1020.0",
+      version: "3.1025.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
         "build:cjs": "node ../../scripts/compilation/inline client-sts",
@@ -32801,16 +32881,16 @@ var require_package = __commonJS({
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
         "@aws-sdk/core": "^3.973.26",
-        "@aws-sdk/credential-provider-node": "^3.972.28",
+        "@aws-sdk/credential-provider-node": "^3.972.29",
         "@aws-sdk/middleware-host-header": "^3.972.8",
         "@aws-sdk/middleware-logger": "^3.972.8",
         "@aws-sdk/middleware-recursion-detection": "^3.972.9",
-        "@aws-sdk/middleware-user-agent": "^3.972.27",
+        "@aws-sdk/middleware-user-agent": "^3.972.28",
         "@aws-sdk/region-config-resolver": "^3.972.10",
         "@aws-sdk/types": "^3.973.6",
         "@aws-sdk/util-endpoints": "^3.996.5",
         "@aws-sdk/util-user-agent-browser": "^3.972.8",
-        "@aws-sdk/util-user-agent-node": "^3.973.13",
+        "@aws-sdk/util-user-agent-node": "^3.973.14",
         "@smithy/config-resolver": "^4.4.13",
         "@smithy/core": "^3.23.13",
         "@smithy/fetch-http-handler": "^5.3.15",
@@ -32818,7 +32898,7 @@ var require_package = __commonJS({
         "@smithy/invalid-dependency": "^4.2.12",
         "@smithy/middleware-content-length": "^4.2.12",
         "@smithy/middleware-endpoint": "^4.4.28",
-        "@smithy/middleware-retry": "^4.4.45",
+        "@smithy/middleware-retry": "^4.4.46",
         "@smithy/middleware-serde": "^4.2.16",
         "@smithy/middleware-stack": "^4.2.12",
         "@smithy/node-config-provider": "^4.3.12",
@@ -32834,7 +32914,7 @@ var require_package = __commonJS({
         "@smithy/util-defaults-mode-node": "^4.2.48",
         "@smithy/util-endpoints": "^3.3.3",
         "@smithy/util-middleware": "^4.2.12",
-        "@smithy/util-retry": "^4.2.12",
+        "@smithy/util-retry": "^4.2.13",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
@@ -33555,7 +33635,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.996.17",
+      version: "3.996.18",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -33588,12 +33668,12 @@ var init_package = __esm({
         "@aws-sdk/middleware-host-header": "^3.972.8",
         "@aws-sdk/middleware-logger": "^3.972.8",
         "@aws-sdk/middleware-recursion-detection": "^3.972.9",
-        "@aws-sdk/middleware-user-agent": "^3.972.27",
+        "@aws-sdk/middleware-user-agent": "^3.972.28",
         "@aws-sdk/region-config-resolver": "^3.972.10",
         "@aws-sdk/types": "^3.973.6",
         "@aws-sdk/util-endpoints": "^3.996.5",
         "@aws-sdk/util-user-agent-browser": "^3.972.8",
-        "@aws-sdk/util-user-agent-node": "^3.973.13",
+        "@aws-sdk/util-user-agent-node": "^3.973.14",
         "@smithy/config-resolver": "^4.4.13",
         "@smithy/core": "^3.23.13",
         "@smithy/fetch-http-handler": "^5.3.15",
@@ -33601,7 +33681,7 @@ var init_package = __esm({
         "@smithy/invalid-dependency": "^4.2.12",
         "@smithy/middleware-content-length": "^4.2.12",
         "@smithy/middleware-endpoint": "^4.4.28",
-        "@smithy/middleware-retry": "^4.4.45",
+        "@smithy/middleware-retry": "^4.4.46",
         "@smithy/middleware-serde": "^4.2.16",
         "@smithy/middleware-stack": "^4.2.12",
         "@smithy/node-config-provider": "^4.3.12",
@@ -33617,7 +33697,7 @@ var init_package = __esm({
         "@smithy/util-defaults-mode-node": "^4.2.48",
         "@smithy/util-endpoints": "^3.3.3",
         "@smithy/util-middleware": "^4.2.12",
-        "@smithy/util-retry": "^4.2.12",
+        "@smithy/util-retry": "^4.2.13",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
