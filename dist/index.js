@@ -15048,11 +15048,11 @@ var require_util4 = __commonJS({
             dataURL += serializeAMimeType(parsed);
           }
           dataURL += ";base64,";
-          const decoder = new StringDecoder("latin1");
+          const decoder2 = new StringDecoder("latin1");
           for (const chunk of bytes) {
-            dataURL += btoa(decoder.write(chunk));
+            dataURL += btoa(decoder2.write(chunk));
           }
-          dataURL += btoa(decoder.end());
+          dataURL += btoa(decoder2.end());
           return dataURL;
         }
         case "Text": {
@@ -15077,11 +15077,11 @@ var require_util4 = __commonJS({
         }
         case "BinaryString": {
           let binaryString = "";
-          const decoder = new StringDecoder("latin1");
+          const decoder2 = new StringDecoder("latin1");
           for (const chunk of bytes) {
-            binaryString += decoder.write(chunk);
+            binaryString += decoder2.write(chunk);
           }
-          binaryString += decoder.end();
+          binaryString += decoder2.end();
           return binaryString;
         }
       }
@@ -24210,8 +24210,8 @@ var require_sdk_stream_mixin = __commonJS({
           if (encoding === void 0 || Buffer.isEncoding(encoding)) {
             return (0, util_buffer_from_1.fromArrayBuffer)(buf.buffer, buf.byteOffset, buf.byteLength).toString(encoding);
           } else {
-            const decoder = new TextDecoder(encoding);
-            return decoder.decode(buf);
+            const decoder2 = new TextDecoder(encoding);
+            return decoder2.decode(buf);
           }
         },
         transformToWebStream: () => {
@@ -66554,16 +66554,11 @@ function compile(vm, code, returnName, options = {}) {
       if (typeof value !== "function") {
         throw new Error(`Expected a "function" for sandbox property \`${name}\`, but got "${typeof value}"`);
       }
-      const fnHandle = vm.newFunction(name, (_this, ...args) => {
-        const result = value(...args.map((arg) => vm.dump(arg)));
-        vm.executePendingJobs();
-        return hostToQuickJSHandle(vm, result);
-      });
+      const fnHandle = getOrCreateSandboxFunction(vm, name, value);
       fnHandle.consume((handle) => vm.setProp(vm.global, name, handle));
     }
   }
-  const fnResult = vm.evalCode(`${compiled};${returnName}`, options.filename);
-  const fn = vm.unwrapResult(fnResult);
+  const fn = vm.evalCode(`${compiled};${returnName}`, options.filename);
   const t5 = vm.typeof(fn);
   if (t5 !== "function") {
     throw new Error(`Expected a "function" named \`${returnName}\` to be defined, but got "${t5}"`);
@@ -66573,7 +66568,7 @@ function compile(vm, code, returnName, options = {}) {
     let resolvedHandle;
     try {
       const result = vm.callFunction(fn, vm.undefined, ...args.map((arg) => hostToQuickJSHandle(vm, arg)));
-      promiseHandle = vm.unwrapResult(result);
+      promiseHandle = result;
       const resolvedResultP = vm.resolvePromise(promiseHandle);
       vm.executePendingJobs();
       const resolvedResult = await resolvedResultP;
@@ -66611,6 +66606,34 @@ ${err.cause.stack}`;
   });
   return r5;
 }
+function getOrCreateSandboxFunction(vm, name, value) {
+  const callback = (...args) => {
+    const result = value(...args.map((arg) => vm.dump(arg)));
+    vm.executePendingJobs();
+    return hostToQuickJSHandle(vm, result);
+  };
+  const globalFunctionName = `${SANDBOX_FUNCTION_PREFIX}${name}`;
+  const keyHandle = vm.newString(globalFunctionName);
+  let existingHandle;
+  try {
+    existingHandle = vm.getProp(vm.global, keyHandle);
+    if (vm.typeof(existingHandle) === "function") {
+      vm.registerHostCallback(name, callback);
+      return existingHandle;
+    }
+    existingHandle.dispose();
+    existingHandle = void 0;
+    const fnHandle = vm.newFunction(name, callback);
+    vm.defineProp(vm.global, globalFunctionName, fnHandle, {
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+    return fnHandle;
+  } finally {
+    keyHandle.dispose();
+  }
+}
 function hostToQuickJSHandle(vm, val) {
   if (typeof val === "undefined") {
     return vm.undefined;
@@ -66639,11 +66662,12 @@ function hostToQuickJSHandle(vm, val) {
   }
   throw new Error(`Unsupported value: ${val}`);
 }
-var import_util2;
+var import_util2, SANDBOX_FUNCTION_PREFIX;
 var init_compile = __esm({
   "node_modules/degenerator/dist/compile.js"() {
     import_util2 = require("util");
     init_degenerator();
+    SANDBOX_FUNCTION_PREFIX = "__degeneratorSandboxFunction:";
   }
 });
 
@@ -66729,198 +66753,425 @@ var init_dnsResolve = __esm({
   }
 });
 
-// node_modules/netmask/lib/netmask.js
-var require_netmask = __commonJS({
-  "node_modules/netmask/lib/netmask.js"(exports2) {
-    (function() {
-      var Netmask2, atob, chr, chr0, chrA, chra, ip2long, long2ip;
-      long2ip = function(long) {
-        var a5, b6, c5, d5;
-        a5 = (long & 255 << 24) >>> 24;
-        b6 = (long & 255 << 16) >>> 16;
-        c5 = (long & 255 << 8) >>> 8;
-        d5 = long & 255;
-        return [a5, b6, c5, d5].join(".");
-      };
-      ip2long = function(ip2) {
-        var b6, c5, i5, j5, n6, ref;
-        b6 = [];
-        for (i5 = j5 = 0; j5 <= 3; i5 = ++j5) {
-          if (ip2.length === 0) {
+// node_modules/netmask/dist/netmask4.js
+var require_netmask4 = __commonJS({
+  "node_modules/netmask/dist/netmask4.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.Netmask4Impl = void 0;
+    exports2.ip2long = ip2long;
+    exports2.long2ip = long2ip;
+    function long2ip(long) {
+      const a5 = (long & 255 << 24) >>> 24;
+      const b6 = (long & 255 << 16) >>> 16;
+      const c5 = (long & 255 << 8) >>> 8;
+      const d5 = long & 255;
+      return [a5, b6, c5, d5].join(".");
+    }
+    var chr0 = "0".charCodeAt(0);
+    var chra = "a".charCodeAt(0);
+    var chrA = "A".charCodeAt(0);
+    function parseNum(s5) {
+      let n6 = 0;
+      let base = 10;
+      let dmax = "9";
+      let i5 = 0;
+      if (s5.length > 1 && s5[i5] === "0") {
+        if (s5[i5 + 1] === "x" || s5[i5 + 1] === "X") {
+          i5 += 2;
+          base = 16;
+        } else if ("0" <= s5[i5 + 1] && s5[i5 + 1] <= "9") {
+          i5++;
+          base = 8;
+          dmax = "7";
+        }
+      }
+      const start = i5;
+      while (i5 < s5.length) {
+        if ("0" <= s5[i5] && s5[i5] <= dmax) {
+          n6 = n6 * base + (s5.charCodeAt(i5) - chr0) >>> 0;
+        } else if (base === 16) {
+          if ("a" <= s5[i5] && s5[i5] <= "f") {
+            n6 = n6 * base + (10 + s5.charCodeAt(i5) - chra) >>> 0;
+          } else if ("A" <= s5[i5] && s5[i5] <= "F") {
+            n6 = n6 * base + (10 + s5.charCodeAt(i5) - chrA) >>> 0;
+          } else {
             break;
           }
-          if (i5 > 0) {
-            if (ip2[0] !== ".") {
-              throw new Error("Invalid IP");
-            }
-            ip2 = ip2.substring(1);
-          }
-          ref = atob(ip2), n6 = ref[0], c5 = ref[1];
-          ip2 = ip2.substring(c5);
-          b6.push(n6);
+        } else {
+          break;
         }
-        if (ip2.length !== 0) {
-          throw new Error("Invalid IP");
+        if (n6 > 4294967295) {
+          throw new Error("too large");
         }
-        switch (b6.length) {
-          case 1:
-            if (b6[0] > 4294967295) {
-              throw new Error("Invalid IP");
-            }
-            return b6[0] >>> 0;
-          case 2:
-            if (b6[0] > 255 || b6[1] > 16777215) {
-              throw new Error("Invalid IP");
-            }
-            return (b6[0] << 24 | b6[1]) >>> 0;
-          case 3:
-            if (b6[0] > 255 || b6[1] > 255 || b6[2] > 65535) {
-              throw new Error("Invalid IP");
-            }
-            return (b6[0] << 24 | b6[1] << 16 | b6[2]) >>> 0;
-          case 4:
-            if (b6[0] > 255 || b6[1] > 255 || b6[2] > 255 || b6[3] > 255) {
-              throw new Error("Invalid IP");
-            }
-            return (b6[0] << 24 | b6[1] << 16 | b6[2] << 8 | b6[3]) >>> 0;
-          default:
+        i5++;
+      }
+      if (i5 === start) {
+        throw new Error("empty octet");
+      }
+      return [n6, i5];
+    }
+    function ip2long(ip2) {
+      const b6 = [];
+      for (let i5 = 0; i5 <= 3; i5++) {
+        if (ip2.length === 0) {
+          break;
+        }
+        if (i5 > 0) {
+          if (ip2[0] !== ".") {
             throw new Error("Invalid IP");
-        }
-      };
-      chr = function(b6) {
-        return b6.charCodeAt(0);
-      };
-      chr0 = chr("0");
-      chra = chr("a");
-      chrA = chr("A");
-      atob = function(s5) {
-        var base, dmax, i5, n6, start;
-        n6 = 0;
-        base = 10;
-        dmax = "9";
-        i5 = 0;
-        if (s5.length > 1 && s5[i5] === "0") {
-          if (s5[i5 + 1] === "x" || s5[i5 + 1] === "X") {
-            i5 += 2;
-            base = 16;
-          } else if ("0" <= s5[i5 + 1] && s5[i5 + 1] <= "9") {
-            i5++;
-            base = 8;
-            dmax = "7";
           }
+          ip2 = ip2.substring(1);
         }
-        start = i5;
-        while (i5 < s5.length) {
-          if ("0" <= s5[i5] && s5[i5] <= dmax) {
-            n6 = n6 * base + (chr(s5[i5]) - chr0) >>> 0;
-          } else if (base === 16) {
-            if ("a" <= s5[i5] && s5[i5] <= "f") {
-              n6 = n6 * base + (10 + chr(s5[i5]) - chra) >>> 0;
-            } else if ("A" <= s5[i5] && s5[i5] <= "F") {
-              n6 = n6 * base + (10 + chr(s5[i5]) - chrA) >>> 0;
-            } else {
+        const [n6, c5] = parseNum(ip2);
+        ip2 = ip2.substring(c5);
+        b6.push(n6);
+      }
+      if (ip2.length !== 0) {
+        throw new Error("Invalid IP");
+      }
+      switch (b6.length) {
+        case 1:
+          if (b6[0] > 4294967295) {
+            throw new Error("Invalid IP");
+          }
+          return b6[0] >>> 0;
+        case 2:
+          if (b6[0] > 255 || b6[1] > 16777215) {
+            throw new Error("Invalid IP");
+          }
+          return (b6[0] << 24 | b6[1]) >>> 0;
+        case 3:
+          if (b6[0] > 255 || b6[1] > 255 || b6[2] > 65535) {
+            throw new Error("Invalid IP");
+          }
+          return (b6[0] << 24 | b6[1] << 16 | b6[2]) >>> 0;
+        case 4:
+          if (b6[0] > 255 || b6[1] > 255 || b6[2] > 255 || b6[3] > 255) {
+            throw new Error("Invalid IP");
+          }
+          return (b6[0] << 24 | b6[1] << 16 | b6[2] << 8 | b6[3]) >>> 0;
+        default:
+          throw new Error("Invalid IP");
+      }
+    }
+    var Netmask4Impl = class _Netmask4Impl {
+      constructor(net11, mask) {
+        if (typeof net11 !== "string") {
+          throw new Error("Missing `net' parameter");
+        }
+        let maskStr = mask;
+        if (!maskStr) {
+          const parts = net11.split("/", 2);
+          net11 = parts[0];
+          maskStr = parts[1];
+        }
+        if (!maskStr) {
+          maskStr = 32;
+        }
+        if (typeof maskStr === "string" && maskStr.indexOf(".") > -1) {
+          try {
+            this.maskLong = ip2long(maskStr);
+          } catch (error2) {
+            throw new Error("Invalid mask: " + maskStr);
+          }
+          this.bitmask = NaN;
+          for (let i5 = 32; i5 >= 0; i5--) {
+            if (this.maskLong === 4294967295 << 32 - i5 >>> 0) {
+              this.bitmask = i5;
               break;
             }
-          } else {
-            break;
           }
-          if (n6 > 4294967295) {
-            throw new Error("too large");
+        } else if (maskStr || maskStr === 0) {
+          this.bitmask = parseInt(maskStr, 10);
+          this.maskLong = 0;
+          if (this.bitmask > 0) {
+            this.maskLong = 4294967295 << 32 - this.bitmask >>> 0;
           }
-          i5++;
+        } else {
+          throw new Error("Invalid mask: empty");
         }
-        if (i5 === start) {
-          throw new Error("empty octet");
+        try {
+          this.netLong = (ip2long(net11) & this.maskLong) >>> 0;
+        } catch (error2) {
+          throw new Error("Invalid net address: " + net11);
         }
-        return [n6, i5];
-      };
-      Netmask2 = (function() {
-        function Netmask3(net11, mask) {
-          var error2, i5, j5, ref;
-          if (typeof net11 !== "string") {
-            throw new Error("Missing `net' parameter");
-          }
-          if (!mask) {
-            ref = net11.split("/", 2), net11 = ref[0], mask = ref[1];
-          }
-          if (!mask) {
-            mask = 32;
-          }
-          if (typeof mask === "string" && mask.indexOf(".") > -1) {
-            try {
-              this.maskLong = ip2long(mask);
-            } catch (error1) {
-              error2 = error1;
-              throw new Error("Invalid mask: " + mask);
-            }
-            for (i5 = j5 = 32; j5 >= 0; i5 = --j5) {
-              if (this.maskLong === 4294967295 << 32 - i5 >>> 0) {
-                this.bitmask = i5;
-                break;
-              }
-            }
-          } else if (mask || mask === 0) {
-            this.bitmask = parseInt(mask, 10);
-            this.maskLong = 0;
-            if (this.bitmask > 0) {
-              this.maskLong = 4294967295 << 32 - this.bitmask >>> 0;
-            }
-          } else {
-            throw new Error("Invalid mask: empty");
-          }
-          try {
-            this.netLong = (ip2long(net11) & this.maskLong) >>> 0;
-          } catch (error1) {
-            error2 = error1;
-            throw new Error("Invalid net address: " + net11);
-          }
-          if (!(this.bitmask <= 32)) {
-            throw new Error("Invalid mask for ip4: " + mask);
-          }
-          this.size = Math.pow(2, 32 - this.bitmask);
-          this.base = long2ip(this.netLong);
-          this.mask = long2ip(this.maskLong);
-          this.hostmask = long2ip(~this.maskLong);
-          this.first = this.bitmask <= 30 ? long2ip(this.netLong + 1) : this.base;
-          this.last = this.bitmask <= 30 ? long2ip(this.netLong + this.size - 2) : long2ip(this.netLong + this.size - 1);
-          this.broadcast = this.bitmask <= 30 ? long2ip(this.netLong + this.size - 1) : void 0;
+        if (!(this.bitmask <= 32)) {
+          throw new Error("Invalid mask for ip4: " + maskStr);
         }
-        Netmask3.prototype.contains = function(ip2) {
-          if (typeof ip2 === "string" && (ip2.indexOf("/") > 0 || ip2.split(".").length !== 4)) {
-            ip2 = new Netmask3(ip2);
-          }
-          if (ip2 instanceof Netmask3) {
-            return this.contains(ip2.base) && this.contains(ip2.broadcast || ip2.last);
+        this.size = Math.pow(2, 32 - this.bitmask);
+        this.base = long2ip(this.netLong);
+        this.mask = long2ip(this.maskLong);
+        this.hostmask = long2ip(~this.maskLong);
+        this.first = this.bitmask <= 30 ? long2ip(this.netLong + 1) : this.base;
+        this.last = this.bitmask <= 30 ? long2ip(this.netLong + this.size - 2) : long2ip(this.netLong + this.size - 1);
+        this.broadcast = this.bitmask <= 30 ? long2ip(this.netLong + this.size - 1) : void 0;
+      }
+      contains(ip2) {
+        if (typeof ip2 === "string" && (ip2.indexOf("/") > 0 || ip2.split(".").length !== 4)) {
+          ip2 = new _Netmask4Impl(ip2);
+        }
+        if (ip2 instanceof _Netmask4Impl) {
+          return this.contains(ip2.base) && this.contains(ip2.broadcast || ip2.last);
+        } else {
+          return (ip2long(ip2) & this.maskLong) >>> 0 === (this.netLong & this.maskLong) >>> 0;
+        }
+      }
+      next(count = 1) {
+        return new _Netmask4Impl(long2ip(this.netLong + this.size * count), this.mask);
+      }
+      forEach(fn) {
+        let long = ip2long(this.first);
+        const lastLong = ip2long(this.last);
+        let index = 0;
+        while (long <= lastLong) {
+          fn(long2ip(long), long, index);
+          index++;
+          long++;
+        }
+      }
+      toString() {
+        return this.base + "/" + this.bitmask;
+      }
+    };
+    exports2.Netmask4Impl = Netmask4Impl;
+  }
+});
+
+// node_modules/netmask/dist/netmask6.js
+var require_netmask6 = __commonJS({
+  "node_modules/netmask/dist/netmask6.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.Netmask6Impl = void 0;
+    exports2.ip6bigint = ip6bigint;
+    exports2.bigint2ip6 = bigint2ip6;
+    var netmask4_1 = require_netmask4();
+    var MAX_IPV6 = (1n << 128n) - 1n;
+    function ip6bigint(ip2) {
+      const zoneIdx = ip2.indexOf("%");
+      if (zoneIdx !== -1) {
+        ip2 = ip2.substring(0, zoneIdx);
+      }
+      const lastColon = ip2.lastIndexOf(":");
+      if (lastColon !== -1 && ip2.indexOf(".", lastColon) !== -1) {
+        const ipv4Part = ip2.substring(lastColon + 1);
+        const ipv4Long = (0, netmask4_1.ip2long)(ipv4Part);
+        const ipv6Prefix = ip2.substring(0, lastColon + 1) + "0:0";
+        const prefixVal = parseIPv6Pure(ipv6Prefix);
+        return prefixVal & ~0xffffffffn | BigInt(ipv4Long);
+      }
+      return parseIPv6Pure(ip2);
+    }
+    function parseIPv6Pure(ip2) {
+      const doubleColonIdx = ip2.indexOf("::");
+      let groups;
+      if (doubleColonIdx !== -1) {
+        const left = ip2.substring(0, doubleColonIdx);
+        const right = ip2.substring(doubleColonIdx + 2);
+        const leftGroups = left === "" ? [] : left.split(":");
+        const rightGroups = right === "" ? [] : right.split(":");
+        const missing = 8 - leftGroups.length - rightGroups.length;
+        if (missing < 0) {
+          throw new Error("Invalid IPv6: too many groups");
+        }
+        groups = [...leftGroups, ...Array(missing).fill("0"), ...rightGroups];
+      } else {
+        groups = ip2.split(":");
+      }
+      if (groups.length !== 8) {
+        throw new Error("Invalid IPv6: expected 8 groups, got " + groups.length);
+      }
+      let result = 0n;
+      for (let i5 = 0; i5 < 8; i5++) {
+        const g5 = groups[i5];
+        if (g5.length === 0 || g5.length > 4) {
+          throw new Error('Invalid IPv6: bad group "' + g5 + '"');
+        }
+        const val = parseInt(g5, 16);
+        if (isNaN(val) || val < 0 || val > 65535) {
+          throw new Error('Invalid IPv6: bad group "' + g5 + '"');
+        }
+        result = result << 16n | BigInt(val);
+      }
+      return result;
+    }
+    function bigint2ip6(n6) {
+      if (n6 < 0n || n6 > MAX_IPV6) {
+        throw new Error("Invalid IPv6 address value");
+      }
+      const groups = [];
+      for (let i5 = 0; i5 < 8; i5++) {
+        groups.unshift(Number(n6 & 0xffffn));
+        n6 >>= 16n;
+      }
+      let bestStart = -1;
+      let bestLen = 0;
+      let curStart = -1;
+      let curLen = 0;
+      for (let i5 = 0; i5 < 8; i5++) {
+        if (groups[i5] === 0) {
+          if (curStart === -1) {
+            curStart = i5;
+            curLen = 1;
           } else {
-            return (ip2long(ip2) & this.maskLong) >>> 0 === (this.netLong & this.maskLong) >>> 0;
+            curLen++;
           }
-        };
-        Netmask3.prototype.next = function(count) {
-          if (count == null) {
-            count = 1;
+        } else {
+          if (curLen > bestLen && curLen >= 2) {
+            bestStart = curStart;
+            bestLen = curLen;
           }
-          return new Netmask3(long2ip(this.netLong + this.size * count), this.mask);
-        };
-        Netmask3.prototype.forEach = function(fn) {
-          var index, lastLong, long;
-          long = ip2long(this.first);
-          lastLong = ip2long(this.last);
-          index = 0;
-          while (long <= lastLong) {
-            fn(long2ip(long), long, index);
-            index++;
-            long++;
+          curStart = -1;
+          curLen = 0;
+        }
+      }
+      if (curLen > bestLen && curLen >= 2) {
+        bestStart = curStart;
+        bestLen = curLen;
+      }
+      if (bestStart !== -1 && bestStart + bestLen === 8 && bestStart > 0) {
+        const before = groups.slice(0, bestStart).map((g5) => g5.toString(16));
+        return before.join(":") + "::";
+      } else if (bestStart === 0) {
+        const after = groups.slice(bestLen).map((g5) => g5.toString(16));
+        return "::" + after.join(":");
+      } else if (bestStart > 0) {
+        const before = groups.slice(0, bestStart).map((g5) => g5.toString(16));
+        const after = groups.slice(bestStart + bestLen).map((g5) => g5.toString(16));
+        return before.join(":") + "::" + after.join(":");
+      } else {
+        return groups.map((g5) => g5.toString(16)).join(":");
+      }
+    }
+    var Netmask6Impl = class _Netmask6Impl {
+      constructor(net11, mask) {
+        if (typeof net11 !== "string") {
+          throw new Error("Missing `net' parameter");
+        }
+        let prefixLen = mask;
+        if (prefixLen === void 0 || prefixLen === null) {
+          const slashIdx = net11.indexOf("/");
+          if (slashIdx !== -1) {
+            prefixLen = parseInt(net11.substring(slashIdx + 1), 10);
+            net11 = net11.substring(0, slashIdx);
+          } else {
+            prefixLen = 128;
           }
-        };
-        Netmask3.prototype.toString = function() {
-          return this.base + "/" + this.bitmask;
-        };
-        return Netmask3;
-      })();
-      exports2.ip2long = ip2long;
-      exports2.long2ip = long2ip;
-      exports2.Netmask = Netmask2;
-    }).call(exports2);
+        }
+        if (isNaN(prefixLen) || prefixLen < 0 || prefixLen > 128) {
+          throw new Error("Invalid mask for IPv6: " + prefixLen);
+        }
+        this.bitmask = prefixLen;
+        if (this.bitmask === 0) {
+          this.maskBigint = 0n;
+        } else {
+          this.maskBigint = MAX_IPV6 >> BigInt(128 - this.bitmask) << BigInt(128 - this.bitmask);
+        }
+        try {
+          this.netBigint = ip6bigint(net11) & this.maskBigint;
+        } catch (error2) {
+          throw new Error("Invalid IPv6 net address: " + net11);
+        }
+        this.size = Number(1n << BigInt(128 - this.bitmask));
+        this.base = bigint2ip6(this.netBigint);
+        this.mask = bigint2ip6(this.maskBigint);
+        this.hostmask = bigint2ip6(~this.maskBigint & MAX_IPV6);
+        this.first = this.base;
+        this.last = bigint2ip6(this.netBigint + (1n << BigInt(128 - this.bitmask)) - 1n);
+        this.broadcast = void 0;
+      }
+      contains(ip2) {
+        if (typeof ip2 === "string") {
+          if (ip2.indexOf("/") > 0) {
+            ip2 = new _Netmask6Impl(ip2);
+          }
+        }
+        if (ip2 instanceof _Netmask6Impl) {
+          return this.contains(ip2.base) && this.contains(ip2.last);
+        } else {
+          const addr = ip6bigint(ip2);
+          return (addr & this.maskBigint) === this.netBigint;
+        }
+      }
+      next(count = 1) {
+        const sizeBig = 1n << BigInt(128 - this.bitmask);
+        return new _Netmask6Impl(bigint2ip6(this.netBigint + sizeBig * BigInt(count)), this.bitmask);
+      }
+      forEach(fn) {
+        let addr = this.netBigint;
+        const sizeBig = 1n << BigInt(128 - this.bitmask);
+        const lastAddr = this.netBigint + sizeBig - 1n;
+        let index = 0;
+        while (addr <= lastAddr) {
+          fn(bigint2ip6(addr), Number(addr), index);
+          index++;
+          addr++;
+        }
+      }
+      toString() {
+        return this.base + "/" + this.bitmask;
+      }
+    };
+    exports2.Netmask6Impl = Netmask6Impl;
+  }
+});
+
+// node_modules/netmask/dist/netmask.js
+var require_netmask = __commonJS({
+  "node_modules/netmask/dist/netmask.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.Netmask = void 0;
+    var netmask4_1 = require_netmask4();
+    var netmask6_1 = require_netmask6();
+    var Netmask2 = class _Netmask {
+      constructor(net11, mask) {
+        if (typeof net11 !== "string") {
+          throw new Error("Missing `net' parameter");
+        }
+        const addrPart = net11.indexOf("/") !== -1 ? net11.substring(0, net11.indexOf("/")) : net11;
+        if (addrPart.indexOf(":") !== -1) {
+          this._impl = new netmask6_1.Netmask6Impl(net11, mask);
+        } else {
+          this._impl = new netmask4_1.Netmask4Impl(net11, mask);
+        }
+        this.base = this._impl.base;
+        this.mask = this._impl.mask;
+        this.hostmask = this._impl.hostmask;
+        this.bitmask = this._impl.bitmask;
+        this.size = this._impl.size;
+        this.first = this._impl.first;
+        this.last = this._impl.last;
+        this.broadcast = this._impl.broadcast;
+      }
+      contains(ip2) {
+        if (typeof ip2 === "string") {
+          if (ip2.indexOf("/") > 0) {
+            ip2 = new _Netmask(ip2);
+          } else if (ip2.indexOf(":") === -1 && ip2.split(".").length !== 4) {
+            ip2 = new _Netmask(ip2);
+          }
+        }
+        if (ip2 instanceof _Netmask) {
+          return this.contains(ip2.base) && this.contains(ip2.broadcast || ip2.last);
+        }
+        return this._impl.contains(ip2);
+      }
+      next(count = 1) {
+        const nextImpl = this._impl.next(count);
+        const result = new _Netmask(nextImpl.base, nextImpl.bitmask);
+        return result;
+      }
+      /** @deprecated */
+      forEach(fn) {
+        this._impl.forEach(fn);
+      }
+      toString() {
+        return this._impl.toString();
+      }
+    };
+    exports2.Netmask = Netmask2;
   }
 });
 
@@ -67250,22 +67501,21 @@ function createWasiShim(memoryAccessor) {
     clock_time_get(clockId, _precision, resultPtr) {
       const mem = memoryAccessor();
       const view = new DataView(mem.buffer);
-      let timeNs;
-      if (clockId === CLOCK_REALTIME) {
-        timeNs = BigInt(Date.now()) * 1000000n;
-      } else if (clockId === CLOCK_MONOTONIC) {
-        timeNs = BigInt(Date.now()) * 1000000n;
-      } else {
-        return ERRNO_NOSYS;
+      if (clockId === CLOCK_REALTIME || clockId === CLOCK_MONOTONIC) {
+        const timeNs = BigInt(Date.now()) * 1000000n;
+        view.setBigUint64(resultPtr, timeNs, true);
+        return ERRNO_SUCCESS;
       }
-      view.setBigUint64(resultPtr, timeNs, true);
-      return ERRNO_SUCCESS;
+      return ERRNO_NOSYS;
     },
     fd_write(fd, iovsPtr, iovsLen, nwrittenPtr) {
       const mem = memoryAccessor();
       const view = new DataView(mem.buffer);
       const bytes = new Uint8Array(mem.buffer);
       let totalWritten = 0;
+      if (fd !== 1 && fd !== 2) {
+        return ERRNO_BADF;
+      }
       for (let i5 = 0; i5 < iovsLen; i5++) {
         const bufPtr = view.getUint32(iovsPtr + i5 * 8, true);
         const bufLen = view.getUint32(iovsPtr + i5 * 8 + 4, true);
@@ -67277,14 +67527,12 @@ function createWasiShim(memoryAccessor) {
           } else {
             console.log(text);
           }
-        } else if (fd === 2) {
+        } else {
           if (typeof process !== "undefined" && process.stderr) {
             process.stderr.write(text);
           } else {
             console.error(text);
           }
-        } else {
-          return ERRNO_BADF;
         }
         totalWritten += bufLen;
       }
@@ -67328,12 +67576,396 @@ var init_wasi_shim = __esm({
   }
 });
 
+// node_modules/quickjs-wasi/dist/extensions.js
+function parseVersionString(memory, ptr) {
+  const mem = new Uint8Array(memory.buffer);
+  let end = ptr;
+  while (mem[end] !== 0)
+    end++;
+  if (end === ptr)
+    return {};
+  const str = decoder.decode(mem.slice(ptr, end));
+  const result = {};
+  for (const line of str.split("\n")) {
+    const eq = line.indexOf("=");
+    if (eq > 0) {
+      result[line.slice(0, eq)] = line.slice(eq + 1);
+    }
+  }
+  return result;
+}
+function extractExtensionVersions(ext, memory) {
+  const versionsFnName = `qjs_ext_${ext.name.replace(/-/g, "_")}_versions`;
+  const versionsFn = ext.instance.exports[versionsFnName];
+  if (typeof versionsFn !== "function")
+    return void 0;
+  const ptr = versionsFn();
+  if (ptr === 0)
+    return void 0;
+  return parseVersionString(memory, ptr);
+}
+function readULEB128(bytes, offset) {
+  let result = 0;
+  let shift = 0;
+  while (offset.value < bytes.length) {
+    const byte = bytes[offset.value++];
+    result |= (byte & 127) << shift;
+    if ((byte & 128) === 0)
+      break;
+    shift += 7;
+  }
+  return result;
+}
+function parseDylink(module2) {
+  const sections = WebAssembly.Module.customSections(module2, "dylink.0");
+  if (sections.length === 0)
+    return null;
+  const bytes = new Uint8Array(sections[0]);
+  const offset = { value: 0 };
+  const info5 = {
+    memorySize: 0,
+    memoryAlignment: 0,
+    tableSize: 0,
+    tableAlignment: 0,
+    needed: []
+  };
+  while (offset.value < bytes.length) {
+    const subsectionType = readULEB128(bytes, offset);
+    const subsectionSize = readULEB128(bytes, offset);
+    const subsectionEnd = offset.value + subsectionSize;
+    if (subsectionType === 1) {
+      info5.memorySize = readULEB128(bytes, offset);
+      info5.memoryAlignment = readULEB128(bytes, offset);
+      info5.tableSize = readULEB128(bytes, offset);
+      info5.tableAlignment = readULEB128(bytes, offset);
+    } else if (subsectionType === 2) {
+      const count = readULEB128(bytes, offset);
+      for (let i5 = 0; i5 < count; i5++) {
+        const len = readULEB128(bytes, offset);
+        const name = new TextDecoder().decode(bytes.slice(offset.value, offset.value + len));
+        offset.value += len;
+        info5.needed.push(name);
+      }
+    }
+    offset.value = subsectionEnd;
+  }
+  return info5;
+}
+async function loadExtension(descriptor, mainExports, wasiBuiltins, wasiUserOverrides, memoryProxy, allocBase) {
+  let module2;
+  if (descriptor.wasm instanceof WebAssembly.Module) {
+    module2 = descriptor.wasm;
+  } else {
+    module2 = await WebAssembly.compile(descriptor.wasm);
+  }
+  const dylink = parseDylink(module2);
+  if (!dylink) {
+    throw new Error(`Extension "${descriptor.name}" is not a WASM shared library (missing dylink.0 section)`);
+  }
+  const memory = mainExports.memory;
+  const table = mainExports.__indirect_function_table;
+  const stackPointer = mainExports.__stack_pointer;
+  const mallocFn = mainExports.malloc;
+  if (!memory)
+    throw new Error("Main module does not export memory");
+  if (!table)
+    throw new Error("Main module does not export __indirect_function_table");
+  if (!mallocFn)
+    throw new Error("Main module does not export malloc");
+  let memoryBase;
+  let tableBase;
+  if (allocBase) {
+    memoryBase = allocBase.memoryBase;
+    tableBase = allocBase.tableBase;
+  } else {
+    if (dylink.memorySize > 0) {
+      memoryBase = mallocFn(dylink.memorySize);
+      if (memoryBase === 0) {
+        throw new Error(`Failed to allocate ${dylink.memorySize} bytes for extension "${descriptor.name}"`);
+      }
+      new Uint8Array(memory.buffer, memoryBase, dylink.memorySize).fill(0);
+    } else {
+      memoryBase = 0;
+    }
+  }
+  if (allocBase) {
+    tableBase = allocBase.tableBase;
+    if (tableBase + dylink.tableSize > table.length) {
+      table.grow(tableBase + dylink.tableSize - table.length);
+    }
+  } else {
+    tableBase = table.length;
+    if (dylink.tableSize > 0) {
+      table.grow(dylink.tableSize);
+    }
+  }
+  const extImports = WebAssembly.Module.imports(module2);
+  const importObj = {
+    env: {},
+    "GOT.mem": {},
+    "GOT.func": {}
+  };
+  const needsWasi = extImports.some((imp) => imp.module === "wasi_snapshot_preview1");
+  if (needsWasi) {
+    const extWasi = descriptor.wasi && memoryProxy ? descriptor.wasi(memoryProxy) : void 0;
+    importObj["wasi_snapshot_preview1"] = {
+      ...wasiBuiltins,
+      // 1. Built-in defaults (lowest priority)
+      ...extWasi,
+      // 2. Extension-provided
+      ...wasiUserOverrides
+      // 3. User overrides (highest priority)
+    };
+  }
+  const extExportNames = new Set(WebAssembly.Module.exports(module2).filter((e5) => e5.kind === "function").map((e5) => e5.name));
+  const unresolvedFuncs = /* @__PURE__ */ new Set();
+  for (const imp of extImports) {
+    if (imp.module === "env") {
+      if (imp.name === "memory" && imp.kind === "memory") {
+        importObj.env.memory = memory;
+      } else if (imp.name === "__indirect_function_table" && imp.kind === "table") {
+        importObj.env.__indirect_function_table = table;
+      } else if (imp.name === "__memory_base" && imp.kind === "global") {
+        importObj.env.__memory_base = new WebAssembly.Global({ value: "i32", mutable: false }, memoryBase);
+      } else if (imp.name === "__table_base" && imp.kind === "global") {
+        importObj.env.__table_base = new WebAssembly.Global({ value: "i32", mutable: false }, tableBase);
+      } else if (imp.name === "__stack_pointer" && imp.kind === "global") {
+        importObj.env.__stack_pointer = stackPointer;
+      } else if (imp.kind === "function") {
+        const resolved = mainExports[imp.name];
+        if (resolved && typeof resolved === "function") {
+          importObj.env[imp.name] = resolved;
+        } else {
+          unresolvedFuncs.add(imp.name);
+          importObj.env[imp.name] = () => {
+            throw new Error(`Extension "${descriptor.name}" called unresolved symbol: env.${imp.name}`);
+          };
+        }
+      } else if (imp.kind === "global") {
+        const resolved = mainExports[imp.name];
+        if (resolved instanceof WebAssembly.Global) {
+          importObj.env[imp.name] = resolved;
+        } else {
+          importObj.env[imp.name] = new WebAssembly.Global({ value: "i32", mutable: true }, 0);
+        }
+      }
+    } else if (imp.module === "GOT.mem" && imp.kind === "global") {
+      importObj["GOT.mem"][imp.name] = new WebAssembly.Global({ value: "i32", mutable: true }, 0);
+    } else if (imp.module === "GOT.func" && imp.kind === "global") {
+      const resolved = mainExports[imp.name];
+      if (resolved && typeof resolved === "function") {
+        const idx = table.length;
+        table.grow(1);
+        table.set(idx, resolved);
+        importObj["GOT.func"][imp.name] = new WebAssembly.Global({ value: "i32", mutable: true }, idx);
+      } else {
+        importObj["GOT.func"][imp.name] = new WebAssembly.Global({ value: "i32", mutable: true }, 0);
+      }
+    }
+  }
+  const selfResolvable = [...unresolvedFuncs].filter((name) => extExportNames.has(name));
+  const wrappers = {};
+  for (const name of selfResolvable) {
+    const wrapper = { target: null };
+    wrappers[name] = wrapper;
+    importObj.env[name] = (...args) => {
+      if (!wrapper.target) {
+        throw new Error(`Extension "${descriptor.name}" called unresolved symbol during init: env.${name}`);
+      }
+      return wrapper.target(...args);
+    };
+  }
+  const instance = await WebAssembly.instantiate(module2, importObj);
+  const extExports = instance.exports;
+  for (const name of selfResolvable) {
+    const selfExport = extExports[name];
+    if (typeof selfExport === "function") {
+      wrappers[name].target = selfExport;
+    }
+  }
+  if (typeof extExports.__wasm_apply_data_relocs === "function") {
+    extExports.__wasm_apply_data_relocs();
+  }
+  if (typeof extExports.__wasm_call_ctors === "function") {
+    extExports.__wasm_call_ctors();
+  }
+  const initFn = descriptor.initFn ?? `qjs_ext_${descriptor.name.replace(/-/g, "_")}_init`;
+  const ext = {
+    name: descriptor.name,
+    module: module2,
+    instance,
+    dylink,
+    memoryBase,
+    tableBase,
+    initFn
+  };
+  ext.versions = extractExtensionVersions(ext, memory);
+  return ext;
+}
+function initExtension(ext, mainExports) {
+  const initFunc = ext.instance.exports[ext.initFn];
+  if (typeof initFunc !== "function") {
+    throw new Error(`Extension "${ext.name}" does not export init function "${ext.initFn}"`);
+  }
+  const ctxPtr = mainExports.qjs_get_context_ptr();
+  const rtPtr = mainExports.qjs_get_runtime_ptr();
+  const result = initFunc(ctxPtr, rtPtr);
+  if (result !== 0) {
+    throw new Error(`Extension "${ext.name}" init function returned error code ${result}`);
+  }
+}
+async function restoreExtensions(descriptors, extensionMeta, mainExports, wasiBuiltins, wasiUserOverrides, memoryProxy) {
+  const loaded = [];
+  for (const meta of extensionMeta) {
+    const descriptor = descriptors.find((d5) => d5.name === meta.name);
+    if (!descriptor) {
+      throw new Error(`Extension "${meta.name}" required by snapshot but not provided`);
+    }
+    const ext = await loadExtension(descriptor, mainExports, wasiBuiltins, wasiUserOverrides, memoryProxy, {
+      memoryBase: meta.memoryBase,
+      tableBase: meta.tableBase
+    });
+    ext.initFn = meta.initFn;
+    loaded.push(ext);
+  }
+  return loaded;
+}
+var decoder;
+var init_extensions = __esm({
+  "node_modules/quickjs-wasi/dist/extensions.js"() {
+    decoder = new TextDecoder();
+  }
+});
+
+// node_modules/quickjs-wasi/dist/version.js
+var VERSION;
+var init_version = __esm({
+  "node_modules/quickjs-wasi/dist/version.js"() {
+    VERSION = "2.2.0";
+  }
+});
+
 // node_modules/quickjs-wasi/dist/index.js
-var import_meta, QuickJS, JSValueHandle;
+var import_meta, __addDisposableResource2, __disposeResources2, EvalFlags, CompileFlags, Intrinsics, SNAPSHOT_MAGIC, SNAPSHOT_VERSION, SNAPSHOT_HEADER_SIZE, QuickJS, JSException, JSValueHandle;
 var init_dist9 = __esm({
   "node_modules/quickjs-wasi/dist/index.js"() {
     init_wasi_shim();
+    init_extensions();
+    init_version();
     import_meta = {};
+    __addDisposableResource2 = function(env, value, async) {
+      if (value !== null && value !== void 0) {
+        if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
+        var dispose, inner;
+        if (async) {
+          if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
+          dispose = value[Symbol.asyncDispose];
+        }
+        if (dispose === void 0) {
+          if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
+          dispose = value[Symbol.dispose];
+          if (async) inner = dispose;
+        }
+        if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
+        if (inner) dispose = function() {
+          try {
+            inner.call(this);
+          } catch (e5) {
+            return Promise.reject(e5);
+          }
+        };
+        env.stack.push({ value, dispose, async });
+      } else if (async) {
+        env.stack.push({ async: true });
+      }
+      return value;
+    };
+    __disposeResources2 = /* @__PURE__ */ (function(SuppressedError2) {
+      return function(env) {
+        function fail(e5) {
+          env.error = env.hasError ? new SuppressedError2(e5, env.error, "An error was suppressed during disposal.") : e5;
+          env.hasError = true;
+        }
+        var r5, s5 = 0;
+        function next() {
+          while (r5 = env.stack.pop()) {
+            try {
+              if (!r5.async && s5 === 1) return s5 = 0, env.stack.push(r5), Promise.resolve().then(next);
+              if (r5.dispose) {
+                var result = r5.dispose.call(r5.value);
+                if (r5.async) return s5 |= 2, Promise.resolve(result).then(next, function(e5) {
+                  fail(e5);
+                  return next();
+                });
+              } else s5 |= 1;
+            } catch (e5) {
+              fail(e5);
+            }
+          }
+          if (s5 === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
+          if (env.hasError) throw env.error;
+        }
+        return next();
+      };
+    })(typeof SuppressedError === "function" ? SuppressedError : function(error2, suppressed, message) {
+      var e5 = new Error(message);
+      return e5.name = "SuppressedError", e5.error = error2, e5.suppressed = suppressed, e5;
+    });
+    EvalFlags = {
+      /** Global script mode (default). */
+      TYPE_GLOBAL: 0,
+      /** Module mode. */
+      TYPE_MODULE: 1 << 0,
+      /** Force strict mode. */
+      STRICT: 1 << 3,
+      /** Compile only — do not execute. */
+      COMPILE_ONLY: 1 << 5,
+      /** Omit stack frames before this eval from Error backtraces. */
+      BACKTRACE_BARRIER: 1 << 6,
+      /**
+       * Allow top-level `await` in global scripts. When used, `evalCode()`
+       * returns a handle to a Promise that resolves to the completion value.
+       * Use together with `executePendingJobs()` and `resolvePromise()`.
+       */
+      ASYNC: 1 << 7
+    };
+    CompileFlags = {
+      /** Strip source code from the bytecode (smaller output, no source in errors). */
+      STRIP_SOURCE: 1 << 4,
+      /** Strip debug information (line numbers, etc.) from the bytecode. */
+      STRIP_DEBUG: 1 << 5
+    };
+    Intrinsics = {
+      /** `Date` constructor and prototype methods. */
+      DATE: 1 << 0,
+      /** `eval()` and `Function()` constructor. */
+      EVAL: 1 << 1,
+      /** `RegExp` constructor, prototype methods, and regex literals. */
+      REGEXP: 1 << 2,
+      /** `JSON.parse()` and `JSON.stringify()`. */
+      JSON: 1 << 3,
+      /** `Proxy` and `Reflect`. */
+      PROXY: 1 << 4,
+      /** `Map`, `Set`, `WeakMap`, `WeakSet`. */
+      MAP_SET: 1 << 5,
+      /** `ArrayBuffer`, `TypedArray` variants, `DataView`. */
+      TYPED_ARRAYS: 1 << 6,
+      /** `Promise`, `async`/`await`. */
+      PROMISE: 1 << 7,
+      /** `BigInt`. Note: BigInt is part of BaseObjects in quickjs-ng and cannot be fully removed. */
+      BIG_INT: 1 << 8,
+      /** `WeakRef` and `FinalizationRegistry`. */
+      WEAK_REF: 1 << 9,
+      /** `performance.now()`. */
+      PERFORMANCE: 1 << 10,
+      /** `DOMException` class. */
+      DOM_EXCEPTION: 1 << 11,
+      /** All intrinsics enabled (default). */
+      ALL: 4294967295
+    };
+    SNAPSHOT_MAGIC = 1363825491;
+    SNAPSHOT_VERSION = 2;
+    SNAPSHOT_HEADER_SIZE = 24;
     QuickJS = class _QuickJS {
       exports;
       module;
@@ -67341,15 +67973,26 @@ var init_dist9 = __esm({
       encoder = new TextEncoder();
       decoder = new TextDecoder();
       disposed = false;
-      /** Registry of host callbacks, keyed by integer ID */
+      /** Registry of host callbacks, keyed by function name */
       hostCallbacks = /* @__PURE__ */ new Map();
-      nextCallbackId = 1;
+      /** Counter for internal-only callbacks (e.g. promise settle handlers) */
+      nextInternalId = 1;
+      interruptHandler = null;
+      unhandledRejectionHandler = null;
+      moduleNormalizeHandler = null;
+      moduleLoadHandler = null;
+      timezoneOffsetHandler = null;
       // Cached singleton handles
       _global = null;
+      _versions = null;
       _undefined = null;
       _null = null;
       _true = null;
       _false = null;
+      // Handles that must be freed on dispose (e.g. unresolved promise resolve/reject functions)
+      _ownedHandles = /* @__PURE__ */ new Set();
+      /** Loaded extensions in deterministic order */
+      loadedExtensions = [];
       constructor(module2) {
         this.module = module2;
         this.instance = null;
@@ -67360,6 +68003,28 @@ var init_dist9 = __esm({
         this.exports = instance.exports;
       }
       // ---- Cached property accessors ----
+      /**
+       * Version information for the runtime and loaded native libraries.
+       * Always includes `"quickjs-wasi"` (the npm package version) and
+       * `"quickjs"` (the QuickJS engine version). Extensions may contribute
+       * additional entries for their native dependencies (e.g. `"ada"`, `"mbedtls"`).
+       */
+      get versions() {
+        this.assertNotDisposed();
+        if (!this._versions) {
+          const result = {
+            "quickjs-wasi": VERSION,
+            quickjs: this.readCString(this.exports.qjs_get_quickjs_version())
+          };
+          for (const ext of this.loadedExtensions) {
+            if (ext.versions) {
+              Object.assign(result, ext.versions);
+            }
+          }
+          this._versions = result;
+        }
+        return this._versions;
+      }
       /** The global object. Cached — do not dispose. */
       get global() {
         if (!this._global) {
@@ -67397,73 +68062,311 @@ var init_dist9 = __esm({
       }
       /**
        * Create a fresh QuickJS VM instance.
+       *
+       * @param options - Optional configuration. Can also pass raw WASM bytes
+       *                  directly for backwards compatibility.
        */
-      static async create(wasmInput) {
-        const module2 = await _QuickJS.resolveModule(wasmInput);
+      static async create(options) {
+        const opts = _QuickJS.normalizeOptions(options);
+        const module2 = await _QuickJS.resolveModule(opts.wasm);
         const vm = new _QuickJS(module2);
-        const instance = await _QuickJS.instantiate(module2, vm);
+        const { instance, wasiBuiltins, wasiUserOverrides, memoryProxy } = await _QuickJS.instantiate(module2, vm, opts.wasi);
         vm.setInstance(instance);
         vm.exports._initialize();
-        const result = vm.exports.qjs_init();
+        const result = opts.intrinsics !== void 0 ? vm.exports.qjs_init2(opts.intrinsics) : vm.exports.qjs_init();
         if (result !== 0) {
           throw new Error("Failed to initialize QuickJS runtime");
         }
+        if (opts.extensions) {
+          const mainExports = instance.exports;
+          for (const desc of opts.extensions) {
+            const ext = await loadExtension(desc, mainExports, wasiBuiltins, wasiUserOverrides, memoryProxy);
+            vm.loadedExtensions.push(ext);
+            initExtension(ext, mainExports);
+          }
+        }
+        _QuickJS.applyLimits(vm, opts);
         return vm;
       }
       /**
        * Restore a QuickJS VM from a snapshot.
+       *
+       * @param snapshot - The snapshot to restore from.
+       * @param options - Optional configuration. Can also pass raw WASM bytes
+       *                  directly for backwards compatibility.
        */
-      static async restore(snapshot, wasmInput) {
-        const module2 = await _QuickJS.resolveModule(wasmInput);
+      static async restore(snapshot, options) {
+        const opts = _QuickJS.normalizeOptions(options);
+        const module2 = await _QuickJS.resolveModule(opts.wasm);
         const vm = new _QuickJS(module2);
-        const instance = await _QuickJS.instantiate(module2, vm);
+        const { instance, wasiBuiltins, wasiUserOverrides, memoryProxy } = await _QuickJS.instantiate(module2, vm, opts.wasi);
         vm.setInstance(instance);
+        const mainExports = instance.exports;
         const exportedMemory = vm.exports.memory;
         const currentPages = exportedMemory.buffer.byteLength / 65536;
-        const neededPages = snapshot.memoryPages;
+        const neededPages = Math.ceil(snapshot.memory.byteLength / 65536);
         if (neededPages > currentPages) {
           exportedMemory.grow(neededPages - currentPages);
+        }
+        if (snapshot.extensions.length > 0) {
+          const descriptors = opts.extensions ?? [];
+          vm.loadedExtensions = await restoreExtensions(descriptors, snapshot.extensions, mainExports, wasiBuiltins, wasiUserOverrides, memoryProxy);
         }
         const dst = new Uint8Array(exportedMemory.buffer);
         dst.set(snapshot.memory);
         vm.exports.qjs_set_runtime_and_context(snapshot.runtimePtr, snapshot.contextPtr);
         vm.exports.__stack_pointer.value = snapshot.stackPointer;
+        _QuickJS.applyLimits(vm, opts);
         return vm;
       }
+      // ---- Snapshot serialization ----
+      /**
+       * Serialize a snapshot to a binary buffer for persistent storage.
+       *
+       * The format includes a versioned header followed by the raw memory.
+       * Apply your own compression (gzip, zstd, etc.) on top for smaller
+       * storage — the memory compresses very well due to large zero regions.
+       *
+       * Format (version 1):
+       * ```
+       * Offset  Size  Field
+       * 0       4     Magic: "QJSS" (0x514A5353, big-endian)
+       * 4       1     Version: 1
+       * 5       3     Reserved (zero)
+       * 8       4     Memory size in bytes (u32 little-endian)
+       * 12      4     Stack pointer (u32 little-endian)
+       * 16      4     Runtime pointer (u32 little-endian)
+       * 20      4     Context pointer (u32 little-endian)
+       * 24      N     Memory data (N = memory size from offset 8)
+       * ```
+       */
+      static serializeSnapshot(snapshot) {
+        const textEncoder = new TextEncoder();
+        let extMetaSize = 4;
+        const extEncodedNames = [];
+        const extEncodedInitFns = [];
+        for (const ext of snapshot.extensions) {
+          const nameBytes = textEncoder.encode(ext.name);
+          const initFnBytes = textEncoder.encode(ext.initFn);
+          extEncodedNames.push(nameBytes);
+          extEncodedInitFns.push(initFnBytes);
+          extMetaSize += 4 + nameBytes.length + 4 + 4 + 4 + initFnBytes.length;
+        }
+        const totalSize = SNAPSHOT_HEADER_SIZE + extMetaSize + snapshot.memory.byteLength;
+        const buffer = new ArrayBuffer(totalSize);
+        const view = new DataView(buffer);
+        const bytes = new Uint8Array(buffer);
+        view.setUint32(0, SNAPSHOT_MAGIC, false);
+        view.setUint8(4, SNAPSHOT_VERSION);
+        view.setUint32(8, snapshot.memory.byteLength, true);
+        view.setUint32(12, snapshot.stackPointer, true);
+        view.setUint32(16, snapshot.runtimePtr, true);
+        view.setUint32(20, snapshot.contextPtr, true);
+        let offset = SNAPSHOT_HEADER_SIZE;
+        view.setUint32(offset, snapshot.extensions.length, true);
+        offset += 4;
+        for (let i5 = 0; i5 < snapshot.extensions.length; i5++) {
+          const ext = snapshot.extensions[i5];
+          const nameBytes = extEncodedNames[i5];
+          const initFnBytes = extEncodedInitFns[i5];
+          view.setUint32(offset, nameBytes.length, true);
+          offset += 4;
+          bytes.set(nameBytes, offset);
+          offset += nameBytes.length;
+          view.setUint32(offset, ext.memoryBase, true);
+          offset += 4;
+          view.setUint32(offset, ext.tableBase, true);
+          offset += 4;
+          view.setUint32(offset, initFnBytes.length, true);
+          offset += 4;
+          bytes.set(initFnBytes, offset);
+          offset += initFnBytes.length;
+        }
+        bytes.set(snapshot.memory, offset);
+        return bytes;
+      }
+      /**
+       * Deserialize a snapshot from a binary buffer produced by `serializeSnapshot()`.
+       */
+      static deserializeSnapshot(data3) {
+        if (data3.length < SNAPSHOT_HEADER_SIZE) {
+          throw new Error("Invalid snapshot: too small");
+        }
+        const view = new DataView(data3.buffer, data3.byteOffset, data3.byteLength);
+        const magic = view.getUint32(0, false);
+        if (magic !== SNAPSHOT_MAGIC) {
+          throw new Error(`Invalid snapshot: bad magic (expected 0x${SNAPSHOT_MAGIC.toString(16)}, got 0x${magic.toString(16)})`);
+        }
+        const version = view.getUint8(4);
+        if (version !== SNAPSHOT_VERSION && version !== 1) {
+          throw new Error(`Unsupported snapshot version: ${version} (expected ${SNAPSHOT_VERSION})`);
+        }
+        const memorySize = view.getUint32(8, true);
+        const stackPointer = view.getUint32(12, true);
+        const runtimePtr = view.getUint32(16, true);
+        const contextPtr = view.getUint32(20, true);
+        let extensions = [];
+        let memoryOffset = SNAPSHOT_HEADER_SIZE;
+        if (version >= 2) {
+          const extCount = view.getUint32(24, true);
+          let offset = 28;
+          const textDecoder2 = new TextDecoder();
+          for (let i5 = 0; i5 < extCount; i5++) {
+            const nameLen = view.getUint32(offset, true);
+            offset += 4;
+            const name = textDecoder2.decode(data3.slice(offset, offset + nameLen));
+            offset += nameLen;
+            const memBase = view.getUint32(offset, true);
+            offset += 4;
+            const tblBase = view.getUint32(offset, true);
+            offset += 4;
+            const initFnLen = view.getUint32(offset, true);
+            offset += 4;
+            const initFn = textDecoder2.decode(data3.slice(offset, offset + initFnLen));
+            offset += initFnLen;
+            extensions.push({ name, memoryBase: memBase, tableBase: tblBase, initFn });
+          }
+          memoryOffset = offset;
+        }
+        const expectedSize = memoryOffset + memorySize;
+        if (data3.length < expectedSize) {
+          throw new Error(`Invalid snapshot: expected ${expectedSize} bytes, got ${data3.length}`);
+        }
+        const memory = data3.slice(memoryOffset, memoryOffset + memorySize);
+        return { memory, stackPointer, runtimePtr, contextPtr, extensions };
+      }
       // ---- Internal instantiation helpers ----
+      static normalizeOptions(options) {
+        if (!options)
+          return {};
+        if (options instanceof WebAssembly.Module)
+          return { wasm: options };
+        if (typeof options === "object" && ("wasm" in options || "wasi" in options || "memoryLimit" in options || "interruptHandler" in options || "onUnhandledRejection" in options || "moduleLoader" in options || "intrinsics" in options || "extensions" in options || "timezoneOffset" in options))
+          return options;
+        return { wasm: options };
+      }
+      static applyLimits(vm, opts) {
+        if (opts.memoryLimit !== void 0) {
+          vm.exports.qjs_set_memory_limit(opts.memoryLimit);
+        }
+        if (opts.interruptHandler) {
+          vm.interruptHandler = opts.interruptHandler;
+          vm.exports.qjs_set_interrupt_handler(1);
+        }
+        if (opts.onUnhandledRejection) {
+          vm.unhandledRejectionHandler = opts.onUnhandledRejection;
+          vm.exports.qjs_set_promise_rejection_handler(1);
+        }
+        if (opts.moduleLoader) {
+          vm.moduleLoadHandler = opts.moduleLoader.load;
+          vm.moduleNormalizeHandler = opts.moduleLoader.normalize ?? null;
+          vm.exports.qjs_set_module_loader(1);
+        }
+        const tz = opts.timezoneOffset;
+        if (typeof tz === "function") {
+          vm.timezoneOffsetHandler = (timeSecs) => -tz(timeSecs) * 60;
+        } else if (typeof tz === "number") {
+          const offsetSecs = -tz * 60;
+          vm.timezoneOffsetHandler = () => offsetSecs;
+        } else {
+          vm.timezoneOffsetHandler = (timeSecs) => {
+            return -new Date(timeSecs * 1e3).getTimezoneOffset() * 60;
+          };
+        }
+      }
       static async resolveModule(wasmInput) {
         if (wasmInput instanceof WebAssembly.Module) {
           return wasmInput;
         } else if (wasmInput) {
           return WebAssembly.compile(wasmInput);
         } else {
-          const fs3 = await import("node:fs");
-          const path3 = await import("node:path");
-          const url = await import("node:url");
-          const __dirname2 = path3.dirname(url.fileURLToPath(import_meta.url));
-          const wasmPath = path3.resolve(__dirname2, "..", "quickjs.wasm");
-          const buf = fs3.readFileSync(wasmPath);
+          const { readFile } = await import("node:fs/promises");
+          const buf = await readFile(new URL("../quickjs.wasm", import_meta.url));
           return WebAssembly.compile(buf);
         }
       }
-      static async instantiate(module2, vm) {
+      static async instantiate(module2, vm, wasiOptions) {
         let memory = null;
-        const wasiShim = createWasiShim(() => memory);
-        const hostCall = (funcId, thisPtr, argc, argvPtr) => {
-          return vm.handleHostCall(funcId, thisPtr, argc, argvPtr);
+        const memoryProxy = new Proxy({}, {
+          get(_target, prop) {
+            return memory[prop];
+          }
+        });
+        const wasiBuiltins = createWasiShim(() => memory);
+        const wasiUserOverrides = wasiOptions ? wasiOptions(memoryProxy) : void 0;
+        const wasiShim = { ...wasiBuiltins, ...wasiUserOverrides };
+        const hostCall = (namePtr, nameLen, thisPtr, argc, argvPtr) => {
+          return vm.handleHostCall(namePtr, nameLen, thisPtr, argc, argvPtr);
+        };
+        const hostInterrupt = () => {
+          return vm.interruptHandler ? vm.interruptHandler() ? 1 : 0 : 0;
+        };
+        const hostPromiseRejection = (promisePtr, reasonPtr, isHandled) => {
+          if (!vm.unhandledRejectionHandler) {
+            vm.exports.qjs_free_value(promisePtr);
+            vm.exports.qjs_free_value(reasonPtr);
+            return;
+          }
+          const promise = new JSValueHandle(vm, promisePtr);
+          const reason = new JSValueHandle(vm, reasonPtr);
+          try {
+            vm.unhandledRejectionHandler(promise, reason, isHandled !== 0);
+          } finally {
+            promise.dispose();
+            reason.dispose();
+          }
+        };
+        const hostModuleNormalize = (baseNamePtr, namePtr) => {
+          if (!vm.moduleNormalizeHandler) {
+            const name = vm.readCString(namePtr);
+            return vm.writeString(name).ptr;
+          }
+          const baseName = vm.readCString(baseNamePtr);
+          const specifier = vm.readCString(namePtr);
+          try {
+            const normalized = vm.moduleNormalizeHandler(baseName, specifier);
+            return vm.writeString(normalized).ptr;
+          } catch {
+            return 0;
+          }
+        };
+        const hostModuleLoad = (namePtr, outLenPtr) => {
+          if (!vm.moduleLoadHandler)
+            return 0;
+          const name = vm.readCString(namePtr);
+          try {
+            const source = vm.moduleLoadHandler(name);
+            const { ptr, len } = vm.writeString(source);
+            new Uint32Array(vm.exports.memory.buffer, outLenPtr, 1)[0] = len;
+            return ptr;
+          } catch {
+            return 0;
+          }
+        };
+        const hostGetTimezoneOffset = (hi, lo) => {
+          const timeSecs = Number(BigInt(hi) << 32n | BigInt(lo >>> 0));
+          return vm.timezoneOffsetHandler ? vm.timezoneOffsetHandler(timeSecs) : 0;
         };
         const instance = await WebAssembly.instantiate(module2, {
-          env: { host_call: hostCall },
+          env: {
+            host_call: hostCall,
+            host_interrupt: hostInterrupt,
+            host_promise_rejection: hostPromiseRejection,
+            host_module_normalize: hostModuleNormalize,
+            host_module_load: hostModuleLoad,
+            host_get_timezone_offset: hostGetTimezoneOffset
+          },
           wasi_snapshot_preview1: wasiShim
         });
         memory = instance.exports.memory;
-        return instance;
+        return { instance, wasiBuiltins, wasiUserOverrides, memoryProxy };
       }
       /**
        * Called from WASM when a host function is invoked from QuickJS code.
        */
-      handleHostCall(funcId, thisPtr, argc, argvPtr) {
-        const callback = this.hostCallbacks.get(funcId);
+      handleHostCall(namePtr, nameLen, thisPtr, argc, argvPtr) {
+        const name = this.decoder.decode(new Uint8Array(this.exports.memory.buffer, namePtr, nameLen));
+        const callback = this.hostCallbacks.get(name);
         if (!callback) {
           return this.exports.qjs_get_undefined();
         }
@@ -67477,14 +68380,13 @@ var init_dist9 = __esm({
           }
         }
         try {
-          const result = callback.call(void 0, thisHandle, ...args);
+          const result = callback.call(thisHandle, ...args);
           return this.exports.qjs_dup_value(result.ptr);
         } catch (err) {
-          const errStr = err instanceof Error ? err.message : String(err);
-          const errHandle = this.newError(errStr);
-          const excPtr = this.exports.qjs_dup_value(errHandle.ptr);
+          const errHandle = this.newError(err instanceof Error ? err : String(err));
+          this.exports.qjs_throw(errHandle.ptr);
           errHandle.dispose();
-          return excPtr;
+          return 0;
         }
       }
       // ---- String helpers ----
@@ -67509,34 +68411,83 @@ var init_dist9 = __esm({
       }
       // ---- Public API ----
       /**
-       * Evaluate JavaScript code and return the result as a handle.
-       * If the code throws, the returned handle will have `isException === true`.
+       * Check if a result handle is an exception and throw a JSException if so.
+       * Used internally by evalCode and callFunction.
        */
-      evalCode(code, filename = "<eval>") {
+      throwIfException(result) {
+        if (this.exports.qjs_is_exception(result.ptr) !== 0) {
+          const exc = this.getException();
+          result.dispose();
+          this._ownedHandles.add(exc);
+          throw new JSException(exc);
+        }
+        return result;
+      }
+      /**
+       * Evaluate JavaScript code and return the result as a handle.
+       * If the code throws, a `JSException` (which extends `Error`) is thrown
+       * on the host side — matching standard JavaScript semantics.
+       *
+       * @param code - The JavaScript source code to evaluate.
+       * @param filename - Optional filename for error stack traces (default `'<eval>'`).
+       * @param flags - Optional bitwise OR of `EvalFlags.*` constants.
+       *   For example, pass `EvalFlags.ASYNC` to allow top-level `await` — the
+       *   returned handle will be a Promise that resolves to the completion value.
+       */
+      evalCode(code, filename = "<eval>", flags = 0) {
         this.assertNotDisposed();
         const codeStr = this.writeString(code);
         const fnStr = this.writeString(filename);
-        const resultPtr = this.exports.qjs_eval(codeStr.ptr, codeStr.len, fnStr.ptr, 0);
+        const resultPtr = this.exports.qjs_eval(codeStr.ptr, codeStr.len, fnStr.ptr, flags);
         this.exports.wasm_free(codeStr.ptr);
         this.exports.wasm_free(fnStr.ptr);
-        return new JSValueHandle(this, resultPtr);
+        return this.throwIfException(new JSValueHandle(this, resultPtr));
       }
       /**
-       * Unwrap a result handle. If it's an exception, throws a host Error
-       * with the QuickJS error as the `cause`. Otherwise returns the handle.
+       * Compile JavaScript source code to bytecode without executing it.
+       * The returned `Uint8Array` can be stored, transferred, or later executed
+       * with `evalBytecode()`.
+       *
+       * @param code - The JavaScript source code to compile.
+       * @param filename - Optional filename for error stack traces (default `'<compile>'`).
+       * @param evalFlags - Optional bitwise OR of `EvalFlags.*` constants.
+       *   Use `EvalFlags.TYPE_MODULE` to compile as a module.
+       * @param compileFlags - Optional bitwise OR of `CompileFlags.*` constants.
+       *   Use `CompileFlags.STRIP_SOURCE` and/or `CompileFlags.STRIP_DEBUG` to
+       *   reduce bytecode size.
        */
-      unwrapResult(result) {
-        if (result.isException) {
+      compile(code, filename = "<compile>", evalFlags = 0, compileFlags = 0) {
+        this.assertNotDisposed();
+        const codeStr = this.writeString(code);
+        const fnStr = this.writeString(filename);
+        const outLenPtr = this.exports.wasm_malloc(4);
+        const bufPtr = this.exports.qjs_compile(codeStr.ptr, codeStr.len, fnStr.ptr, evalFlags, compileFlags, outLenPtr);
+        this.exports.wasm_free(codeStr.ptr);
+        this.exports.wasm_free(fnStr.ptr);
+        if (bufPtr === 0) {
+          this.exports.wasm_free(outLenPtr);
           const exc = this.getException();
-          const dumped = this.dump(exc);
-          exc.dispose();
-          result.dispose();
-          if (dumped instanceof Error) {
-            throw dumped;
-          }
-          throw new Error(String(dumped));
+          throw new Error(`Compilation error: ${exc.toString()}`);
         }
-        return result;
+        const outLen = new Uint32Array(this.exports.memory.buffer, outLenPtr, 1)[0];
+        this.exports.wasm_free(outLenPtr);
+        const bytecode = new Uint8Array(this.exports.memory.buffer, bufPtr, outLen).slice();
+        this.exports.wasm_free(bufPtr);
+        return bytecode;
+      }
+      /**
+       * Execute previously compiled bytecode (from `compile()`).
+       * Returns the evaluation result as a handle.
+       *
+       * @param bytecode - The bytecode `Uint8Array` from `compile()`.
+       */
+      evalBytecode(bytecode) {
+        this.assertNotDisposed();
+        const bufPtr = this.exports.wasm_malloc(bytecode.byteLength);
+        new Uint8Array(this.exports.memory.buffer, bufPtr, bytecode.byteLength).set(bytecode);
+        const resultPtr = this.exports.qjs_eval_bytecode(bufPtr, bytecode.byteLength);
+        this.exports.wasm_free(bufPtr);
+        return this.throwIfException(new JSValueHandle(this, resultPtr));
       }
       /**
        * Execute all pending microtask jobs (promise reactions, etc.)
@@ -67554,6 +68505,68 @@ var init_dist9 = __esm({
           count++;
         }
         return count;
+      }
+      /**
+       * Explicitly trigger garbage collection. QuickJS runs GC automatically,
+       * but this can be useful to reclaim memory at a known point or before
+       * taking a snapshot.
+       */
+      runGC() {
+        this.assertNotDisposed();
+        this.exports.qjs_run_gc();
+      }
+      /**
+       * The GC threshold in bytes. When allocated memory exceeds this value,
+       * garbage collection is triggered automatically. Set to 0 to disable
+       * automatic GC.
+       */
+      get gcThreshold() {
+        this.assertNotDisposed();
+        return this.exports.qjs_get_gc_threshold();
+      }
+      set gcThreshold(threshold) {
+        this.assertNotDisposed();
+        this.exports.qjs_set_gc_threshold(threshold);
+      }
+      /**
+       * Get detailed memory usage statistics from the QuickJS runtime.
+       * Returns counts and sizes for atoms, strings, objects, functions, etc.
+       */
+      getMemoryUsage() {
+        this.assertNotDisposed();
+        const bufPtr = this.exports.wasm_malloc(26 * 8);
+        this.exports.qjs_compute_memory_usage(bufPtr);
+        const view = new BigInt64Array(this.exports.memory.buffer, bufPtr, 26);
+        const result = {
+          mallocSize: Number(view[0]),
+          mallocLimit: Number(view[1]),
+          memoryUsedSize: Number(view[2]),
+          mallocCount: Number(view[3]),
+          memoryUsedCount: Number(view[4]),
+          atomCount: Number(view[5]),
+          atomSize: Number(view[6]),
+          strCount: Number(view[7]),
+          strSize: Number(view[8]),
+          objCount: Number(view[9]),
+          objSize: Number(view[10]),
+          propCount: Number(view[11]),
+          propSize: Number(view[12]),
+          shapeCount: Number(view[13]),
+          shapeSize: Number(view[14]),
+          jsFuncCount: Number(view[15]),
+          jsFuncSize: Number(view[16]),
+          jsFuncCodeSize: Number(view[17]),
+          jsFuncPc2lineCount: Number(view[18]),
+          jsFuncPc2lineSize: Number(view[19]),
+          cFuncCount: Number(view[20]),
+          arrayCount: Number(view[21]),
+          fastArrayCount: Number(view[22]),
+          fastArrayElements: Number(view[23]),
+          binaryObjectCount: Number(view[24]),
+          binaryObjectSize: Number(view[25])
+        };
+        this.exports.wasm_free(bufPtr);
+        return result;
       }
       /**
        * Get the global object. Prefer the cached `vm.global` property.
@@ -67603,6 +68616,45 @@ var init_dist9 = __esm({
         return new JSValueHandle(this, this.exports.qjs_new_array());
       }
       /**
+       * Create a global symbol (`Symbol.for(description)`).
+       * Global symbols with the same description are always the same symbol,
+       * even across snapshot/restore.
+       */
+      newSymbolFor(description) {
+        this.assertNotDisposed();
+        const { ptr, len } = this.writeString(description);
+        const result = new JSValueHandle(this, this.exports.qjs_new_symbol(ptr, len, 1));
+        this.exports.wasm_free(ptr);
+        return result;
+      }
+      /**
+       * Create a new QuickJS ArrayBuffer by copying data from a host buffer.
+       */
+      newArrayBuffer(data3) {
+        this.assertNotDisposed();
+        const bytes = data3 instanceof ArrayBuffer ? new Uint8Array(data3) : data3;
+        const ptr = this.exports.wasm_malloc(bytes.length);
+        if (ptr === 0)
+          throw new Error("wasm_malloc failed");
+        new Uint8Array(this.exports.memory.buffer).set(bytes, ptr);
+        const result = new JSValueHandle(this, this.exports.qjs_new_array_buffer(ptr, bytes.length));
+        this.exports.wasm_free(ptr);
+        return result;
+      }
+      /**
+       * Create a new QuickJS Uint8Array by copying data from a host buffer.
+       */
+      newUint8Array(data3) {
+        this.assertNotDisposed();
+        const ptr = this.exports.wasm_malloc(data3.length);
+        if (ptr === 0)
+          throw new Error("wasm_malloc failed");
+        new Uint8Array(this.exports.memory.buffer).set(data3, ptr);
+        const result = new JSValueHandle(this, this.exports.qjs_new_uint8_array(ptr, data3.length));
+        this.exports.wasm_free(ptr);
+        return result;
+      }
+      /**
        * Get undefined. Prefer the cached `vm.undefined` property.
        */
       getUndefined() {
@@ -67638,10 +68690,24 @@ var init_dist9 = __esm({
        */
       newFunction(name, fn) {
         this.assertNotDisposed();
-        const funcId = this.nextCallbackId++;
-        this.hostCallbacks.set(funcId, fn);
+        if (this.hostCallbacks.has(name)) {
+          throw new Error(`Host callback with name "${name}" is already registered`);
+        }
+        this.hostCallbacks.set(name, fn);
         const { ptr: namePtr, len: nameLen } = this.writeString(name);
-        const resultPtr = this.exports.qjs_new_host_function(namePtr, nameLen, funcId, 0);
+        const resultPtr = this.exports.qjs_new_host_function(namePtr, nameLen, 0);
+        this.exports.wasm_free(namePtr);
+        return new JSValueHandle(this, resultPtr);
+      }
+      /**
+       * Create an internal host function that bypasses the duplicate-name check.
+       * Used for ephemeral callbacks (promise settle handlers, resolvePromise, etc.)
+       * that are not intended to survive snapshot/restore.
+       */
+      newInternalFunction(name, fn) {
+        this.hostCallbacks.set(name, fn);
+        const { ptr: namePtr, len: nameLen } = this.writeString(name);
+        const resultPtr = this.exports.qjs_new_host_function(namePtr, nameLen, 0);
         this.exports.wasm_free(namePtr);
         return new JSValueHandle(this, resultPtr);
       }
@@ -67667,35 +68733,41 @@ var init_dist9 = __esm({
         const promiseHandle = new JSValueHandle(this, promisePtr);
         const resolveHandle = new JSValueHandle(this, resolvePtr);
         const rejectHandle = new JSValueHandle(this, rejectPtr);
-        let settledResolve;
-        const settled = new Promise((res) => {
-          settledResolve = res;
-        });
-        const settleCallbackId = this.nextCallbackId++;
-        this.hostCallbacks.set(settleCallbackId, () => {
-          settledResolve();
-          this.hostCallbacks.delete(settleCallbackId);
-          return this.undefined;
-        });
-        const { ptr: onSettleName, len: onSettleNameLen } = this.writeString("__onSettle");
-        const onSettleFn = new JSValueHandle(this, this.exports.qjs_new_host_function(onSettleName, onSettleNameLen, settleCallbackId, 0));
-        this.exports.wasm_free(onSettleName);
-        const thenFn = promiseHandle.getProp("then");
-        const onSettleDup = onSettleFn.dup();
-        this.callFunction(thenFn, promiseHandle, onSettleFn, onSettleDup).dispose();
-        thenFn.dispose();
-        onSettleFn.dispose();
-        onSettleDup.dispose();
         const vm = this;
+        vm._ownedHandles.add(resolveHandle);
+        vm._ownedHandles.add(rejectHandle);
+        let _settled = null;
         return {
           handle: promiseHandle,
-          settled,
+          get settled() {
+            if (!_settled) {
+              let settledResolve;
+              _settled = new Promise((res) => {
+                settledResolve = res;
+              });
+              const settleName = `__settle:${vm.nextInternalId++}`;
+              const onSettleFn = vm.newInternalFunction(settleName, () => {
+                settledResolve();
+                vm.hostCallbacks.delete(settleName);
+                return vm.undefined;
+              });
+              const thenFn = promiseHandle.getProp("then");
+              const onSettleDup = onSettleFn.dup();
+              vm.callFunctionRaw(thenFn, promiseHandle, onSettleFn, onSettleDup).dispose();
+              thenFn.dispose();
+              onSettleFn.dispose();
+              onSettleDup.dispose();
+            }
+            return _settled;
+          },
           resolve(value) {
-            vm.callFunction(resolveHandle, vm.undefined, value).dispose();
+            vm.callFunctionRaw(resolveHandle, vm.undefined, value).dispose();
+            vm._ownedHandles.delete(resolveHandle);
             resolveHandle.dispose();
           },
           reject(value) {
-            vm.callFunction(rejectHandle, vm.undefined, value).dispose();
+            vm.callFunctionRaw(rejectHandle, vm.undefined, value).dispose();
+            vm._ownedHandles.delete(rejectHandle);
             rejectHandle.dispose();
           }
         };
@@ -67721,27 +68793,42 @@ var init_dist9 = __esm({
           return Promise.resolve({ error: new JSValueHandle(this, this.exports.qjs_promise_result(promiseHandle.ptr)) });
         }
         return new Promise((hostResolve) => {
-          const onFulfilled = this.newFunction("__onFulfilled", (_this, ...args) => {
+          const id = this.nextInternalId++;
+          const fulfilledName = `__onFulfilled:${id}`;
+          const rejectedName = `__onRejected:${id}`;
+          const onFulfilled = this.newInternalFunction(fulfilledName, (...args) => {
             const val = args[0]?.dup() ?? this.undefined;
+            this.hostCallbacks.delete(fulfilledName);
+            this.hostCallbacks.delete(rejectedName);
             hostResolve({ value: val });
             return this.undefined;
           });
-          const onRejected = this.newFunction("__onRejected", (_this, ...args) => {
+          const onRejected = this.newInternalFunction(rejectedName, (...args) => {
             const val = args[0]?.dup() ?? this.undefined;
+            this.hostCallbacks.delete(fulfilledName);
+            this.hostCallbacks.delete(rejectedName);
             hostResolve({ error: val });
             return this.undefined;
           });
           const thenFn = promiseHandle.getProp("then");
-          this.callFunction(thenFn, promiseHandle, onFulfilled, onRejected).dispose();
+          this.callFunctionRaw(thenFn, promiseHandle, onFulfilled, onRejected).dispose();
           thenFn.dispose();
           onFulfilled.dispose();
           onRejected.dispose();
         });
       }
       /**
-       * Call a QuickJS function.
+       * Call a QuickJS function. If the function throws, a `JSException`
+       * is thrown on the host side.
        */
       callFunction(func, thisVal, ...args) {
+        return this.throwIfException(this.callFunctionRaw(func, thisVal, ...args));
+      }
+      /**
+       * Internal: call a QuickJS function without throwing on exception.
+       * Used by promise plumbing where exceptions are handled differently.
+       */
+      callFunctionRaw(func, thisVal, ...args) {
         this.assertNotDisposed();
         const argc = args.length;
         let argvPtr = 0;
@@ -67759,6 +68846,7 @@ var init_dist9 = __esm({
       }
       /**
        * Set a property on an object. Accepts string or JSValueHandle as key.
+       * JSValueHandle keys support symbols (including `Symbol.for()`).
        */
       setProp(obj, key, value) {
         this.assertNotDisposed();
@@ -67767,11 +68855,41 @@ var init_dist9 = __esm({
           this.exports.qjs_set_prop_string(obj.ptr, namePtr, value.ptr);
           this.exports.wasm_free(namePtr);
         } else {
-          const keyStr = key.toString();
-          const { ptr: namePtr } = this.writeString(keyStr);
-          this.exports.qjs_set_prop_string(obj.ptr, namePtr, value.ptr);
-          this.exports.wasm_free(namePtr);
+          this.exports.qjs_set_prop_value(obj.ptr, key.ptr, value.ptr);
         }
+      }
+      /**
+       * Define a property on an object with explicit property descriptor flags.
+       * Unlike `setProp`, this allows controlling `writable`, `enumerable`, and
+       * `configurable` attributes, matching `Object.defineProperty()` semantics.
+       * Accepts string or JSValueHandle as key (JSValueHandle keys support symbols).
+       *
+       * All flags default to `false` when not specified.
+       */
+      defineProp(obj, key, value, descriptor) {
+        this.assertNotDisposed();
+        let flags = 0;
+        if (descriptor?.configurable)
+          flags |= 1;
+        if (descriptor?.writable)
+          flags |= 2;
+        if (descriptor?.enumerable)
+          flags |= 4;
+        if (typeof key === "string") {
+          const { ptr: namePtr } = this.writeString(key);
+          this.exports.qjs_define_prop_string(obj.ptr, namePtr, value.ptr, flags);
+          this.exports.wasm_free(namePtr);
+        } else {
+          this.exports.qjs_define_prop_value(obj.ptr, key.ptr, value.ptr, flags);
+        }
+      }
+      /**
+       * Get a property from an object using a JSValueHandle key.
+       * Supports symbol keys (including `Symbol.for()`).
+       */
+      getProp(obj, key) {
+        this.assertNotDisposed();
+        return new JSValueHandle(this, this.exports.qjs_get_prop_value(obj.ptr, key.ptr));
       }
       /**
        * Get the current exception, if any.
@@ -67838,10 +68956,14 @@ var init_dist9 = __esm({
       /**
        * Convert a QuickJS handle to a host JavaScript value.
        * Handles strings, numbers, booleans, null, undefined, bigint, arrays,
-       * errors, and plain objects.
+       * errors, functions, and plain objects. Circular references in objects
+       * are returned as `undefined`.
        */
       dump(handle) {
         this.assertNotDisposed();
+        return this._dump(handle, /* @__PURE__ */ new Map());
+      }
+      _dump(handle, visited) {
         const e5 = this.exports;
         if (e5.qjs_is_undefined(handle.ptr))
           return void 0;
@@ -67855,21 +68977,94 @@ var init_dist9 = __esm({
           return handle.toString();
         if (e5.qjs_is_big_int(handle.ptr))
           return handle.toBigInt();
+        if (e5.qjs_is_symbol(handle.ptr)) {
+          const descOutPtr = e5.wasm_malloc(4);
+          const kind = e5.qjs_get_symbol_description(handle.ptr, descOutPtr);
+          const view = new DataView(e5.memory.buffer);
+          const descPtr = view.getUint32(descOutPtr, true);
+          e5.wasm_free(descOutPtr);
+          if (kind === 1) {
+            const descHandle = new JSValueHandle(this, descPtr);
+            const description = descHandle.toString();
+            descHandle.dispose();
+            return Symbol.for(description);
+          } else if (kind === 2) {
+            const descHandle = new JSValueHandle(this, descPtr);
+            descHandle.dispose();
+            return void 0;
+          }
+          return void 0;
+        }
+        if (e5.qjs_is_array_buffer(handle.ptr))
+          return handle.toArrayBuffer();
         if (e5.qjs_is_exception(handle.ptr)) {
           const exc = this.getException();
           const msg = exc.toString();
           exc.dispose();
           return new Error(msg);
         }
+        if (e5.qjs_is_function(handle.ptr))
+          return void 0;
+        if (e5.qjs_is_object(handle.ptr)) {
+          const objPtr = e5.qjs_get_value_ptr(handle.ptr);
+          if (objPtr) {
+            const existing = visited.get(objPtr);
+            if (existing !== void 0)
+              return existing;
+          }
+        }
+        if (e5.qjs_is_object(handle.ptr)) {
+          const byteOffsetPtr = e5.wasm_malloc(4);
+          const byteLengthPtr = e5.wasm_malloc(4);
+          const bytesPerElemPtr = e5.wasm_malloc(4);
+          const abPtr = e5.qjs_get_typed_array_buffer(handle.ptr, byteOffsetPtr, byteLengthPtr, bytesPerElemPtr);
+          const abHandle = new JSValueHandle(this, abPtr);
+          if (e5.qjs_is_exception(abHandle.ptr) === 0) {
+            const view = new DataView(e5.memory.buffer);
+            const byteOffset = view.getUint32(byteOffsetPtr, true);
+            const byteLength = view.getUint32(byteLengthPtr, true);
+            const bytesPerElement = view.getUint32(bytesPerElemPtr, true);
+            e5.wasm_free(byteOffsetPtr);
+            e5.wasm_free(byteLengthPtr);
+            e5.wasm_free(bytesPerElemPtr);
+            const abLenPtr = e5.wasm_malloc(4);
+            const abDataPtr = e5.qjs_get_array_buffer(abHandle.ptr, abLenPtr);
+            e5.wasm_free(abLenPtr);
+            abHandle.dispose();
+            if (abDataPtr !== 0) {
+              const rawBytes = new Uint8Array(e5.memory.buffer, abDataPtr + byteOffset, byteLength).slice();
+              switch (bytesPerElement) {
+                case 1:
+                  return rawBytes;
+                case 2:
+                  return new Uint16Array(rawBytes.buffer);
+                case 4:
+                  return new Uint32Array(rawBytes.buffer);
+                case 8:
+                  return new Float64Array(rawBytes.buffer);
+                default:
+                  return rawBytes;
+              }
+            }
+          } else {
+            abHandle.dispose();
+            e5.wasm_free(byteOffsetPtr);
+            e5.wasm_free(byteLengthPtr);
+            e5.wasm_free(bytesPerElemPtr);
+          }
+        }
         if (e5.qjs_is_array(handle.ptr)) {
           const lenHandle = handle.getProp("length");
           const len = e5.qjs_get_float64(lenHandle.ptr);
           lenHandle.dispose();
           const arr = [];
+          const objPtr = e5.qjs_get_value_ptr(handle.ptr);
+          if (objPtr)
+            visited.set(objPtr, arr);
           for (let i5 = 0; i5 < len; i5++) {
             const elemPtr = e5.qjs_get_prop_uint32(handle.ptr, i5);
             const elemHandle = new JSValueHandle(this, elemPtr);
-            arr.push(this.dump(elemHandle));
+            arr.push(this._dump(elemHandle, visited));
             elemHandle.dispose();
           }
           return arr;
@@ -67892,24 +69087,30 @@ var init_dist9 = __esm({
           return err;
         }
         if (e5.qjs_is_object(handle.ptr)) {
-          const jsonResult = this.evalCode(`(v) => JSON.stringify(v)`);
-          if (jsonResult.isException) {
-            jsonResult.dispose();
-            return "[object Object]";
+          const keysPtr = e5.qjs_get_own_property_names(handle.ptr);
+          const keysHandle = new JSValueHandle(this, keysPtr);
+          if (e5.qjs_is_exception(keysHandle.ptr) !== 0) {
+            keysHandle.dispose();
+            return {};
           }
-          const jsonStr = this.callFunction(jsonResult, this.undefined, handle);
-          jsonResult.dispose();
-          if (jsonStr.isException || e5.qjs_is_undefined(jsonStr.ptr)) {
-            jsonStr.dispose();
-            return "[object Object]";
+          const lenHandle = keysHandle.getProp("length");
+          const len = e5.qjs_get_float64(lenHandle.ptr);
+          lenHandle.dispose();
+          const obj = {};
+          const objPtr = e5.qjs_get_value_ptr(handle.ptr);
+          if (objPtr)
+            visited.set(objPtr, obj);
+          for (let i5 = 0; i5 < len; i5++) {
+            const keyPtr = e5.qjs_get_prop_uint32(keysHandle.ptr, i5);
+            const keyHandle = new JSValueHandle(this, keyPtr);
+            const key = keyHandle.toString();
+            keyHandle.dispose();
+            const valHandle = handle.getProp(key);
+            obj[key] = this._dump(valHandle, visited);
+            valHandle.dispose();
           }
-          const str = jsonStr.toString();
-          jsonStr.dispose();
-          try {
-            return JSON.parse(str);
-          } catch {
-            return str;
-          }
+          keysHandle.dispose();
+          return obj;
         }
         return void 0;
       }
@@ -67932,8 +69133,35 @@ var init_dist9 = __esm({
           return this.newString(value);
         if (typeof value === "bigint")
           return this.newBigInt(value);
+        if (typeof value === "symbol") {
+          const key = Symbol.keyFor(value);
+          if (key !== void 0) {
+            return this.newSymbolFor(key);
+          }
+          throw new Error(`Cannot convert local symbol to QuickJS handle. Use Symbol.for() for cross-boundary symbols.`);
+        }
+        if (value instanceof Promise) {
+          const deferred = this.newPromise();
+          value.then((r5) => {
+            deferred.resolve(this.hostToHandle(r5));
+            this.executePendingJobs();
+          }, (err) => {
+            deferred.reject(this.hostToHandle(err));
+            this.executePendingJobs();
+          });
+          return deferred.handle;
+        }
         if (value instanceof Error) {
           return this.newError(value);
+        }
+        if (value instanceof ArrayBuffer) {
+          return this.newArrayBuffer(value);
+        }
+        if (value instanceof Uint8Array) {
+          return this.newUint8Array(value);
+        }
+        if (ArrayBuffer.isView(value)) {
+          return this.newArrayBuffer(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
         }
         if (Array.isArray(value)) {
           const arr = this.newArray();
@@ -67958,42 +69186,50 @@ var init_dist9 = __esm({
       // ---- Snapshot / Restore ----
       /**
        * Snapshot the entire VM state.
+       *
+       * Returns a snapshot containing the full WASM linear memory. Use
+       * `QuickJS.serializeSnapshot()` to convert to a versioned binary
+       * buffer for persistent storage.
        */
       snapshot() {
         this.assertNotDisposed();
-        const memory = this.exports.memory;
-        const memoryBytes = new Uint8Array(memory.buffer);
-        const memoryPages = memory.buffer.byteLength / 65536;
         return {
-          memory: memoryBytes.slice(),
+          memory: new Uint8Array(this.exports.memory.buffer).slice(),
           stackPointer: this.exports.__stack_pointer.value,
-          memoryPages,
           runtimePtr: this.exports.qjs_get_runtime_ptr(),
-          contextPtr: this.exports.qjs_get_context_ptr()
+          contextPtr: this.exports.qjs_get_context_ptr(),
+          extensions: this.loadedExtensions.map((ext) => ({
+            name: ext.name,
+            memoryBase: ext.memoryBase,
+            tableBase: ext.tableBase,
+            initFn: ext.initFn
+          }))
         };
       }
       /**
        * Re-register a host callback after restoring from a snapshot.
-       * The func_id must match the ID that was used before the snapshot.
+       * The name must match the name passed to `newFunction()` before the snapshot.
        */
-      registerHostCallback(funcId, fn) {
-        this.hostCallbacks.set(funcId, fn);
-        if (funcId >= this.nextCallbackId) {
-          this.nextCallbackId = funcId + 1;
-        }
+      registerHostCallback(name, fn) {
+        this.hostCallbacks.set(name, fn);
       }
       /**
-       * Dispose the VM, freeing all resources.
+       * Dispose the VM, releasing all references to the WASM instance
+       * so it can be garbage collected by the host JS engine.
        */
-      dispose(leakCheck = true) {
+      dispose() {
         if (!this.disposed) {
           this.disposed = true;
-          if (leakCheck) {
-            try {
-              this.exports.qjs_destroy();
-            } catch {
-            }
-          }
+          this._global = null;
+          this._undefined = null;
+          this._null = null;
+          this._true = null;
+          this._false = null;
+          this._ownedHandles.clear();
+          this.hostCallbacks.clear();
+          this.exports = null;
+          this.instance = null;
+          this.module = null;
         }
       }
       /**
@@ -68032,7 +69268,62 @@ var init_dist9 = __esm({
         return this.readCString(ptr);
       }
     };
+    JSException = class extends Error {
+      /**
+       * A live handle to the QuickJS exception value. You can read custom
+       * properties, call methods, etc. Must be disposed when done.
+       */
+      handle;
+      // Cached values so they survive handle disposal / VM teardown.
+      // Using # fields keeps them out of console.log / Object.keys output.
+      #name;
+      #message;
+      #stack;
+      /** @internal */
+      constructor(handle) {
+        const env_1 = { stack: [], error: void 0, hasError: false };
+        try {
+          super();
+          this.handle = handle;
+          delete this.stack;
+          const msgHandle = __addDisposableResource2(env_1, handle.getProp("message"), false);
+          this.#name = handle.getProp("name").consume((h5) => h5.isUndefined ? "Error" : h5.toString());
+          this.#message = msgHandle.isUndefined ? handle.toString() : msgHandle.toString();
+          this.#stack = handle.getProp("stack").consume((h5) => h5.isUndefined ? void 0 : h5.toString());
+        } catch (e_1) {
+          env_1.error = e_1;
+          env_1.hasError = true;
+        } finally {
+          __disposeResources2(env_1);
+        }
+      }
+      get name() {
+        return this.#name;
+      }
+      set name(v5) {
+        this.#name = v5;
+      }
+      get message() {
+        return this.#message;
+      }
+      set message(v5) {
+        this.#message = v5;
+      }
+      get stack() {
+        return this.#stack;
+      }
+      set stack(v5) {
+        this.#stack = v5;
+      }
+      dispose() {
+        this.handle.dispose();
+      }
+      [Symbol.dispose]() {
+        this.handle.dispose();
+      }
+    };
     JSValueHandle = class _JSValueHandle {
+      /** The QuickJS VM instance this handle belongs to. */
       vm;
       /** @internal */
       ptr;
@@ -68040,9 +69331,6 @@ var init_dist9 = __esm({
       constructor(vm, ptr) {
         this.vm = vm;
         this.ptr = ptr;
-      }
-      get isException() {
-        return this.vm._getExports().qjs_is_exception(this.ptr) !== 0;
       }
       get isUndefined() {
         return this.vm._getExports().qjs_is_undefined(this.ptr) !== 0;
@@ -68053,8 +69341,150 @@ var init_dist9 = __esm({
       /**
        * Get the promise state: 0 = pending, 1 = fulfilled, 2 = rejected
        */
+      get isBool() {
+        return this.vm._getExports().qjs_is_bool(this.ptr) !== 0;
+      }
+      get isNumber() {
+        return this.vm._getExports().qjs_is_number(this.ptr) !== 0;
+      }
+      get isString() {
+        return this.vm._getExports().qjs_is_string(this.ptr) !== 0;
+      }
+      get isSymbol() {
+        return this.vm._getExports().qjs_is_symbol(this.ptr) !== 0;
+      }
+      get isBigInt() {
+        return this.vm._getExports().qjs_is_big_int(this.ptr) !== 0;
+      }
+      get isObject() {
+        return this.vm._getExports().qjs_is_object(this.ptr) !== 0;
+      }
+      get isArray() {
+        return this.vm._getExports().qjs_is_array(this.ptr) !== 0;
+      }
+      get isFunction() {
+        return this.vm._getExports().qjs_is_function(this.ptr) !== 0;
+      }
+      get isError() {
+        return this.vm._getExports().qjs_is_error(this.ptr) !== 0;
+      }
+      get isPromise() {
+        return this.vm._getExports().qjs_is_promise(this.ptr) !== 0;
+      }
+      get isArrayBuffer() {
+        return this.vm._getExports().qjs_is_array_buffer(this.ptr) !== 0;
+      }
       get promiseState() {
         return this.vm._getExports().qjs_promise_state(this.ptr);
+      }
+      /**
+       * Get the typeof this value as a string.
+       * Returns the same values as the native `typeof` operator.
+       */
+      get typeof() {
+        return this.vm.typeof(this);
+      }
+      /**
+       * Get the length property of this value (for arrays, strings, etc.).
+       */
+      get length() {
+        const h5 = this.getProp("length");
+        const n6 = h5.toNumber();
+        h5.dispose();
+        return n6;
+      }
+      /**
+       * Get the constructor name of this object, or undefined if unavailable.
+       */
+      get constructorName() {
+        const ctor = this.getProp("constructor");
+        if (ctor.isUndefined || ctor.isNull) {
+          ctor.dispose();
+          return void 0;
+        }
+        const name = ctor.getProp("name");
+        ctor.dispose();
+        if (name.isUndefined || name.isNull) {
+          name.dispose();
+          return void 0;
+        }
+        const result = name.toString();
+        name.dispose();
+        return result;
+      }
+      /**
+       * Get the own enumerable string property names (equivalent to Object.keys()).
+       */
+      keys() {
+        const e5 = this.vm._getExports();
+        const keysPtr = e5.qjs_get_own_property_names(this.ptr);
+        const keysHandle = new _JSValueHandle(this.vm, keysPtr);
+        if (e5.qjs_is_exception(keysHandle.ptr) !== 0) {
+          keysHandle.dispose();
+          return [];
+        }
+        const lenHandle = keysHandle.getProp("length");
+        const len = e5.qjs_get_float64(lenHandle.ptr);
+        lenHandle.dispose();
+        const result = [];
+        for (let i5 = 0; i5 < len; i5++) {
+          const keyPtr = e5.qjs_get_prop_uint32(keysHandle.ptr, i5);
+          const keyHandle = new _JSValueHandle(this.vm, keyPtr);
+          result.push(keyHandle.toString());
+          keyHandle.dispose();
+        }
+        keysHandle.dispose();
+        return result;
+      }
+      /**
+       * Get all own property names including non-enumerable ones
+       * (equivalent to Object.getOwnPropertyNames()).
+       */
+      getOwnPropertyNames() {
+        const e5 = this.vm._getExports();
+        const keysPtr = e5.qjs_get_own_property_names_all(this.ptr);
+        const keysHandle = new _JSValueHandle(this.vm, keysPtr);
+        if (e5.qjs_is_exception(keysHandle.ptr) !== 0) {
+          keysHandle.dispose();
+          return [];
+        }
+        const lenHandle = keysHandle.getProp("length");
+        const len = e5.qjs_get_float64(lenHandle.ptr);
+        lenHandle.dispose();
+        const result = [];
+        for (let i5 = 0; i5 < len; i5++) {
+          const keyPtr = e5.qjs_get_prop_uint32(keysHandle.ptr, i5);
+          const keyHandle = new _JSValueHandle(this.vm, keyPtr);
+          result.push(keyHandle.toString());
+          keyHandle.dispose();
+        }
+        keysHandle.dispose();
+        return result;
+      }
+      /**
+       * Check if a property is an own property (equivalent to Object.prototype.hasOwnProperty).
+       */
+      hasOwnProperty(name) {
+        const { ptr: namePtr } = this.vm._writeString(name);
+        const result = this.vm._getExports().qjs_has_own_property(this.ptr, namePtr);
+        this.vm._getExports().wasm_free(namePtr);
+        return result === 1;
+      }
+      /**
+       * Check if a property is enumerable (equivalent to Object.prototype.propertyIsEnumerable).
+       */
+      propertyIsEnumerable(name) {
+        const { ptr: namePtr } = this.vm._writeString(name);
+        const result = this.vm._getExports().qjs_property_is_enumerable(this.ptr, namePtr);
+        this.vm._getExports().wasm_free(namePtr);
+        return result === 1;
+      }
+      /**
+       * Get the prototype of this object (equivalent to Object.getPrototypeOf()).
+       */
+      getPrototypeOf() {
+        const protoPtr = this.vm._getExports().qjs_get_prototype_of(this.ptr);
+        return new _JSValueHandle(this.vm, protoPtr);
       }
       /**
        * Get a property by name.
@@ -68072,6 +69502,30 @@ var init_dist9 = __esm({
         const { ptr: namePtr } = this.vm._writeString(name);
         this.vm._getExports().qjs_set_prop_string(this.ptr, namePtr, value.ptr);
         this.vm._getExports().wasm_free(namePtr);
+      }
+      /**
+       * Define a property with explicit property descriptor flags.
+       * Unlike `setProp`, this allows controlling `writable`, `enumerable`, and
+       * `configurable` attributes, matching `Object.defineProperty()` semantics.
+       * Accepts string or JSValueHandle as key (JSValueHandle keys support symbols).
+       *
+       * All flags default to `false` when not specified.
+       */
+      defineProp(key, value, descriptor) {
+        let flags = 0;
+        if (descriptor?.configurable)
+          flags |= 1;
+        if (descriptor?.writable)
+          flags |= 2;
+        if (descriptor?.enumerable)
+          flags |= 4;
+        if (typeof key === "string") {
+          const { ptr: namePtr } = this.vm._writeString(key);
+          this.vm._getExports().qjs_define_prop_string(this.ptr, namePtr, value.ptr, flags);
+          this.vm._getExports().wasm_free(namePtr);
+        } else {
+          this.vm._getExports().qjs_define_prop_value(this.ptr, key.ptr, value.ptr, flags);
+        }
       }
       /**
        * Extract the value as a number.
@@ -68098,6 +69552,59 @@ var init_dist9 = __esm({
         e5.wasm_free(loPtr);
         e5.wasm_free(hiPtr);
         return BigInt(hi) << 32n | BigInt(lo);
+      }
+      /**
+       * Extract the value as an ArrayBuffer (copies from WASM memory).
+       * Works on ArrayBuffer values. For typed arrays, gets the underlying buffer.
+       */
+      toArrayBuffer() {
+        const e5 = this.vm._getExports();
+        const lenOutPtr = e5.wasm_malloc(4);
+        if (e5.qjs_is_array_buffer(this.ptr)) {
+          const dataPtr = e5.qjs_get_array_buffer(this.ptr, lenOutPtr);
+          if (dataPtr === 0) {
+            e5.wasm_free(lenOutPtr);
+            throw new Error("Failed to get ArrayBuffer data");
+          }
+          const view2 = new DataView(e5.memory.buffer);
+          const len = view2.getUint32(lenOutPtr, true);
+          e5.wasm_free(lenOutPtr);
+          return new Uint8Array(e5.memory.buffer, dataPtr, len).slice().buffer;
+        }
+        e5.wasm_free(lenOutPtr);
+        const byteOffsetPtr = e5.wasm_malloc(4);
+        const byteLengthPtr = e5.wasm_malloc(4);
+        const bytesPerElemPtr = e5.wasm_malloc(4);
+        const abPtr = e5.qjs_get_typed_array_buffer(this.ptr, byteOffsetPtr, byteLengthPtr, bytesPerElemPtr);
+        const abHandle = new _JSValueHandle(this.vm, abPtr);
+        if (this.vm._getExports().qjs_is_exception(abHandle.ptr) !== 0) {
+          abHandle.dispose();
+          e5.wasm_free(byteOffsetPtr);
+          e5.wasm_free(byteLengthPtr);
+          e5.wasm_free(bytesPerElemPtr);
+          throw new Error("Value is not an ArrayBuffer or typed array");
+        }
+        const view = new DataView(e5.memory.buffer);
+        const byteOffset = view.getUint32(byteOffsetPtr, true);
+        const byteLength = view.getUint32(byteLengthPtr, true);
+        e5.wasm_free(byteOffsetPtr);
+        e5.wasm_free(byteLengthPtr);
+        e5.wasm_free(bytesPerElemPtr);
+        const abLenPtr = e5.wasm_malloc(4);
+        const abDataPtr = e5.qjs_get_array_buffer(abHandle.ptr, abLenPtr);
+        e5.wasm_free(abLenPtr);
+        abHandle.dispose();
+        if (abDataPtr === 0) {
+          throw new Error("Failed to get ArrayBuffer data from typed array");
+        }
+        return new Uint8Array(e5.memory.buffer, abDataPtr + byteOffset, byteLength).slice().buffer;
+      }
+      /**
+       * Extract the value as a Uint8Array (copies from WASM memory).
+       * Works on Uint8Array, ArrayBuffer, and other typed array values.
+       */
+      toUint8Array() {
+        return new Uint8Array(this.toArrayBuffer());
       }
       /**
        * Extract the value as a string (calls JS_ToCString - works on any value).
@@ -68128,11 +69635,15 @@ var init_dist9 = __esm({
       }
       /**
        * Dispose this handle, freeing the heap-allocated JSValue.
+       * Safe to call after the VM has been disposed (becomes a no-op).
        */
       dispose() {
         if (!this.disposed) {
-          this.vm._getExports().qjs_free_value(this.ptr);
           this.disposed = true;
+          const exports2 = this.vm._getExports();
+          if (exports2) {
+            exports2.qjs_free_value(this.ptr);
+          }
         }
       }
       /**
@@ -68694,11 +70205,11 @@ var init_dist13 = __esm({
           const hash = crypto2.createHash("sha1").update(code).digest("hex");
           if (this.resolver && this.resolverHash === hash) {
             debug16("Same sha1 hash for code - contents have not changed, reusing previous proxy resolver");
-            qjs.dispose(false);
+            qjs.dispose();
             return this.resolver;
           }
           if (this.qjs) {
-            this.qjs.dispose(false);
+            this.qjs.dispose();
           }
           this.qjs = qjs;
           debug16("Creating new proxy resolver instance");

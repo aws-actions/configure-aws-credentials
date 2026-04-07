@@ -1081,10 +1081,10 @@ Apache License
 The following npm packages may be included in this product:
 
  - agent-base@9.0.0
- - degenerator@7.0.0
+ - degenerator@7.0.1
  - https-proxy-agent@9.0.0
- - pac-resolver@9.0.0
- - proxy-agent@8.0.0
+ - pac-resolver@9.0.1
+ - proxy-agent@8.0.1
  - socks-proxy-agent@10.0.0
 
 These packages each contain the following license:
@@ -1179,7 +1179,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - pac-proxy-agent@9.0.0
+ - pac-proxy-agent@9.0.1
 
 This package contains the following license:
 
@@ -2792,8 +2792,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following npm packages may be included in this product:
 
- - netmask@2.0.2
- - quickjs-wasi@0.0.1
+ - netmask@2.1.0
+ - quickjs-wasi@2.2.0
 
 These packages each contain the following license:
 
