@@ -51890,6 +51890,9 @@ var require_Client = __commonJS({
        * a given path to fix that issue for most cases.
        */
       async protectWhitespace(path3) {
+        if (/[\r\n\0]/.test(path3)) {
+          throw new Error("Invalid path: Contains control characters");
+        }
         if (!path3.startsWith(" ")) {
           return path3;
         }
