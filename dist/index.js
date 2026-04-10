@@ -50252,6 +50252,9 @@ var require_FtpContext = __commonJS({
        * Send an FTP command without waiting for or handling the result.
        */
       send(command) {
+        if (/[\r\n\0]/.test(command)) {
+          throw new Error(`Invalid command: Contains control characters. (${command})`);
+        }
         const containsPassword = command.startsWith("PASS");
         const message = containsPassword ? "> PASS ###" : `> ${command}`;
         this.log(message);
@@ -51890,9 +51893,6 @@ var require_Client = __commonJS({
        * a given path to fix that issue for most cases.
        */
       async protectWhitespace(path3) {
-        if (/[\r\n\0]/.test(path3)) {
-          throw new Error("Invalid path: Contains control characters");
-        }
         if (!path3.startsWith(" ")) {
           return path3;
         }
