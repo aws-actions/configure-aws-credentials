@@ -28008,6 +28008,21 @@ var require_dist_cjs20 = __commonJS({
   "node_modules/@smithy/util-endpoints/dist-cjs/index.js"(exports2) {
     "use strict";
     var types3 = require_dist_cjs();
+    var BinaryDecisionDiagram = class _BinaryDecisionDiagram {
+      nodes;
+      root;
+      conditions;
+      results;
+      constructor(bdd, root, conditions, results) {
+        this.nodes = bdd;
+        this.root = root;
+        this.conditions = conditions;
+        this.results = results;
+      }
+      static from(bdd, root, conditions, results) {
+        return new _BinaryDecisionDiagram(bdd, root, conditions, results);
+      }
+    };
     var EndpointCache5 = class {
       capacity;
       data = /* @__PURE__ */ new Map();
@@ -28058,22 +28073,12 @@ var require_dist_cjs20 = __commonJS({
         return buffer;
       }
     };
-    var IP_V4_REGEX = new RegExp(`^(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}$`);
-    var isIpAddress = (value) => IP_V4_REGEX.test(value) || value.startsWith("[") && value.endsWith("]");
-    var VALID_HOST_LABEL_REGEX = new RegExp(`^(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$`);
-    var isValidHostLabel = (value, allowSubDomains = false) => {
-      if (!allowSubDomains) {
-        return VALID_HOST_LABEL_REGEX.test(value);
+    var EndpointError = class extends Error {
+      constructor(message) {
+        super(message);
+        this.name = "EndpointError";
       }
-      const labels = value.split(".");
-      for (const label of labels) {
-        if (!isValidHostLabel(label)) {
-          return false;
-        }
-      }
-      return true;
     };
-    var customEndpointFunctions5 = {};
     var debugId = "endpoints";
     function toDebugString(input) {
       if (typeof input !== "object" || input == null) {
@@ -28087,13 +28092,16 @@ var require_dist_cjs20 = __commonJS({
       }
       return JSON.stringify(input, null, 2);
     }
-    var EndpointError = class extends Error {
-      constructor(message) {
-        super(message);
-        this.name = "EndpointError";
-      }
-    };
+    var customEndpointFunctions5 = {};
     var booleanEquals = (value1, value2) => value1 === value2;
+    function coalesce(...args) {
+      for (const arg of args) {
+        if (arg != null) {
+          return arg;
+        }
+      }
+      return void 0;
+    }
     var getAttrPathList = (path3) => {
       const parts = path3.split(".");
       const pathList = [];
@@ -28126,7 +28134,25 @@ var require_dist_cjs20 = __commonJS({
       return acc[index];
     }, value);
     var isSet = (value) => value != null;
+    var VALID_HOST_LABEL_REGEX = new RegExp(`^(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$`);
+    var isValidHostLabel = (value, allowSubDomains = false) => {
+      if (!allowSubDomains) {
+        return VALID_HOST_LABEL_REGEX.test(value);
+      }
+      const labels = value.split(".");
+      for (const label of labels) {
+        if (!isValidHostLabel(label)) {
+          return false;
+        }
+      }
+      return true;
+    };
+    function ite(condition, trueValue, falseValue) {
+      return condition ? trueValue : falseValue;
+    }
     var not = (value) => !value;
+    var IP_V4_REGEX = new RegExp(`^(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}$`);
+    var isIpAddress = (value) => IP_V4_REGEX.test(value) || value.startsWith("[") && value.endsWith("]");
     var DEFAULT_PORTS3 = {
       [types3.EndpointURLScheme.HTTP]: 80,
       [types3.EndpointURLScheme.HTTPS]: 443
@@ -28172,9 +28198,22 @@ var require_dist_cjs20 = __commonJS({
         isIp
       };
     };
+    function split(value, delimiter, limit) {
+      if (limit === 1) {
+        return [value];
+      }
+      if (value === "") {
+        return [""];
+      }
+      const parts = value.split(delimiter);
+      if (limit === 0) {
+        return parts;
+      }
+      return parts.slice(0, limit - 1).concat(parts.slice(1).join(delimiter));
+    }
     var stringEquals = (value1, value2) => value1 === value2;
     var substring = (input, start, stop, reverse) => {
-      if (start >= stop || input.length < stop || /[^\u0000-\u007f]/.test(input)) {
+      if (input == null || start >= stop || input.length < stop || /[^\u0000-\u007f]/.test(input)) {
         return null;
       }
       if (!reverse) {
@@ -28185,21 +28224,21 @@ var require_dist_cjs20 = __commonJS({
     var uriEncode = (value) => encodeURIComponent(value).replace(/[!*'()]/g, (c5) => `%${c5.charCodeAt(0).toString(16).toUpperCase()}`);
     var endpointFunctions = {
       booleanEquals,
+      coalesce,
       getAttr,
       isSet,
       isValidHostLabel,
+      ite,
       not,
       parseURL,
+      split,
       stringEquals,
       substring,
       uriEncode
     };
     var evaluateTemplate = (template, options) => {
       const evaluatedTemplateArr = [];
-      const templateContext = {
-        ...options.endpointParams,
-        ...options.referenceRecord
-      };
+      const { referenceRecord, endpointParams } = options;
       let currentIndex = 0;
       while (currentIndex < template.length) {
         const openingBraceIndex = template.indexOf("{", currentIndex);
@@ -28220,20 +28259,16 @@ var require_dist_cjs20 = __commonJS({
         const parameterName = template.substring(openingBraceIndex + 1, closingBraceIndex);
         if (parameterName.includes("#")) {
           const [refName, attrName] = parameterName.split("#");
-          evaluatedTemplateArr.push(getAttr(templateContext[refName], attrName));
+          evaluatedTemplateArr.push(getAttr(referenceRecord[refName] ?? endpointParams[refName], attrName));
         } else {
-          evaluatedTemplateArr.push(templateContext[parameterName]);
+          evaluatedTemplateArr.push(referenceRecord[parameterName] ?? endpointParams[parameterName]);
         }
         currentIndex = closingBraceIndex + 1;
       }
       return evaluatedTemplateArr.join("");
     };
     var getReferenceValue = ({ ref }, options) => {
-      const referenceRecord = {
-        ...options.endpointParams,
-        ...options.referenceRecord
-      };
-      return referenceRecord[ref];
+      return options.referenceRecord[ref] ?? options.endpointParams[ref];
     };
     var evaluateExpression = (obj, keyName, options) => {
       if (typeof obj === "string") {
@@ -28246,12 +28281,26 @@ var require_dist_cjs20 = __commonJS({
       throw new EndpointError(`'${keyName}': ${String(obj)} is not a string, function or reference.`);
     };
     var callFunction = ({ fn, argv }, options) => {
-      const evaluatedArgs = argv.map((arg) => ["boolean", "number"].includes(typeof arg) ? arg : group$2.evaluateExpression(arg, "arg", options));
-      const fnSegments = fn.split(".");
-      if (fnSegments[0] in customEndpointFunctions5 && fnSegments[1] != null) {
-        return customEndpointFunctions5[fnSegments[0]][fnSegments[1]](...evaluatedArgs);
+      const evaluatedArgs = Array(argv.length);
+      for (let i5 = 0; i5 < evaluatedArgs.length; ++i5) {
+        const arg = argv[i5];
+        if (typeof arg === "boolean" || typeof arg === "number") {
+          evaluatedArgs[i5] = arg;
+        } else {
+          evaluatedArgs[i5] = group$2.evaluateExpression(arg, "arg", options);
+        }
       }
-      return endpointFunctions[fn](...evaluatedArgs);
+      if (fn.includes(".")) {
+        const fnSegments = fn.split(".");
+        if (fnSegments[0] in customEndpointFunctions5 && fnSegments[1] != null) {
+          return customEndpointFunctions5[fnSegments[0]][fnSegments[1]](...evaluatedArgs);
+        }
+      }
+      if (typeof endpointFunctions[fn] !== "function") {
+        throw new Error(`function ${fn} not loaded in endpointFunctions.`);
+      }
+      const callable = endpointFunctions[fn];
+      return callable(...evaluatedArgs);
     };
     var group$2 = {
       evaluateExpression,
@@ -28267,26 +28316,6 @@ var require_dist_cjs20 = __commonJS({
         result: value === "" ? true : !!value,
         ...assign != null && { toAssign: { name: assign, value } }
       };
-    };
-    var evaluateConditions = (conditions = [], options) => {
-      const conditionsReferenceRecord = {};
-      for (const condition of conditions) {
-        const { result, toAssign } = evaluateCondition(condition, {
-          ...options,
-          referenceRecord: {
-            ...options.referenceRecord,
-            ...conditionsReferenceRecord
-          }
-        });
-        if (!result) {
-          return { result };
-        }
-        if (toAssign) {
-          conditionsReferenceRecord[toAssign.name] = toAssign.value;
-          options.logger?.debug?.(`${debugId} assign: ${toAssign.name} := ${toDebugString(toAssign.value)}`);
-        }
-      }
-      return { result: true, referenceRecord: conditionsReferenceRecord };
     };
     var getEndpointHeaders = (headers, options) => Object.entries(headers).reduce((acc, [headerKey, headerVal]) => ({
       ...acc,
@@ -28335,6 +28364,62 @@ var require_dist_cjs20 = __commonJS({
         }
       }
       throw new EndpointError(`Endpoint URL must be a string, got ${typeof expression}`);
+    };
+    var RESULT = 1e8;
+    var decideEndpoint = (bdd, options) => {
+      const { nodes, root, results, conditions } = bdd;
+      let ref = root;
+      const referenceRecord = {};
+      const closure = {
+        referenceRecord,
+        endpointParams: options.endpointParams,
+        logger: options.logger
+      };
+      while (ref !== 1 && ref !== -1 && ref < RESULT) {
+        const node_i = 3 * (Math.abs(ref) - 1);
+        const [condition_i, highRef, lowRef] = [nodes[node_i], nodes[node_i + 1], nodes[node_i + 2]];
+        const [fn, argv, assign] = conditions[condition_i];
+        const evaluation = evaluateCondition({ fn, assign, argv }, closure);
+        if (evaluation.toAssign) {
+          const { name, value } = evaluation.toAssign;
+          referenceRecord[name] = value;
+        }
+        ref = ref >= 0 === evaluation.result ? highRef : lowRef;
+      }
+      if (ref >= RESULT) {
+        const result = results[ref - RESULT];
+        if (result[0] === -1) {
+          const [, errorMessage2] = result;
+          throw new EndpointError(errorMessage2);
+        }
+        const [url, properties, headers] = result;
+        return {
+          url: getEndpointUrl(url, closure),
+          properties: getEndpointProperties(properties, closure),
+          headers: getEndpointHeaders(headers, closure)
+        };
+      }
+      throw new EndpointError(`No matching endpoint.`);
+    };
+    var evaluateConditions = (conditions = [], options) => {
+      const conditionsReferenceRecord = {};
+      for (const condition of conditions) {
+        const { result, toAssign } = evaluateCondition(condition, {
+          ...options,
+          referenceRecord: {
+            ...options.referenceRecord,
+            ...conditionsReferenceRecord
+          }
+        });
+        if (!result) {
+          return { result };
+        }
+        if (toAssign) {
+          conditionsReferenceRecord[toAssign.name] = toAssign.value;
+          options.logger?.debug?.(`${debugId} assign: ${toAssign.name} := ${toDebugString(toAssign.value)}`);
+        }
+      }
+      return { result: true, referenceRecord: conditionsReferenceRecord };
     };
     var evaluateEndpointRule = (endpointRule, options) => {
       const { conditions, endpoint } = endpointRule;
@@ -28424,9 +28509,11 @@ var require_dist_cjs20 = __commonJS({
       options.logger?.debug?.(`${debugId} Resolved endpoint: ${toDebugString(endpoint)}`);
       return endpoint;
     };
+    exports2.BinaryDecisionDiagram = BinaryDecisionDiagram;
     exports2.EndpointCache = EndpointCache5;
     exports2.EndpointError = EndpointError;
     exports2.customEndpointFunctions = customEndpointFunctions5;
+    exports2.decideEndpoint = decideEndpoint;
     exports2.isIpAddress = isIpAddress;
     exports2.isValidHostLabel = isValidHostLabel;
     exports2.resolveEndpoint = resolveEndpoint5;
@@ -29262,6 +29349,9 @@ var require_dist_cjs23 = __commonJS({
       isRetryableError(errorType) {
         return errorType === "THROTTLING" || errorType === "TRANSIENT";
       }
+      async maxAttempts() {
+        return this.maxAttemptsProvider();
+      }
     };
     var AdaptiveRetryStrategy = class {
       mode = exports2.RETRY_MODES.ADAPTIVE;
@@ -29286,6 +29376,9 @@ var require_dist_cjs23 = __commonJS({
       recordSuccess(token) {
         this.rateLimiter.updateClientSendingRate({});
         this.standardRetryStrategy.recordSuccess(token);
+      }
+      async maxAttemptsProvider() {
+        return this.standardRetryStrategy.maxAttempts();
       }
     };
     var ConfiguredRetryStrategy = class extends StandardRetryStrategy {
@@ -32891,7 +32984,7 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1025.0",
+      version: "3.1030.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
         "build:cjs": "node ../../scripts/compilation/inline client-sts",
@@ -32917,46 +33010,46 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.973.26",
-        "@aws-sdk/credential-provider-node": "^3.972.29",
-        "@aws-sdk/middleware-host-header": "^3.972.8",
-        "@aws-sdk/middleware-logger": "^3.972.8",
-        "@aws-sdk/middleware-recursion-detection": "^3.972.9",
-        "@aws-sdk/middleware-user-agent": "^3.972.28",
-        "@aws-sdk/region-config-resolver": "^3.972.10",
-        "@aws-sdk/types": "^3.973.6",
-        "@aws-sdk/util-endpoints": "^3.996.5",
-        "@aws-sdk/util-user-agent-browser": "^3.972.8",
-        "@aws-sdk/util-user-agent-node": "^3.973.14",
-        "@smithy/config-resolver": "^4.4.13",
-        "@smithy/core": "^3.23.13",
-        "@smithy/fetch-http-handler": "^5.3.15",
-        "@smithy/hash-node": "^4.2.12",
-        "@smithy/invalid-dependency": "^4.2.12",
-        "@smithy/middleware-content-length": "^4.2.12",
-        "@smithy/middleware-endpoint": "^4.4.28",
-        "@smithy/middleware-retry": "^4.4.46",
-        "@smithy/middleware-serde": "^4.2.16",
-        "@smithy/middleware-stack": "^4.2.12",
-        "@smithy/node-config-provider": "^4.3.12",
-        "@smithy/node-http-handler": "^4.5.1",
-        "@smithy/protocol-http": "^5.3.12",
-        "@smithy/smithy-client": "^4.12.8",
-        "@smithy/types": "^4.13.1",
-        "@smithy/url-parser": "^4.2.12",
+        "@aws-sdk/core": "^3.973.27",
+        "@aws-sdk/credential-provider-node": "^3.972.30",
+        "@aws-sdk/middleware-host-header": "^3.972.9",
+        "@aws-sdk/middleware-logger": "^3.972.9",
+        "@aws-sdk/middleware-recursion-detection": "^3.972.10",
+        "@aws-sdk/middleware-user-agent": "^3.972.29",
+        "@aws-sdk/region-config-resolver": "^3.972.11",
+        "@aws-sdk/types": "^3.973.7",
+        "@aws-sdk/util-endpoints": "^3.996.6",
+        "@aws-sdk/util-user-agent-browser": "^3.972.9",
+        "@aws-sdk/util-user-agent-node": "^3.973.15",
+        "@smithy/config-resolver": "^4.4.14",
+        "@smithy/core": "^3.23.14",
+        "@smithy/fetch-http-handler": "^5.3.16",
+        "@smithy/hash-node": "^4.2.13",
+        "@smithy/invalid-dependency": "^4.2.13",
+        "@smithy/middleware-content-length": "^4.2.13",
+        "@smithy/middleware-endpoint": "^4.4.29",
+        "@smithy/middleware-retry": "^4.5.0",
+        "@smithy/middleware-serde": "^4.2.17",
+        "@smithy/middleware-stack": "^4.2.13",
+        "@smithy/node-config-provider": "^4.3.13",
+        "@smithy/node-http-handler": "^4.5.2",
+        "@smithy/protocol-http": "^5.3.13",
+        "@smithy/smithy-client": "^4.12.9",
+        "@smithy/types": "^4.14.0",
+        "@smithy/url-parser": "^4.2.13",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.44",
-        "@smithy/util-defaults-mode-node": "^4.2.48",
-        "@smithy/util-endpoints": "^3.3.3",
-        "@smithy/util-middleware": "^4.2.12",
-        "@smithy/util-retry": "^4.2.13",
+        "@smithy/util-defaults-mode-browser": "^4.3.45",
+        "@smithy/util-defaults-mode-node": "^4.2.49",
+        "@smithy/util-endpoints": "^3.3.4",
+        "@smithy/util-middleware": "^4.2.13",
+        "@smithy/util-retry": "^4.3.0",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@smithy/snapshot-testing": "^2.0.4",
+        "@smithy/snapshot-testing": "^2.0.5",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -33672,7 +33765,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.996.18",
+      version: "3.996.19",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -33701,40 +33794,40 @@ var init_package = __esm({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.973.26",
-        "@aws-sdk/middleware-host-header": "^3.972.8",
-        "@aws-sdk/middleware-logger": "^3.972.8",
-        "@aws-sdk/middleware-recursion-detection": "^3.972.9",
-        "@aws-sdk/middleware-user-agent": "^3.972.28",
-        "@aws-sdk/region-config-resolver": "^3.972.10",
-        "@aws-sdk/types": "^3.973.6",
-        "@aws-sdk/util-endpoints": "^3.996.5",
-        "@aws-sdk/util-user-agent-browser": "^3.972.8",
-        "@aws-sdk/util-user-agent-node": "^3.973.14",
-        "@smithy/config-resolver": "^4.4.13",
-        "@smithy/core": "^3.23.13",
-        "@smithy/fetch-http-handler": "^5.3.15",
-        "@smithy/hash-node": "^4.2.12",
-        "@smithy/invalid-dependency": "^4.2.12",
-        "@smithy/middleware-content-length": "^4.2.12",
-        "@smithy/middleware-endpoint": "^4.4.28",
-        "@smithy/middleware-retry": "^4.4.46",
-        "@smithy/middleware-serde": "^4.2.16",
-        "@smithy/middleware-stack": "^4.2.12",
-        "@smithy/node-config-provider": "^4.3.12",
-        "@smithy/node-http-handler": "^4.5.1",
-        "@smithy/protocol-http": "^5.3.12",
-        "@smithy/smithy-client": "^4.12.8",
-        "@smithy/types": "^4.13.1",
-        "@smithy/url-parser": "^4.2.12",
+        "@aws-sdk/core": "^3.973.27",
+        "@aws-sdk/middleware-host-header": "^3.972.9",
+        "@aws-sdk/middleware-logger": "^3.972.9",
+        "@aws-sdk/middleware-recursion-detection": "^3.972.10",
+        "@aws-sdk/middleware-user-agent": "^3.972.29",
+        "@aws-sdk/region-config-resolver": "^3.972.11",
+        "@aws-sdk/types": "^3.973.7",
+        "@aws-sdk/util-endpoints": "^3.996.6",
+        "@aws-sdk/util-user-agent-browser": "^3.972.9",
+        "@aws-sdk/util-user-agent-node": "^3.973.15",
+        "@smithy/config-resolver": "^4.4.14",
+        "@smithy/core": "^3.23.14",
+        "@smithy/fetch-http-handler": "^5.3.16",
+        "@smithy/hash-node": "^4.2.13",
+        "@smithy/invalid-dependency": "^4.2.13",
+        "@smithy/middleware-content-length": "^4.2.13",
+        "@smithy/middleware-endpoint": "^4.4.29",
+        "@smithy/middleware-retry": "^4.5.0",
+        "@smithy/middleware-serde": "^4.2.17",
+        "@smithy/middleware-stack": "^4.2.13",
+        "@smithy/node-config-provider": "^4.3.13",
+        "@smithy/node-http-handler": "^4.5.2",
+        "@smithy/protocol-http": "^5.3.13",
+        "@smithy/smithy-client": "^4.12.9",
+        "@smithy/types": "^4.14.0",
+        "@smithy/url-parser": "^4.2.13",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.44",
-        "@smithy/util-defaults-mode-node": "^4.2.48",
-        "@smithy/util-endpoints": "^3.3.3",
-        "@smithy/util-middleware": "^4.2.12",
-        "@smithy/util-retry": "^4.2.13",
+        "@smithy/util-defaults-mode-browser": "^4.3.45",
+        "@smithy/util-defaults-mode-node": "^4.2.49",
+        "@smithy/util-endpoints": "^3.3.4",
+        "@smithy/util-middleware": "^4.2.13",
+        "@smithy/util-retry": "^4.3.0",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
