@@ -28856,6 +28856,28 @@ More information can be found at: https://a.co/c895JFp`);
   }
 });
 
+// node_modules/@aws-sdk/core/dist-es/submodules/client/longPollMiddleware.js
+var longPollMiddleware, longPollMiddlewareOptions, getLongPollPlugin;
+var init_longPollMiddleware = __esm({
+  "node_modules/@aws-sdk/core/dist-es/submodules/client/longPollMiddleware.js"() {
+    longPollMiddleware = () => (next, context) => async (args) => {
+      context.__retryLongPoll = true;
+      return next(args);
+    };
+    longPollMiddlewareOptions = {
+      name: "longPollMiddleware",
+      tags: ["RETRY"],
+      step: "initialize",
+      override: true
+    };
+    getLongPollPlugin = (options) => ({
+      applyToStack: (clientStack) => {
+        clientStack.add(longPollMiddleware(), longPollMiddlewareOptions);
+      }
+    });
+  }
+});
+
 // node_modules/@aws-sdk/core/dist-es/submodules/client/setCredentialFeature.js
 function setCredentialFeature(credentials, feature, value) {
   if (!credentials.$source) {
@@ -28902,6 +28924,7 @@ var init_setTokenFeature = __esm({
 var client_exports = {};
 __export(client_exports, {
   emitWarningIfUnsupportedVersion: () => emitWarningIfUnsupportedVersion,
+  getLongPollPlugin: () => getLongPollPlugin,
   setCredentialFeature: () => setCredentialFeature,
   setFeature: () => setFeature2,
   setTokenFeature: () => setTokenFeature,
@@ -28910,6 +28933,7 @@ __export(client_exports, {
 var init_client = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/index.js"() {
     init_emitWarningIfUnsupportedVersion();
+    init_longPollMiddleware();
     init_setCredentialFeature();
     init_setFeature2();
     init_setTokenFeature();
@@ -32238,6 +32262,19 @@ var require_dist_cjs36 = __commonJS({
         }
       }
     };
+    var HEADER_VALUE_TYPE;
+    (function(HEADER_VALUE_TYPE2) {
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["boolTrue"] = 0] = "boolTrue";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["boolFalse"] = 1] = "boolFalse";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["byte"] = 2] = "byte";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["short"] = 3] = "short";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["integer"] = 4] = "integer";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["long"] = 5] = "long";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["byteArray"] = 6] = "byteArray";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["string"] = 7] = "string";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["timestamp"] = 8] = "timestamp";
+      HEADER_VALUE_TYPE2[HEADER_VALUE_TYPE2["uuid"] = 9] = "uuid";
+    })(HEADER_VALUE_TYPE || (HEADER_VALUE_TYPE = {}));
     var UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
     var Int64 = class _Int64 {
       bytes;
