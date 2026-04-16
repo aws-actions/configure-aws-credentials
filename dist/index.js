@@ -50558,6 +50558,57 @@ Closing reason: ${this._closingError.stack}`;
   }
 });
 
+// node_modules/basic-ftp/dist/netUtils.js
+var require_netUtils = __commonJS({
+  "node_modules/basic-ftp/dist/netUtils.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.describeTLS = describeTLS;
+    exports2.describeAddress = describeAddress;
+    exports2.upgradeSocket = upgradeSocket;
+    exports2.ipIsPrivateV4Address = ipIsPrivateV4Address;
+    var tls_1 = require("tls");
+    function describeTLS(socket) {
+      if (socket instanceof tls_1.TLSSocket) {
+        const protocol = socket.getProtocol();
+        return protocol ? protocol : "Server socket or disconnected client socket";
+      }
+      return "No encryption";
+    }
+    function describeAddress(socket) {
+      if (socket.remoteFamily === "IPv6") {
+        return `[${socket.remoteAddress}]:${socket.remotePort}`;
+      }
+      return `${socket.remoteAddress}:${socket.remotePort}`;
+    }
+    function upgradeSocket(socket, options) {
+      return new Promise((resolve, reject) => {
+        const tlsOptions = Object.assign({}, options, {
+          socket
+        });
+        const tlsSocket = (0, tls_1.connect)(tlsOptions, () => {
+          const expectCertificate = tlsOptions.rejectUnauthorized !== false;
+          if (expectCertificate && !tlsSocket.authorized) {
+            reject(tlsSocket.authorizationError);
+          } else {
+            tlsSocket.removeAllListeners("error");
+            resolve(tlsSocket);
+          }
+        }).once("error", (error2) => {
+          reject(error2);
+        });
+      });
+    }
+    function ipIsPrivateV4Address(ip2 = "") {
+      if (ip2.startsWith("::ffff:")) {
+        ip2 = ip2.substr(7);
+      }
+      const octets = ip2.split(".").map((o5) => parseInt(o5, 10));
+      return octets[0] === 10 || octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31 || octets[0] === 192 && octets[1] === 168 || ip2 === "127.0.0.1";
+    }
+  }
+});
+
 // node_modules/basic-ftp/dist/FileInfo.js
 var require_FileInfo = __commonJS({
   "node_modules/basic-ftp/dist/FileInfo.js"(exports2) {
@@ -51066,74 +51117,30 @@ var require_StringWriter = __commonJS({
     exports2.StringWriter = void 0;
     var stream_1 = require("stream");
     var StringWriter = class extends stream_1.Writable {
-      constructor() {
-        super(...arguments);
-        this.buf = Buffer.alloc(0);
+      constructor(maxByteLength = 1 * 1024 * 1024) {
+        super();
+        this.maxByteLength = maxByteLength;
+        this.byteLength = 0;
+        this.bufs = [];
       }
       _write(chunk, _, callback) {
-        if (chunk instanceof Buffer) {
-          this.buf = Buffer.concat([this.buf, chunk]);
-          callback(null);
-        } else {
-          callback(new Error("StringWriter expects chunks of type 'Buffer'."));
+        if (!(chunk instanceof Buffer)) {
+          callback(new Error("StringWriter: expects chunks of type 'Buffer'."));
+          return;
         }
+        if (this.byteLength + chunk.byteLength > this.maxByteLength) {
+          callback(new Error(`StringWriter: Maximum bytes exceeded, maxByteLength=${this.maxByteLength}.`));
+          return;
+        }
+        this.byteLength += chunk.byteLength;
+        this.bufs.push(chunk);
+        callback(null);
       }
       getText(encoding) {
-        return this.buf.toString(encoding);
+        return Buffer.concat(this.bufs).toString(encoding);
       }
     };
     exports2.StringWriter = StringWriter;
-  }
-});
-
-// node_modules/basic-ftp/dist/netUtils.js
-var require_netUtils = __commonJS({
-  "node_modules/basic-ftp/dist/netUtils.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.describeTLS = describeTLS;
-    exports2.describeAddress = describeAddress;
-    exports2.upgradeSocket = upgradeSocket;
-    exports2.ipIsPrivateV4Address = ipIsPrivateV4Address;
-    var tls_1 = require("tls");
-    function describeTLS(socket) {
-      if (socket instanceof tls_1.TLSSocket) {
-        const protocol = socket.getProtocol();
-        return protocol ? protocol : "Server socket or disconnected client socket";
-      }
-      return "No encryption";
-    }
-    function describeAddress(socket) {
-      if (socket.remoteFamily === "IPv6") {
-        return `[${socket.remoteAddress}]:${socket.remotePort}`;
-      }
-      return `${socket.remoteAddress}:${socket.remotePort}`;
-    }
-    function upgradeSocket(socket, options) {
-      return new Promise((resolve, reject) => {
-        const tlsOptions = Object.assign({}, options, {
-          socket
-        });
-        const tlsSocket = (0, tls_1.connect)(tlsOptions, () => {
-          const expectCertificate = tlsOptions.rejectUnauthorized !== false;
-          if (expectCertificate && !tlsSocket.authorized) {
-            reject(tlsSocket.authorizationError);
-          } else {
-            tlsSocket.removeAllListeners("error");
-            resolve(tlsSocket);
-          }
-        }).once("error", (error2) => {
-          reject(error2);
-        });
-      });
-    }
-    function ipIsPrivateV4Address(ip2 = "") {
-      if (ip2.startsWith("::ffff:")) {
-        ip2 = ip2.substr(7);
-      }
-      const octets = ip2.split(".").map((o5) => parseInt(o5, 10));
-      return octets[0] === 10 || octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31 || octets[0] === 192 && octets[1] === 168 || ip2 === "127.0.0.1";
-    }
   }
 });
 
@@ -51400,13 +51407,13 @@ var require_Client = __commonJS({
     var tls_1 = require("tls");
     var util_1 = require("util");
     var FtpContext_1 = require_FtpContext();
+    var netUtils_1 = require_netUtils();
+    var parseControlResponse_1 = require_parseControlResponse();
     var parseList_1 = require_parseList();
+    var parseListMLSD_1 = require_parseListMLSD();
     var ProgressTracker_1 = require_ProgressTracker();
     var StringWriter_1 = require_StringWriter();
-    var parseListMLSD_1 = require_parseListMLSD();
-    var netUtils_1 = require_netUtils();
     var transfer_1 = require_transfer();
-    var parseControlResponse_1 = require_parseControlResponse();
     var fsReadDir = (0, util_1.promisify)(fs_1.readdir);
     var fsMkDir = (0, util_1.promisify)(fs_1.mkdir);
     var fsStat = (0, util_1.promisify)(fs_1.stat);
@@ -51414,7 +51421,8 @@ var require_Client = __commonJS({
     var fsClose = (0, util_1.promisify)(fs_1.close);
     var fsUnlink = (0, util_1.promisify)(fs_1.unlink);
     var defaultClientOptions = {
-      allowSeparateTransferHost: true
+      allowSeparateTransferHost: true,
+      maxListingBytes: 40 * 1024 * 1024
     };
     var LIST_COMMANDS_DEFAULT = () => ["LIST -a", "LIST"];
     var LIST_COMMANDS_MLSD = () => ["MLSD", "LIST -a", "LIST"];
@@ -51424,13 +51432,15 @@ var require_Client = __commonJS({
        *
        * @param timeout  Timeout in milliseconds, use 0 for no timeout. Optional, default is 30 seconds.
        */
-      constructor(timeout = 3e4, options = defaultClientOptions) {
+      constructor(timeout = 3e4, userOptions = defaultClientOptions) {
         this.availableListCommands = LIST_COMMANDS_DEFAULT();
+        const options = { ...defaultClientOptions, ...userOptions };
         this.ftp = new FtpContext_1.FTPContext(timeout);
         this.prepareTransfer = this._enterFirstCompatibleMode([
           transfer_1.enterPassiveModeIPv6,
           options.allowSeparateTransferHost ? transfer_1.enterPassiveModeIPv4 : transfer_1.enterPassiveModeIPv4_forceControlHostIP
         ]);
+        this.options = options;
         this.parseList = parseList_1.parseList;
         this._progressTracker = new ProgressTracker_1.ProgressTracker();
       }
@@ -51867,7 +51877,7 @@ var require_Client = __commonJS({
        * @protected
        */
       async _requestListWithCommand(command) {
-        const buffer = new StringWriter_1.StringWriter();
+        const buffer = new StringWriter_1.StringWriter(this.options.maxListingBytes);
         await (0, transfer_1.downloadTo)(buffer, {
           ftp: this.ftp,
           tracker: this._progressTracker,
