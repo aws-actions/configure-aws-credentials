@@ -870,7 +870,7 @@ The following npm packages may be included in this product:
  - @smithy/middleware-serde@4.2.17
  - @smithy/protocol-http@5.3.13
  - @smithy/smithy-client@4.12.9
- - @smithy/types@4.14.0
+ - @smithy/types@4.14.1
 
 These packages each contain the following license:
 
@@ -1707,7 +1707,7 @@ The following npm packages may be included in this product:
  - @smithy/middleware-endpoint@4.4.29
  - @smithy/middleware-stack@4.2.13
  - @smithy/node-http-handler@4.5.2
- - @smithy/property-provider@4.2.13
+ - @smithy/property-provider@4.2.14
  - @smithy/shared-ini-file-loader@4.4.8
  - @smithy/signature-v4@5.3.13
  - @smithy/util-base64@4.3.2
