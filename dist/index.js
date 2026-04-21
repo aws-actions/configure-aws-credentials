@@ -23511,57 +23511,117 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         };
       }
     };
-    var NodeHttp2ConnectionPool = class {
-      sessions = [];
-      constructor(sessions) {
-        this.sessions = sessions ?? [];
+    var ids = new Uint16Array(1);
+    var ClientHttp2SessionRef = class {
+      id = ids[0]++;
+      total = 0;
+      max = 0;
+      session;
+      refs = 0;
+      constructor(session) {
+        session.unref();
+        this.session = session;
       }
-      poll() {
-        if (this.sessions.length > 0) {
-          return this.sessions.shift();
+      retain() {
+        if (this.session.destroyed) {
+          throw new Error("@smithy/node-http-handler - cannot acquire reference to destroyed session.");
+        }
+        this.refs += 1;
+        this.total += 1;
+        this.max = Math.max(this.refs, this.max);
+        this.session.ref();
+      }
+      free() {
+        if (this.session.destroyed) {
+          return;
+        }
+        this.refs -= 1;
+        if (this.refs === 0) {
+          this.session.unref();
+        }
+        if (this.refs < 0) {
+          throw new Error("@smithy/node-http-handler - ClientHttp2Session refcount at zero, cannot decrement.");
         }
       }
-      offerLast(session) {
-        this.sessions.push(session);
+      deref() {
+        return this.session;
       }
-      contains(session) {
-        return this.sessions.includes(session);
+      destroy() {
+        this.refs = 0;
+        if (!this.session.destroyed) {
+          this.session.destroy();
+        }
       }
-      remove(session) {
-        this.sessions = this.sessions.filter((s5) => s5 !== session);
+      useCount() {
+        return this.refs;
       }
-      [Symbol.iterator]() {
-        return this.sessions[Symbol.iterator]();
+    };
+    var NodeHttp2ConnectionPool = class {
+      sessions = [];
+      maxConcurrency = 0;
+      constructor(sessions) {
+        this.sessions = (sessions ?? []).map((session) => new ClientHttp2SessionRef(session));
       }
-      destroy(connection) {
+      poll() {
+        let cleanup = false;
         for (const session of this.sessions) {
-          if (session === connection) {
-            if (!session.destroyed) {
-              session.destroy();
+          if (session.deref().destroyed) {
+            cleanup = true;
+            continue;
+          }
+          if (!this.maxConcurrency || session.useCount() < this.maxConcurrency) {
+            return session;
+          }
+        }
+        if (cleanup) {
+          for (const session of this.sessions) {
+            if (session.deref().destroyed) {
+              this.remove(session);
             }
           }
         }
       }
+      offerLast(ref) {
+        this.sessions.push(ref);
+      }
+      remove(ref) {
+        const ix = this.sessions.indexOf(ref);
+        if (ix > -1) {
+          this.sessions.splice(ix, 1);
+        }
+      }
+      [Symbol.iterator]() {
+        return this.sessions[Symbol.iterator]();
+      }
+      setMaxConcurrency(maxConcurrency) {
+        this.maxConcurrency = maxConcurrency;
+      }
+      destroy(ref) {
+        this.remove(ref);
+        ref.destroy();
+      }
     };
     var NodeHttp2ConnectionManager = class {
+      config;
+      connectionPools = /* @__PURE__ */ new Map();
       constructor(config) {
         this.config = config;
         if (this.config.maxConcurrency && this.config.maxConcurrency <= 0) {
           throw new RangeError("maxConcurrency must be greater than zero.");
         }
       }
-      config;
-      sessionCache = /* @__PURE__ */ new Map();
       lease(requestContext, connectionConfiguration) {
         const url = this.getUrlString(requestContext);
-        const existingPool = this.sessionCache.get(url);
-        if (existingPool) {
-          const existingSession = existingPool.poll();
-          if (existingSession && !this.config.disableConcurrency) {
-            return existingSession;
+        const pool = this.getPool(url);
+        if (!this.config.disableConcurrency && !connectionConfiguration.isEventStream) {
+          const available = pool.poll();
+          if (available) {
+            available.retain();
+            return available;
           }
         }
-        const session = http22.connect(url);
+        const ref = new ClientHttp2SessionRef(http22.connect(url));
+        const session = ref.deref();
         if (this.config.maxConcurrency) {
           session.settings({ maxConcurrentStreams: this.config.maxConcurrency }, (err) => {
             if (err) {
@@ -23569,47 +23629,48 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             }
           });
         }
-        session.unref();
         const destroySessionCb = () => {
           session.destroy();
-          this.deleteSession(url, session);
+          this.removeFromPool(url, ref);
         };
         session.on("goaway", destroySessionCb);
         session.on("error", destroySessionCb);
         session.on("frameError", destroySessionCb);
-        session.on("close", () => this.deleteSession(url, session));
+        session.on("close", () => this.removeFromPool(url, ref));
         if (connectionConfiguration.requestTimeout) {
           session.setTimeout(connectionConfiguration.requestTimeout, destroySessionCb);
         }
-        const connectionPool = this.sessionCache.get(url) || new NodeHttp2ConnectionPool();
-        connectionPool.offerLast(session);
-        this.sessionCache.set(url, connectionPool);
-        return session;
+        pool.offerLast(ref);
+        ref.retain();
+        return ref;
       }
-      deleteSession(authority, session) {
-        const existingConnectionPool = this.sessionCache.get(authority);
-        if (!existingConnectionPool) {
-          return;
-        }
-        if (!existingConnectionPool.contains(session)) {
-          return;
-        }
-        existingConnectionPool.remove(session);
-        this.sessionCache.set(authority, existingConnectionPool);
+      release(_requestContext, ref) {
+        ref.free();
       }
-      release(requestContext, session) {
-        const cacheKey = this.getUrlString(requestContext);
-        this.sessionCache.get(cacheKey)?.offerLast(session);
+      createIsolatedSession(requestContext, connectionConfiguration) {
+        const url = this.getUrlString(requestContext);
+        const ref = new ClientHttp2SessionRef(http22.connect(url));
+        const session = ref.deref();
+        session.settings({ maxConcurrentStreams: 1 });
+        const destroySession = () => {
+          session.destroy();
+        };
+        session.on("goaway", destroySession);
+        session.on("error", destroySession);
+        session.on("frameError", destroySession);
+        session.on("close", destroySession);
+        if (connectionConfiguration.requestTimeout) {
+          session.setTimeout(connectionConfiguration.requestTimeout, destroySession);
+        }
+        ref.retain();
+        return ref;
       }
       destroy() {
-        for (const [key, connectionPool] of this.sessionCache) {
-          for (const session of connectionPool) {
-            if (!session.destroyed) {
-              session.destroy();
-            }
-            connectionPool.remove(session);
+        for (const [url, connectionPool] of this.connectionPools) {
+          for (const session of [...connectionPool]) {
+            session.destroy();
           }
-          this.sessionCache.delete(key);
+          this.connectionPools.delete(url);
         }
       }
       setMaxConcurrentStreams(maxConcurrentStreams) {
@@ -23617,9 +23678,41 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           throw new RangeError("maxConcurrentStreams must be greater than zero.");
         }
         this.config.maxConcurrency = maxConcurrentStreams;
+        for (const pool of this.connectionPools.values()) {
+          pool.setMaxConcurrency(maxConcurrentStreams);
+        }
       }
       setDisableConcurrentStreams(disableConcurrentStreams) {
         this.config.disableConcurrency = disableConcurrentStreams;
+      }
+      debug() {
+        const pools = {};
+        for (const [url, pool] of this.connectionPools) {
+          const sessions = [];
+          for (const ref of pool) {
+            sessions.push({
+              id: ref.id,
+              active: ref.useCount(),
+              maxConcurrent: ref.max,
+              totalRequests: ref.total
+            });
+          }
+          pools[url] = { sessions };
+        }
+        return pools;
+      }
+      removeFromPool(authority, ref) {
+        this.connectionPools.get(authority)?.remove(ref);
+      }
+      getPool(url) {
+        if (!this.connectionPools.has(url)) {
+          const pool = new NodeHttp2ConnectionPool();
+          if (this.config.maxConcurrency) {
+            pool.setMaxConcurrency(this.config.maxConcurrency);
+          }
+          this.connectionPools.set(url, pool);
+        }
+        return this.connectionPools.get(url);
       }
       getUrlString(request) {
         return request.destination.toString();
@@ -23650,15 +23743,17 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       destroy() {
         this.connectionManager.destroy();
       }
-      async handle(request, { abortSignal, requestTimeout } = {}) {
+      async handle(request, { abortSignal, requestTimeout, isEventStream } = {}) {
         if (!this.config) {
           this.config = await this.configProvider;
-          this.connectionManager.setDisableConcurrentStreams(this.config.disableConcurrentStreams || false);
-          if (this.config.maxConcurrentStreams) {
-            this.connectionManager.setMaxConcurrentStreams(this.config.maxConcurrentStreams);
+          const { disableConcurrentStreams: disableConcurrentStreams2, maxConcurrentStreams } = this.config;
+          this.connectionManager.setDisableConcurrentStreams(disableConcurrentStreams2 ?? false);
+          if (maxConcurrentStreams) {
+            this.connectionManager.setMaxConcurrentStreams(maxConcurrentStreams);
           }
         }
         const { requestTimeout: configRequestTimeout, disableConcurrentStreams } = this.config;
+        const useIsolatedSession = disableConcurrentStreams || isEventStream;
         const effectiveRequestTimeout = requestTimeout ?? configRequestTimeout;
         return new Promise((_resolve, _reject) => {
           let fulfilled = false;
@@ -23686,18 +23781,20 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           }
           const authority = `${protocol}//${auth}${hostname}${port ? `:${port}` : ""}`;
           const requestContext = { destination: new URL(authority) };
-          const session = this.connectionManager.lease(requestContext, {
+          const connectConfig = {
             requestTimeout: this.config?.sessionTimeout,
-            disableConcurrentStreams: disableConcurrentStreams || false
-          });
+            isEventStream
+          };
+          const ref = useIsolatedSession ? this.connectionManager.createIsolatedSession(requestContext, connectConfig) : this.connectionManager.lease(requestContext, connectConfig);
+          const session = ref.deref();
           const rejectWithDestroy = (err) => {
-            if (disableConcurrentStreams) {
-              this.destroySession(session);
+            if (useIsolatedSession) {
+              ref.destroy();
             }
             fulfilled = true;
             reject(err);
           };
-          const queryString = querystringBuilder.buildQueryString(query || {});
+          const queryString = querystringBuilder.buildQueryString(query ?? {});
           let path3 = request.path;
           if (queryString) {
             path3 += `?${queryString}`;
@@ -23705,28 +23802,14 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           if (request.fragment) {
             path3 += `#${request.fragment}`;
           }
-          const req = session.request({
+          const clientHttp2Stream = session.request({
             ...request.headers,
             [http22.constants.HTTP2_HEADER_PATH]: path3,
             [http22.constants.HTTP2_HEADER_METHOD]: method
           });
-          session.ref();
-          req.on("response", (headers) => {
-            const httpResponse = new protocolHttp.HttpResponse({
-              statusCode: headers[":status"] || -1,
-              headers: getTransformedHeaders(headers),
-              body: req
-            });
-            fulfilled = true;
-            resolve({ response: httpResponse });
-            if (disableConcurrentStreams) {
-              session.close();
-              this.connectionManager.deleteSession(authority, session);
-            }
-          });
           if (effectiveRequestTimeout) {
-            req.setTimeout(effectiveRequestTimeout, () => {
-              req.close();
+            clientHttp2Stream.setTimeout(effectiveRequestTimeout, () => {
+              clientHttp2Stream.close();
               const timeoutError = new Error(`Stream timed out because of no activity for ${effectiveRequestTimeout} ms`);
               timeoutError.name = "TimeoutError";
               rejectWithDestroy(timeoutError);
@@ -23734,35 +23817,48 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           }
           if (abortSignal) {
             const onAbort = () => {
-              req.close();
+              clientHttp2Stream.close();
               const abortError = buildAbortError(abortSignal);
               rejectWithDestroy(abortError);
             };
             if (typeof abortSignal.addEventListener === "function") {
               const signal = abortSignal;
               signal.addEventListener("abort", onAbort, { once: true });
-              req.once("close", () => signal.removeEventListener("abort", onAbort));
+              clientHttp2Stream.once("close", () => signal.removeEventListener("abort", onAbort));
             } else {
               abortSignal.onabort = onAbort;
             }
           }
-          req.on("frameError", (type, code, id) => {
+          clientHttp2Stream.on("frameError", (type, code, id) => {
             rejectWithDestroy(new Error(`Frame type id ${type} in stream id ${id} has failed with code ${code}.`));
           });
-          req.on("error", rejectWithDestroy);
-          req.on("aborted", () => {
-            rejectWithDestroy(new Error(`HTTP/2 stream is abnormally aborted in mid-communication with result code ${req.rstCode}.`));
+          clientHttp2Stream.on("error", rejectWithDestroy);
+          clientHttp2Stream.on("aborted", () => {
+            rejectWithDestroy(new Error(`HTTP/2 stream is abnormally aborted in mid-communication with result code ${clientHttp2Stream.rstCode}.`));
           });
-          req.on("close", () => {
-            session.unref();
-            if (disableConcurrentStreams) {
-              session.destroy();
+          clientHttp2Stream.on("response", (headers) => {
+            const httpResponse = new protocolHttp.HttpResponse({
+              statusCode: headers[":status"] ?? -1,
+              headers: getTransformedHeaders(headers),
+              body: clientHttp2Stream
+            });
+            fulfilled = true;
+            resolve({ response: httpResponse });
+            if (useIsolatedSession) {
+              session.close();
+            }
+          });
+          clientHttp2Stream.on("close", () => {
+            if (useIsolatedSession) {
+              ref.destroy();
+            } else {
+              this.connectionManager.release(requestContext, ref);
             }
             if (!fulfilled) {
               rejectWithDestroy(new Error("Unexpected error: http2 request did not get a response"));
             }
           });
-          writeRequestBodyPromise = writeRequestBody(req, request, effectiveRequestTimeout);
+          writeRequestBodyPromise = writeRequestBody(clientHttp2Stream, request, effectiveRequestTimeout);
         });
       }
       updateHttpClientConfig(key, value) {
@@ -23776,11 +23872,6 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
       httpHandlerConfigs() {
         return this.config ?? {};
-      }
-      destroySession(session) {
-        if (!session.destroyed) {
-          session.destroy();
-        }
       }
     };
     var Collector = class extends node_stream.Writable {
@@ -24551,8 +24642,8 @@ var init_toEndpointV1 = __esm({
           const v1Endpoint = (0, import_url_parser.parseUrl)(endpoint.url);
           if (endpoint.headers) {
             v1Endpoint.headers = {};
-            for (const [name, values] of Object.entries(endpoint.headers)) {
-              v1Endpoint.headers[name.toLowerCase()] = values.join(", ");
+            for (const name in endpoint.headers) {
+              v1Endpoint.headers[name.toLowerCase()] = endpoint.headers[name].join(", ");
             }
           }
           return v1Endpoint;
@@ -25215,7 +25306,12 @@ var init_TypeRegistry = __esm({
         return void 0;
       }
       find(predicate) {
-        return [...this.schemas.values()].find(predicate);
+        for (const schema of this.schemas.values()) {
+          if (predicate(schema)) {
+            return schema;
+          }
+        }
+        return void 0;
       }
       clear() {
         this.schemas.clear();
@@ -25430,7 +25526,12 @@ var init_parse_utils = __esm({
         return void 0;
       }
       const asObject = expectObject(value);
-      const setKeys = Object.entries(asObject).filter(([, v5]) => v5 != null).map(([k5]) => k5);
+      const setKeys = [];
+      for (const k5 in asObject) {
+        if (asObject[k5] != null) {
+          setKeys.push(k5);
+        }
+      }
       if (setKeys.length === 0) {
         throw new TypeError(`Unions must have exactly one non-null member. None were found.`);
       }
@@ -26658,9 +26759,13 @@ var init_EventStreamSerde = __esm({
               body: event.body
             };
           }
-          const unionMember = Object.keys(event).find((key) => {
-            return key !== "__type";
-          }) ?? "";
+          let unionMember = "";
+          for (const key in event) {
+            if (key !== "__type") {
+              unionMember = key;
+              break;
+            }
+          }
           const { additionalHeaders, body, eventType, explicitPayloadContentType } = this.writeEventBody(unionMember, unionSchema, event);
           const headers = {
             ":event-type": { type: "string", value: eventType },
@@ -26681,9 +26786,13 @@ var init_EventStreamSerde = __esm({
         const memberSchemas = unionSchema.getMemberSchemas();
         const initialResponseMarker = /* @__PURE__ */ Symbol("initialResponseMarker");
         const asyncIterable = marshaller.deserialize(response.body, async (event) => {
-          const unionMember = Object.keys(event).find((key) => {
-            return key !== "__type";
-          }) ?? "";
+          let unionMember = "";
+          for (const key in event) {
+            if (key !== "__type") {
+              unionMember = key;
+              break;
+            }
+          }
           const body = event[unionMember].body;
           if (unionMember === "initial-response") {
             const dataObject = await this.deserializer.read(responseSchema, body);
@@ -26752,8 +26861,8 @@ var init_EventStreamSerde = __esm({
           if (!responseSchema) {
             throw new Error("@smithy::core/protocols - initial-response event encountered in event stream but no response schema given.");
           }
-          for (const [key, value] of Object.entries(firstEvent.value)) {
-            initialResponseContainer[key] = value;
+          for (const key in firstEvent.value) {
+            initialResponseContainer[key] = firstEvent.value[key];
           }
         }
         return {
@@ -26906,8 +27015,8 @@ var init_HttpProtocol = __esm({
             request.query[k5] = v5;
           }
           if (endpoint.headers) {
-            for (const [name, values] of Object.entries(endpoint.headers)) {
-              request.headers[name] = values.join(", ");
+            for (const name in endpoint.headers) {
+              request.headers[name] = endpoint.headers[name].join(", ");
             }
           }
           return request;
@@ -26920,8 +27029,8 @@ var init_HttpProtocol = __esm({
             ...endpoint.query
           };
           if (endpoint.headers) {
-            for (const [name, value] of Object.entries(endpoint.headers)) {
-              request.headers[name] = value;
+            for (const name in endpoint.headers) {
+              request.headers[name] = endpoint.headers[name];
             }
           }
           return request;
@@ -26936,8 +27045,10 @@ var init_HttpProtocol = __esm({
         if (opTraits.endpoint) {
           let hostPrefix = opTraits.endpoint?.[0];
           if (typeof hostPrefix === "string") {
-            const hostLabelInputs = [...inputNs.structIterator()].filter(([, member2]) => member2.getMergedTraits().hostLabel);
-            for (const [name] of hostLabelInputs) {
+            for (const [name, member2] of inputNs.structIterator()) {
+              if (!member2.getMergedTraits().hostLabel) {
+                continue;
+              }
               const replacement = input[name];
               if (typeof replacement !== "string") {
                 throw new Error(`@smithy/core/schema - ${name} in input must be a string as hostLabel.`);
@@ -27050,7 +27161,9 @@ var init_HttpBindingProtocol = __esm({
               request.path += path3;
             }
             const traitSearchParams = new URLSearchParams(search ?? "");
-            Object.assign(query, Object.fromEntries(traitSearchParams));
+            for (const [key, value] of traitSearchParams) {
+              query[key] = value;
+            }
           }
         }
         for (const [memberName, memberNs] of ns.structIterator()) {
@@ -27094,7 +27207,8 @@ var init_HttpBindingProtocol = __esm({
             serializer.write(memberNs, inputMemberValue);
             headers[memberTraits.httpHeader.toLowerCase()] = String(serializer.flush());
           } else if (typeof memberTraits.httpPrefixHeaders === "string") {
-            for (const [key, val] of Object.entries(inputMemberValue)) {
+            for (const key in inputMemberValue) {
+              const val = inputMemberValue[key];
               const amalgam = memberTraits.httpPrefixHeaders + key;
               serializer.write([memberNs.getValueSchema(), { httpHeader: amalgam }], val);
               headers[amalgam.toLowerCase()] = serializer.flush();
@@ -27136,8 +27250,9 @@ var init_HttpBindingProtocol = __esm({
         const serializer = this.serializer;
         const traits = ns.getMergedTraits();
         if (traits.httpQueryParams) {
-          for (const [key, val] of Object.entries(data3)) {
+          for (const key in data3) {
             if (!(key in query)) {
+              const val = data3[key];
               const valueSchema = ns.getValueSchema();
               Object.assign(valueSchema.getMergedTraits(), {
                 ...traits,
@@ -27255,8 +27370,9 @@ var init_HttpBindingProtocol = __esm({
             }
           } else if (memberTraits.httpPrefixHeaders !== void 0) {
             dataObject[memberName] = {};
-            for (const [header, value] of Object.entries(response.headers)) {
+            for (const header in response.headers) {
               if (header.startsWith(memberTraits.httpPrefixHeaders)) {
+                const value = response.headers[header];
                 const valueSchema = memberSchema.getValueSchema();
                 valueSchema.getMergedTraits().httpHeader = header;
                 dataObject[memberName][header.slice(memberTraits.httpPrefixHeaders.length)] = await deserializer.read(valueSchema, value);
@@ -27808,7 +27924,8 @@ var init_DefaultIdentityProviderConfig = __esm({
     DefaultIdentityProviderConfig = class {
       authSchemes = /* @__PURE__ */ new Map();
       constructor(config) {
-        for (const [key, value] of Object.entries(config)) {
+        for (const key in config) {
+          const value = config[key];
           if (value !== void 0) {
             this.authSchemes.set(key, value);
           }
@@ -31065,7 +31182,14 @@ var require_dist_cjs34 = __commonJS({
           ...additionalContext
         };
         const { requestHandler } = configuration;
-        return stack.resolve((request) => requestHandler.handle(request.request, options || {}), handlerExecutionContext);
+        let requestOptions = options ?? {};
+        if (smithyContext.eventStream) {
+          requestOptions = {
+            isEventStream: true,
+            ...requestOptions
+          };
+        }
+        return stack.resolve((request) => requestHandler.handle(request.request, requestOptions), handlerExecutionContext);
       }
     };
     var ClassBuilder = class {
@@ -32592,7 +32716,7 @@ ${utilHexEncoding.toHex(hashedRequest)}`;
           return this.signRequest(toSign, options);
         }
       }
-      async signEvent({ headers, payload: payload2 }, { signingDate = /* @__PURE__ */ new Date(), priorSignature, signingRegion, signingService }) {
+      async signEvent({ headers, payload: payload2 }, { signingDate = /* @__PURE__ */ new Date(), priorSignature, signingRegion, signingService, eventStreamCredentials }) {
         const region = signingRegion ?? await this.regionProvider();
         const { shortDate, longDate } = this.formatDate(signingDate);
         const scope = createScope(shortDate, region, signingService ?? this.service);
@@ -32608,9 +32732,14 @@ ${utilHexEncoding.toHex(hashedRequest)}`;
           hashedHeaders,
           hashedPayload
         ].join("\n");
-        return this.signString(stringToSign, { signingDate, signingRegion: region, signingService });
+        return this.signString(stringToSign, {
+          signingDate,
+          signingRegion: region,
+          signingService,
+          eventStreamCredentials
+        });
       }
-      async signMessage(signableMessage, { signingDate = /* @__PURE__ */ new Date(), signingRegion, signingService }) {
+      async signMessage(signableMessage, { signingDate = /* @__PURE__ */ new Date(), signingRegion, signingService, eventStreamCredentials }) {
         const promise = this.signEvent({
           headers: this.headerFormatter.format(signableMessage.message.headers),
           payload: signableMessage.message.body
@@ -32618,14 +32747,15 @@ ${utilHexEncoding.toHex(hashedRequest)}`;
           signingDate,
           signingRegion,
           signingService,
-          priorSignature: signableMessage.priorSignature
+          priorSignature: signableMessage.priorSignature,
+          eventStreamCredentials
         });
         return promise.then((signature) => {
           return { message: signableMessage.message, signature };
         });
       }
-      async signString(stringToSign, { signingDate = /* @__PURE__ */ new Date(), signingRegion, signingService } = {}) {
-        const credentials = await this.credentialProvider();
+      async signString(stringToSign, { signingDate = /* @__PURE__ */ new Date(), signingRegion, signingService, eventStreamCredentials } = {}) {
+        const credentials = eventStreamCredentials ?? await this.credentialProvider();
         this.validateResolvedCredentials(credentials);
         const region = signingRegion ?? await this.regionProvider();
         const { shortDate } = this.formatDate(signingDate);
@@ -34919,7 +35049,7 @@ var init_parseCborBody = __esm({
       });
     };
     loadSmithyRpcV2CborErrorCode = (output, data3) => {
-      const sanitizeErrorCode = (rawValue) => {
+      const sanitizeErrorCode2 = (rawValue) => {
         let cleanValue = rawValue;
         if (typeof cleanValue === "number") {
           cleanValue = cleanValue.toString();
@@ -34936,11 +35066,17 @@ var init_parseCborBody = __esm({
         return cleanValue;
       };
       if (data3["__type"] !== void 0) {
-        return sanitizeErrorCode(data3["__type"]);
+        return sanitizeErrorCode2(data3["__type"]);
       }
-      const codeKey = Object.keys(data3).find((key) => key.toLowerCase() === "code");
+      let codeKey;
+      for (const key in data3) {
+        if (key.toLowerCase() === "code") {
+          codeKey = key;
+          break;
+        }
+      }
       if (codeKey && data3[codeKey] !== void 0) {
-        return sanitizeErrorCode(data3[codeKey]);
+        return sanitizeErrorCode2(data3[codeKey]);
       }
     };
   }
@@ -35014,7 +35150,7 @@ var init_CborCodec = __esm({
           const newObject = {};
           if (ns.isMapSchema()) {
             const sparse = !!ns.getMergedTraits().sparse;
-            for (const key of Object.keys(sourceObject)) {
+            for (const key in sourceObject) {
               const value = this.serialize(ns.getValueSchema(), sourceObject[key]);
               if (value != null || sparse) {
                 newObject[key] = value;
@@ -35032,14 +35168,14 @@ var init_CborCodec = __esm({
               const [k5, v5] = sourceObject.$unknown;
               newObject[k5] = v5;
             } else if (typeof sourceObject.__type === "string") {
-              for (const [k5, v5] of Object.entries(sourceObject)) {
+              for (const k5 in sourceObject) {
                 if (!(k5 in newObject)) {
-                  newObject[k5] = this.serialize(15, v5);
+                  newObject[k5] = this.serialize(15, sourceObject[k5]);
                 }
               }
             }
           } else if (ns.isDocumentSchema()) {
-            for (const key of Object.keys(sourceObject)) {
+            for (const key in sourceObject) {
               newObject[key] = this.serialize(ns.getValueSchema(), sourceObject[key]);
             }
           } else if (ns.isBigDecimalSchema()) {
@@ -35105,7 +35241,7 @@ var init_CborCodec = __esm({
           const newObject = {};
           if (ns.isMapSchema()) {
             const targetSchema = ns.getValueSchema();
-            for (const key of Object.keys(value)) {
+            for (const key in value) {
               const itemValue = this.readValue(targetSchema, value[key]);
               newObject[key] = itemValue;
             }
@@ -35113,7 +35249,12 @@ var init_CborCodec = __esm({
             const isUnion = ns.isUnionSchema();
             let keys;
             if (isUnion) {
-              keys = new Set(Object.keys(value).filter((k5) => k5 !== "__type"));
+              keys = /* @__PURE__ */ new Set();
+              for (const k5 in value) {
+                if (k5 !== "__type") {
+                  keys.add(k5);
+                }
+              }
             }
             for (const [key, memberSchema] of ns.structIterator()) {
               if (isUnion) {
@@ -35123,13 +35264,20 @@ var init_CborCodec = __esm({
                 newObject[key] = this.readValue(memberSchema, value[key]);
               }
             }
-            if (isUnion && keys?.size === 1 && Object.keys(newObject).length === 0) {
-              const k5 = keys.values().next().value;
-              newObject.$unknown = [k5, value[k5]];
+            if (isUnion && keys?.size === 1) {
+              let newObjectEmpty = true;
+              for (const _ in newObject) {
+                newObjectEmpty = false;
+                break;
+              }
+              if (newObjectEmpty) {
+                const k5 = keys.values().next().value;
+                newObject.$unknown = [k5, value[k5]];
+              }
             } else if (typeof value.__type === "string") {
-              for (const [k5, v5] of Object.entries(value)) {
+              for (const k5 in value) {
                 if (!(k5 in newObject)) {
-                  newObject[k5] = v5;
+                  newObject[k5] = value[k5];
                 }
               }
             }
@@ -35345,12 +35493,11 @@ var init_ProtocolLib = __esm({
           if (msg) {
             error2.message = msg;
           }
-          error2.Error = {
-            ...error2.Error,
-            Type: error2.Error?.Type,
-            Code: error2.Error?.Code,
-            Message: error2.Error?.message ?? error2.Error?.Message ?? msg
-          };
+          const errorObj = error2.Error ?? {};
+          errorObj.Type = error2.Error?.Type;
+          errorObj.Code = error2.Error?.Code;
+          errorObj.Message = error2.Error?.message ?? error2.Error?.Message ?? msg;
+          error2.Error = errorObj;
           const reqId = error2.$metadata.requestId;
           if (reqId) {
             error2.RequestId = reqId;
@@ -35363,14 +35510,16 @@ var init_ProtocolLib = __esm({
         const queryErrorHeader = response.headers?.["x-amzn-query-error"];
         if (output !== void 0 && queryErrorHeader != null) {
           const [Code, Type] = queryErrorHeader.split(";");
-          const entries = Object.entries(output);
+          const keys = Object.keys(output);
           const Error2 = {
             Code,
             Type
           };
-          Object.assign(output, Error2);
-          for (const [k5, v5] of entries) {
-            Error2[k5 === "message" ? "Message" : k5] = v5;
+          output.Code = Code;
+          output.Type = Type;
+          for (let i5 = 0; i5 < keys.length; i5++) {
+            const k5 = keys[i5];
+            Error2[k5 === "message" ? "Message" : k5] = output[k5];
           }
           delete Error2.__type;
           output.Error = Error2;
@@ -35539,7 +35688,10 @@ var init_UnionSerde = __esm({
       constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.keys = new Set(Object.keys(this.from).filter((k5) => k5 !== "__type"));
+        const keys = Object.keys(this.from);
+        const set = new Set(keys);
+        set.delete("__type");
+        this.keys = set;
       }
       mark(key) {
         this.keys.delete(key);
@@ -35592,7 +35744,7 @@ var init_common = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js
-var parseJsonBody, parseJsonErrorBody, loadRestJsonErrorCode;
+var parseJsonBody, parseJsonErrorBody, findKey, sanitizeErrorCode, loadRestJsonErrorCode;
 var init_parseJsonBody = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js"() {
     init_common();
@@ -35616,24 +35768,24 @@ var init_parseJsonBody = __esm({
       value.message = value.message ?? value.Message;
       return value;
     };
+    findKey = (object, key) => Object.keys(object).find((k5) => k5.toLowerCase() === key.toLowerCase());
+    sanitizeErrorCode = (rawValue) => {
+      let cleanValue = rawValue;
+      if (typeof cleanValue === "number") {
+        cleanValue = cleanValue.toString();
+      }
+      if (cleanValue.indexOf(",") >= 0) {
+        cleanValue = cleanValue.split(",")[0];
+      }
+      if (cleanValue.indexOf(":") >= 0) {
+        cleanValue = cleanValue.split(":")[0];
+      }
+      if (cleanValue.indexOf("#") >= 0) {
+        cleanValue = cleanValue.split("#")[1];
+      }
+      return cleanValue;
+    };
     loadRestJsonErrorCode = (output, data3) => {
-      const findKey = (object, key) => Object.keys(object).find((k5) => k5.toLowerCase() === key.toLowerCase());
-      const sanitizeErrorCode = (rawValue) => {
-        let cleanValue = rawValue;
-        if (typeof cleanValue === "number") {
-          cleanValue = cleanValue.toString();
-        }
-        if (cleanValue.indexOf(",") >= 0) {
-          cleanValue = cleanValue.split(",")[0];
-        }
-        if (cleanValue.indexOf(":") >= 0) {
-          cleanValue = cleanValue.split(":")[0];
-        }
-        if (cleanValue.indexOf("#") >= 0) {
-          cleanValue = cleanValue.split("#")[1];
-        }
-        return cleanValue;
-      };
       const headerKey = findKey(output.headers, "x-amzn-errortype");
       if (headerKey !== void 0) {
         return sanitizeErrorCode(output.headers[headerKey]);
@@ -35708,7 +35860,8 @@ var init_JsonShapeDeserializer = __esm({
             if (union) {
               unionSerde.writeUnknown();
             } else if (typeof record.__type === "string") {
-              for (const [k5, v5] of Object.entries(record)) {
+              for (const k5 in record) {
+                const v5 = record[k5];
                 const t5 = jsonName ? nameMap[k5] ?? k5 : k5;
                 if (!(t5 in out)) {
                   out[t5] = v5;
@@ -35728,8 +35881,8 @@ var init_JsonShapeDeserializer = __esm({
           if (ns.isMapSchema()) {
             const mapMember = ns.getValueSchema();
             const out = {};
-            for (const [_k, _v] of Object.entries(value)) {
-              out[_k] = this._read(mapMember, _v);
+            for (const _k in value) {
+              out[_k] = this._read(mapMember, value[_k]);
             }
             return out;
           }
@@ -35786,7 +35939,8 @@ var init_JsonShapeDeserializer = __esm({
         if (ns.isDocumentSchema()) {
           if (isObject) {
             const out = Array.isArray(value) ? [] : {};
-            for (const [k5, v5] of Object.entries(value)) {
+            for (const k5 in value) {
+              const v5 = value[k5];
               if (v5 instanceof NumericValue) {
                 out[k5] = v5;
               } else {
@@ -35880,12 +36034,6 @@ var init_JsonShapeSerializer = __esm({
         this.rootSchema = NormalizedSchema.of(schema);
         this.buffer = this._write(this.rootSchema, value);
       }
-      writeDiscriminatedDocument(schema, value) {
-        this.write(schema, value);
-        if (typeof this.buffer === "object") {
-          this.buffer.__type = NormalizedSchema.of(schema).getName(true);
-        }
-      }
       flush() {
         const { rootSchema, useReplacer } = this;
         this.rootSchema = void 0;
@@ -35899,6 +36047,12 @@ var init_JsonShapeSerializer = __esm({
         }
         return this.buffer;
       }
+      writeDiscriminatedDocument(schema, value) {
+        this.write(schema, value);
+        if (typeof this.buffer === "object") {
+          this.buffer.__type = NormalizedSchema.of(schema).getName(true);
+        }
+      }
       _write(schema, value, container) {
         const isObject = value !== null && typeof value === "object";
         const ns = NormalizedSchema.of(schema);
@@ -35911,6 +36065,7 @@ var init_JsonShapeSerializer = __esm({
             if (jsonName) {
               nameMap = {};
             }
+            let outCount = 0;
             for (const [memberName, memberSchema] of ns.structIterator()) {
               const serializableValue = this._write(memberSchema, record[memberName], ns);
               if (serializableValue !== void 0) {
@@ -35920,16 +36075,18 @@ var init_JsonShapeSerializer = __esm({
                   nameMap[memberName] = targetKey;
                 }
                 out[targetKey] = serializableValue;
+                outCount++;
               }
             }
-            if (ns.isUnionSchema() && Object.keys(out).length === 0) {
+            if (ns.isUnionSchema() && outCount === 0) {
               const { $unknown } = record;
               if (Array.isArray($unknown)) {
                 const [k5, v5] = $unknown;
                 out[k5] = this._write(15, v5);
               }
             } else if (typeof record.__type === "string") {
-              for (const [k5, v5] of Object.entries(record)) {
+              for (const k5 in record) {
+                const v5 = record[k5];
                 const targetKey = jsonName ? nameMap[k5] ?? k5 : k5;
                 if (!(targetKey in out)) {
                   out[targetKey] = this._write(15, v5);
@@ -35953,7 +36110,8 @@ var init_JsonShapeSerializer = __esm({
             const mapMember = ns.getValueSchema();
             const out = {};
             const sparse = !!ns.getMergedTraits().sparse;
-            for (const [_k, _v] of Object.entries(value)) {
+            for (const _k in value) {
+              const _v = value[_k];
               if (sparse || _v != null) {
                 out[_k] = this._write(mapMember, _v);
               }
@@ -36018,7 +36176,8 @@ var init_JsonShapeSerializer = __esm({
         if (ns.isDocumentSchema()) {
           if (isObject) {
             const out = Array.isArray(value) ? [] : {};
-            for (const [k5, v5] of Object.entries(value)) {
+            for (const k5 in value) {
+              const v5 = value[k5];
               if (v5 instanceof NumericValue) {
                 this.useReplacer = true;
                 out[k5] = v5;
@@ -36103,10 +36262,8 @@ var init_AwsJsonRpcProtocol = __esm({
         if (!request.path.endsWith("/")) {
           request.path += "/";
         }
-        Object.assign(request.headers, {
-          "content-type": `application/x-amz-json-${this.getJsonRpcVersion()}`,
-          "x-amz-target": `${this.serviceTarget}.${operationSchema.name}`
-        });
+        request.headers["content-type"] = `application/x-amz-json-${this.getJsonRpcVersion()}`;
+        request.headers["x-amz-target"] = `${this.serviceTarget}.${operationSchema.name}`;
         if (this.awsQueryCompatible) {
           request.headers["x-amzn-query-mode"] = "true";
         }
@@ -36130,9 +36287,10 @@ var init_AwsJsonRpcProtocol = __esm({
         const ErrorCtor = this.compositeErrorRegistry.getErrorCtor(errorSchema) ?? Error;
         const exception = new ErrorCtor(message);
         const output = {};
+        const errorDeserializer = this.codec.createDeserializer();
         for (const [name, member2] of ns.structIterator()) {
           if (dataObject[name] != null) {
-            output[name] = this.codec.createDeserializer().readObject(member2, dataObject[name]);
+            output[name] = errorDeserializer.readObject(member2, dataObject[name]);
           }
         }
         if (this.awsQueryCompatible) {
@@ -36278,9 +36436,10 @@ var init_AwsRestJsonProtocol = __esm({
         const exception = new ErrorCtor(message);
         await this.deserializeHttpMessage(errorSchema, context, response, dataObject);
         const output = {};
+        const errorDeserializer = this.codec.createDeserializer();
         for (const [name, member2] of ns.structIterator()) {
           const target = member2.getMergedTraits().jsonName ?? name;
-          output[name] = this.codec.createDeserializer().readObject(member2, dataObject[target]);
+          output[name] = errorDeserializer.readObject(member2, dataObject[target]);
         }
         throw this.mixin.decorateServiceException(Object.assign(exception, errorMetadata, {
           $fault: ns.getMergedTraits().error,
@@ -38025,7 +38184,8 @@ var init_QueryShapeSerializer = __esm({
             const memberSchema = ns.getValueSchema();
             const flat = ns.getMergedTraits().xmlFlattened;
             let i5 = 1;
-            for (const [k5, v5] of Object.entries(value)) {
+            for (const k5 in value) {
+              const v5 = value[k5];
               if (v5 == null) {
                 continue;
               }
@@ -38147,9 +38307,7 @@ var init_AwsQueryProtocol = __esm({
         if (!request.path.endsWith("/")) {
           request.path += "/";
         }
-        Object.assign(request.headers, {
-          "content-type": `application/x-www-form-urlencoded`
-        });
+        request.headers["content-type"] = "application/x-www-form-urlencoded";
         if (deref(operationSchema.input) === "unit" || !request.body) {
           request.body = "";
         }
@@ -38182,11 +38340,8 @@ var init_AwsQueryProtocol = __esm({
         if (bytes.byteLength > 0) {
           Object.assign(dataObject, await deserializer.read(ns, bytes, awsQueryResultKey));
         }
-        const output = {
-          $metadata: this.deserializeMetadata(response),
-          ...dataObject
-        };
-        return output;
+        dataObject.$metadata = this.deserializeMetadata(response);
+        return dataObject;
       }
       useNestedResult() {
         return true;
@@ -38508,7 +38663,8 @@ var init_XmlShapeSerializer = __esm({
           entry.addChildNode(valueNode);
         };
         if (flat) {
-          for (const [key, val] of Object.entries(map2)) {
+          for (const key in map2) {
+            const val = map2[key];
             if (sparse || val != null) {
               const entry = import_xml_builder3.XmlNode.of(mapTraits.xmlName ?? mapMember.getMemberName());
               addKeyValue(entry, key, val);
@@ -38524,7 +38680,8 @@ var init_XmlShapeSerializer = __esm({
             }
             container.addChildNode(mapNode);
           }
-          for (const [key, val] of Object.entries(map2)) {
+          for (const key in map2) {
+            const val = map2[key];
             if (sparse || val != null) {
               const entry = import_xml_builder3.XmlNode.of("entry");
               addKeyValue(entry, key, val);
@@ -38708,10 +38865,11 @@ var init_AwsRestXmlProtocol = __esm({
         const exception = new ErrorCtor(message);
         await this.deserializeHttpMessage(errorSchema, context, response, dataObject);
         const output = {};
+        const errorDeserializer = this.codec.createDeserializer();
         for (const [name, member2] of ns.structIterator()) {
           const target = member2.getMergedTraits().xmlName ?? name;
           const value = dataObject.Error?.[target] ?? dataObject[target];
-          output[name] = this.codec.createDeserializer().readSchema(member2, value);
+          output[name] = errorDeserializer.readSchema(member2, value);
         }
         throw this.mixin.decorateServiceException(Object.assign(exception, errorMetadata, {
           $fault: ns.getMergedTraits().error,
