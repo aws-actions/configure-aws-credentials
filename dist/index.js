@@ -33044,6 +33044,19 @@ var init_httpAuthSchemes2 = __esm({
   }
 });
 
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-cjs/toStream.js
+var require_toStream = __commonJS({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-cjs/toStream.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.toStream = toStream;
+    var node_stream_1 = require("node:stream");
+    function toStream(bytes) {
+      return node_stream_1.Readable.from(Buffer.from(bytes));
+    }
+  }
+});
+
 // node_modules/@aws-sdk/util-arn-parser/dist-cjs/index.js
 var require_dist_cjs37 = __commonJS({
   "node_modules/@aws-sdk/util-arn-parser/dist-cjs/index.js"(exports2) {
@@ -38239,7 +38252,7 @@ var require_dist_cjs39 = __commonJS({
     "use strict";
     var protocolHttp = require_dist_cjs2();
     var smithyClient = require_dist_cjs34();
-    var utilStream = require_dist_cjs16();
+    var toStream = require_toStream();
     var utilArnParser = require_dist_cjs37();
     var protocols2 = (init_protocols2(), __toCommonJS(protocols_exports2));
     var schema = (init_schema(), __toCommonJS(schema_exports));
@@ -38635,43 +38648,29 @@ var require_dist_cjs39 = __commonJS({
       UploadPartCopyCommand: true,
       CompleteMultipartUploadCommand: true
     };
-    var MAX_BYTES_TO_INSPECT = 3e3;
     var throw200ExceptionsMiddleware = (config) => (next, context) => async (args) => {
       const result = await next(args);
       const { response } = result;
       if (!protocolHttp.HttpResponse.isInstance(response)) {
         return result;
       }
-      const { statusCode, body: sourceBody } = response;
+      const { statusCode, body } = response;
       if (statusCode < 200 || statusCode >= 300) {
         return result;
       }
-      const isSplittableStream = typeof sourceBody?.stream === "function" || typeof sourceBody?.pipe === "function" || typeof sourceBody?.tee === "function";
-      if (!isSplittableStream) {
-        return result;
-      }
-      let bodyCopy = sourceBody;
-      let body = sourceBody;
-      if (sourceBody && typeof sourceBody === "object" && !(sourceBody instanceof Uint8Array)) {
-        [bodyCopy, body] = await utilStream.splitStream(sourceBody);
-      }
-      response.body = body;
-      const bodyBytes = await collectBody3(bodyCopy, {
-        streamCollector: async (stream) => {
-          return utilStream.headStream(stream, MAX_BYTES_TO_INSPECT);
-        }
-      });
-      if (typeof bodyCopy?.destroy === "function") {
-        bodyCopy.destroy();
-      }
-      const bodyStringTail = config.utf8Encoder(bodyBytes.subarray(bodyBytes.length - 16));
+      const bodyBytes = await collectBody3(body, config);
+      response.body = toStream.toStream(bodyBytes);
       if (bodyBytes.length === 0 && THROW_IF_EMPTY_BODY[context.commandName]) {
         const err = new Error("S3 aborted request");
+        err.$metadata = {
+          httpStatusCode: 503
+        };
         err.name = "InternalError";
         throw err;
       }
+      const bodyStringTail = config.utf8Encoder(bodyBytes.subarray(bodyBytes.length - 16));
       if (bodyStringTail && bodyStringTail.endsWith("</Error>")) {
-        response.statusCode = 400;
+        response.statusCode = 503;
       }
       return result;
     };
@@ -39281,7 +39280,7 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1033.0",
+      version: "3.1038.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
         "build:cjs": "node ../../scripts/compilation/inline client-sts",
@@ -39307,47 +39306,47 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.2",
-        "@aws-sdk/credential-provider-node": "^3.972.33",
+        "@aws-sdk/core": "^3.974.6",
+        "@aws-sdk/credential-provider-node": "^3.972.37",
         "@aws-sdk/middleware-host-header": "^3.972.10",
         "@aws-sdk/middleware-logger": "^3.972.10",
         "@aws-sdk/middleware-recursion-detection": "^3.972.11",
-        "@aws-sdk/middleware-user-agent": "^3.972.32",
-        "@aws-sdk/region-config-resolver": "^3.972.12",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.19",
+        "@aws-sdk/middleware-user-agent": "^3.972.36",
+        "@aws-sdk/region-config-resolver": "^3.972.13",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.23",
         "@aws-sdk/types": "^3.973.8",
-        "@aws-sdk/util-endpoints": "^3.996.7",
+        "@aws-sdk/util-endpoints": "^3.996.8",
         "@aws-sdk/util-user-agent-browser": "^3.972.10",
-        "@aws-sdk/util-user-agent-node": "^3.973.18",
-        "@smithy/config-resolver": "^4.4.16",
-        "@smithy/core": "^3.23.15",
+        "@aws-sdk/util-user-agent-node": "^3.973.22",
+        "@smithy/config-resolver": "^4.4.17",
+        "@smithy/core": "^3.23.17",
         "@smithy/fetch-http-handler": "^5.3.17",
         "@smithy/hash-node": "^4.2.14",
         "@smithy/invalid-dependency": "^4.2.14",
         "@smithy/middleware-content-length": "^4.2.14",
-        "@smithy/middleware-endpoint": "^4.4.30",
-        "@smithy/middleware-retry": "^4.5.3",
-        "@smithy/middleware-serde": "^4.2.18",
+        "@smithy/middleware-endpoint": "^4.4.32",
+        "@smithy/middleware-retry": "^4.5.6",
+        "@smithy/middleware-serde": "^4.2.20",
         "@smithy/middleware-stack": "^4.2.14",
         "@smithy/node-config-provider": "^4.3.14",
-        "@smithy/node-http-handler": "^4.5.3",
+        "@smithy/node-http-handler": "^4.6.1",
         "@smithy/protocol-http": "^5.3.14",
-        "@smithy/smithy-client": "^4.12.11",
+        "@smithy/smithy-client": "^4.12.13",
         "@smithy/types": "^4.14.1",
         "@smithy/url-parser": "^4.2.14",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.47",
-        "@smithy/util-defaults-mode-node": "^4.2.52",
-        "@smithy/util-endpoints": "^3.4.1",
+        "@smithy/util-defaults-mode-browser": "^4.3.49",
+        "@smithy/util-defaults-mode-node": "^4.2.54",
+        "@smithy/util-endpoints": "^3.4.2",
         "@smithy/util-middleware": "^4.2.14",
-        "@smithy/util-retry": "^4.3.2",
+        "@smithy/util-retry": "^4.3.5",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@smithy/snapshot-testing": "^2.0.6",
+        "@smithy/snapshot-testing": "^2.0.8",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -40063,7 +40062,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.0",
+      version: "3.997.4",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -40092,41 +40091,41 @@ var init_package = __esm({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.2",
+        "@aws-sdk/core": "^3.974.6",
         "@aws-sdk/middleware-host-header": "^3.972.10",
         "@aws-sdk/middleware-logger": "^3.972.10",
         "@aws-sdk/middleware-recursion-detection": "^3.972.11",
-        "@aws-sdk/middleware-user-agent": "^3.972.32",
-        "@aws-sdk/region-config-resolver": "^3.972.12",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.19",
+        "@aws-sdk/middleware-user-agent": "^3.972.36",
+        "@aws-sdk/region-config-resolver": "^3.972.13",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.23",
         "@aws-sdk/types": "^3.973.8",
-        "@aws-sdk/util-endpoints": "^3.996.7",
+        "@aws-sdk/util-endpoints": "^3.996.8",
         "@aws-sdk/util-user-agent-browser": "^3.972.10",
-        "@aws-sdk/util-user-agent-node": "^3.973.18",
-        "@smithy/config-resolver": "^4.4.16",
-        "@smithy/core": "^3.23.15",
+        "@aws-sdk/util-user-agent-node": "^3.973.22",
+        "@smithy/config-resolver": "^4.4.17",
+        "@smithy/core": "^3.23.17",
         "@smithy/fetch-http-handler": "^5.3.17",
         "@smithy/hash-node": "^4.2.14",
         "@smithy/invalid-dependency": "^4.2.14",
         "@smithy/middleware-content-length": "^4.2.14",
-        "@smithy/middleware-endpoint": "^4.4.30",
-        "@smithy/middleware-retry": "^4.5.3",
-        "@smithy/middleware-serde": "^4.2.18",
+        "@smithy/middleware-endpoint": "^4.4.32",
+        "@smithy/middleware-retry": "^4.5.6",
+        "@smithy/middleware-serde": "^4.2.20",
         "@smithy/middleware-stack": "^4.2.14",
         "@smithy/node-config-provider": "^4.3.14",
-        "@smithy/node-http-handler": "^4.5.3",
+        "@smithy/node-http-handler": "^4.6.1",
         "@smithy/protocol-http": "^5.3.14",
-        "@smithy/smithy-client": "^4.12.11",
+        "@smithy/smithy-client": "^4.12.13",
         "@smithy/types": "^4.14.1",
         "@smithy/url-parser": "^4.2.14",
         "@smithy/util-base64": "^4.3.2",
         "@smithy/util-body-length-browser": "^4.2.2",
         "@smithy/util-body-length-node": "^4.2.3",
-        "@smithy/util-defaults-mode-browser": "^4.3.47",
-        "@smithy/util-defaults-mode-node": "^4.2.52",
-        "@smithy/util-endpoints": "^3.4.1",
+        "@smithy/util-defaults-mode-browser": "^4.3.49",
+        "@smithy/util-defaults-mode-node": "^4.2.54",
+        "@smithy/util-endpoints": "^3.4.2",
         "@smithy/util-middleware": "^4.2.14",
-        "@smithy/util-retry": "^4.3.2",
+        "@smithy/util-retry": "^4.3.5",
         "@smithy/util-utf8": "^4.2.2",
         tslib: "^2.6.2"
       },
@@ -43839,6 +43838,7 @@ var init_errors4 = __esm({
     IDPCommunicationErrorException = class _IDPCommunicationErrorException extends STSServiceException {
       name = "IDPCommunicationErrorException";
       $fault = "client";
+      $retryable = {};
       constructor(opts) {
         super({
           name: "IDPCommunicationErrorException",
@@ -45209,6 +45209,7 @@ var require_errors2 = __commonJS({
     var IDPCommunicationErrorException2 = class _IDPCommunicationErrorException extends STSServiceException_1.STSServiceException {
       name = "IDPCommunicationErrorException";
       $fault = "client";
+      $retryable = {};
       constructor(opts) {
         super({
           name: "IDPCommunicationErrorException",
