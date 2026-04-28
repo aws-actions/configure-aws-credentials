@@ -1709,7 +1709,7 @@ The following npm packages may be included in this product:
  - @smithy/middleware-content-length@4.2.14
  - @smithy/middleware-endpoint@4.4.31
  - @smithy/middleware-stack@4.2.14
- - @smithy/node-http-handler@4.6.0
+ - @smithy/node-http-handler@4.6.1
  - @smithy/property-provider@4.2.14
  - @smithy/shared-ini-file-loader@4.4.9
  - @smithy/signature-v4@5.3.14

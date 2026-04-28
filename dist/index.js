@@ -23546,6 +23546,11 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       deref() {
         return this.session;
       }
+      close() {
+        if (!this.session.closed) {
+          this.session.close();
+        }
+      }
       destroy() {
         this.refs = 0;
         if (!this.session.destroyed) {
@@ -23629,16 +23634,18 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             }
           });
         }
-        const destroySessionCb = () => {
-          session.destroy();
-          this.removeFromPool(url, ref);
+        const graceful = () => {
+          this.removeFromPoolAndClose(url, ref);
         };
-        session.on("goaway", destroySessionCb);
-        session.on("error", destroySessionCb);
-        session.on("frameError", destroySessionCb);
-        session.on("close", () => this.removeFromPool(url, ref));
+        const ensureDestroyed = () => {
+          this.removeFromPoolAndCheckedDestroy(url, ref);
+        };
+        session.on("goaway", graceful);
+        session.on("error", ensureDestroyed);
+        session.on("frameError", ensureDestroyed);
+        session.on("close", ensureDestroyed);
         if (connectionConfiguration.requestTimeout) {
-          session.setTimeout(connectionConfiguration.requestTimeout, destroySessionCb);
+          session.setTimeout(connectionConfiguration.requestTimeout, ensureDestroyed);
         }
         pool.offerLast(ref);
         ref.retain();
@@ -23652,15 +23659,14 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         const ref = new ClientHttp2SessionRef(http22.connect(url));
         const session = ref.deref();
         session.settings({ maxConcurrentStreams: 1 });
-        const destroySession = () => {
-          session.destroy();
+        const ensureDestroyed = () => {
+          ref.destroy();
         };
-        session.on("goaway", destroySession);
-        session.on("error", destroySession);
-        session.on("frameError", destroySession);
-        session.on("close", destroySession);
+        session.on("error", ensureDestroyed);
+        session.on("frameError", ensureDestroyed);
+        session.on("close", ensureDestroyed);
         if (connectionConfiguration.requestTimeout) {
-          session.setTimeout(connectionConfiguration.requestTimeout, destroySession);
+          session.setTimeout(connectionConfiguration.requestTimeout, ensureDestroyed);
         }
         ref.retain();
         return ref;
@@ -23701,8 +23707,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         }
         return pools;
       }
-      removeFromPool(authority, ref) {
+      removeFromPoolAndClose(authority, ref) {
         this.connectionPools.get(authority)?.remove(ref);
+        ref.close();
+      }
+      removeFromPoolAndCheckedDestroy(authority, ref) {
+        this.connectionPools.get(authority)?.remove(ref);
+        ref.destroy();
       }
       getPool(url) {
         if (!this.connectionPools.has(url)) {
