@@ -33,7 +33,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@actions/core": "^2.0.2",
+    "@actions/core": "^3.0.1",
     "@aws-sdk/client-sts": "^3.1038.0",
     "@smithy/node-http-handler": "^4.6.1",
     "proxy-agent": "^8.0.1"
