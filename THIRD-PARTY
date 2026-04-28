@@ -649,7 +649,7 @@ The following npm packages may be included in this product:
  - @smithy/middleware-retry@4.5.4
  - @smithy/querystring-builder@4.2.14
  - @smithy/querystring-parser@4.2.14
- - @smithy/service-error-classification@4.3.0
+ - @smithy/service-error-classification@4.3.1
  - @smithy/url-parser@4.2.14
  - @smithy/util-defaults-mode-browser@4.3.48
  - @smithy/util-defaults-mode-node@4.2.53
@@ -867,11 +867,11 @@ The following npm packages may be included in this product:
  - @aws-sdk/middleware-sdk-s3@3.972.31
  - @aws-sdk/middleware-user-agent@3.972.32
  - @aws-sdk/signature-v4-multi-region@3.996.19
- - @smithy/core@3.23.16
+ - @smithy/core@3.23.17
  - @smithy/invalid-dependency@4.2.14
- - @smithy/middleware-serde@4.2.19
+ - @smithy/middleware-serde@4.2.20
  - @smithy/protocol-http@5.3.14
- - @smithy/smithy-client@4.12.12
+ - @smithy/smithy-client@4.12.13
  - @smithy/types@4.14.1
 
 These packages each contain the following license:
@@ -1270,7 +1270,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.974.2
+ - @aws-sdk/core@3.974.6
 
 This package contains the following license:
 
@@ -1690,7 +1690,7 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.28
+ - @aws-sdk/credential-provider-env@3.972.32
  - @aws-sdk/credential-provider-ini@3.972.32
  - @aws-sdk/credential-provider-node@3.972.33
  - @aws-sdk/region-config-resolver@3.972.12
@@ -1699,7 +1699,7 @@ The following npm packages may be included in this product:
  - @aws-sdk/util-arn-parser@3.972.3
  - @aws-sdk/util-endpoints@3.996.7
  - @aws-sdk/util-locate-window@3.965.5
- - @aws-sdk/xml-builder@3.972.18
+ - @aws-sdk/xml-builder@3.972.21
  - @smithy/config-resolver@4.4.17
  - @smithy/credential-provider-imds@4.2.14
  - @smithy/fetch-http-handler@5.3.17
@@ -1707,7 +1707,7 @@ The following npm packages may be included in this product:
  - @smithy/is-array-buffer@2.2.0
  - @smithy/is-array-buffer@4.2.2
  - @smithy/middleware-content-length@4.2.14
- - @smithy/middleware-endpoint@4.4.31
+ - @smithy/middleware-endpoint@4.4.32
  - @smithy/middleware-stack@4.2.14
  - @smithy/node-http-handler@4.6.1
  - @smithy/property-provider@4.2.14
@@ -1719,7 +1719,7 @@ The following npm packages may be included in this product:
  - @smithy/util-buffer-from@2.2.0
  - @smithy/util-buffer-from@4.2.2
  - @smithy/util-hex-encoding@4.2.2
- - @smithy/util-stream@4.5.24
+ - @smithy/util-stream@4.5.25
  - @smithy/util-uri-escape@4.2.2
  - @smithy/util-utf8@2.3.0
  - @smithy/util-utf8@4.2.2
@@ -2359,7 +2359,7 @@ The following npm packages may be included in this product:
 
  - @smithy/util-endpoints@3.4.2
  - @smithy/util-middleware@4.2.14
- - @smithy/util-retry@4.3.3
+ - @smithy/util-retry@4.3.5
 
 These packages each contain the following license:
 
@@ -2795,6 +2795,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following npm packages may be included in this product:
 
+ - @nodable/entities@2.1.0
  - netmask@2.1.0
  - quickjs-wasi@2.2.0
 
@@ -2806,7 +2807,7 @@ MIT
 
 The following npm package may be included in this product:
 
- - fast-xml-parser@5.5.8
+ - fast-xml-parser@5.7.2
 
 This package contains the following license:
 
