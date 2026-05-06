@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.1.1](https://github.com/aws-actions/configure-aws-credentials/compare/v6.1.0...v6.1.1) (2026-05-05)
+
+
+### Miscellaneous Chores
+
+* various dependency updates
+
+## [6.1.0](https://github.com/aws-actions/configure-aws-credentials/compare/v6.0.0...v6.1.0) (2026-04-06)
+
+
+### Features
+
+* add skip cleanup option ([#1716](https://github.com/aws-actions/configure-aws-credentials/issues/1716)) ([11b1c58](https://github.com/aws-actions/configure-aws-credentials/commit/11b1c58b24724e66aa52a847862a0c1b0c4b0c7b)), closes [#1545](https://github.com/aws-actions/configure-aws-credentials/issues/1545)
+* Support usage of AWS Profiles ([#1696](https://github.com/aws-actions/configure-aws-credentials/issues/1696)) ([a7f0c82](https://github.com/aws-actions/configure-aws-credentials/commit/a7f0c828ac76e0d049e34c920172c60f579f9eb3))
+
+## [6.0.0](https://github.com/aws-actions/configure-aws-credentials/compare/v5.1.1...v6.0.0) (2026-02-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* Update action to use node24 ([#1632](https://github.com/aws-actions/configure-aws-credentials/pull/1632)) ([a7a2c11](https://github.com/aws-actions/configure-aws-credentials/commit/a7a2c1125c67f40a1e95768f4e4a7d8f019f87af))
+
+### Features
+
+* add support to define transitive tag keys ([#1316](https://github.com/aws-actions/configure-aws-credentials/pull/1316)) ([232435c](https://github.com/aws-actions/configure-aws-credentials/commit/232435c0c05e51137544f0203931b84893d13b74)) ([930ebd9](https://github.com/aws-actions/configure-aws-credentials/pull/1628/changes/930ebd9bcaed959c3ba9e21567e8abbc3cae72c0))
+
+### Bug Fixes
+
+* properly output `aws-account-id` and `authenticated-arn` when using role-chaining ([#1633](https://github.com/aws-actions/configure-aws-credentials/pull/1633)) ([7ceaf96](https://github.com/aws-actions/configure-aws-credentials/commit/7ceaf96edc86cc1713cef59eba79feeb23f59da1))
+
 ## [5.1.1](https://github.com/aws-actions/configure-aws-credentials/compare/v5.1.0...v5.1.1) (2025-11-24)
 
 

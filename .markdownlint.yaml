@@ -1,0 +1,17 @@
+default: true
+MD007:
+  indent: 4
+heading-style:
+  style: atx
+ul-style:
+  style: dash
+line-length:
+  stern: true
+  tables: false
+  code_blocks: false
+no-inline-html:
+  allowed_elements:
+    - details
+    - summary
+code-block-style:
+  style: fenced

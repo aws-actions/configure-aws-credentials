@@ -5,20 +5,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup } from '../src/cleanup';
 import mocks from './mockinputs.test';
 
+vi.mock('@actions/core');
+
 const mockedSTSClient = mockClient(STSClient);
 
 describe('Configure AWS Credentials cleanup', {}, () => {
   beforeEach(() => {
-    // Reset mock state
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
     mockedSTSClient.reset();
-    // Mock GitHub Actions core functions
-    vi.spyOn(core, 'exportVariable').mockImplementation((_n, _v) => {});
-    vi.spyOn(core, 'setSecret').mockImplementation((_s) => {});
-    vi.spyOn(core, 'setFailed').mockImplementation((_m) => {});
-    vi.spyOn(core, 'setOutput').mockImplementation((_n, _v) => {});
-    vi.spyOn(core, 'debug').mockImplementation((_m) => {});
-    vi.spyOn(core, 'info').mockImplementation((_m) => {});
+    vi.mocked(core.getInput).mockReturnValue('');
     process.env = {
       ...mocks.envs,
       AWS_ACCESS_KEY_ID: 'CLEANUPTEST',
@@ -38,15 +33,35 @@ describe('Configure AWS Credentials cleanup', {}, () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_DEFAULT_REGION', '');
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_REGION', '');
   });
+  it('also clears AWS_PROFILE when aws-profile was set', {}, () => {
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'aws-profile') return 'my-profile';
+      if (name === 'output-env-credentials') return 'true';
+      return '';
+    });
+    cleanup();
+    expect(core.setFailed).toHaveBeenCalledTimes(0);
+    expect(core.exportVariable).toHaveBeenCalledTimes(6);
+    expect(core.exportVariable).toHaveBeenCalledWith('AWS_PROFILE', '');
+  });
+  it('skips env cleanup when aws-profile is set without output-env-credentials', {}, () => {
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'aws-profile') return 'my-profile';
+      return '';
+    });
+    cleanup();
+    expect(core.setFailed).toHaveBeenCalledTimes(0);
+    expect(core.exportVariable).toHaveBeenCalledTimes(0);
+  });
   it('handles errors', {}, () => {
-    vi.spyOn(core, 'exportVariable').mockImplementationOnce(() => {
+    vi.mocked(core.exportVariable).mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     cleanup();
     expect(core.setFailed).toHaveBeenCalled();
   });
   it(`doesn't export credentials as empty env variables if asked not to`, {}, () => {
-    vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
+    vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
     cleanup();
     expect(core.exportVariable).toHaveBeenCalledTimes(0);
   });

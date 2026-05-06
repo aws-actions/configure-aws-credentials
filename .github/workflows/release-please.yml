@@ -4,6 +4,7 @@
     push:
       branches:
         - main
+    workflow_dispatch:
 
   permissions:
     id-token: write
@@ -20,7 +21,7 @@
             fetch-depth: 0
 
         - name: Configure AWS Credentials
-          uses: aws-actions/configure-aws-credentials@v5
+          uses: aws-actions/configure-aws-credentials@v6
           with:
             aws-region: us-west-2
             role-to-assume: ${{ secrets.SECRETS_AWS_PACKAGING_ROLE_TO_ASSUME }}

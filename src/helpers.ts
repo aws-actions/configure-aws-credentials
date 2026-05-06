@@ -20,6 +20,7 @@ export function translateEnvVariables() {
     'ROLE_EXTERNAL_ID',
     'ROLE_SESSION_NAME',
     'ROLE_SKIP_SESSION_TAGGING',
+    'TRANSITIVE_TAG_KEYS',
     'INLINE_SESSION_POLICY',
     'MANAGED_SESSION_POLICIES',
     'OUTPUT_CREDENTIALS',
@@ -29,6 +30,7 @@ export function translateEnvVariables() {
     'SPECIAL_CHARACTERS_WORKAROUND',
     'USE_EXISTING_CREDENTIALS',
     'NO_PROXY',
+    'OVERWRITE_AWS_PROFILE',
   ];
   // Treat HTTPS_PROXY as HTTP_PROXY. Precedence is HTTPS_PROXY > HTTP_PROXY
   if (process.env.HTTPS_PROXY) process.env.HTTP_PROXY = process.env.HTTPS_PROXY;
