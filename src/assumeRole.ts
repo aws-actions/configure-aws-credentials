@@ -104,7 +104,9 @@ export function parseAndValidateCustomTags(customTags: string, existingTags: Tag
 
   for (const [key, value] of Object.entries(parsed)) {
     if (typeof value === 'object' && value !== null) {
-      throw new Error(`custom-tags: value for key '${key}' must be a string, number, or boolean (not an object or array)`);
+      throw new Error(
+        `custom-tags: value for key '${key}' must be a string, number, or boolean (not an object or array)`,
+      );
     }
 
     const stringValue = String(value);
@@ -113,16 +115,24 @@ export function parseAndValidateCustomTags(customTags: string, existingTags: Tag
       throw new Error(`custom-tags: key '${key}' must be between 1 and ${MAX_TAG_KEY_LENGTH} characters`);
     }
     if (stringValue.length > MAX_TAG_VALUE_LENGTH) {
-      throw new Error(`custom-tags: value for key '${key}' exceeds maximum length of ${MAX_TAG_VALUE_LENGTH} characters`);
+      throw new Error(
+        `custom-tags: value for key '${key}' exceeds maximum length of ${MAX_TAG_VALUE_LENGTH} characters`,
+      );
     }
     if (!TAG_KEY_REGEX.test(key)) {
-      throw new Error(`custom-tags: key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`);
+      throw new Error(
+        `custom-tags: key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`,
+      );
     }
     if (stringValue.length > 0 && !TAG_VALUE_REGEX.test(stringValue)) {
-      throw new Error(`custom-tags: value for key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`);
+      throw new Error(
+        `custom-tags: value for key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`,
+      );
     }
     if (reservedKeys.has(key)) {
-      throw new Error(`custom-tags: key '${key}' conflicts with a default session tag set by this action and cannot be overridden`);
+      throw new Error(
+        `custom-tags: key '${key}' conflicts with a default session tag set by this action and cannot be overridden`,
+      );
     }
 
     newTags.push({ Key: key, Value: stringValue });
