@@ -103,7 +103,7 @@ export function parseAndValidateCustomTags(customTags: string, existingTags: Tag
   const newTags: Tag[] = [];
 
   for (const [key, value] of Object.entries(parsed)) {
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === 'object') {
       throw new Error(
         `custom-tags: value for key '${key}' must be a string, number, or boolean (not an object or array)`,
       );
