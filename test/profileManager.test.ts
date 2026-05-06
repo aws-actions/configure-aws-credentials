@@ -11,14 +11,13 @@ import {
   writeProfileFiles,
 } from '../src/profileManager';
 
+vi.mock('@actions/core');
 vi.mock('node:fs');
 
 describe('Profile Manager', {}, () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
     vol.reset();
-    vi.spyOn(core, 'debug').mockImplementation(() => {});
-    vi.spyOn(core, 'info').mockImplementation(() => {});
   });
 
   describe('parseIni', {}, () => {
