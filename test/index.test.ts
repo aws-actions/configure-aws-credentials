@@ -238,6 +238,85 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Custom Tags', {}, () => {
+    beforeEach(() => {
+      mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+    });
+    it('rejects invalid JSON in custom tags', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_INVALID_JSON_INPUTS));
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith('custom-tags: input is not valid JSON');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    });
+    it('handles valid custom tags', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_OBJECT_INPUTS));
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input).toMatchObject({
+        Tags: expect.arrayContaining([
+          { Key: 'GitHub', Value: 'Actions' },
+          { Key: 'Repository', Value: 'MY-REPOSITORY-NAME' },
+          { Key: 'Workflow', Value: 'MY-WORKFLOW-ID' },
+          { Key: 'Action', Value: 'MY-ACTION-NAME' },
+          { Key: 'Actor', Value: 'MY-USERNAME_bot_' },
+          { Key: 'Commit', Value: 'MY-COMMIT-ID' },
+          { Key: 'Environment', Value: 'Production' },
+          { Key: 'Team', Value: 'DevOps' },
+        ]),
+      });
+    });
+    it('rejects array input for custom tags', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_ARRAY_INPUTS));
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'custom-tags: input must be a JSON object (not an array or primitive)',
+      );
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    });
+    it('rejects custom tags that conflict with default session tags', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_RESERVED_KEY_INPUTS));
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "custom-tags: key 'Repository' conflicts with a default session tag set by this action and cannot be overridden",
+      );
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    });
+    it('rejects custom tags with invalid key characters', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_INVALID_KEY_CHARS_INPUTS));
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        expect.stringContaining("custom-tags: key 'invalid{key}' contains invalid characters"),
+      );
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    });
+    it('warns when custom tags are used with OIDC', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'custom-tags': JSON.stringify({ MyTag: 'value' }),
+        }),
+      );
+      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'STSAWSACCESSKEYID',
+      });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining("'custom-tags' is set but will be ignored"),
+      );
+    });
+  });
+
   describe('Odd inputs', {}, () => {
     it('fails when github env vars are missing', {}, async () => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
@@ -269,6 +348,7 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
+
     it('handles improper retry-max-attempts input', {}, async () => {
       // This should mean we retry one time
       vi.mocked(core.getInput).mockImplementation(
@@ -712,7 +792,7 @@ describe('Configure AWS Credentials', {}, () => {
 
       // Get the timeout callback function
       const timeoutCallback = setTimeoutSpy.mock.calls[0][0] as () => void;
-      
+
       // Execute the timeout callback
       timeoutCallback();
 
