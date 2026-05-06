@@ -11,10 +11,11 @@ import {
   writeProfileFiles,
 } from '../src/profileManager';
 
+vi.mock('node:fs');
+
 describe('Profile Manager', {}, () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    vi.mock('node:fs');
     vol.reset();
     vi.spyOn(core, 'debug').mockImplementation(() => {});
     vi.spyOn(core, 'info').mockImplementation(() => {});
