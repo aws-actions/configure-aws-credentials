@@ -78,6 +78,73 @@ export interface assumeRoleParams {
   webIdentityToken?: string;
   inlineSessionPolicy?: string;
   managedSessionPolicies?: { arn: string }[];
+  customTags?: string;
+}
+
+const TAG_KEY_REGEX = /^[\p{L}\p{Z}\p{N}_.:/=+\-@]+$/u;
+const TAG_VALUE_REGEX = /^[\p{L}\p{Z}\p{N}_.:/=+\-@]*$/u;
+const MAX_TAG_KEY_LENGTH = 128;
+const MAX_TAG_VALUE_LENGTH = 256;
+const MAX_SESSION_TAGS = 50;
+
+export function parseAndValidateCustomTags(customTags: string, existingTags: Tag[]): Tag[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(customTags);
+  } catch {
+    throw new Error('custom-tags: input is not valid JSON');
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('custom-tags: input must be a JSON object (not an array or primitive)');
+  }
+
+  const reservedKeys = new Set(existingTags.map((tag) => tag.Key));
+  const newTags: Tag[] = [];
+
+  for (const [key, value] of Object.entries(parsed)) {
+    if (typeof value === 'object') {
+      throw new Error(
+        `custom-tags: value for key '${key}' must be a string, number, or boolean (not an object or array)`,
+      );
+    }
+
+    const stringValue = String(value);
+
+    if (key.length === 0 || key.length > MAX_TAG_KEY_LENGTH) {
+      throw new Error(`custom-tags: key '${key}' must be between 1 and ${MAX_TAG_KEY_LENGTH} characters`);
+    }
+    if (stringValue.length > MAX_TAG_VALUE_LENGTH) {
+      throw new Error(
+        `custom-tags: value for key '${key}' exceeds maximum length of ${MAX_TAG_VALUE_LENGTH} characters`,
+      );
+    }
+    if (!TAG_KEY_REGEX.test(key)) {
+      throw new Error(
+        `custom-tags: key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`,
+      );
+    }
+    if (stringValue.length > 0 && !TAG_VALUE_REGEX.test(stringValue)) {
+      throw new Error(
+        `custom-tags: value for key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`,
+      );
+    }
+    if (reservedKeys.has(key)) {
+      throw new Error(
+        `custom-tags: key '${key}' conflicts with a default session tag set by this action and cannot be overridden`,
+      );
+    }
+
+    newTags.push({ Key: key, Value: stringValue });
+  }
+
+  if (existingTags.length + newTags.length > MAX_SESSION_TAGS) {
+    throw new Error(
+      `custom-tags: total session tags (${existingTags.length + newTags.length}) would exceed the AWS limit of ${MAX_SESSION_TAGS}`,
+    );
+  }
+
+  return newTags;
 }
 
 export async function assumeRole(params: assumeRoleParams) {
@@ -94,6 +161,7 @@ export async function assumeRole(params: assumeRoleParams) {
     webIdentityToken,
     inlineSessionPolicy,
     managedSessionPolicies,
+    customTags,
   } = { ...params };
 
   // Load GitHub environment variables
@@ -111,17 +179,24 @@ export async function assumeRole(params: assumeRoleParams) {
     { Key: 'Actor', Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
     { Key: 'Commit', Value: GITHUB_SHA },
   ];
+
   if (process.env.GITHUB_REF) {
     tagArray.push({
       Key: 'Branch',
       Value: sanitizeGitHubVariables(process.env.GITHUB_REF),
     });
   }
+
+  if (customTags) {
+    const parsed = parseAndValidateCustomTags(customTags, tagArray);
+    tagArray.push(...parsed);
+  }
+
   const tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!tags) {
     core.debug('Role session tagging has been skipped.');
   } else {
-    core.debug(`${tags.length} role session tags are being used.`);
+    core.debug(`${tags.length} role session tags are being used:`);
   }
 
   //only populate transitiveTagKeys array if user is actually using session tagging
