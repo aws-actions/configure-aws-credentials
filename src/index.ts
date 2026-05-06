@@ -191,6 +191,13 @@ export async function run() {
       await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
+    if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
+      core.warning(
+        "'custom-tags' is set but will be ignored because session tags cannot be applied when using OIDC or web identity token authentication. " +
+          'Tags are controlled by the identity provider token claims in these authentication flows.',
+      );
+    }
+
     // Get role credentials if configured to do so
     if (roleToAssume) {
       let roleCredentials: AssumeRoleCommandOutput;
