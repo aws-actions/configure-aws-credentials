@@ -36,10 +36,27 @@
               ${{ secrets.OSDS_PACKAGING_ROLE }}
 
         - name: Run release-please
+          id: release
           uses: googleapis/release-please-action@v4
           with:
             release-type: node
             token: ${{ env.OSDS_ACCESS_TOKEN }}
             config-file: release-please-config.json
             manifest-file: .release-please-manifest.json
-            
+
+        - name: Checkout Again
+          uses: actions/checkout@v5
+          with:
+            fetch-depth: 0
+
+        - name: Tag Major Version
+          if: ${{ steps.release.outputs.release_created }}
+          run: |
+            git config user.name "GitHub Actions"
+            git config user.email "github-aws-sdk-osds-automation@amazon.com
+            if git rev-parse "v${{ steps.release.outputs.major }}" >/dev/null 2>&1; then
+              git tag -d "v${{ steps.release.outputs.major }}"
+              git push origin ":v${{ steps.release.outputs.major }}"
+            fi
+            git tag -a "v${{ steps.release.outputs.major }}" -m "Release v${{ steps.release.outputs.major }}"
+            git push origin "v${{ steps.release.outputs.major }}"
