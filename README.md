@@ -382,6 +382,21 @@ with:
     Actor
 ```
 
+### Custom session tags
+
+You can add custom session tags using the `custom-tags` input, which accepts a
+JSON object. Custom tags cannot override the default tags listed above.
+
+```yaml
+uses: aws-actions/configure-aws-credentials@v6
+with:
+  custom-tags: '{"Environment": "Production", "Team": "Platform"}'
+```
+
+_Note: custom tags are not supported when using OIDC or web identity token
+authentication. In those flows, session tags are controlled by the identity
+provider's token claims._
+
 ### Session policies
 
 Session policies are not required, but they allow you to limit the scope of the
