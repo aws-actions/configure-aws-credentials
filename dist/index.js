@@ -72616,12 +72616,16 @@ var CredentialsClient = class {
         httpAgent: handler
       });
     }
+    if (props.stsEndpoint) {
+      this.stsEndpoint = props.stsEndpoint;
+    }
     this.roleChaining = props.roleChaining;
   }
   get stsClient() {
     if (!this._stsClient || this.roleChaining) {
       const config = { customUserAgent: USER_AGENT };
       if (this.region !== void 0) config.region = this.region;
+      if (this.stsEndpoint !== void 0) config.endpoint = this.stsEndpoint;
       if (this.requestHandler !== void 0) config.requestHandler = this.requestHandler;
       this._stsClient = new import_client_sts3.STSClient(config);
     }
@@ -72836,6 +72840,7 @@ async function run() {
     const expectedAccountIds = getInput("allowed-account-ids", { required: false }).split(",").map((s) => s.trim());
     const forceSkipOidc = getBooleanInput("force-skip-oidc", { required: false });
     const noProxy = getInput("no-proxy", { required: false });
+    const stsEndpoint = getInput("sts-endpoint", { required: false });
     const globalTimeout = Number.parseInt(getInput("action-timeout-s", { required: false })) || 0;
     let timeoutId;
     if (globalTimeout > 0) {
@@ -72878,6 +72883,7 @@ async function run() {
     };
     if (proxyServer) clientProps.proxyServer = proxyServer;
     if (noProxy) clientProps.noProxy = noProxy;
+    if (stsEndpoint) clientProps.stsEndpoint = stsEndpoint;
     const credentialsClient = new CredentialsClient(clientProps);
     let sourceAccountId;
     let webIdentityToken;
