@@ -311,9 +311,7 @@ describe('Configure AWS Credentials', {}, () => {
       });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
       await run();
-      expect(core.warning).toHaveBeenCalledWith(
-        expect.stringContaining("'custom-tags' is set but will be ignored"),
-      );
+      expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("'custom-tags' is set but will be ignored"));
     });
   });
 
@@ -798,6 +796,54 @@ describe('Configure AWS Credentials', {}, () => {
 
       expect(core.setFailed).toHaveBeenCalledWith('Action timed out after 5 seconds');
       expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('Custom STS Endpoint', {}, () => {
+    it('passes sts-endpoint to the STS client', async () => {
+      const client = new CredentialsClient({
+        region: 'us-east-1',
+        stsEndpoint: 'https://sts.custom.example.com',
+        roleChaining: false,
+      });
+      const endpoint = await client.stsClient.config.endpoint();
+      expect(endpoint).toMatchObject({ hostname: 'sts.custom.example.com', protocol: 'https:' });
+    });
+
+    it('does not override endpoint when sts-endpoint is not provided', () => {
+      const client = new CredentialsClient({
+        region: 'us-east-1',
+        roleChaining: false,
+      });
+      expect(client.stsClient.config.endpoint).toBeUndefined();
+    });
+
+    it('works with http endpoints for local services', async () => {
+      const client = new CredentialsClient({
+        region: 'us-east-1',
+        stsEndpoint: 'http://localhost:9000',
+        roleChaining: false,
+      });
+      const endpoint = await client.stsClient.config.endpoint();
+      expect(endpoint).toMatchObject({ hostname: 'localhost', protocol: 'http:', port: 9000 });
+    });
+
+    it('succeeds in a full action run with sts-endpoint input', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'sts-endpoint': 'https://sts.custom.example.com',
+        }),
+      );
+      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
     });
   });
 

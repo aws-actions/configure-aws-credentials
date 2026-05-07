@@ -64,6 +64,7 @@ export async function run() {
       .map((s) => s.trim());
     const forceSkipOidc = getBooleanInput('force-skip-oidc', { required: false });
     const noProxy = core.getInput('no-proxy', { required: false });
+    const stsEndpoint = core.getInput('sts-endpoint', { required: false });
     const globalTimeout = Number.parseInt(core.getInput('action-timeout-s', { required: false })) || 0;
 
     let timeoutId: NodeJS.Timeout | undefined;
@@ -128,12 +129,19 @@ export async function run() {
     exportRegion(region, outputEnvCredentials);
 
     // Instantiate credentials client
-    const clientProps: { region: string; proxyServer?: string; noProxy?: string; roleChaining: boolean } = {
+    const clientProps: {
+      region: string;
+      proxyServer?: string;
+      noProxy?: string;
+      stsEndpoint?: string;
+      roleChaining: boolean;
+    } = {
       region,
       roleChaining,
     };
     if (proxyServer) clientProps.proxyServer = proxyServer;
     if (noProxy) clientProps.noProxy = noProxy;
+    if (stsEndpoint) clientProps.stsEndpoint = stsEndpoint;
     const credentialsClient = new CredentialsClient(clientProps);
     let sourceAccountId: string;
     let webIdentityToken: string;

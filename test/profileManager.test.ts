@@ -95,7 +95,10 @@ describe('Profile Manager', {}, () => {
     });
 
     it('round-trips through parseIni', {}, () => {
-      const data = { dev: { aws_access_key_id: 'AKIA', aws_secret_access_key: 'secret' }, 'profile prod': { region: 'us-west-2' } };
+      const data = {
+        dev: { aws_access_key_id: 'AKIA', aws_secret_access_key: 'secret' },
+        'profile prod': { region: 'us-west-2' },
+      };
       const roundTripped = parseIni(stringifyIni(data));
       expect(roundTripped).toEqual(data);
     });
@@ -196,10 +199,15 @@ describe('Profile Manager', {}, () => {
       const filePath = '/home/runner/.aws/credentials';
       fs.mkdirSync('/home/runner/.aws', { recursive: true });
 
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'AKIAIOSFODNN7EXAMPLE',
-        aws_secret_access_key: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-      }, false);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'AKIAIOSFODNN7EXAMPLE',
+          aws_secret_access_key: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        },
+        false,
+      );
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -214,16 +222,26 @@ describe('Profile Manager', {}, () => {
       fs.mkdirSync('/home/runner/.aws', { recursive: true });
 
       // Create initial profile
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'AKIAIOSFODNN7EXAMPLE',
-        aws_secret_access_key: 'devSecretKey',
-      }, false);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'AKIAIOSFODNN7EXAMPLE',
+          aws_secret_access_key: 'devSecretKey',
+        },
+        false,
+      );
 
       // Add second profile
-      mergeProfileSection(filePath, 'prod', {
-        aws_access_key_id: 'AKIAPRODEXAMPLE',
-        aws_secret_access_key: 'prodSecretKey',
-      }, false);
+      mergeProfileSection(
+        filePath,
+        'prod',
+        {
+          aws_access_key_id: 'AKIAPRODEXAMPLE',
+          aws_secret_access_key: 'prodSecretKey',
+        },
+        false,
+      );
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -239,18 +257,28 @@ describe('Profile Manager', {}, () => {
       fs.mkdirSync('/home/runner/.aws', { recursive: true });
 
       // Create initial profile
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'OLD_KEY',
-        aws_secret_access_key: 'oldSecretKey',
-        aws_session_token: 'oldSessionToken'
-      }, false);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'OLD_KEY',
+          aws_secret_access_key: 'oldSecretKey',
+          aws_session_token: 'oldSessionToken',
+        },
+        false,
+      );
 
       // Overwrite with new credentials
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'NEW_KEY',
-        aws_secret_access_key: 'newSecretKey',
-        aws_session_token: 'newSessionToken',
-      }, true);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'NEW_KEY',
+          aws_secret_access_key: 'newSecretKey',
+          aws_session_token: 'newSessionToken',
+        },
+        true,
+      );
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -265,17 +293,27 @@ describe('Profile Manager', {}, () => {
       fs.mkdirSync('/home/runner/.aws', { recursive: true });
 
       // Create profile with session token
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'AKIA',
-        aws_secret_access_key: 'secret',
-        aws_session_token: 'old-token',
-      }, false);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'AKIA',
+          aws_secret_access_key: 'secret',
+          aws_session_token: 'old-token',
+        },
+        false,
+      );
 
       // Overwrite without session token
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'AKIA2',
-        aws_secret_access_key: 'secret2',
-      }, true);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'AKIA2',
+          aws_secret_access_key: 'secret2',
+        },
+        true,
+      );
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -290,10 +328,15 @@ describe('Profile Manager', {}, () => {
       fs.mkdirSync('/home/runner/.aws', { recursive: true });
       fs.writeFileSync(filePath, '', { mode: 0o600 });
 
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'AKIA',
-        aws_secret_access_key: 'secret',
-      }, false);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'AKIA',
+          aws_secret_access_key: 'secret',
+        },
+        false,
+      );
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -307,17 +350,31 @@ describe('Profile Manager', {}, () => {
       fs.mkdirSync('/home/runner/.aws', { recursive: true });
 
       // Create initial profile
-      mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'OLD_KEY',
-        aws_secret_access_key: 'oldSecretKey',
-      }, false);
+      mergeProfileSection(
+        filePath,
+        'dev',
+        {
+          aws_access_key_id: 'OLD_KEY',
+          aws_secret_access_key: 'oldSecretKey',
+        },
+        false,
+      );
 
       // Overwrite with new credentials
-      expect(() => mergeProfileSection(filePath, 'dev', {
-        aws_access_key_id: 'NEW_KEY',
-        aws_secret_access_key: 'newSecretKey',
-        aws_session_token: 'sessionToken',
-      }, false)).toThrow(`Profile with name "dev" already exists. Please use the overwrite-aws-profile input if you want to overwrite existing profiles.`);
+      expect(() =>
+        mergeProfileSection(
+          filePath,
+          'dev',
+          {
+            aws_access_key_id: 'NEW_KEY',
+            aws_secret_access_key: 'newSecretKey',
+            aws_session_token: 'sessionToken',
+          },
+          false,
+        ),
+      ).toThrow(
+        `Profile with name "dev" already exists. Please use the overwrite-aws-profile input if you want to overwrite existing profiles.`,
+      );
 
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = parseIni(content);
@@ -468,7 +525,7 @@ describe('Profile Manager', {}, () => {
             SecretAccessKey: 'secret',
           },
           'us-east-1',
-          false
+          false,
         ),
       ).toThrow('whitespace');
     });
@@ -486,7 +543,7 @@ describe('Profile Manager', {}, () => {
           SecretAccessKey: 'secret',
         },
         'us-east-1',
-        false
+        false,
       );
 
       expect(fs.existsSync('/custom/credentials')).toBe(true);
@@ -501,7 +558,7 @@ describe('Profile Manager', {}, () => {
           SecretAccessKey: 'secret',
         },
         'us-east-1',
-        false
+        false,
       );
 
       expect(core.info).toHaveBeenCalledWith('Writing credentials to profile: dev');
@@ -517,12 +574,7 @@ describe('Profile Manager', {}, () => {
         '[personal]\naws_access_key_id=AKIAPERSONAL\naws_secret_access_key=personalSecret\naws_session_token=personalToken\n',
       );
 
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
-        'us-east-1',
-        false,
-      );
+      writeProfileFiles('dev', { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' }, 'us-east-1', false);
 
       const content = fs.readFileSync(credsPath, 'utf-8');
       const parsed = parseIni(content);
@@ -540,17 +592,9 @@ describe('Profile Manager', {}, () => {
     it('preserves pre-existing config with extra keys', {}, () => {
       const configPath = getProfileFilePaths().config;
       fs.mkdirSync(require('node:path').dirname(configPath), { recursive: true });
-      fs.writeFileSync(
-        configPath,
-        '[profile personal]\nregion=eu-west-1\noutput=json\ncli_pager=\n',
-      );
+      fs.writeFileSync(configPath, '[profile personal]\nregion=eu-west-1\noutput=json\ncli_pager=\n');
 
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIA', SecretAccessKey: 'secret' },
-        'us-east-1',
-        false
-      );
+      writeProfileFiles('dev', { AccessKeyId: 'AKIA', SecretAccessKey: 'secret' }, 'us-east-1', false);
 
       const content = fs.readFileSync(configPath, 'utf-8');
       const parsed = parseIni(content);
@@ -566,17 +610,9 @@ describe('Profile Manager', {}, () => {
     it('preserves pre-existing default profile when writing a named profile', {}, () => {
       const credsPath = getProfileFilePaths().credentials;
       fs.mkdirSync(require('node:path').dirname(credsPath), { recursive: true });
-      fs.writeFileSync(
-        credsPath,
-        '[default]\naws_access_key_id=AKIADEFAULT\naws_secret_access_key=defaultSecret\n',
-      );
+      fs.writeFileSync(credsPath, '[default]\naws_access_key_id=AKIADEFAULT\naws_secret_access_key=defaultSecret\n');
 
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
-        'us-west-2',
-        false
-      );
+      writeProfileFiles('dev', { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' }, 'us-west-2', false);
 
       const content = fs.readFileSync(credsPath, 'utf-8');
       const parsed = parseIni(content);
@@ -596,12 +632,7 @@ describe('Profile Manager', {}, () => {
         '# My important comment\n[personal]\naws_access_key_id=AKIA\naws_secret_access_key=secret\n',
       );
 
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
-        'us-east-1',
-        false
-      );
+      writeProfileFiles('dev', { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' }, 'us-east-1', false);
 
       const content = fs.readFileSync(credsPath, 'utf-8') as string;
 
@@ -635,12 +666,7 @@ describe('Profile Manager', {}, () => {
 
       fs.mkdirSync('/custom-creds', { recursive: true });
 
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIA', SecretAccessKey: 'secret' },
-        'us-east-1',
-        false
-      );
+      writeProfileFiles('dev', { AccessKeyId: 'AKIA', SecretAccessKey: 'secret' }, 'us-east-1', false);
 
       expect(fs.existsSync('/custom-creds/credentials')).toBe(true);
       // Config file should be at the default path (under homedir)
@@ -657,7 +683,7 @@ describe('Profile Manager', {}, () => {
           SessionToken: 'FwoGZXIvYXdzEBYaDEXAMPLE',
         },
         'us-east-1',
-        false
+        false,
       );
 
       const credsPath = getProfileFilePaths().credentials;
@@ -672,28 +698,20 @@ describe('Profile Manager', {}, () => {
       // - LF line endings, trailing newline
       expect(credContent).toBe(
         '[dev]\n' +
-        'aws_access_key_id = AKIAIOSFODNN7EXAMPLE\n' +
-        'aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n' +
-        'aws_session_token = FwoGZXIvYXdzEBYaDEXAMPLE\n',
+          'aws_access_key_id = AKIAIOSFODNN7EXAMPLE\n' +
+          'aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n' +
+          'aws_session_token = FwoGZXIvYXdzEBYaDEXAMPLE\n',
       );
-      expect(configContent).toBe(
-        '[profile dev]\n' +
-        'region = us-east-1\n',
-      );
+      expect(configContent).toBe('[profile dev]\n' + 'region = us-east-1\n');
     });
 
     it('golden file for multi-profile output', {}, () => {
-      writeProfileFiles(
-        'dev',
-        { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' },
-        'us-east-1',
-        false
-      );
+      writeProfileFiles('dev', { AccessKeyId: 'AKIADEV', SecretAccessKey: 'devSecret' }, 'us-east-1', false);
       writeProfileFiles(
         'prod',
         { AccessKeyId: 'AKIAPROD', SecretAccessKey: 'prodSecret', SessionToken: 'prodToken' },
         'us-west-2',
-        false
+        false,
       );
 
       const credsPath = getProfileFilePaths().credentials;
@@ -704,20 +722,16 @@ describe('Profile Manager', {}, () => {
 
       expect(credContent).toBe(
         '[dev]\n' +
-        'aws_access_key_id = AKIADEV\n' +
-        'aws_secret_access_key = devSecret\n' +
-        '\n' +
-        '[prod]\n' +
-        'aws_access_key_id = AKIAPROD\n' +
-        'aws_secret_access_key = prodSecret\n' +
-        'aws_session_token = prodToken\n',
+          'aws_access_key_id = AKIADEV\n' +
+          'aws_secret_access_key = devSecret\n' +
+          '\n' +
+          '[prod]\n' +
+          'aws_access_key_id = AKIAPROD\n' +
+          'aws_secret_access_key = prodSecret\n' +
+          'aws_session_token = prodToken\n',
       );
       expect(configContent).toBe(
-        '[profile dev]\n' +
-        'region = us-east-1\n' +
-        '\n' +
-        '[profile prod]\n' +
-        'region = us-west-2\n',
+        '[profile dev]\n' + 'region = us-east-1\n' + '\n' + '[profile prod]\n' + 'region = us-west-2\n',
       );
     });
   });
