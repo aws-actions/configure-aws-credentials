@@ -103,6 +103,9 @@ inputs:
   custom-tags:
     description: Additional tags to apply to the assumed role session. Must be a JSON object provided as a string.
     required: false
+  sts-endpoint:
+    description: Custom STS endpoint URL. Use this to point to an STS-compatible API (e.g. MinIO, LocalStack) instead of the default AWS STS endpoint for the region.
+    required: false
 
 outputs:
   aws-account-id:
