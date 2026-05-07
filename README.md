@@ -467,6 +467,12 @@ with:
 
 </details>
 
+### Custom STS endpoint
+
+Use the `sts-endpoint` input to override the AWS STS endpoint URL. Most users
+should not set this option and instead let the SDK derive the correct endpoint
+from the specified region.
+
 ## OIDC Configuration Details
 
 We recommend using
