@@ -24,6 +24,29 @@ describe('Configure AWS Credentials helpers', {}, () => {
     await expect(helpers.retryAndBackoff(fn, false)).rejects.toMatch('i am not retryable');
     expect(fn).toHaveBeenCalledTimes(1);
   });
+  it('retries and logs with label at info level', {}, async () => {
+    helpers.withsleep(() => Promise.resolve());
+    const fn = vi.fn().mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce('success');
+    const result = await helpers.retryAndBackoff(fn, true, 3, 0, 50, 'TestOp');
+    expect(result).toBe('success');
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry TestOp: attempt 1 of 3 failed'));
+    helpers.reset();
+  });
+  it('logs max retries reached with label', {}, async () => {
+    helpers.withsleep(() => Promise.resolve());
+    const fn = vi.fn().mockRejectedValue(new Error('persistent'));
+    await expect(helpers.retryAndBackoff(fn, true, 2, 0, 50, 'TestOp')).rejects.toThrow('persistent');
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry TestOp: reached max retries (2)'));
+    helpers.reset();
+  });
+  it('retries without a label (backward compat)', {}, async () => {
+    helpers.withsleep(() => Promise.resolve());
+    const fn = vi.fn().mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce('ok');
+    await helpers.retryAndBackoff(fn, true, 3);
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry: attempt 1 of 3 failed'));
+    helpers.reset();
+  });
   it('can output creds when told to', {}, () => {
     helpers.exportCredentials(
       { AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) },
