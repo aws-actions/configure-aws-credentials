@@ -53,10 +53,24 @@
           if: ${{ steps.release.outputs.release_created }}
           run: |
             git config user.name "GitHub Actions"
-            git config user.email "github-aws-sdk-osds-automation@amazon.com
+            git config user.email "github-aws-sdk-osds-automation@amazon.com"
             if git rev-parse "v${{ steps.release.outputs.major }}" >/dev/null 2>&1; then
               git tag -d "v${{ steps.release.outputs.major }}"
               git push origin ":v${{ steps.release.outputs.major }}"
             fi
             git tag -a "v${{ steps.release.outputs.major }}" -m "Release v${{ steps.release.outputs.major }}"
             git push origin "v${{ steps.release.outputs.major }}"
+
+        - name: Update README version references
+          if: ${{ steps.release.outputs.release_created }}
+          run: |
+            sed -i 's|configure-aws-credentials@v[0-9]*\.[0-9]*\.[0-9]*|configure-aws-credentials@${{ steps.release.outputs.tag_name }}|g' README.md
+            if git diff --quiet README.md; then
+              echo "README already up to date"
+            else
+              echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}"
+              git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
+              git add README.md
+              git commit -m "docs: update README version references to ${{ steps.release.outputs.tag_name }}"
+              git push --force origin
+            fi
