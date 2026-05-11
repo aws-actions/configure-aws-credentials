@@ -7,8 +7,9 @@ import {
 } from '@aws-sdk/client-sts';
 import { mockClient } from 'aws-sdk-client-mock';
 import { fs, vol } from 'memfs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialsClient } from '../src/CredentialsClient';
+import * as helpers from '../src/helpers';
 import { run } from '../src/index';
 import * as profileManager from '../src/profileManager';
 import mocks from './mockinputs.test';
@@ -24,9 +25,15 @@ describe('Configure AWS Credentials', {}, () => {
     mockedSTSClient.reset();
     vi.mocked(core.getInput).mockReturnValue('');
     vi.mocked(core.getMultilineInput).mockReturnValue([]);
+    // Inject no-op sleep to avoid real delays during retries in tests
+    helpers.withsleep(() => Promise.resolve());
     // Remove any existing environment variables before each test to prevent the
     // SDK from picking them up
     process.env = { ...mocks.envs };
+  });
+
+  afterEach(() => {
+    helpers.reset();
   });
 
   describe('GitHub OIDC Authentication', {}, () => {
@@ -317,7 +324,12 @@ describe('Configure AWS Credentials', {}, () => {
 
   describe('Odd inputs', {}, () => {
     it('fails when github env vars are missing', {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
       delete process.env.GITHUB_REPOSITORY;
       delete process.env.GITHUB_SHA;
       await run();
@@ -369,6 +381,10 @@ describe('Configure AWS Credentials', {}, () => {
     });
     it('fails if doing OIDC without the ACTIONS_ID_TOKEN_REQUEST_TOKEN', {}, async () => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockRejectedValue(
+        new Error('No credentials available'),
+      );
       delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
       await run();
       expect(core.setFailed).toHaveBeenCalled();
@@ -376,6 +392,10 @@ describe('Configure AWS Credentials', {}, () => {
     it("gets new creds if told to reuse existing but they're invalid", {}, async () => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).rejects();
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockRejectedValue(
+        new Error('No credentials available'),
+      );
       await run();
       expect(core.notice).toHaveBeenCalledWith('No valid credentials exist. Running as normal.');
     });
@@ -1138,6 +1158,83 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
 
       expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining('whitespace'));
+    });
+  });
+
+  describe('Retry Behavior', {}, () => {
+    it('retries exportAccountId on transient GetCallerIdentity failure', async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      mockedSTSClient
+        .on(GetCallerIdentityCommand)
+        .rejectsOnce(new Error('throttled'))
+        .resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      await run();
+      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry exportAccountId'));
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('retries validateCredentials on transient loadCredentials failure', async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockRejectedValueOnce(new Error('network glitch'))
+        .mockResolvedValue({ accessKeyId: 'MYAWSACCESSKEYID' });
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      await run();
+      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry validateCredentials'));
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('respects disable-retry for validateCredentials', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_USER_INPUTS,
+          'disable-retry': 'true',
+        }),
+      );
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockRejectedValue(
+        new Error('network glitch'),
+      );
+      await run();
+      expect(core.setFailed).toHaveBeenCalled();
+      expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('Retry'));
+    });
+
+    it('retries exportAccountId after role assumption (issue #1681)', async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient
+        .on(GetCallerIdentityCommand)
+        .rejectsOnce(new Error('The security token included in the request is invalid'))
+        .resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
+      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry exportAccountId'));
+      expect(core.info).toHaveBeenCalledWith(
+        expect.stringContaining('The security token included in the request is invalid'),
+      );
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('retries AssumeRole and shows info-level retry messages', async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      mockedSTSClient
+        .on(AssumeRoleWithWebIdentityCommand)
+        .rejectsOnce(new Error('Rate exceeded'))
+        .resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      await run();
+      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry AssumeRole'));
+      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Rate exceeded'));
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 });

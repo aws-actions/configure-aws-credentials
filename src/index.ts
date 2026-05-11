@@ -90,6 +90,9 @@ export async function run() {
       maxRetries = 1;
     }
 
+    const withRetry = <T>(fn: () => Promise<T>, label: string): Promise<T> =>
+      retryAndBackoff(fn, !disableRetry, maxRetries, 0, 50, label);
+
     // Logic to decide whether to attempt to use OIDC or not
     const useGitHubOIDCProvider = () => {
       if (forceSkipOidc) return false;
@@ -161,13 +164,9 @@ export async function run() {
     // Else, export credentials provided as input
     if (useGitHubOIDCProvider()) {
       try {
-        webIdentityToken = await retryAndBackoff(
-          async () => {
-            return core.getIDToken(audience);
-          },
-          !disableRetry,
-          maxRetries,
-        );
+        webIdentityToken = await withRetry(async () => {
+          return core.getIDToken(audience);
+        }, 'getIDToken');
       } catch (error) {
         throw new Error(`getIDToken call failed: ${errorMessage(error)}`);
       }
@@ -188,16 +187,22 @@ export async function run() {
       }
     } else if (!webIdentityTokenFile && !roleChaining) {
       // Proceed only if credentials can be picked up
-      await credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds);
-      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
+      await withRetry(
+        () => credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds),
+        'validateCredentials',
+      );
+      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
     }
 
     if (AccessKeyId || roleChaining) {
       // Validate that the SDK can actually pick up credentials.
       // This validates cases where this action is using existing environment credentials,
       // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
-      await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
-      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
+      await withRetry(
+        () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
+        'validateCredentials',
+      );
+      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
     }
     if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
       core.warning(
@@ -210,27 +215,23 @@ export async function run() {
     if (roleToAssume) {
       let roleCredentials: AssumeRoleCommandOutput;
       do {
-        roleCredentials = await retryAndBackoff(
-          async () => {
-            return assumeRole({
-              credentialsClient,
-              sourceAccountId,
-              roleToAssume,
-              roleExternalId,
-              roleDuration,
-              roleSessionName,
-              roleSkipSessionTagging,
-              transitiveTagKeys,
-              webIdentityTokenFile,
-              webIdentityToken,
-              inlineSessionPolicy,
-              managedSessionPolicies,
-              customTags,
-            });
-          },
-          !disableRetry,
-          maxRetries,
-        );
+        roleCredentials = await withRetry(async () => {
+          return assumeRole({
+            credentialsClient,
+            sourceAccountId,
+            roleToAssume,
+            roleExternalId,
+            roleDuration,
+            roleSessionName,
+            roleSkipSessionTagging,
+            transitiveTagKeys,
+            webIdentityTokenFile,
+            webIdentityToken,
+            inlineSessionPolicy,
+            managedSessionPolicies,
+            customTags,
+          });
+        }, 'AssumeRole');
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
@@ -241,14 +242,18 @@ export async function run() {
       // If we are using a profile, don't validate credentials yet (since they most likely won't be in the environment).
       // Wait until after creds are written to the profile file to try validation.
       if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile) {
-        await credentialsClient.validateCredentials(
-          roleCredentials.Credentials?.AccessKeyId,
-          roleChaining,
-          expectedAccountIds,
+        await withRetry(
+          () =>
+            credentialsClient.validateCredentials(
+              roleCredentials.Credentials?.AccessKeyId,
+              roleChaining,
+              expectedAccountIds,
+            ),
+          'validateCredentials',
         );
       }
       if (outputEnvCredentials) {
-        await exportAccountId(credentialsClient, maskAccountId);
+        await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
       }
 
       // Write profile files if profile mode is enabled
@@ -261,10 +266,14 @@ export async function run() {
         // We then validate the credentials to make sure they work.
         if (AccessKeyId || !process.env.GITHUB_ACTIONS) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, true);
-          await credentialsClient.validateCredentials(
-            roleCredentials.Credentials.AccessKeyId,
-            roleChaining,
-            expectedAccountIds,
+          await withRetry(
+            () =>
+              credentialsClient.validateCredentials(
+                roleCredentials.Credentials?.AccessKeyId,
+                roleChaining,
+                expectedAccountIds,
+              ),
+            'validateCredentials',
           );
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, overwriteAwsProfile);
