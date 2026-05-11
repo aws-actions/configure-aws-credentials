@@ -37,6 +37,12 @@ Authenticate to AWS in GitHub Actions! Works especially well with
 
     </details>
 
+    Note: if you are running in a GitHub environment based workflow, the value
+    for the Sub claim will be different, in the form of
+    `repo:<GITHUB_ORG>/<GITHUB_REPOSITORY>:environment:<ENVIRONMENT_NAME>`.
+    Adjust the trust policy accordingly if you are using environment-based
+    workflows.
+
 3. Attach permissions to the IAM Role that allow it to access the AWS resources
     you need.
 4. Add the following to your GitHub Actions workflow: <details>
