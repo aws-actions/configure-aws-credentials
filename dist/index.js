@@ -71149,7 +71149,7 @@ function verifyKeys(creds) {
   }
   return true;
 }
-async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, base = 50) {
+async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, base = 50, label) {
   try {
     return await fn();
   } catch (err) {
@@ -71159,15 +71159,16 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
     }
     const delay = Math.random() * (2 ** retries * base);
     const nextRetry = retries + 1;
-    debug(
-      `retryAndBackoff: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. Retrying after ${Math.floor(delay)}ms.`
+    const opName = label ? ` ${label}` : "";
+    info(
+      `Retry${opName}: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. Retrying after ${Math.floor(delay)}ms.`
     );
     await sleep(delay);
     if (nextRetry >= maxRetries) {
-      debug("retryAndBackoff: reached max retries; giving up.");
+      info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
       throw err;
     }
-    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base);
+    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base, label);
   }
 }
 function errorMessage(error3) {
@@ -72861,6 +72862,7 @@ async function run() {
     } else if (maxRetries < 1) {
       maxRetries = 1;
     }
+    const withRetry = (fn, label) => retryAndBackoff(fn, !disableRetry, maxRetries, 0, 50, label);
     const useGitHubOIDCProvider = () => {
       if (forceSkipOidc) return false;
       if (!!roleToAssume && !webIdentityTokenFile && !AccessKeyId && !process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN && !roleChaining) {
@@ -72898,13 +72900,9 @@ async function run() {
     }
     if (useGitHubOIDCProvider()) {
       try {
-        webIdentityToken = await retryAndBackoff(
-          async () => {
-            return getIDToken(audience);
-          },
-          !disableRetry,
-          maxRetries
-        );
+        webIdentityToken = await withRetry(async () => {
+          return getIDToken(audience);
+        }, "getIDToken");
       } catch (error3) {
         throw new Error(`getIDToken call failed: ${errorMessage(error3)}`);
       }
@@ -72917,12 +72915,18 @@ async function run() {
         writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
       }
     } else if (!webIdentityTokenFile && !roleChaining) {
-      await credentialsClient.validateCredentials(void 0, roleChaining, expectedAccountIds);
-      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
+      await withRetry(
+        () => credentialsClient.validateCredentials(void 0, roleChaining, expectedAccountIds),
+        "validateCredentials"
+      );
+      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
     }
     if (AccessKeyId || roleChaining) {
-      await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
-      sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
+      await withRetry(
+        () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
+        "validateCredentials"
+      );
+      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
     }
     if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
       warning(
@@ -72932,39 +72936,38 @@ async function run() {
     if (roleToAssume) {
       let roleCredentials;
       do {
-        roleCredentials = await retryAndBackoff(
-          async () => {
-            return assumeRole({
-              credentialsClient,
-              sourceAccountId,
-              roleToAssume,
-              roleExternalId,
-              roleDuration,
-              roleSessionName,
-              roleSkipSessionTagging,
-              transitiveTagKeys,
-              webIdentityTokenFile,
-              webIdentityToken,
-              inlineSessionPolicy,
-              managedSessionPolicies,
-              customTags
-            });
-          },
-          !disableRetry,
-          maxRetries
-        );
+        roleCredentials = await withRetry(async () => {
+          return assumeRole({
+            credentialsClient,
+            sourceAccountId,
+            roleToAssume,
+            roleExternalId,
+            roleDuration,
+            roleSessionName,
+            roleSkipSessionTagging,
+            transitiveTagKeys,
+            webIdentityTokenFile,
+            webIdentityToken,
+            inlineSessionPolicy,
+            managedSessionPolicies,
+            customTags
+          });
+        }, "AssumeRole");
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
       if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile) {
-        await credentialsClient.validateCredentials(
-          roleCredentials.Credentials?.AccessKeyId,
-          roleChaining,
-          expectedAccountIds
+        await withRetry(
+          () => credentialsClient.validateCredentials(
+            roleCredentials.Credentials?.AccessKeyId,
+            roleChaining,
+            expectedAccountIds
+          ),
+          "validateCredentials"
         );
       }
       if (outputEnvCredentials) {
-        await exportAccountId(credentialsClient, maskAccountId);
+        await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
       }
       if (awsProfile) {
         if (!roleCredentials.Credentials) {
@@ -72972,10 +72975,13 @@ async function run() {
         }
         if (AccessKeyId || !process.env.GITHUB_ACTIONS) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, true);
-          await credentialsClient.validateCredentials(
-            roleCredentials.Credentials.AccessKeyId,
-            roleChaining,
-            expectedAccountIds
+          await withRetry(
+            () => credentialsClient.validateCredentials(
+              roleCredentials.Credentials?.AccessKeyId,
+              roleChaining,
+              expectedAccountIds
+            ),
+            "validateCredentials"
           );
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, overwriteAwsProfile);
