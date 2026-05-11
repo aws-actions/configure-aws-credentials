@@ -351,6 +351,27 @@ describe('Configure AWS Credentials', {}, () => {
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
+    it('fails with a role-session-name containing invalid characters', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({ ...mocks.IAM_ASSUMEROLE_INPUTS, 'role-session-name': 'invalid session!' }),
+      );
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining('Role session name is not valid'));
+    });
+    it('fails with a role-session-name that is too short', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({ ...mocks.IAM_ASSUMEROLE_INPUTS, 'role-session-name': 'a' }),
+      );
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining('must be between 2 and 64 characters'));
+    });
+    it('fails with a role-session-name that is too long', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({ ...mocks.IAM_ASSUMEROLE_INPUTS, 'role-session-name': 'a'.repeat(65) }),
+      );
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining('must be between 2 and 64 characters'));
+    });
     it('fails if access key id is provided without secret access key', {}, async () => {
       vi.mocked(core.getInput).mockImplementation(
         mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-secret-access-key': '' }),

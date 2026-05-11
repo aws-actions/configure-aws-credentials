@@ -19,6 +19,7 @@ import { writeProfileFiles } from './profileManager';
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
+const ROLE_SESSION_NAME_REGEX = /^[\w+=,.@-]*$/;
 
 export async function run() {
   try {
@@ -127,6 +128,17 @@ export async function run() {
 
     if (!region.match(REGION_REGEX)) {
       throw new Error(`Region is not valid: ${region}`);
+    }
+
+    if (roleSessionName.length < 2 || roleSessionName.length > 64) {
+      throw new Error(
+        `Role session name must be between 2 and 64 characters, got ${roleSessionName.length}: '${roleSessionName}'`,
+      );
+    }
+    if (!roleSessionName.match(ROLE_SESSION_NAME_REGEX)) {
+      throw new Error(
+        `Role session name is not valid: '${roleSessionName}'. Must satisfy regular expression pattern: [\\w+=,.@-]*`,
+      );
     }
 
     exportRegion(region, outputEnvCredentials);
