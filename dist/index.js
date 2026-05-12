@@ -40117,41 +40117,12 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
   }
 });
 
-// node_modules/@smithy/querystring-builder/dist-cjs/index.js
-var require_dist_cjs42 = __commonJS({
-  "node_modules/@smithy/querystring-builder/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var utilUriEscape = require_dist_cjs33();
-    function buildQueryString2(query) {
-      const parts = [];
-      for (let key of Object.keys(query).sort()) {
-        const value = query[key];
-        key = utilUriEscape.escapeUri(key);
-        if (Array.isArray(value)) {
-          for (let i5 = 0, iLen = value.length; i5 < iLen; i5++) {
-            parts.push(`${key}=${utilUriEscape.escapeUri(value[i5])}`);
-          }
-        } else {
-          let qsEntry = key;
-          if (value || typeof value === "string") {
-            qsEntry += `=${utilUriEscape.escapeUri(value)}`;
-          }
-          parts.push(qsEntry);
-        }
-      }
-      return parts.join("&");
-    }
-    exports2.buildQueryString = buildQueryString2;
-  }
-});
-
 // node_modules/@smithy/node-http-handler/dist-cjs/index.js
-var require_dist_cjs43 = __commonJS({
+var require_dist_cjs42 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
     "use strict";
-    var protocolHttp = require_dist_cjs2();
-    var querystringBuilder = require_dist_cjs42();
     var node_https = require("node:https");
+    var protocols2 = (init_protocols(), __toCommonJS(protocols_exports));
     var node_stream = require("node:stream");
     var http22 = require("node:http2");
     function buildAbortError(abortSignal) {
@@ -40174,7 +40145,7 @@ var require_dist_cjs43 = __commonJS({
     var NODEJS_TIMEOUT_ERROR_CODES = ["ECONNRESET", "EPIPE", "ETIMEDOUT"];
     var getTransformedHeaders = (headers) => {
       const transformedHeaders = {};
-      for (const name of Object.keys(headers)) {
+      for (const name in headers) {
         const headerValues = headers[name];
         transformedHeaders[name] = Array.isArray(headerValues) ? headerValues.join(",") : headerValues;
       }
@@ -40279,8 +40250,8 @@ var require_dist_cjs43 = __commonJS({
     };
     var MIN_WAIT_TIME = 6e3;
     async function writeRequestBody(httpRequest, request, maxContinueTimeoutMs = MIN_WAIT_TIME, externalAgent = false) {
-      const headers = request.headers ?? {};
-      const expect = headers.Expect || headers.expect;
+      const headers = request.headers;
+      const expect = headers ? headers.Expect || headers.expect : void 0;
       let timeoutId = -1;
       let sendBody = true;
       if (!externalAgent && expect === "100-continue") {
@@ -40398,15 +40369,26 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         }
         return new Promise((_resolve, _reject) => {
           let writeRequestBodyPromise = void 0;
-          const timeouts = [];
+          let socketWarningTimeoutId = -1;
+          let connectionTimeoutId = -1;
+          let requestTimeoutId = -1;
+          let socketTimeoutId = -1;
+          let keepAliveTimeoutId = -1;
+          const clearTimeouts = () => {
+            timing.clearTimeout(socketWarningTimeoutId);
+            timing.clearTimeout(connectionTimeoutId);
+            timing.clearTimeout(requestTimeoutId);
+            timing.clearTimeout(socketTimeoutId);
+            timing.clearTimeout(keepAliveTimeoutId);
+          };
           const resolve = async (arg) => {
             await writeRequestBodyPromise;
-            timeouts.forEach(timing.clearTimeout);
+            clearTimeouts();
             _resolve(arg);
           };
           const reject = async (arg) => {
             await writeRequestBodyPromise;
-            timeouts.forEach(timing.clearTimeout);
+            clearTimeouts();
             _reject(arg);
           };
           if (abortSignal?.aborted) {
@@ -40414,8 +40396,8 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             reject(abortError);
             return;
           }
-          const headers = request.headers ?? {};
-          const expectContinue = (headers.Expect ?? headers.expect) === "100-continue";
+          const headers = request.headers;
+          const expectContinue = headers ? (headers.Expect ?? headers.expect) === "100-continue" : false;
           let agent = isSSL ? config.httpsAgent : config.httpAgent;
           if (expectContinue && !this.externalAgent) {
             agent = new (isSSL ? node_https.Agent : hAgent)({
@@ -40423,10 +40405,10 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               maxSockets: Infinity
             });
           }
-          timeouts.push(timing.setTimeout(() => {
+          socketWarningTimeoutId = timing.setTimeout(() => {
             this.socketWarningTimestamp = _NodeHttpHandler.checkSocketUsage(agent, this.socketWarningTimestamp, config.logger);
-          }, config.socketAcquisitionWarningTimeout ?? (config.requestTimeout ?? 2e3) + (config.connectionTimeout ?? 1e3)));
-          const queryString = querystringBuilder.buildQueryString(request.query || {});
+          }, config.socketAcquisitionWarningTimeout ?? (config.requestTimeout ?? 2e3) + (config.connectionTimeout ?? 1e3));
+          const queryString = request.query ? protocols2.buildQueryString(request.query) : "";
           let auth = void 0;
           if (request.username != null || request.password != null) {
             const username = request.username ?? "";
@@ -40457,7 +40439,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           };
           const requestFunc = isSSL ? node_https.request : hRequest;
           const req = requestFunc(nodeHttpsOptions, (res) => {
-            const httpResponse = new protocolHttp.HttpResponse({
+            const httpResponse = new protocols2.HttpResponse({
               statusCode: res.statusCode || -1,
               reason: res.statusMessage,
               headers: getTransformedHeaders(res.headers),
@@ -40487,18 +40469,18 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             }
           }
           const effectiveRequestTimeout = requestTimeout ?? config.requestTimeout;
-          timeouts.push(setConnectionTimeout(req, reject, config.connectionTimeout));
-          timeouts.push(setRequestTimeout(req, reject, effectiveRequestTimeout, config.throwOnRequestTimeout, config.logger ?? console));
-          timeouts.push(setSocketTimeout(req, reject, config.socketTimeout));
+          connectionTimeoutId = setConnectionTimeout(req, reject, config.connectionTimeout);
+          requestTimeoutId = setRequestTimeout(req, reject, effectiveRequestTimeout, config.throwOnRequestTimeout, config.logger ?? console);
+          socketTimeoutId = setSocketTimeout(req, reject, config.socketTimeout);
           const httpAgent = nodeHttpsOptions.agent;
           if (typeof httpAgent === "object" && "keepAlive" in httpAgent) {
-            timeouts.push(setSocketKeepAlive(req, {
+            keepAliveTimeoutId = setSocketKeepAlive(req, {
               keepAlive: httpAgent.keepAlive,
               keepAliveMsecs: httpAgent.keepAliveMsecs
-            }));
+            });
           }
           writeRequestBodyPromise = writeRequestBody(req, request, effectiveRequestTimeout, this.externalAgent).catch((e5) => {
-            timeouts.forEach(timing.clearTimeout);
+            clearTimeouts();
             return _reject(e5);
           });
         });
@@ -40643,6 +40625,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
     };
     var NodeHttp2ConnectionManager = class {
       config;
+      connectOptions;
       connectionPools = /* @__PURE__ */ new Map();
       constructor(config) {
         this.config = config;
@@ -40660,7 +40643,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             return available;
           }
         }
-        const ref = new ClientHttp2SessionRef(http22.connect(url));
+        const ref = new ClientHttp2SessionRef(this.connect(url));
         const session = ref.deref();
         if (this.config.maxConcurrency) {
           session.settings({ maxConcurrentStreams: this.config.maxConcurrency }, (err) => {
@@ -40691,7 +40674,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
       createIsolatedSession(requestContext, connectionConfiguration) {
         const url = this.getUrlString(requestContext);
-        const ref = new ClientHttp2SessionRef(http22.connect(url));
+        const ref = new ClientHttp2SessionRef(this.connect(url));
         const session = ref.deref();
         session.settings({ maxConcurrentStreams: 1 });
         const ensureDestroyed = () => {
@@ -40725,6 +40708,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
       setDisableConcurrentStreams(disableConcurrentStreams) {
         this.config.disableConcurrency = disableConcurrentStreams;
+      }
+      setNodeHttp2ConnectOptions(nodeHttp2ConnectOptions) {
+        this.connectOptions = nodeHttp2ConnectOptions;
       }
       debug() {
         const pools = {};
@@ -40763,6 +40749,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       getUrlString(request) {
         return request.destination.toString();
       }
+      connect(url) {
+        return this.connectOptions === void 0 ? http22.connect(url) : http22.connect(url, this.connectOptions);
+      }
     };
     var NodeHttp2Handler = class _NodeHttp2Handler {
       config;
@@ -40792,10 +40781,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       async handle(request, { abortSignal, requestTimeout, isEventStream } = {}) {
         if (!this.config) {
           this.config = await this.configProvider;
-          const { disableConcurrentStreams: disableConcurrentStreams2, maxConcurrentStreams } = this.config;
+          const { disableConcurrentStreams: disableConcurrentStreams2, maxConcurrentStreams, nodeHttp2ConnectOptions } = this.config;
           this.connectionManager.setDisableConcurrentStreams(disableConcurrentStreams2 ?? false);
           if (maxConcurrentStreams) {
             this.connectionManager.setMaxConcurrentStreams(maxConcurrentStreams);
+          }
+          if (nodeHttp2ConnectOptions) {
+            this.connectionManager.setNodeHttp2ConnectOptions(nodeHttp2ConnectOptions);
           }
         }
         const { requestTimeout: configRequestTimeout, disableConcurrentStreams } = this.config;
@@ -40840,7 +40832,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             fulfilled = true;
             reject(err);
           };
-          const queryString = querystringBuilder.buildQueryString(query ?? {});
+          const queryString = query ? protocols2.buildQueryString(query) : "";
           let path3 = request.path;
           if (queryString) {
             path3 += `?${queryString}`;
@@ -40883,7 +40875,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             rejectWithDestroy(new Error(`HTTP/2 stream is abnormally aborted in mid-communication with result code ${clientHttp2Stream.rstCode}.`));
           });
           clientHttp2Stream.on("response", (headers) => {
-            const httpResponse = new protocolHttp.HttpResponse({
+            const httpResponse = new protocols2.HttpResponse({
               statusCode: headers[":status"] ?? -1,
               headers: getTransformedHeaders(headers),
               body: clientHttp2Stream
@@ -41561,12 +41553,40 @@ var require_headStream = __commonJS({
   }
 });
 
+// node_modules/@smithy/querystring-builder/dist-cjs/index.js
+var require_dist_cjs43 = __commonJS({
+  "node_modules/@smithy/querystring-builder/dist-cjs/index.js"(exports2) {
+    "use strict";
+    var utilUriEscape = require_dist_cjs33();
+    function buildQueryString2(query) {
+      const parts = [];
+      for (let key of Object.keys(query).sort()) {
+        const value = query[key];
+        key = utilUriEscape.escapeUri(key);
+        if (Array.isArray(value)) {
+          for (let i5 = 0, iLen = value.length; i5 < iLen; i5++) {
+            parts.push(`${key}=${utilUriEscape.escapeUri(value[i5])}`);
+          }
+        } else {
+          let qsEntry = key;
+          if (value || typeof value === "string") {
+            qsEntry += `=${utilUriEscape.escapeUri(value)}`;
+          }
+          parts.push(qsEntry);
+        }
+      }
+      return parts.join("&");
+    }
+    exports2.buildQueryString = buildQueryString2;
+  }
+});
+
 // node_modules/@smithy/fetch-http-handler/dist-cjs/index.js
 var require_dist_cjs44 = __commonJS({
   "node_modules/@smithy/fetch-http-handler/dist-cjs/index.js"(exports2) {
     "use strict";
     var protocolHttp = require_dist_cjs2();
-    var querystringBuilder = require_dist_cjs42();
+    var querystringBuilder = require_dist_cjs43();
     var utilBase64 = require_dist_cjs36();
     function createRequest(url, requestOptions) {
       return new Request(url, requestOptions);
@@ -41864,7 +41884,7 @@ var require_sdk_stream_mixin = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.sdkStreamMixin = void 0;
-    var node_http_handler_1 = require_dist_cjs43();
+    var node_http_handler_1 = require_dist_cjs42();
     var util_buffer_from_1 = require_dist_cjs31();
     var stream_1 = require("stream");
     var sdk_stream_mixin_browser_1 = require_sdk_stream_mixin_browser();
@@ -42129,7 +42149,7 @@ var require_fromHttp = __commonJS({
     exports2.fromHttp = void 0;
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
     var client_1 = (init_client2(), __toCommonJS(client_exports));
-    var node_http_handler_1 = require_dist_cjs43();
+    var node_http_handler_1 = require_dist_cjs42();
     var property_provider_1 = require_dist_cjs20();
     var promises_1 = tslib_1.__importDefault(require("node:fs/promises"));
     var checkUrl_1 = require_checkUrl();
@@ -43279,7 +43299,7 @@ var init_runtimeConfig = __esm({
     import_hash_node2 = __toESM(require_dist_cjs48());
     import_middleware_retry = __toESM(require_dist_cjs28());
     import_node_config_provider = __toESM(require_dist_cjs22());
-    import_node_http_handler = __toESM(require_dist_cjs43());
+    import_node_http_handler = __toESM(require_dist_cjs42());
     import_smithy_client10 = __toESM(require_dist_cjs27());
     import_util_body_length_node = __toESM(require_dist_cjs49());
     import_util_defaults_mode_node = __toESM(require_dist_cjs50());
@@ -44177,7 +44197,7 @@ var init_runtimeConfig2 = __esm({
     import_hash_node3 = __toESM(require_dist_cjs48());
     import_middleware_retry3 = __toESM(require_dist_cjs28());
     import_node_config_provider2 = __toESM(require_dist_cjs22());
-    import_node_http_handler2 = __toESM(require_dist_cjs43());
+    import_node_http_handler2 = __toESM(require_dist_cjs42());
     import_smithy_client17 = __toESM(require_dist_cjs27());
     import_util_body_length_node2 = __toESM(require_dist_cjs49());
     import_util_defaults_mode_node2 = __toESM(require_dist_cjs50());
@@ -45077,7 +45097,7 @@ var init_runtimeConfig3 = __esm({
     import_hash_node4 = __toESM(require_dist_cjs48());
     import_middleware_retry5 = __toESM(require_dist_cjs28());
     import_node_config_provider3 = __toESM(require_dist_cjs22());
-    import_node_http_handler3 = __toESM(require_dist_cjs43());
+    import_node_http_handler3 = __toESM(require_dist_cjs42());
     import_smithy_client24 = __toESM(require_dist_cjs27());
     import_util_body_length_node3 = __toESM(require_dist_cjs49());
     import_util_defaults_mode_node3 = __toESM(require_dist_cjs50());
@@ -46345,7 +46365,7 @@ var init_runtimeConfig4 = __esm({
     import_hash_node5 = __toESM(require_dist_cjs48());
     import_middleware_retry7 = __toESM(require_dist_cjs28());
     import_node_config_provider4 = __toESM(require_dist_cjs22());
-    import_node_http_handler4 = __toESM(require_dist_cjs43());
+    import_node_http_handler4 = __toESM(require_dist_cjs42());
     import_smithy_client31 = __toESM(require_dist_cjs27());
     import_util_body_length_node4 = __toESM(require_dist_cjs49());
     import_util_defaults_mode_node4 = __toESM(require_dist_cjs50());
@@ -48184,7 +48204,7 @@ var require_runtimeConfig = __commonJS({
     var hash_node_1 = require_dist_cjs48();
     var middleware_retry_1 = require_dist_cjs28();
     var node_config_provider_1 = require_dist_cjs22();
-    var node_http_handler_1 = require_dist_cjs43();
+    var node_http_handler_1 = require_dist_cjs42();
     var smithy_client_1 = require_dist_cjs27();
     var util_body_length_node_1 = require_dist_cjs49();
     var util_defaults_mode_node_1 = require_dist_cjs50();
@@ -76555,7 +76575,7 @@ async function assumeRole(params) {
 
 // src/CredentialsClient.ts
 var import_client_sts3 = __toESM(require_dist_cjs59());
-var import_node_http_handler5 = __toESM(require_dist_cjs43());
+var import_node_http_handler5 = __toESM(require_dist_cjs42());
 
 // node_modules/proxy-agent/dist/index.js
 var http5 = __toESM(require("http"), 1);
