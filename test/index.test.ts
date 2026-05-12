@@ -1218,9 +1218,7 @@ describe('Configure AWS Credentials', {}, () => {
         }),
       );
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
-      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockRejectedValue(
-        new Error('network glitch'),
-      );
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockRejectedValue(new Error('network glitch'));
       await run();
       expect(core.setFailed).toHaveBeenCalled();
       expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('Retry'));
@@ -1267,13 +1265,15 @@ describe('Configure AWS Credentials', {}, () => {
       return (client.stsClient.config as any).customUserAgent;
     }
 
-    it('includes run_id and attempt tokens when env vars are valid', async () => {
+    it('includes action, run_id and attempt tokens when env vars are valid', async () => {
       vi.resetModules();
+      process.env.GITHUB_ACTION = '__run_2';
       process.env.GITHUB_RUN_ID = '16412345678';
       process.env.GITHUB_RUN_ATTEMPT = '1';
       const ua = await getCustomUserAgent();
       expect(ua).toEqual([
         ['configure-aws-credentials-for-github-actions'],
+        ['md', 'action#__run_2'],
         ['md', 'run_id#16412345678'],
         ['md', 'attempt#1'],
       ]);
@@ -1282,6 +1282,7 @@ describe('Configure AWS Credentials', {}, () => {
 
     it('omits tokens when env vars are unset, with no warning', async () => {
       vi.resetModules();
+      delete process.env.GITHUB_ACTION;
       const ua = await getCustomUserAgent();
       expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
       expect(core.warning).not.toHaveBeenCalled();
@@ -1289,26 +1290,33 @@ describe('Configure AWS Credentials', {}, () => {
 
     it('warns and skips when env vars are malformed', async () => {
       vi.resetModules();
+      process.env.GITHUB_ACTION = '$(curl evil)';
       process.env.GITHUB_RUN_ID = '$(curl evil)';
       process.env.GITHUB_RUN_ATTEMPT = '1; rm -rf /';
       const ua = await getCustomUserAgent();
       expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
-      expect(core.warning).toHaveBeenCalledWith(
-        'GITHUB_RUN_ID has unexpected format; omitting from User-Agent',
-      );
-      expect(core.warning).toHaveBeenCalledWith(
-        'GITHUB_RUN_ATTEMPT has unexpected format; omitting from User-Agent',
-      );
-      expect(core.warning).toHaveBeenCalledTimes(2);
+      expect(core.warning).toHaveBeenCalledWith('GITHUB_ACTION has unexpected format; omitting from User-Agent');
+      expect(core.warning).toHaveBeenCalledWith('GITHUB_RUN_ID has unexpected format; omitting from User-Agent');
+      expect(core.warning).toHaveBeenCalledWith('GITHUB_RUN_ATTEMPT has unexpected format; omitting from User-Agent');
+      expect(core.warning).toHaveBeenCalledTimes(3);
     });
 
     it('warns and skips when env vars exceed the length bound', async () => {
       vi.resetModules();
+      process.env.GITHUB_ACTION = 'a'.repeat(200);
       process.env.GITHUB_RUN_ID = '1'.repeat(50);
       process.env.GITHUB_RUN_ATTEMPT = '1'.repeat(50);
       const ua = await getCustomUserAgent();
       expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
-      expect(core.warning).toHaveBeenCalledTimes(2);
+      expect(core.warning).toHaveBeenCalledTimes(3);
+    });
+
+    it('rejects GITHUB_ACTION containing whitespace or other characters', async () => {
+      vi.resetModules();
+      process.env.GITHUB_ACTION = 'has space';
+      const ua = await getCustomUserAgent();
+      expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
+      expect(core.warning).toHaveBeenCalledWith('GITHUB_ACTION has unexpected format; omitting from User-Agent');
     });
 
     it('sets AWS_EXECUTION_ENV to GitHubActions when unset', async () => {

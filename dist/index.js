@@ -71011,24 +71011,20 @@ var MAX_TAG_VALUE_LENGTH = 256;
 var SANITIZATION_CHARACTER = "_";
 var SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
 var USER_AGENT_PREFIX = "configure-aws-credentials-for-github-actions";
-var RUN_ID_PATTERN = /^[0-9]{1,20}$/;
-var ATTEMPT_PATTERN = /^[0-9]{1,10}$/;
+var UA_FIELDS = [
+  { env: "GITHUB_ACTION", label: "action", pattern: /^[A-Za-z0-9_-]{1,128}$/ },
+  { env: "GITHUB_RUN_ID", label: "run_id", pattern: /^[0-9]{1,20}$/ },
+  { env: "GITHUB_RUN_ATTEMPT", label: "attempt", pattern: /^[0-9]{1,10}$/ }
+];
 function buildCustomUserAgent() {
   const tokens = [[USER_AGENT_PREFIX]];
-  const runId = process.env.GITHUB_RUN_ID;
-  const attempt = process.env.GITHUB_RUN_ATTEMPT;
-  if (runId !== void 0) {
-    if (RUN_ID_PATTERN.test(runId)) {
-      tokens.push(["md", `run_id#${runId}`]);
+  for (const { env, label, pattern } of UA_FIELDS) {
+    const value = process.env[env];
+    if (value === void 0) continue;
+    if (pattern.test(value)) {
+      tokens.push(["md", `${label}#${value}`]);
     } else {
-      warning("GITHUB_RUN_ID has unexpected format; omitting from User-Agent");
-    }
-  }
-  if (attempt !== void 0) {
-    if (ATTEMPT_PATTERN.test(attempt)) {
-      tokens.push(["md", `attempt#${attempt}`]);
-    } else {
-      warning("GITHUB_RUN_ATTEMPT has unexpected format; omitting from User-Agent");
+      warning(`${env} has unexpected format; omitting from User-Agent`);
     }
   }
   return tokens;
