@@ -1258,4 +1258,70 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
+
+  describe('User-Agent enrichment', {}, () => {
+    async function getCustomUserAgent(): Promise<unknown> {
+      const { CredentialsClient: FreshClient } = await import('../src/CredentialsClient');
+      const client = new FreshClient({ region: 'fake-region-1', roleChaining: false });
+      // biome-ignore lint/suspicious/noExplicitAny: SDK config readout
+      return (client.stsClient.config as any).customUserAgent;
+    }
+
+    it('includes run_id and attempt tokens when env vars are valid', async () => {
+      vi.resetModules();
+      process.env.GITHUB_RUN_ID = '16412345678';
+      process.env.GITHUB_RUN_ATTEMPT = '1';
+      const ua = await getCustomUserAgent();
+      expect(ua).toEqual([
+        ['configure-aws-credentials-for-github-actions'],
+        ['md', 'run_id#16412345678'],
+        ['md', 'attempt#1'],
+      ]);
+      expect(core.warning).not.toHaveBeenCalled();
+    });
+
+    it('omits tokens when env vars are unset, with no warning', async () => {
+      vi.resetModules();
+      const ua = await getCustomUserAgent();
+      expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
+      expect(core.warning).not.toHaveBeenCalled();
+    });
+
+    it('warns and skips when env vars are malformed', async () => {
+      vi.resetModules();
+      process.env.GITHUB_RUN_ID = '$(curl evil)';
+      process.env.GITHUB_RUN_ATTEMPT = '1; rm -rf /';
+      const ua = await getCustomUserAgent();
+      expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
+      expect(core.warning).toHaveBeenCalledWith(
+        'GITHUB_RUN_ID has unexpected format; omitting from User-Agent',
+      );
+      expect(core.warning).toHaveBeenCalledWith(
+        'GITHUB_RUN_ATTEMPT has unexpected format; omitting from User-Agent',
+      );
+      expect(core.warning).toHaveBeenCalledTimes(2);
+    });
+
+    it('warns and skips when env vars exceed the length bound', async () => {
+      vi.resetModules();
+      process.env.GITHUB_RUN_ID = '1'.repeat(50);
+      process.env.GITHUB_RUN_ATTEMPT = '1'.repeat(50);
+      const ua = await getCustomUserAgent();
+      expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
+      expect(core.warning).toHaveBeenCalledTimes(2);
+    });
+
+    it('sets AWS_EXECUTION_ENV to GitHubActions when unset', async () => {
+      vi.resetModules();
+      await import('../src/CredentialsClient');
+      expect(process.env.AWS_EXECUTION_ENV).toBe('GitHubActions');
+    });
+
+    it('preserves a pre-existing AWS_EXECUTION_ENV value', async () => {
+      vi.resetModules();
+      process.env.AWS_EXECUTION_ENV = 'CustomRunner';
+      await import('../src/CredentialsClient');
+      expect(process.env.AWS_EXECUTION_ENV).toBe('CustomRunner');
+    });
+  });
 });

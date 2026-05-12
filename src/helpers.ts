@@ -1,11 +1,36 @@
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import type { UserAgent } from '@smithy/types';
 import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
+const USER_AGENT_PREFIX = 'configure-aws-credentials-for-github-actions';
+const RUN_ID_PATTERN = /^[0-9]{1,20}$/;
+const ATTEMPT_PATTERN = /^[0-9]{1,10}$/;
+
+export function buildCustomUserAgent(): UserAgent {
+  const tokens: UserAgent = [[USER_AGENT_PREFIX]];
+  const runId = process.env.GITHUB_RUN_ID;
+  const attempt = process.env.GITHUB_RUN_ATTEMPT;
+  if (runId !== undefined) {
+    if (RUN_ID_PATTERN.test(runId)) {
+      tokens.push(['md', `run_id#${runId}`]);
+    } else {
+      core.warning('GITHUB_RUN_ID has unexpected format; omitting from User-Agent');
+    }
+  }
+  if (attempt !== undefined) {
+    if (ATTEMPT_PATTERN.test(attempt)) {
+      tokens.push(['md', `attempt#${attempt}`]);
+    } else {
+      core.warning('GITHUB_RUN_ATTEMPT has unexpected format; omitting from User-Agent');
+    }
+  }
+  return tokens;
+}
 
 export function translateEnvVariables() {
   const envVars = [
