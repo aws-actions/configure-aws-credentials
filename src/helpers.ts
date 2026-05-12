@@ -1,11 +1,32 @@
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import type { UserAgent } from '@smithy/types';
 import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
+const USER_AGENT_PREFIX = 'configure-aws-credentials-for-github-actions';
+const UA_FIELDS: ReadonlyArray<{ env: string; label: string; pattern: RegExp }> = [
+  { env: 'GITHUB_ACTION', label: 'action', pattern: /^[A-Za-z0-9_-]{1,128}$/ },
+  { env: 'GITHUB_RUN_ID', label: 'run_id', pattern: /^[0-9]{1,20}$/ },
+  { env: 'GITHUB_RUN_ATTEMPT', label: 'attempt', pattern: /^[0-9]{1,10}$/ },
+];
+
+export function buildCustomUserAgent(): UserAgent {
+  const tokens: UserAgent = [[USER_AGENT_PREFIX]];
+  for (const { env, label, pattern } of UA_FIELDS) {
+    const value = process.env[env];
+    if (value === undefined) continue;
+    if (pattern.test(value)) {
+      tokens.push(['md', `${label}#${value}`]);
+    } else {
+      core.warning(`${env} has unexpected format; omitting from User-Agent`);
+    }
+  }
+  return tokens;
+}
 
 export function translateEnvVariables() {
   const envVars = [
