@@ -431,11 +431,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -----------
 
-The following npm package may be included in this product:
+The following npm packages may be included in this product:
 
+ - @aws-crypto/crc32@5.2.0
  - @aws-crypto/util@5.2.0
 
-This package contains the following license:
+These packages each contain the following license:
 
 Apache License
                            Version 2.0, January 2004
@@ -867,7 +868,7 @@ The following npm packages may be included in this product:
  - @aws-sdk/middleware-sdk-s3@3.972.37
  - @aws-sdk/middleware-user-agent@3.972.38
  - @aws-sdk/signature-v4-multi-region@3.996.25
- - @smithy/core@3.23.17
+ - @smithy/core@3.24.1
  - @smithy/invalid-dependency@4.2.14
  - @smithy/middleware-serde@4.2.20
  - @smithy/protocol-http@5.3.14
@@ -1710,7 +1711,7 @@ The following npm packages may be included in this product:
  - @smithy/middleware-endpoint@4.4.32
  - @smithy/middleware-stack@4.2.14
  - @smithy/node-http-handler@4.6.1
- - @smithy/property-provider@4.2.14
+ - @smithy/property-provider@4.3.1
  - @smithy/shared-ini-file-loader@4.4.9
  - @smithy/signature-v4@5.3.14
  - @smithy/util-base64@4.3.2
