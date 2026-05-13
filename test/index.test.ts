@@ -245,6 +245,74 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Default session tags', {}, () => {
+    beforeEach(() => {
+      mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+    });
+    it('emits exactly the expected default tag set with no custom-tags', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
+      await run();
+      const tags = mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input.Tags ?? [];
+      // 7 protected (GitHub + Repository, Workflow, Action, Actor, Commit, Branch)
+      // + 8 overrideable (EventName, BaseRef, HeadRef, RefName, RunId, RefType, Job, TriggeringActor).
+      // No custom-tags, all env vars set in mocks.envs → all 15 should be present, nothing else.
+      expect(tags).toHaveLength(15);
+      const tagsByKey = Object.fromEntries(tags.map((t) => [t.Key, t.Value]));
+      expect(tagsByKey).toEqual({
+        GitHub: 'Actions',
+        Repository: 'MY-REPOSITORY-NAME',
+        Workflow: 'MY-WORKFLOW-ID',
+        Action: 'MY-ACTION-NAME',
+        Actor: 'MY-USERNAME_bot_',
+        Commit: 'MY-COMMIT-ID',
+        Branch: 'refs/pull/42/merge',
+        EventName: 'pull_request',
+        BaseRef: 'main',
+        HeadRef: 'feature-branch',
+        RefName: 'feature-branch',
+        RunId: '16412345678',
+        RefType: 'branch',
+        Job: 'build',
+        TriggeringActor: 'MY-USERNAME_bot_',
+      });
+    });
+    it('omits overrideable tags whose env vars are unset', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
+      delete process.env.GITHUB_BASE_REF;
+      delete process.env.GITHUB_HEAD_REF;
+      delete process.env.GITHUB_TRIGGERING_ACTOR;
+      await run();
+      const tags = mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input.Tags ?? [];
+      const tagKeys = tags.map((t) => t.Key);
+      expect(tagKeys).not.toContain('BaseRef');
+      expect(tagKeys).not.toContain('HeadRef');
+      expect(tagKeys).not.toContain('TriggeringActor');
+      expect(tagKeys).toContain('EventName');
+      expect(tagKeys).toContain('RunId');
+    });
+    it('sanitizes invalid characters in env-derived tag values', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
+      process.env.GITHUB_HEAD_REF = 'feature/has spaces&bad?chars';
+      await run();
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input).toMatchObject({
+        Tags: expect.arrayContaining([{ Key: 'HeadRef', Value: 'feature/has spaces_bad_chars' }]),
+      });
+    });
+    it('truncates env-derived tag values longer than 256 characters', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
+      process.env.GITHUB_HEAD_REF = 'a'.repeat(300);
+      await run();
+      const tags = mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input.Tags ?? [];
+      const headRef = tags.find((t) => t.Key === 'HeadRef');
+      expect(headRef?.Value).toHaveLength(256);
+    });
+  });
+
   describe('Custom Tags', {}, () => {
     beforeEach(() => {
       mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
@@ -273,6 +341,15 @@ describe('Configure AWS Credentials', {}, () => {
           { Key: 'Action', Value: 'MY-ACTION-NAME' },
           { Key: 'Actor', Value: 'MY-USERNAME_bot_' },
           { Key: 'Commit', Value: 'MY-COMMIT-ID' },
+          { Key: 'Branch', Value: 'refs/pull/42/merge' },
+          { Key: 'BaseRef', Value: 'main' },
+          { Key: 'HeadRef', Value: 'feature-branch' },
+          { Key: 'EventName', Value: 'pull_request' },
+          { Key: 'RunId', Value: '16412345678' },
+          { Key: 'Job', Value: 'build' },
+          { Key: 'RefName', Value: 'feature-branch' },
+          { Key: 'RefType', Value: 'branch' },
+          { Key: 'TriggeringActor', Value: 'MY-USERNAME_bot_' },
           { Key: 'Environment', Value: 'Production' },
           { Key: 'Team', Value: 'DevOps' },
         ]),
@@ -286,11 +363,11 @@ describe('Configure AWS Credentials', {}, () => {
       );
       expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     });
-    it('rejects custom tags that conflict with default session tags', {}, async () => {
+    it('rejects custom tags that conflict with protected session tags', {}, async () => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.CUSTOM_TAGS_RESERVED_KEY_INPUTS));
       await run();
       expect(core.setFailed).toHaveBeenCalledWith(
-        "custom-tags: key 'Repository' conflicts with a default session tag set by this action and cannot be overridden",
+        "custom-tags: key 'Repository' conflicts with a protected session tag set by this action and cannot be overridden",
       );
       expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
     });
@@ -319,6 +396,128 @@ describe('Configure AWS Credentials', {}, () => {
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
       await run();
       expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("'custom-tags' is set but will be ignored"));
+    });
+    it('lets custom tags override overrideable default tag keys', {}, async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'custom-tags': JSON.stringify({ EventName: 'workflow_dispatch', BaseRef: 'release/2026' }),
+        }),
+      );
+      await run();
+      const tags = mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input.Tags ?? [];
+      const eventNameTags = tags.filter((t) => t.Key === 'EventName');
+      const baseRefTags = tags.filter((t) => t.Key === 'BaseRef');
+      expect(eventNameTags).toHaveLength(1);
+      expect(eventNameTags[0]?.Value).toBe('workflow_dispatch');
+      expect(baseRefTags).toHaveLength(1);
+      expect(baseRefTags[0]?.Value).toBe('release/2026');
+    });
+    it('rejects custom tags that conflict with the protected Branch tag', {}, async () => {
+      // Regression guard: Branch was a default before v6.2 and must remain unoverridable.
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'custom-tags': JSON.stringify({ Branch: 'evil-branch' }),
+        }),
+      );
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "custom-tags: key 'Branch' conflicts with a protected session tag set by this action and cannot be overridden",
+      );
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    });
+    it('drops lower-priority overrideable tags when custom-tags would exceed the session-tag limit', {}, async () => {
+      // 7 protected (GitHub + 6 from PROTECTED_TAG_SOURCES) + 40 custom = 47 used → 3 overrideable slots.
+      // The first 3 overrideable tags by priority are EventName, BaseRef, HeadRef (RefName, RunId, RefType,
+      // Job, TriggeringActor must be dropped).
+      const customTagsObj: Record<string, string> = {};
+      for (let i = 0; i < 40; i++) {
+        customTagsObj[`Custom${i}`] = `value${i}`;
+      }
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'custom-tags': JSON.stringify(customTagsObj),
+        }),
+      );
+      await run();
+      const tags = mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input.Tags ?? [];
+      const tagKeys = tags.map((t) => t.Key);
+      expect(tags).toHaveLength(50);
+      expect(tagKeys).toContain('Branch');
+      expect(tagKeys).toContain('EventName');
+      expect(tagKeys).toContain('BaseRef');
+      expect(tagKeys).toContain('HeadRef');
+      expect(tagKeys).not.toContain('RefName');
+      expect(tagKeys).not.toContain('RunId');
+      expect(tagKeys).not.toContain('RefType');
+      expect(tagKeys).not.toContain('Job');
+      expect(tagKeys).not.toContain('TriggeringActor');
+    });
+    it('overridden overrideable tags free a slot for a lower-priority overrideable tag', {}, async () => {
+      // Same 40-custom-tag scenario as above, but one of the customs overrides BaseRef.
+      // BaseRef no longer competes for the overrideable budget, so the next-priority overrideable (RefName) gets in.
+      const customTagsObj: Record<string, string> = { BaseRef: 'release/2026' };
+      for (let i = 0; i < 39; i++) {
+        customTagsObj[`Custom${i}`] = `value${i}`;
+      }
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'custom-tags': JSON.stringify(customTagsObj),
+        }),
+      );
+      await run();
+      const tags = mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input.Tags ?? [];
+      const tagKeys = tags.map((t) => t.Key);
+      expect(tags).toHaveLength(50);
+      expect(tagKeys).toContain('Branch');
+      expect(tagKeys).toContain('EventName');
+      expect(tagKeys).toContain('BaseRef');
+      expect(tagKeys).toContain('HeadRef');
+      expect(tagKeys).toContain('RefName');
+      expect(tagKeys).not.toContain('RunId');
+    });
+    it('rejects custom-tags that would exceed the session-tag limit on their own', {}, async () => {
+      // 7 protected + 44 custom = 51, which is over 50 even with zero overrideable tags.
+      const customTagsObj: Record<string, string> = {};
+      for (let i = 0; i < 44; i++) {
+        customTagsObj[`Custom${i}`] = `value${i}`;
+      }
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'custom-tags': JSON.stringify(customTagsObj),
+        }),
+      );
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining('would exceed the AWS limit of 50'));
+      expect(mockedSTSClient.commandCalls(AssumeRoleCommand)).toHaveLength(0);
+    });
+    it('drops transitive-tag-keys entries that refer to evicted overrideable tags', {}, async () => {
+      // Force eviction of all overrideable tags below EventName/BaseRef/HeadRef. The user transitive-tags
+      // RunId (which gets evicted) and Repository (which is protected and stays). The TransitiveTagKeys
+      // payload must include only the keys that actually appear in Tags.
+      const customTagsObj: Record<string, string> = {};
+      for (let i = 0; i < 40; i++) {
+        customTagsObj[`Custom${i}`] = `value${i}`;
+      }
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'custom-tags': JSON.stringify(customTagsObj),
+        }),
+      );
+      vi.mocked(core.getMultilineInput).mockImplementation((name: string) => {
+        if (name === 'transitive-tag-keys') return ['Repository', 'RunId'];
+        return [];
+      });
+      await run();
+      const callInput = mockedSTSClient.commandCalls(AssumeRoleCommand)[0].args[0].input;
+      const tagKeys = (callInput.Tags ?? []).map((t) => t.Key);
+      expect(tagKeys).not.toContain('RunId');
+      expect(callInput.TransitiveTagKeys).toEqual(['Repository']);
     });
   });
 
@@ -1283,6 +1482,8 @@ describe('Configure AWS Credentials', {}, () => {
     it('omits tokens when env vars are unset, with no warning', async () => {
       vi.resetModules();
       delete process.env.GITHUB_ACTION;
+      delete process.env.GITHUB_RUN_ID;
+      delete process.env.GITHUB_RUN_ATTEMPT;
       const ua = await getCustomUserAgent();
       expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
       expect(core.warning).not.toHaveBeenCalled();
@@ -1314,6 +1515,8 @@ describe('Configure AWS Credentials', {}, () => {
     it('rejects GITHUB_ACTION containing whitespace or other characters', async () => {
       vi.resetModules();
       process.env.GITHUB_ACTION = 'has space';
+      delete process.env.GITHUB_RUN_ID;
+      delete process.env.GITHUB_RUN_ATTEMPT;
       const ua = await getCustomUserAgent();
       expect(ua).toEqual([['configure-aws-credentials-for-github-actions']]);
       expect(core.warning).toHaveBeenCalledWith('GITHUB_ACTION has unexpected format; omitting from User-Agent');
