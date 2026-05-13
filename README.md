@@ -1,6 +1,6 @@
 # Configure AWS Credentials
 
-Authenticate to AWS in GitHub Actions! Works especially well with
+Authenticate to AWS in GitHub Actions (and others)! Works especially well with
 [AWS Secrets Manager][secretsmanager].
 
 [secretsmanager]:
@@ -611,6 +611,24 @@ For further information on OIDC and GitHub Actions, please see:
 - [GitHub docs: About security hardening with OpenID Connect](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
 - [GitHub docs: Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 - [GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
+
+## Compatibility with non-GitHub Actions environments
+
+This action has been sucessfully tested with
+Codeberg/[Forgejo Actions](https://forgejo.org/docs/next/user/actions/overview/)
+and should be generally compatible with any CI/CD environment that sets the
+correct `GITHUB_` environment variables. For use with Foregejo, please review
+the [runner differences with GitHub's action runners](https://forgejo.org/docs/next/user/actions/github-actions/#known-list-of-differences).
+The main difference to be aware of is that Forgejo uses the
+`enable-openid-connect` flag to enable OIDC instad of GitHub's
+`id-token: write` permission. Forgejo also uses a slightly different syntax for
+the workflow definition file, omitting some subkeys.
+
+For OIDC use, the issuer name for the IAM IdP for GitHub Actions is
+`token.actions.githubusercontent.com`. For Forgejo Actions it is
+`[foregejo instance url]/api/actions`. As an example, Codeberg would use
+`codeberg.org/api/actions` as the issuer URL when configuring the IAM Identity
+Provider. The audience would still be `sts.amazonaws.com` by default.
 
 ## Examples
 
