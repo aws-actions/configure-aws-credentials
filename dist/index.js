@@ -71277,6 +71277,25 @@ var TAG_VALUE_REGEX = /^[\p{L}\p{Z}\p{N}_.:/=+\-@]*$/u;
 var MAX_TAG_KEY_LENGTH = 128;
 var MAX_TAG_VALUE_LENGTH2 = 256;
 var MAX_SESSION_TAGS = 50;
+var PROTECTED_TAG_SOURCES = [
+  { key: "Repository", envVar: "GITHUB_REPOSITORY" },
+  { key: "Workflow", envVar: "GITHUB_WORKFLOW" },
+  { key: "Action", envVar: "GITHUB_ACTION" },
+  { key: "Actor", envVar: "GITHUB_ACTOR" },
+  { key: "Commit", envVar: "GITHUB_SHA" },
+  { key: "Branch", envVar: "GITHUB_REF" }
+];
+var OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY = [
+  { key: "EventName", envVar: "GITHUB_EVENT_NAME" },
+  { key: "BaseRef", envVar: "GITHUB_BASE_REF" },
+  { key: "HeadRef", envVar: "GITHUB_HEAD_REF" },
+  { key: "RefName", envVar: "GITHUB_REF_NAME" },
+  { key: "RunId", envVar: "GITHUB_RUN_ID" },
+  { key: "RefType", envVar: "GITHUB_REF_TYPE" },
+  { key: "Job", envVar: "GITHUB_JOB" },
+  { key: "TriggeringActor", envVar: "GITHUB_TRIGGERING_ACTOR" }
+];
+var PROTECTED_TAG_KEYS = /* @__PURE__ */ new Set(["GitHub", ...PROTECTED_TAG_SOURCES.map((s) => s.key)]);
 function parseAndValidateCustomTags(customTags, existingTags) {
   let parsed;
   try {
@@ -71287,7 +71306,6 @@ function parseAndValidateCustomTags(customTags, existingTags) {
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error("custom-tags: input must be a JSON object (not an array or primitive)");
   }
-  const reservedKeys = new Set(existingTags.map((tag2) => tag2.Key));
   const newTags = [];
   for (const [key, value] of Object.entries(parsed)) {
     if (typeof value === "object") {
@@ -71314,9 +71332,9 @@ function parseAndValidateCustomTags(customTags, existingTags) {
         `custom-tags: value for key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`
       );
     }
-    if (reservedKeys.has(key)) {
+    if (PROTECTED_TAG_KEYS.has(key)) {
       throw new Error(
-        `custom-tags: key '${key}' conflicts with a default session tag set by this action and cannot be overridden`
+        `custom-tags: key '${key}' conflicts with a protected session tag set by this action and cannot be overridden`
       );
     }
     newTags.push({ Key: key, Value: stringValue });
@@ -71348,24 +71366,26 @@ async function assumeRole(params) {
   if (!GITHUB_REPOSITORY || !GITHUB_WORKFLOW || !GITHUB_ACTION || !GITHUB_ACTOR || !GITHUB_SHA || !GITHUB_WORKSPACE) {
     throw new Error("Missing required environment variables. Are you running in GitHub Actions?");
   }
-  const tagArray = [
-    { Key: "GitHub", Value: "Actions" },
-    { Key: "Repository", Value: GITHUB_REPOSITORY },
-    { Key: "Workflow", Value: sanitizeGitHubVariables(GITHUB_WORKFLOW) },
-    { Key: "Action", Value: GITHUB_ACTION },
-    { Key: "Actor", Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
-    { Key: "Commit", Value: GITHUB_SHA }
-  ];
-  if (process.env.GITHUB_REF) {
-    tagArray.push({
-      Key: "Branch",
-      Value: sanitizeGitHubVariables(process.env.GITHUB_REF)
-    });
+  const protectedTags = [{ Key: "GitHub", Value: "Actions" }];
+  for (const { key, envVar } of PROTECTED_TAG_SOURCES) {
+    const value = process.env[envVar];
+    if (value) {
+      protectedTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
+    }
   }
-  if (customTags) {
-    const parsed = parseAndValidateCustomTags(customTags, tagArray);
-    tagArray.push(...parsed);
+  const parsedCustomTags = customTags ? parseAndValidateCustomTags(customTags, protectedTags) : [];
+  const customTagKeys = new Set(parsedCustomTags.map((t) => t.Key));
+  const availableOverrideableSlots = MAX_SESSION_TAGS - protectedTags.length - parsedCustomTags.length;
+  const overrideableTags = [];
+  for (const { key, envVar } of OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY) {
+    if (overrideableTags.length >= availableOverrideableSlots) break;
+    if (customTagKeys.has(key)) continue;
+    const value = process.env[envVar];
+    if (value) {
+      overrideableTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
+    }
   }
+  const tagArray = [...protectedTags, ...overrideableTags, ...parsedCustomTags];
   const tags = roleSkipSessionTagging ? void 0 : tagArray;
   if (!tags) {
     debug("Role session tagging has been skipped.");

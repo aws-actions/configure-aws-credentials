@@ -93,6 +93,15 @@ const envs = {
   GITHUB_SHA: 'MY-COMMIT-ID',
   GITHUB_WORKSPACE: '/home/github',
   GITHUB_ACTIONS: 'true',
+  GITHUB_REF: 'refs/pull/42/merge',
+  GITHUB_EVENT_NAME: 'pull_request',
+  GITHUB_RUN_ID: '16412345678',
+  GITHUB_JOB: 'build',
+  GITHUB_REF_NAME: 'feature-branch',
+  GITHUB_REF_TYPE: 'branch',
+  GITHUB_BASE_REF: 'main',
+  GITHUB_HEAD_REF: 'feature-branch',
+  GITHUB_TRIGGERING_ACTOR: 'MY-USERNAME[bot]',
 };
 
 const outputs = {
