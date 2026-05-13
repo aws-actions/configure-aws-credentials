@@ -87,6 +87,32 @@ const MAX_TAG_KEY_LENGTH = 128;
 const MAX_TAG_VALUE_LENGTH = 256;
 const MAX_SESSION_TAGS = 50;
 
+// Identity/audit primitives. Always emitted and cannot be overridden by custom-tags.
+const PROTECTED_TAG_SOURCES: ReadonlyArray<{ key: string; envVar: string }> = [
+  { key: 'Repository', envVar: 'GITHUB_REPOSITORY' },
+  { key: 'Workflow', envVar: 'GITHUB_WORKFLOW' },
+  { key: 'Action', envVar: 'GITHUB_ACTION' },
+  { key: 'Actor', envVar: 'GITHUB_ACTOR' },
+  { key: 'Commit', envVar: 'GITHUB_SHA' },
+  { key: 'Branch', envVar: 'GITHUB_REF' },
+];
+
+// Convenience metadata. Custom-tags may override (suppresses the default for that key).
+// Listed in priority order; lower-priority entries are dropped first if the user's custom-tags
+// would push the total above MAX_SESSION_TAGS.
+const OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY: ReadonlyArray<{ key: string; envVar: string }> = [
+  { key: 'EventName', envVar: 'GITHUB_EVENT_NAME' },
+  { key: 'BaseRef', envVar: 'GITHUB_BASE_REF' },
+  { key: 'HeadRef', envVar: 'GITHUB_HEAD_REF' },
+  { key: 'RefName', envVar: 'GITHUB_REF_NAME' },
+  { key: 'RunId', envVar: 'GITHUB_RUN_ID' },
+  { key: 'RefType', envVar: 'GITHUB_REF_TYPE' },
+  { key: 'Job', envVar: 'GITHUB_JOB' },
+  { key: 'TriggeringActor', envVar: 'GITHUB_TRIGGERING_ACTOR' },
+];
+
+const PROTECTED_TAG_KEYS = new Set<string>(['GitHub', ...PROTECTED_TAG_SOURCES.map((s) => s.key)]);
+
 export function parseAndValidateCustomTags(customTags: string, existingTags: Tag[]): Tag[] {
   let parsed: unknown;
   try {
@@ -99,7 +125,6 @@ export function parseAndValidateCustomTags(customTags: string, existingTags: Tag
     throw new Error('custom-tags: input must be a JSON object (not an array or primitive)');
   }
 
-  const reservedKeys = new Set(existingTags.map((tag) => tag.Key));
   const newTags: Tag[] = [];
 
   for (const [key, value] of Object.entries(parsed)) {
@@ -129,9 +154,9 @@ export function parseAndValidateCustomTags(customTags: string, existingTags: Tag
         `custom-tags: value for key '${key}' contains invalid characters. Allowed: unicode letters, digits, spaces, and _.:/=+-@`,
       );
     }
-    if (reservedKeys.has(key)) {
+    if (PROTECTED_TAG_KEYS.has(key)) {
       throw new Error(
-        `custom-tags: key '${key}' conflicts with a default session tag set by this action and cannot be overridden`,
+        `custom-tags: key '${key}' conflicts with a protected session tag set by this action and cannot be overridden`,
       );
     }
 
@@ -170,27 +195,31 @@ export async function assumeRole(params: assumeRoleParams) {
     throw new Error('Missing required environment variables. Are you running in GitHub Actions?');
   }
 
-  // Load role session tags
-  const tagArray: Tag[] = [
-    { Key: 'GitHub', Value: 'Actions' },
-    { Key: 'Repository', Value: GITHUB_REPOSITORY },
-    { Key: 'Workflow', Value: sanitizeGitHubVariables(GITHUB_WORKFLOW) },
-    { Key: 'Action', Value: GITHUB_ACTION },
-    { Key: 'Actor', Value: sanitizeGitHubVariables(GITHUB_ACTOR) },
-    { Key: 'Commit', Value: GITHUB_SHA },
-  ];
-
-  if (process.env.GITHUB_REF) {
-    tagArray.push({
-      Key: 'Branch',
-      Value: sanitizeGitHubVariables(process.env.GITHUB_REF),
-    });
+  // Build session tags. Values are sanitized because the AWS tag value spec is more
+  // restrictive than permissible characters in environment variables.
+  const protectedTags: Tag[] = [{ Key: 'GitHub', Value: 'Actions' }];
+  for (const { key, envVar } of PROTECTED_TAG_SOURCES) {
+    const value = process.env[envVar];
+    if (value) {
+      protectedTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
+    }
   }
 
-  if (customTags) {
-    const parsed = parseAndValidateCustomTags(customTags, tagArray);
-    tagArray.push(...parsed);
+  const parsedCustomTags: Tag[] = customTags ? parseAndValidateCustomTags(customTags, protectedTags) : [];
+  const customTagKeys = new Set(parsedCustomTags.map((t) => t.Key));
+
+  const availableOverrideableSlots = MAX_SESSION_TAGS - protectedTags.length - parsedCustomTags.length;
+  const overrideableTags: Tag[] = [];
+  for (const { key, envVar } of OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY) {
+    if (overrideableTags.length >= availableOverrideableSlots) break;
+    if (customTagKeys.has(key)) continue;
+    const value = process.env[envVar];
+    if (value) {
+      overrideableTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
+    }
   }
+
+  const tagArray: Tag[] = [...protectedTags, ...overrideableTags, ...parsedCustomTags];
 
   const tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!tags) {
