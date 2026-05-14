@@ -83,6 +83,14 @@ const inputs = {
     'output-env-credentials': 'false',
     'output-credentials': 'true',
   },
+  IAM_ASSUMEROLE_NO_ENV_INPUTS: {
+    'aws-access-key-id': 'MYAWSACCESSKEYID',
+    'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
+    'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+    'aws-region': 'fake-region-1',
+    'output-env-credentials': 'false',
+    'output-credentials': 'true',
+  },
 };
 
 const envs = {

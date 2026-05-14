@@ -210,11 +210,16 @@ export async function run() {
       // Validate that the SDK can actually pick up credentials.
       // This validates cases where this action is using existing environment credentials,
       // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
-      await withRetry(
-        () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
-        'validateCredentials',
-      );
-      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
+      // Skip when output-env-credentials is false: input IAM keys were not written to env, so
+      // the default chain would resolve to ambient runner credentials and the access-key check
+      // would spuriously fail (see #1554).
+      if (outputEnvCredentials) {
+        await withRetry(
+          () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
+          'validateCredentials',
+        );
+        sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
+      }
     }
     if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
       core.warning(
@@ -247,13 +252,12 @@ export async function run() {
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
-      // We need to validate the credentials in 2 of our use-cases
-      // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
-      //  is set to `true` then we are NOT in a self-hosted runner.
-      // Second: Customer provided credentials manually (IAM User keys stored in GH Secrets)
-      // If we are using a profile, don't validate credentials yet (since they most likely won't be in the environment).
-      // Wait until after creds are written to the profile file to try validation.
-      if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile) {
+      // Validate that the SDK can pick up the assumed-role credentials from the environment.
+      // Skip when output-env-credentials is false: the credentials were never written to env,
+      // so the default credential provider chain would resolve to ambient runner credentials
+      // (e.g. an EC2 instance profile) and the access-key-id check would spuriously fail.
+      // Skip when using a profile: validation runs after the profile file is written below.
+      if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile && outputEnvCredentials) {
         await withRetry(
           () =>
             credentialsClient.validateCredentials(
