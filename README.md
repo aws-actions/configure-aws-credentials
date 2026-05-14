@@ -571,41 +571,41 @@ aws iam create-open-id-connect-provider \
 ### Claims and scoping permissions
 
 To align with the Amazon IAM best practice of [granting least
-privilege][least-privilege],
+privilege][least-privilege], the assume role policy document should contain a
+[`Condition`](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html)
+that restricts which workflows can assume the role. Without any condition, any
+GitHub user or repository could potentially assume the role.
+
+GitHub provides a number of additional claims in the OIDC token that you can use
+in your IAM policies to scope down permissions. Early versions of this action
+only supported the `sub` and `aud` claims, but AWS IAM and GitHub have since
+added support for `sub` claim customization and a variety of additional
+claims ([1][gh-blog-oidc], [2][sub-claim-custom]).
+
+> **Warning:** Avoid `ForAllValues:` in `Allow` statements. These operators
+> return true when the claim is absent or misspelled, which can lead to
+> uninended access. Instead, use `StringEquals` or `StringLike` operators to
+> check for specific claim values.
 
 [least-privilege]:
   https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege
+[gh-blog-oidc]:
+  https://aws.amazon.com/about-aws/whats-new/2026/01/aws-sts-supports-validation-identity-provider-claims/
+[sub-claim-custom]:
+  https://docs.github.com/en/rest/actions/oidc?apiVersion=2026-03-10
 
-the assume role policy document should contain a
-[`Condition`](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html)
-that specifies a subject (`sub`) allowed to assume the role.
-[GitHub also recommends](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-trust-conditions-on-cloud-roles-using-oidc-claims)
-filtering for the correct audience (`aud`). See
-[AWS IAM documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#condition-keys-wif)
-on which claims you can filter for in your trust policies.
+#### Inspecting the token
 
-Without a subject (`sub`) condition, any GitHub user or repository could
-potentially assume the role. The subject can be scoped to a GitHub organization
-and repository as shown in the CloudFormation template. However, scoping it down
-to your org and repo may cause the role assumption to fail in some cases. See
-[Example subject claims](https://docs.github.com/en/actions/reference/security/oidc#example-subject-claims)
-for specific details on what the subject value will be depending on your
-workflow. You can also
-[customize your subject claim](https://docs.github.com/en/actions/reference/security/oidc#customizing-the-token-claims)
-if you want full control over the information you can filter for in your trust
-policy. If you aren't sure what your subject (`sub`) key is, you can add the
+If you aren't sure what claim values your workflow is producing, the
 [`actions-oidc-debugger`](https://github.com/github/actions-oidc-debugger)
-action to your workflow to see the value of the subject (`sub`) key, as well as
-other claims.
+action will print the decoded JWT payload. Run it in a private repository
+only — the token itself is short-lived but the claim values may be sensitive.
 
-Additional claim conditions can be added for higher specificity as explained in
-the [GitHub documentation][gh-oidc-hardening].
+See the GitHub [security-hardening guide][gh-oidc-hardening] for further
+discussion of trust conditions and threat modeling.
 
 [gh-oidc-hardening]:
   https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect
-
-Due to implementation details, not every OIDC claim is presently supported by
-IAM.
 
 ### Further information about OIDC
 
