@@ -736,6 +736,13 @@ This example shows that you can reference the fetched credentials as outputs if
 the `aws-session-token` input in a situation where session tokens are fetched
 and passed to this action.
 
+If you only want the credentials available as _step outputs_ and not exported to
+the environment (for example, on a self-hosted runner where you do not want the
+assumed-role credentials to shadow an existing EC2 instance profile), pair
+`output-credentials: true` with `output-env-credentials: false`. In that mode,
+the action does not run its post-credential SDK-pickup validation step, since
+the credentials were never written to the environment.
+
 ### Configure multiple AWS profiles in a single workflow
 
 ```yaml
