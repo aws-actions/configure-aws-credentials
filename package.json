@@ -1,7 +1,7 @@
 {
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
-  "version": "6.1.1",
+  "version": "6.2.0",
   "scripts": {
     "build": "tsc",
     "lint": "biome check --error-on-warnings ./src ./test && markdownlint -i node_modules -i CHANGELOG.md '**/*.md'",
