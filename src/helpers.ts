@@ -37,6 +37,7 @@ export function translateEnvVariables() {
     'AUDIENCE',
     'HTTP_PROXY',
     'MASK_AWS_ACCOUNT_ID',
+    'MASK_AWS_ACCESS_KEY_ID',
     'ROLE_DURATION_SECONDS',
     'ROLE_EXTERNAL_ID',
     'ROLE_SESSION_NAME',
@@ -70,8 +71,9 @@ export function exportCredentials(
   creds?: Partial<Credentials>,
   outputCredentials?: boolean,
   outputEnvCredentials?: boolean,
+  maskAwsAccessKeyId = true,
 ) {
-  if (creds?.AccessKeyId) {
+  if (maskAwsAccessKeyId && creds?.AccessKeyId) {
     core.setSecret(creds.AccessKeyId);
   }
 

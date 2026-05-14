@@ -80,6 +80,14 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(core.exportVariable).toHaveBeenCalledTimes(0);
   });
 
+  it("won't mask access key id when told not to", {}, () => {
+    helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'secret', SessionToken: 'token' }, true, true, false);
+    expect(core.setSecret).not.toHaveBeenCalledWith('test');
+    expect(core.setSecret).toHaveBeenCalledWith('secret');
+    expect(core.setSecret).toHaveBeenCalledWith('token');
+    expect(core.setSecret).toHaveBeenCalledTimes(2);
+  });
+
   it('verifies credentials without special characters', {}, () => {
     expect(helpers.verifyKeys({ AccessKeyId: 'AKIATEST', SecretAccessKey: 'secretkey' })).toBe(true);
     expect(helpers.verifyKeys({ AccessKeyId: 'AKIA!@#$', SecretAccessKey: 'secret' })).toBe(false);

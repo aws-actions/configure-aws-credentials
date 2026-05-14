@@ -49,6 +49,9 @@ inputs:
   mask-aws-account-id:
     description: Whether to mask the AWS account ID for these credentials as a secret value. By default the account ID will not be masked
     required: false
+  mask-aws-access-key-id:
+    description: Whether to mask the AWS access key ID for these credentials as a secret value. Defaults to true.
+    required: false
   role-duration-seconds:
     description: Role duration in seconds. Default is one hour.
     required: false

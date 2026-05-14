@@ -36,6 +36,7 @@ export async function run() {
     const roleToAssume = core.getInput('role-to-assume', { required: false });
     const audience = core.getInput('audience', { required: false });
     const maskAccountId = getBooleanInput('mask-aws-account-id', { required: false });
+    const maskAwsAccessKeyId = getBooleanInput('mask-aws-access-key-id', { required: false, default: true });
     const roleExternalId = core.getInput('role-external-id', { required: false });
     const webIdentityTokenFile = core.getInput('web-identity-token-file', { required: false });
     const roleDuration =
@@ -190,7 +191,12 @@ export async function run() {
       // Plus, in the assume role case, if the AssumeRole call fails, we want
       // the source credentials to already be masked as secrets
       // in any error messages.
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+      exportCredentials(
+        { AccessKeyId, SecretAccessKey, SessionToken },
+        outputCredentials,
+        outputEnvCredentials,
+        maskAwsAccessKeyId,
+      );
 
       // If using IAM User Credentials, write to profile now so that the assumeRole call can succeed (and also for
       // credential validation before role assumption).
@@ -246,7 +252,7 @@ export async function run() {
         }, 'AssumeRole');
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
+      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials, maskAwsAccessKeyId);
       // We need to validate the credentials in 2 of our use-cases
       // First: self-hosted runners. If the GITHUB_ACTIONS environment variable
       //  is set to `true` then we are NOT in a self-hosted runner.

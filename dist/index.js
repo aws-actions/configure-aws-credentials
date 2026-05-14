@@ -76218,6 +76218,7 @@ function translateEnvVariables() {
     "AUDIENCE",
     "HTTP_PROXY",
     "MASK_AWS_ACCOUNT_ID",
+    "MASK_AWS_ACCESS_KEY_ID",
     "ROLE_DURATION_SECONDS",
     "ROLE_EXTERNAL_ID",
     "ROLE_SESSION_NAME",
@@ -76242,8 +76243,8 @@ function translateEnvVariables() {
     }
   }
 }
-function exportCredentials(creds, outputCredentials, outputEnvCredentials) {
-  if (creds?.AccessKeyId) {
+function exportCredentials(creds, outputCredentials, outputEnvCredentials, maskAwsAccessKeyId = true) {
+  if (maskAwsAccessKeyId && creds?.AccessKeyId) {
     setSecret(creds.AccessKeyId);
   }
   if (creds?.SecretAccessKey) {
@@ -78041,6 +78042,7 @@ async function run() {
     const roleToAssume = getInput("role-to-assume", { required: false });
     const audience = getInput("audience", { required: false });
     const maskAccountId = getBooleanInput("mask-aws-account-id", { required: false });
+    const maskAwsAccessKeyId = getBooleanInput("mask-aws-access-key-id", { required: false, default: true });
     const roleExternalId = getInput("role-external-id", { required: false });
     const webIdentityTokenFile = getInput("web-identity-token-file", { required: false });
     const roleDuration = Number.parseInt(getInput("role-duration-seconds", { required: false })) || DEFAULT_ROLE_DURATION;
@@ -78143,7 +78145,12 @@ async function run() {
       if (!SecretAccessKey) {
         throw new Error("'aws-secret-access-key' must be provided if 'aws-access-key-id' is provided");
       }
-      exportCredentials({ AccessKeyId, SecretAccessKey, SessionToken }, outputCredentials, outputEnvCredentials);
+      exportCredentials(
+        { AccessKeyId, SecretAccessKey, SessionToken },
+        outputCredentials,
+        outputEnvCredentials,
+        maskAwsAccessKeyId
+      );
       if (awsProfile) {
         writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
       }
@@ -78188,7 +78195,7 @@ async function run() {
         }, "AssumeRole");
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
-      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
+      exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials, maskAwsAccessKeyId);
       if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile) {
         await withRetry(
           () => credentialsClient.validateCredentials(
