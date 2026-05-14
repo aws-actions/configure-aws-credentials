@@ -151,6 +151,29 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  // Regression test for #1554: IAM keys + role-to-assume on a self-hosted runner
+  // with ambient credentials (e.g. an EC2 instance profile), and output-env-credentials=false.
+  // The post-assume-role validation must be skipped, otherwise the SDK loads the runner's
+  // ambient access key (which doesn't match the assumed role's) and the action fails.
+  describe('AssumeRole with IAM LTC and output-env-credentials=false', {}, () => {
+    it('does not validate against ambient credentials', async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_NO_ENV_INPUTS));
+      mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // Simulate the runner's ambient instance-profile credentials.
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'AMBIENTINSTANCEPROFILEID',
+      });
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.exportVariable).not.toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith('aws-access-key-id', 'STSAWSACCESSKEYID');
+      expect(core.setOutput).toHaveBeenCalledWith('aws-secret-access-key', 'STSAWSSECRETACCESSKEY');
+      expect(core.setOutput).toHaveBeenCalledWith('aws-session-token', 'STSAWSSESSIONTOKEN');
+    });
+  });
+
   describe('AssumeRole with WebIdentityTokeFile', {}, () => {
     beforeEach(() => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.WEBIDENTITY_TOKEN_FILE_INPUTS));

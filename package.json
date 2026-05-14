@@ -4,8 +4,8 @@
   "version": "6.1.1",
   "scripts": {
     "build": "tsc",
-    "lint": "biome check --error-on-warnings ./src && markdownlint -i node_modules -i CHANGELOG.md '**/*.md'",
-    "lint:fix": "biome check --write ./src && markdownlint -i node_modules -i CHANGELOG.md -f '**/*.md'",
+    "lint": "biome check --error-on-warnings ./src ./test && markdownlint -i node_modules -i CHANGELOG.md '**/*.md'",
+    "lint:fix": "biome check --write ./src ./test && markdownlint -i node_modules -i CHANGELOG.md -f '**/*.md'",
     "package": "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/index.js && esbuild src/cleanup/index.ts --bundle --platform=node --target=node24 --outfile=dist/cleanup/index.js && npm run license",
     "test": "npm run lint && vitest run && npm run build",
     "clean": "del-cli coverage test-reports node_modules",
