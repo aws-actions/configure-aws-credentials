@@ -574,7 +574,7 @@ To align with the Amazon IAM best practice of [granting least
 privilege][least-privilege], the assume role policy document should contain a
 [`Condition`](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html)
 that restricts which workflows can assume the role. Without any condition, any
-GitHub user or repository could potentially assume the role. 
+GitHub user or repository could potentially assume the role.
 
 GitHub provides a number of additional claims in the OIDC token that you can use
 in your IAM policies to scope down permissions. Early versions of this action
