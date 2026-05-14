@@ -43,6 +43,7 @@ async function assumeRoleWithWebIdentityTokenFile(
   try {
     const webIdentityToken = fs.readFileSync(webIdentityTokenFilePath, 'utf8');
     delete params.Tags;
+    delete params.TransitiveTagKeys;
     const creds = await client.send(
       new AssumeRoleWithWebIdentityCommand({
         ...params,
