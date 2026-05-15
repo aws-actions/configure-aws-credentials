@@ -77,10 +77,20 @@ export async function run() {
       }, globalTimeout * 1000);
     }
 
-    if (forceSkipOidc && roleToAssume && !AccessKeyId && !webIdentityTokenFile) {
+    // Container-sourced credentials are exposed by the AWS SDK default chain via these env vars. They count as a valid
+    // non-OIDC source for the force-skip-oidc guard.
+    const hasContainerCredentials = !!(
+      process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI || process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI
+    );
+
+    if (forceSkipOidc && roleToAssume && !AccessKeyId && !webIdentityTokenFile && !hasContainerCredentials) {
       throw new Error(
-        "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id' or 'web-identity-token-file' must be set",
+        "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id', 'web-identity-token-file', or container credentials must be available",
       );
+    }
+
+    if (forceSkipOidc && hasContainerCredentials && !AccessKeyId && !webIdentityTokenFile) {
+      core.info('Using container credentials from AWS_CONTAINER_CREDENTIALS_* environment variables');
     }
 
     if (specialCharacterWorkaround) {

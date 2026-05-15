@@ -202,6 +202,18 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setOutput).toHaveBeenCalledTimes(2);
       expect(core.setFailed).not.toHaveBeenCalled();
     });
+    it('does not send Tags or TransitiveTagKeys to AssumeRoleWithWebIdentity', async () => {
+      // AssumeRoleWithWebIdentity reads session tags from JWT claims, not the request.
+      // Both fields must be stripped before the STS call.
+      vi.mocked(core.getMultilineInput).mockImplementation((name: string) => {
+        if (name === 'transitive-tag-keys') return ['Repository'];
+        return [];
+      });
+      await run();
+      const callInput = mockedSTSClient.commandCalls(AssumeRoleWithWebIdentityCommand)[0].args[0].input;
+      expect(callInput.Tags).toBeUndefined();
+      expect(callInput.TransitiveTagKeys).toBeUndefined();
+    });
   });
 
   describe('Assume existing role', {}, () => {
@@ -731,7 +743,70 @@ describe('Configure AWS Credentials', {}, () => {
 
       await run();
       expect(core.setFailed).toHaveBeenCalledWith(
-        "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id' or 'web-identity-token-file' must be set",
+        "If 'force-skip-oidc' is true and 'role-to-assume' is set, 'aws-access-key-id', 'web-identity-token-file', or container credentials must be available",
+      );
+    });
+
+    it('uses container credentials with force-skip-oidc and role-to-assume (CodeBuild/ECS runner, #1546)', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+          'aws-region': 'fake-region-1',
+          'force-skip-oidc': 'true',
+        }),
+      );
+      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // Simulate the container-metadata creds the SDK would pull from 169.254.170.2.
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'CONTAINERAWSACCESSKEYID',
+      });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = '/v2/credentials/abc-123';
+
+      await run();
+      expect(core.getIDToken).not.toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith(
+        'Using container credentials from AWS_CONTAINER_CREDENTIALS_* environment variables',
+      );
+      expect(core.info).toHaveBeenCalledWith('Assuming role with user credentials');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('uses container credentials via AWS_CONTAINER_CREDENTIALS_FULL_URI', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+          'aws-region': 'fake-region-1',
+          'force-skip-oidc': 'true',
+        }),
+      );
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
+        accessKeyId: 'CONTAINERAWSACCESSKEYID',
+      });
+      process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI = 'http://169.254.170.23/credentials';
+
+      await run();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it('still errors when container env vars are absent and no other creds are provided', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
+          'aws-region': 'fake-region-1',
+          'force-skip-oidc': 'true',
+        }),
+      );
+      // Neither AWS_CONTAINER_CREDENTIALS_RELATIVE_URI nor _FULL_URI is set (mocks.envs has neither).
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        expect.stringContaining("'aws-access-key-id', 'web-identity-token-file', or container credentials"),
       );
     });
 
