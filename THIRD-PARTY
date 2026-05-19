@@ -1711,7 +1711,7 @@ The following npm packages may be included in this product:
  - @smithy/middleware-endpoint@4.4.32
  - @smithy/middleware-stack@4.2.14
  - @smithy/node-http-handler@4.7.3
- - @smithy/property-provider@4.3.1
+ - @smithy/property-provider@4.3.3
  - @smithy/shared-ini-file-loader@4.4.9
  - @smithy/signature-v4@5.4.3
  - @smithy/util-base64@4.3.2
