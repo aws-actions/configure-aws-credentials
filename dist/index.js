@@ -78155,13 +78155,11 @@ async function run() {
       sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
     }
     if (AccessKeyId || roleChaining) {
-      if (outputEnvCredentials) {
-        await withRetry(
-          () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
-          "validateCredentials"
-        );
-        sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
-      }
+      await withRetry(
+        () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
+        "validateCredentials"
+      );
+      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
     }
     if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
       warning(
@@ -78191,7 +78189,7 @@ async function run() {
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
-      if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile && outputEnvCredentials) {
+      if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile) {
         await withRetry(
           () => credentialsClient.validateCredentials(
             roleCredentials.Credentials?.AccessKeyId,
