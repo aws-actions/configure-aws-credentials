@@ -107,13 +107,13 @@ describe('Configure AWS Credentials helpers', {}, () => {
   it('handles getBooleanInput correctly', {}, () => {
     vi.spyOn(core, 'getInput').mockReturnValue('true');
     expect(helpers.getBooleanInput('test')).toBe(true);
-    
+
     vi.spyOn(core, 'getInput').mockReturnValue('false');
     expect(helpers.getBooleanInput('test')).toBe(false);
-    
+
     vi.spyOn(core, 'getInput').mockReturnValue('');
     expect(helpers.getBooleanInput('test', { default: true })).toBe(true);
-    
+
     vi.spyOn(core, 'getInput').mockReturnValue('invalid');
     expect(() => helpers.getBooleanInput('test')).toThrow();
   });
