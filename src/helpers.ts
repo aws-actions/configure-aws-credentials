@@ -189,7 +189,6 @@ export async function retryAndBackoff<T>(
   maxRetries = 12,
   retries = 0,
   base = 50,
-  label?: string,
 ): Promise<T> {
   try {
     return await fn();
@@ -201,21 +200,20 @@ export async function retryAndBackoff<T>(
     // It's retryable, so sleep and retry.
     const delay = Math.random() * (2 ** retries * base);
     const nextRetry = retries + 1;
-    const opName = label ? ` ${label}` : '';
 
-    core.info(
-      `Retry${opName}: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
+    core.debug(
+      `retryAndBackoff: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
         `Retrying after ${Math.floor(delay)}ms.`,
     );
 
     await sleep(delay);
 
     if (nextRetry >= maxRetries) {
-      core.info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
+      core.debug('retryAndBackoff: reached max retries; giving up.');
       throw err;
     }
 
-    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base, label);
+    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base);
   }
 }
 
