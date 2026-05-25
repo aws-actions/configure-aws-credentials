@@ -13,17 +13,23 @@ import { run } from '../src/index';
 import * as profileManager from '../src/profileManager';
 import mocks from './mockinputs.test';
 
-vi.mock('@actions/core');
 vi.mock('node:fs');
 
 const mockedSTSClient = mockClient(STSClient);
 
 describe('Configure AWS Credentials', {}, () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    // Reset mock state
+    vi.restoreAllMocks();
     mockedSTSClient.reset();
-    vi.mocked(core.getInput).mockReturnValue('');
-    vi.mocked(core.getMultilineInput).mockReturnValue([]);
+    // Mock GitHub Actions core functions
+    vi.spyOn(core, 'exportVariable').mockImplementation((_n, _v) => {});
+    vi.spyOn(core, 'setSecret').mockImplementation((_s) => {});
+    vi.spyOn(core, 'setFailed').mockImplementation((_m) => {});
+    vi.spyOn(core, 'setOutput').mockImplementation((_n, _v) => {});
+    vi.spyOn(core, 'debug').mockImplementation((_m) => {});
+    vi.spyOn(core, 'info').mockImplementation((_m) => {});
+    vi.spyOn(core, 'notice').mockImplementation((_m) => {});
     // Remove any existing environment variables before each test to prevent the
     // SDK from picking them up
     process.env = { ...mocks.envs };
@@ -32,8 +38,8 @@ describe('Configure AWS Credentials', {}, () => {
   describe('GitHub OIDC Authentication', {}, () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
     });
@@ -85,7 +91,7 @@ describe('Configure AWS Credentials', {}, () => {
 
   describe('IAM User Authentication', {}, () => {
     beforeEach(() => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
       vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
@@ -112,7 +118,7 @@ describe('Configure AWS Credentials', {}, () => {
 
   describe('AssumeRole with IAM LTC', {}, () => {
     beforeEach(() => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
       mockedSTSClient.on(AssumeRoleCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY }); // 3 times
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
@@ -146,7 +152,7 @@ describe('Configure AWS Credentials', {}, () => {
 
   describe('AssumeRole with WebIdentityTokeFile', {}, () => {
     beforeEach(() => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.WEBIDENTITY_TOKEN_FILE_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.WEBIDENTITY_TOKEN_FILE_INPUTS));
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       vol.reset();
@@ -181,7 +187,7 @@ describe('Configure AWS Credentials', {}, () => {
       process.env = { ...mocks.envs };
     });
     it('exports environment variables from env variables', async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.EXISTING_ROLE_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.EXISTING_ROLE_INPUTS));
       process.env.AWS_ACCESS_KEY_ID = 'MYAWSACCESSKEYID';
       process.env.AWS_SECRET_ACCESS_KEY = 'MYAWSSECRETACCESSKEY';
       process.env.AWS_SESSION_TOKEN = 'MYAWSSESSIONTOKEN';
@@ -204,7 +210,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).not.toHaveBeenCalled();
     });
     it('exports environment variables from inputs', {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.EXISTING_ROLE_INPUTS,
           'aws-access-key-id': 'MYAWSACCESSKEYID',
@@ -240,14 +246,14 @@ describe('Configure AWS Credentials', {}, () => {
 
   describe('Odd inputs', {}, () => {
     it('fails when github env vars are missing', {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       delete process.env.GITHUB_REPOSITORY;
       delete process.env.GITHUB_SHA;
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
     it('does not fail if GITHUB_REF is missing', {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
       vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
@@ -258,12 +264,12 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).not.toHaveBeenCalled();
     });
     it('fails with an invalid region', {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput({ 'aws-region': '$|<1B1D1 701L37' }));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput({ 'aws-region': '$|<1B1D1 701L37' }));
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
     it('fails if access key id is provided without secret access key', {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'aws-secret-access-key': '' }),
       );
       await run();
@@ -271,14 +277,14 @@ describe('Configure AWS Credentials', {}, () => {
     });
     it('handles improper retry-max-attempts input', {}, async () => {
       // This should mean we retry one time
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'retry-max-attempts': '-1',
           'special-characters-workaround': 'false',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
       mockedSTSClient
@@ -290,27 +296,27 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setFailed).toHaveBeenCalled();
     });
     it('fails if doing OIDC without the ACTIONS_ID_TOKEN_REQUEST_TOKEN', {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
       delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
       await run();
       expect(core.setFailed).toHaveBeenCalled();
     });
     it("gets new creds if told to reuse existing but they're invalid", {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).rejects();
       await run();
       expect(core.notice).toHaveBeenCalledWith('No valid credentials exist. Running as normal.');
     });
     it("doesn't get new creds if there are already valid ones and we said use them", {}, async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.USE_EXISTING_CREDENTIALS_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolves(mocks.outputs.GET_CALLER_IDENTITY);
       await run();
       expect(core.setFailed).not.toHaveBeenCalled();
     });
     it("doesn't export credentials as environment variables if told not to", {}, async () => {
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
       await run();
       expect(core.setSecret).toHaveBeenCalledTimes(3);
@@ -319,8 +325,8 @@ describe('Configure AWS Credentials', {}, () => {
     });
     it('can export creds as step outputs without exporting as env variables', {}, async () => {
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.STEP_BUT_NO_ENV_INPUTS));
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.STEP_BUT_NO_ENV_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
       await run();
       expect(core.setSecret).toHaveBeenCalledTimes(3);
@@ -337,13 +343,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('skips OIDC when force-skip-oidc is true with IAM credentials', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_ASSUMEROLE_INPUTS,
           'force-skip-oidc': 'true',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
@@ -358,13 +364,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('skips OIDC when force-skip-oidc is true with web identity token file', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.WEBIDENTITY_TOKEN_FILE_INPUTS,
           'force-skip-oidc': 'true',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -379,7 +385,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('fails when force-skip-oidc is true but no alternative credentials provided', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           'role-to-assume': 'arn:aws:iam::111111111111:role/MY-ROLE',
           'aws-region': 'fake-region-1',
@@ -395,13 +401,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('allows force-skip-oidc without role-to-assume', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'force-skip-oidc': 'true',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
 
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
@@ -418,13 +424,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('uses OIDC when force-skip-oidc is false (default behavior)', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'force-skip-oidc': 'false',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -436,8 +442,8 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('uses OIDC when force-skip-oidc is not set (default behavior)', async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -449,7 +455,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('works with role chaining when force-skip-oidc is true', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.EXISTING_ROLE_INPUTS,
           'force-skip-oidc': 'true',
@@ -457,7 +463,7 @@ describe('Configure AWS Credentials', {}, () => {
           'aws-secret-access-key': 'MYAWSSECRETACCESSKEY',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
@@ -479,7 +485,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('succeeds when account ID matches allowed list', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'allowed-account-ids': '111111111111',
@@ -497,7 +503,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('succeeds with multiple allowed account IDs when account matches', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'allowed-account-ids': '999999999999,111111111111,222222222222',
@@ -514,7 +520,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('fails when account ID does not match allowed list', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'allowed-account-ids': '999999999999',
@@ -533,7 +539,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('fails when account ID does not match any in multiple allowed accounts', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'allowed-account-ids': '999999999999,888888888888',
@@ -553,7 +559,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('works with assume role when account ID matches', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_ASSUMEROLE_INPUTS,
           'allowed-account-ids': '111111111111',
@@ -572,13 +578,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('works with OIDC when account ID matches', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'allowed-account-ids': '111111111111',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -589,7 +595,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('handles GetCallerIdentity API failure gracefully', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'allowed-account-ids': '111111111111',
@@ -606,7 +612,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('ignores validation when allowed-account-ids is empty', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'allowed-account-ids': '',
@@ -624,7 +630,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('handles whitespace in allowed-account-ids input', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'allowed-account-ids': ' 111111111111 , 222222222222 ',
@@ -643,7 +649,7 @@ describe('Configure AWS Credentials', {}, () => {
 
   describe('Global Timeout Configuration', {}, () => {
     beforeEach(() => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
       vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
@@ -654,8 +660,8 @@ describe('Configure AWS Credentials', {}, () => {
     it('sets timeout when action-timeout-s is provided', async () => {
       const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
       const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
-      const infoSpy = vi.mocked(core.info);
-      vi.mocked(core.getInput).mockImplementation(
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'action-timeout-s': '30',
@@ -672,8 +678,8 @@ describe('Configure AWS Credentials', {}, () => {
 
     it('does not set timeout when action-timeout-s is 0', async () => {
       const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
-      const infoSpy = vi.mocked(core.info);
-      vi.mocked(core.getInput).mockImplementation(
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'action-timeout-s': '0',
@@ -689,7 +695,7 @@ describe('Configure AWS Credentials', {}, () => {
 
     it('does not set timeout when action-timeout-s is not provided', async () => {
       const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
-      const infoSpy = vi.mocked(core.info);
+      const infoSpy = vi.spyOn(core, 'info');
 
       await run();
 
@@ -701,7 +707,7 @@ describe('Configure AWS Credentials', {}, () => {
     it('timeout callback calls setFailed and exits process', async () => {
       const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
       const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'action-timeout-s': '5',
@@ -723,16 +729,16 @@ describe('Configure AWS Credentials', {}, () => {
 
   describe('HTTP Proxy Configuration', {}, () => {
     beforeEach(() => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
     });
 
     it('configures proxy from http-proxy input', async () => {
-      const infoSpy = vi.mocked(core.info);
-      vi.mocked(core.getInput).mockImplementation(
+      const infoSpy = vi.spyOn(core, 'info');
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'http-proxy': 'http://proxy.example.com:8080',
@@ -746,7 +752,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('configures proxy from HTTP_PROXY environment variable', async () => {
-      const infoSpy = vi.mocked(core.info);
+      const infoSpy = vi.spyOn(core, 'info');
       process.env.HTTP_PROXY = 'http://proxy.example.com:8080';
 
       await run();
@@ -756,7 +762,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('configures proxy from HTTPS_PROXY environment variable', async () => {
-      const infoSpy = vi.mocked(core.info);
+      const infoSpy = vi.spyOn(core, 'info');
       process.env.HTTPS_PROXY = 'https://proxy.example.com:8080';
 
       await run();
@@ -766,9 +772,9 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('prioritizes http-proxy input over environment variables', async () => {
-      const infoSpy = vi.mocked(core.info);
+      const infoSpy = vi.spyOn(core, 'info');
       process.env.HTTP_PROXY = 'http://env-proxy.example.com:8080';
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'http-proxy': 'http://input-proxy.example.com:8080',
@@ -782,9 +788,9 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('properly configures proxy agent in STS client', async () => {
-      const infoSpy = vi.mocked(core.info);
+      const infoSpy = vi.spyOn(core, 'info');
 
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'http-proxy': 'http://proxy.example.com:8080',
@@ -798,7 +804,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('configures no-proxy setting', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'http-proxy': 'http://proxy.example.com:8080',
@@ -826,13 +832,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('writes profile files with OIDC authentication', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'aws-profile': 'dev',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -855,7 +861,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('writes profile files with IAM user credentials', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_USER_INPUTS,
           'aws-profile': 'production',
@@ -885,7 +891,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('writes profile files with IAM user role assumption', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.IAM_ASSUMEROLE_INPUTS,
           'aws-profile': 'assumed-role',
@@ -922,14 +928,14 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('respects output-env-credentials=true with profiles', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'aws-profile': 'dev',
           'output-env-credentials': 'true',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -952,8 +958,8 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('maintains backward compatibility when aws-profile is not specified', async () => {
-      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -977,13 +983,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('handles default profile correctly', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'aws-profile': 'default',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -998,13 +1004,13 @@ describe('Configure AWS Credentials', {}, () => {
     });
 
     it('rejects invalid profile names with whitespace', async () => {
-      vi.mocked(core.getInput).mockImplementation(
+      vi.spyOn(core, 'getInput').mockImplementation(
         mocks.getInput({
           ...mocks.GH_OIDC_INPUTS,
           'aws-profile': 'invalid profile',
         }),
       );
-      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      vi.spyOn(core, 'getIDToken').mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';

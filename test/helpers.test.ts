@@ -2,11 +2,10 @@ import * as core from '@actions/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as helpers from '../src/helpers';
 
-vi.mock('@actions/core');
-
 describe('Configure AWS Credentials helpers', {}, () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.restoreAllMocks();
+    vi.spyOn(core, 'debug').mockImplementation(() => {});
   });
   it('removes brackets from GitHub Actor', {}, () => {
     const actor = 'actor[bot]';
@@ -25,6 +24,9 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
   it('can output creds when told to', {}, () => {
+    vi.spyOn(core, 'setOutput').mockImplementation(() => {});
+    vi.spyOn(core, 'setSecret').mockImplementation(() => {});
+    vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
     helpers.exportCredentials(
       { AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) },
       true,
@@ -45,6 +47,9 @@ describe('Configure AWS Credentials helpers', {}, () => {
     process.env = env;
   });
   it(`won't output credentials to env if told not to`, {}, () => {
+    vi.spyOn(core, 'setOutput').mockImplementation(() => {});
+    vi.spyOn(core, 'setSecret').mockImplementation(() => {});
+    vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
     helpers.exportCredentials(
       { AccessKeyId: 'test', SecretAccessKey: 'test', SessionToken: 'test', Expiration: new Date(8640000000000000) },
       true,
@@ -72,20 +77,22 @@ describe('Configure AWS Credentials helpers', {}, () => {
   });
 
   it('handles getBooleanInput correctly', {}, () => {
-    vi.mocked(core.getInput).mockReturnValue('true');
+    vi.spyOn(core, 'getInput').mockReturnValue('true');
     expect(helpers.getBooleanInput('test')).toBe(true);
-
-    vi.mocked(core.getInput).mockReturnValue('false');
+    
+    vi.spyOn(core, 'getInput').mockReturnValue('false');
     expect(helpers.getBooleanInput('test')).toBe(false);
-
-    vi.mocked(core.getInput).mockReturnValue('');
+    
+    vi.spyOn(core, 'getInput').mockReturnValue('');
     expect(helpers.getBooleanInput('test', { default: true })).toBe(true);
-
-    vi.mocked(core.getInput).mockReturnValue('invalid');
+    
+    vi.spyOn(core, 'getInput').mockReturnValue('invalid');
     expect(() => helpers.getBooleanInput('test')).toThrow();
   });
 
   it('clears session token when not provided', {}, () => {
+    vi.spyOn(core, 'setSecret').mockImplementation(() => {});
+    vi.spyOn(core, 'exportVariable').mockImplementation(() => {});
     process.env.AWS_SESSION_TOKEN = 'old-token';
     helpers.exportCredentials({ AccessKeyId: 'test', SecretAccessKey: 'test' }, false, true);
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', '');
