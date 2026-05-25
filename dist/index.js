@@ -5108,9 +5108,9 @@ var require_formdata_parser = __commonJS({
     var filenameBuffer = Buffer.from("; filename");
     var dd = Buffer.from("--");
     var ddcrlf = Buffer.from("--\r\n");
-    function isAsciiString(chars2) {
-      for (let i5 = 0; i5 < chars2.length; ++i5) {
-        if ((chars2.charCodeAt(i5) & ~127) !== 0) {
+    function isAsciiString(chars) {
+      for (let i5 = 0; i5 < chars.length; ++i5) {
+        if ((chars.charCodeAt(i5) & ~127) !== 0) {
           return false;
         }
       }
@@ -19205,132 +19205,6 @@ var init_deref = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js
-var isArrayBuffer;
-var init_is_array_buffer = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js"() {
-    isArrayBuffer = (arg) => typeof ArrayBuffer === "function" && arg instanceof ArrayBuffer || Object.prototype.toString.call(arg) === "[object ArrayBuffer]";
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js
-var fromArrayBuffer, fromString;
-var init_buffer_from = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js"() {
-    init_is_array_buffer();
-    fromArrayBuffer = (input, offset = 0, length = input.byteLength - offset) => {
-      if (!isArrayBuffer(input)) {
-        throw new TypeError(`The "input" argument must be ArrayBuffer. Received type ${typeof input} (${input})`);
-      }
-      return Buffer.from(input, offset, length);
-    };
-    fromString = (input, encoding) => {
-      if (typeof input !== "string") {
-        throw new TypeError(`The "input" argument must be of type string. Received type ${typeof input} (${input})`);
-      }
-      return encoding ? Buffer.from(input, encoding) : Buffer.from(input);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js
-var BASE64_REGEX, fromBase64;
-var init_fromBase64 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js"() {
-    init_buffer_from();
-    BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
-    fromBase64 = (input) => {
-      if (input.length * 3 % 4 !== 0) {
-        throw new TypeError(`Incorrect padding on base64 string.`);
-      }
-      if (!BASE64_REGEX.exec(input)) {
-        throw new TypeError(`Invalid base64 string.`);
-      }
-      const buffer = fromString(input, "base64");
-      return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js
-var fromUtf8;
-var init_fromUtf8 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js"() {
-    init_buffer_from();
-    fromUtf8 = (input) => {
-      const buf = fromString(input, "utf8");
-      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength / Uint8Array.BYTES_PER_ELEMENT);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js
-var toBase64;
-var init_toBase64 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js"() {
-    init_buffer_from();
-    init_fromUtf8();
-    toBase64 = (_input) => {
-      let input;
-      if (typeof _input === "string") {
-        input = fromUtf8(_input);
-      } else {
-        input = _input;
-      }
-      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
-        throw new Error("@smithy/util-base64: toBase64 encoder function only accepts string | Uint8Array.");
-      }
-      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("base64");
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js
-function bindUint8ArrayBlobAdapter(toUtf89, fromUtf87, toBase6410, fromBase649) {
-  return class Uint8ArrayBlobAdapter2 extends Uint8Array {
-    static fromString(source, encoding = "utf-8") {
-      if (typeof source === "string") {
-        if (encoding === "base64") {
-          return Uint8ArrayBlobAdapter2.mutate(fromBase649(source));
-        }
-        return Uint8ArrayBlobAdapter2.mutate(fromUtf87(source));
-      }
-      throw new Error(`Unsupported conversion from ${typeof source} to Uint8ArrayBlobAdapter.`);
-    }
-    static mutate(source) {
-      Object.setPrototypeOf(source, Uint8ArrayBlobAdapter2.prototype);
-      return source;
-    }
-    transformToString(encoding = "utf-8") {
-      if (encoding === "base64") {
-        return toBase6410(this);
-      }
-      return toUtf89(this);
-    }
-  };
-}
-var init_Uint8ArrayBlobAdapter = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js
-var toUtf8;
-var init_toUtf8 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js"() {
-    init_buffer_from();
-    toUtf8 = (input) => {
-      if (typeof input === "string") {
-        return input;
-      }
-      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
-        throw new Error("@smithy/util-utf8: toUtf8 encoder function only accepts string | Uint8Array.");
-      }
-      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("utf8");
-    };
-  }
-});
-
 // node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js
 function bindV4(getRandomValues2) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -20080,6 +19954,86 @@ var init_hex_encoding = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js
+var isArrayBuffer;
+var init_is_array_buffer = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js"() {
+    isArrayBuffer = (arg) => typeof ArrayBuffer === "function" && arg instanceof ArrayBuffer || Object.prototype.toString.call(arg) === "[object ArrayBuffer]";
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js
+var fromArrayBuffer, fromString;
+var init_buffer_from = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js"() {
+    init_is_array_buffer();
+    fromArrayBuffer = (input, offset = 0, length = input.byteLength - offset) => {
+      if (!isArrayBuffer(input)) {
+        throw new TypeError(`The "input" argument must be ArrayBuffer. Received type ${typeof input} (${input})`);
+      }
+      return Buffer.from(input, offset, length);
+    };
+    fromString = (input, encoding) => {
+      if (typeof input !== "string") {
+        throw new TypeError(`The "input" argument must be of type string. Received type ${typeof input} (${input})`);
+      }
+      return encoding ? Buffer.from(input, encoding) : Buffer.from(input);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js
+var BASE64_REGEX, fromBase64;
+var init_fromBase64 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js"() {
+    init_buffer_from();
+    BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
+    fromBase64 = (input) => {
+      if (input.length * 3 % 4 !== 0) {
+        throw new TypeError(`Incorrect padding on base64 string.`);
+      }
+      if (!BASE64_REGEX.exec(input)) {
+        throw new TypeError(`Invalid base64 string.`);
+      }
+      const buffer = fromString(input, "base64");
+      return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js
+var fromUtf8;
+var init_fromUtf8 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js"() {
+    init_buffer_from();
+    fromUtf8 = (input) => {
+      const buf = fromString(input, "utf8");
+      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength / Uint8Array.BYTES_PER_ELEMENT);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js
+var toBase64;
+var init_toBase64 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js"() {
+    init_buffer_from();
+    init_fromUtf8();
+    toBase64 = (_input) => {
+      let input;
+      if (typeof _input === "string") {
+        input = fromUtf8(_input);
+      } else {
+        input = _input;
+      }
+      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
+        throw new Error("@smithy/util-base64: toBase64 encoder function only accepts string | Uint8Array.");
+      }
+      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("base64");
+    };
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js
 var import_node_fs, calculateBodyLength;
 var init_calculateBodyLength = __esm({
@@ -20122,6 +20076,23 @@ var init_toUint8Array = __esm({
         return new Uint8Array(data3.buffer, data3.byteOffset, data3.byteLength / Uint8Array.BYTES_PER_ELEMENT);
       }
       return new Uint8Array(data3);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js
+var toUtf8;
+var init_toUtf8 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js"() {
+    init_buffer_from();
+    toUtf8 = (input) => {
+      if (typeof input === "string") {
+        return input;
+      }
+      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
+        throw new Error("@smithy/util-utf8: toUtf8 encoder function only accepts string | Uint8Array.");
+      }
+      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("utf8");
     };
   }
 });
@@ -22665,6 +22636,38 @@ var init_hash_node = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js
+var Uint8ArrayBlobAdapter;
+var init_Uint8ArrayBlobAdapter = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js"() {
+    init_fromBase64();
+    init_toBase64();
+    init_fromUtf8();
+    init_toUtf8();
+    Uint8ArrayBlobAdapter = class _Uint8ArrayBlobAdapter extends Uint8Array {
+      static fromString(source, encoding = "utf-8") {
+        if (typeof source === "string") {
+          if (encoding === "base64") {
+            return _Uint8ArrayBlobAdapter.mutate(fromBase64(source));
+          }
+          return _Uint8ArrayBlobAdapter.mutate(fromUtf8(source));
+        }
+        throw new Error(`Unsupported conversion from ${typeof source} to Uint8ArrayBlobAdapter.`);
+      }
+      static mutate(source) {
+        Object.setPrototypeOf(source, _Uint8ArrayBlobAdapter.prototype);
+        return source;
+      }
+      transformToString(encoding = "utf-8") {
+        if (encoding === "base64") {
+          return toBase64(this);
+        }
+        return toUtf8(this);
+      }
+    };
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js
 var import_node_stream, ChecksumStream;
 var init_ChecksumStream = __esm({
@@ -22739,68 +22742,6 @@ var init_stream_type_check = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.browser.js
-var fromUtf82;
-var init_fromUtf8_browser = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.browser.js"() {
-    fromUtf82 = (input) => new TextEncoder().encode(input);
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/constants-for-browser.js
-var chars, alphabetByEncoding, alphabetByValue, bitsPerLetter, bitsPerByte, maxLetterValue;
-var init_constants_for_browser = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/constants-for-browser.js"() {
-    chars = `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/`;
-    alphabetByEncoding = Object.entries(chars).reduce((acc, [i5, c5]) => {
-      acc[c5] = Number(i5);
-      return acc;
-    }, {});
-    alphabetByValue = chars.split("");
-    bitsPerLetter = 6;
-    bitsPerByte = 8;
-    maxLetterValue = 63;
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.browser.js
-function toBase642(_input) {
-  let input;
-  if (typeof _input === "string") {
-    input = fromUtf82(_input);
-  } else {
-    input = _input;
-  }
-  const isArrayLike = typeof input === "object" && typeof input.length === "number";
-  const isUint8Array = typeof input === "object" && typeof input.byteOffset === "number" && typeof input.byteLength === "number";
-  if (!isArrayLike && !isUint8Array) {
-    throw new Error("@smithy/util-base64: toBase64 encoder function only accepts string | Uint8Array.");
-  }
-  let str = "";
-  for (let i5 = 0; i5 < input.length; i5 += 3) {
-    let bits = 0;
-    let bitLength = 0;
-    for (let j5 = i5, limit = Math.min(i5 + 3, input.length); j5 < limit; j5++) {
-      bits |= input[j5] << (limit - j5 - 1) * bitsPerByte;
-      bitLength += bitsPerByte;
-    }
-    const bitClusterCount = Math.ceil(bitLength / bitsPerLetter);
-    bits <<= bitClusterCount * bitsPerLetter - bitLength;
-    for (let k5 = 1; k5 <= bitClusterCount; k5++) {
-      const offset = (bitClusterCount - k5) * bitsPerLetter;
-      str += alphabetByValue[(bits & maxLetterValue << offset) >> offset];
-    }
-    str += "==".slice(0, 4 - bitClusterCount);
-  }
-  return str;
-}
-var init_toBase64_browser = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.browser.js"() {
-    init_fromUtf8_browser();
-    init_constants_for_browser();
-  }
-});
-
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.browser.js
 var ReadableStreamRef, ChecksumStream2;
 var init_ChecksumStream_browser = __esm({
@@ -22816,14 +22757,14 @@ var init_ChecksumStream_browser = __esm({
 var createChecksumStream;
 var init_createChecksumStream_browser = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.browser.js"() {
-    init_toBase64_browser();
+    init_toBase64();
     init_stream_type_check();
     init_ChecksumStream_browser();
     createChecksumStream = ({ expectedChecksum, checksum, source, checksumSourceLocation, base64Encoder }) => {
       if (!isReadableStream(source)) {
         throw new Error(`@smithy/util-stream: unsupported source type ${source?.constructor?.name ?? source} in ChecksumStream.`);
       }
-      const encoder = base64Encoder ?? toBase642;
+      const encoder = base64Encoder ?? toBase64;
       if (typeof TransformStream !== "function") {
         throw new Error("@smithy/util-stream: unable to instantiate ChecksumStream because API unavailable: ReadableStream/TransformStream.");
       }
@@ -23230,67 +23171,10 @@ var init_headStream = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.browser.js
-var toUtf82;
-var init_toUtf8_browser = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.browser.js"() {
-    toUtf82 = (input) => {
-      if (typeof input === "string") {
-        return input;
-      }
-      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
-        throw new Error("@smithy/util-utf8: toUtf8 encoder function only accepts string | Uint8Array.");
-      }
-      return new TextDecoder("utf-8").decode(input);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.browser.js
-var fromBase642;
-var init_fromBase64_browser = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.browser.js"() {
-    init_constants_for_browser();
-    fromBase642 = (input) => {
-      let totalByteLength = input.length / 4 * 3;
-      if (input.slice(-2) === "==") {
-        totalByteLength -= 2;
-      } else if (input.slice(-1) === "=") {
-        totalByteLength--;
-      }
-      const out = new ArrayBuffer(totalByteLength);
-      const dataView3 = new DataView(out);
-      for (let i5 = 0; i5 < input.length; i5 += 4) {
-        let bits = 0;
-        let bitLength = 0;
-        for (let j5 = i5, limit = i5 + 3; j5 <= limit; j5++) {
-          if (input[j5] !== "=") {
-            if (!(input[j5] in alphabetByEncoding)) {
-              throw new TypeError(`Invalid character ${input[j5]} in base64 string.`);
-            }
-            bits |= alphabetByEncoding[input[j5]] << (limit - j5) * bitsPerLetter;
-            bitLength += bitsPerLetter;
-          } else {
-            bits >>= bitsPerLetter;
-          }
-        }
-        const chunkOffset = i5 / 4 * 3;
-        bits >>= bitLength % bitsPerByte;
-        const byteLength = Math.floor(bitLength / bitsPerByte);
-        for (let k5 = 0; k5 < byteLength; k5++) {
-          const offset = (byteLength - k5 - 1) * bitsPerByte;
-          dataView3.setUint8(chunkOffset + k5, (bits & 255 << offset) >> offset);
-        }
-      }
-      return new Uint8Array(out);
-    };
-  }
-});
-
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js
 async function collectBlob(blob) {
   const base64 = await readToBase64(blob);
-  const arrayBuffer = fromBase642(base64);
+  const arrayBuffer = fromBase64(base64);
   return new Uint8Array(arrayBuffer);
 }
 async function collectStream(stream) {
@@ -23334,7 +23218,7 @@ function readToBase64(blob) {
 var streamCollector;
 var init_stream_collector_browser = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js"() {
-    init_fromBase64_browser();
+    init_fromBase64();
     streamCollector = async (stream) => {
       if (typeof Blob === "function" && stream instanceof Blob || stream.constructor?.name === "Blob") {
         if (Blob.prototype.arrayBuffer !== void 0) {
@@ -23351,9 +23235,9 @@ var init_stream_collector_browser = __esm({
 var ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED, sdkStreamMixin, isBlobInstance;
 var init_sdk_stream_mixin_browser = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.browser.js"() {
-    init_toBase64_browser();
+    init_toBase64();
     init_hex_encoding();
-    init_toUtf8_browser();
+    init_toUtf8();
     init_stream_collector_browser();
     init_stream_type_check();
     ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED = "The stream has already been transformed.";
@@ -23381,11 +23265,11 @@ var init_sdk_stream_mixin_browser = __esm({
         transformToString: async (encoding) => {
           const buf = await transformToByteArray();
           if (encoding === "base64") {
-            return toBase642(buf);
+            return toBase64(buf);
           } else if (encoding === "hex") {
             return toHex(buf);
           } else if (encoding === void 0 || encoding === "utf8" || encoding === "utf-8") {
-            return toUtf82(buf);
+            return toUtf8(buf);
           } else if (typeof TextDecoder === "function") {
             return new TextDecoder(encoding).decode(buf);
           } else {
@@ -23628,15 +23512,10 @@ __export(serde_exports, {
   toUtf8: () => toUtf8,
   v4: () => v4
 });
-var import_node_crypto3, Uint8ArrayBlobAdapter, _getRandomValues, v4, generateIdempotencyToken;
+var import_node_crypto3, _getRandomValues, v4, generateIdempotencyToken;
 var init_serde = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/index.js"() {
     import_node_crypto3 = require("node:crypto");
-    init_fromBase64();
-    init_toBase64();
-    init_Uint8ArrayBlobAdapter();
-    init_fromUtf8();
-    init_toUtf8();
     init_v4();
     init_copyDocumentWithTransform();
     init_date_utils();
@@ -23648,14 +23527,19 @@ var init_serde = __esm({
     init_split_header();
     init_NumericValue();
     init_hex_encoding();
+    init_fromBase64();
+    init_toBase64();
     init_calculateBodyLength();
+    init_fromUtf8();
     init_toUint8Array();
+    init_toUtf8();
     init_buffer_from();
     init_is_array_buffer();
     init_deserializerMiddleware();
     init_serdePlugin();
     init_serializerMiddleware();
     init_hash_node();
+    init_Uint8ArrayBlobAdapter();
     init_ChecksumStream();
     init_createChecksumStream();
     init_createBufferedReadable();
@@ -23664,8 +23548,6 @@ var init_serde = __esm({
     init_sdk_stream_mixin();
     init_splitStream();
     init_stream_type_check();
-    Uint8ArrayBlobAdapter = class extends bindUint8ArrayBlobAdapter(toUtf8, fromUtf8, toBase64, fromBase64) {
-    };
     _getRandomValues = import_node_crypto3.getRandomValues;
     v4 = bindV4(_getRandomValues);
     generateIdempotencyToken = v4;
@@ -24423,26 +24305,26 @@ var require_dist_cjs8 = __commonJS({
     var __toCommonJS2 = (mod) => __copyProps2(__defProp2({}, "__esModule", { value: true }), mod);
     var src_exports = {};
     __export2(src_exports, {
-      fromUtf8: () => fromUtf87,
+      fromUtf8: () => fromUtf86,
       toUint8Array: () => toUint8Array3,
-      toUtf8: () => toUtf89
+      toUtf8: () => toUtf88
     });
     module2.exports = __toCommonJS2(src_exports);
     var import_util_buffer_from = require_dist_cjs7();
-    var fromUtf87 = /* @__PURE__ */ __name((input) => {
+    var fromUtf86 = /* @__PURE__ */ __name((input) => {
       const buf = (0, import_util_buffer_from.fromString)(input, "utf8");
       return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength / Uint8Array.BYTES_PER_ELEMENT);
     }, "fromUtf8");
     var toUint8Array3 = /* @__PURE__ */ __name((data3) => {
       if (typeof data3 === "string") {
-        return fromUtf87(data3);
+        return fromUtf86(data3);
       }
       if (ArrayBuffer.isView(data3)) {
         return new Uint8Array(data3.buffer, data3.byteOffset, data3.byteLength / Uint8Array.BYTES_PER_ELEMENT);
       }
       return new Uint8Array(data3);
     }, "toUint8Array");
-    var toUtf89 = /* @__PURE__ */ __name((input) => {
+    var toUtf88 = /* @__PURE__ */ __name((input) => {
       if (typeof input === "string") {
         return input;
       }
@@ -24461,14 +24343,14 @@ var require_convertToBuffer = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.convertToBuffer = void 0;
     var util_utf8_1 = require_dist_cjs8();
-    var fromUtf87 = typeof Buffer !== "undefined" && Buffer.from ? function(input) {
+    var fromUtf86 = typeof Buffer !== "undefined" && Buffer.from ? function(input) {
       return Buffer.from(input, "utf8");
     } : util_utf8_1.fromUtf8;
     function convertToBuffer(data3) {
       if (data3 instanceof Uint8Array)
         return data3;
       if (typeof data3 === "string") {
-        return fromUtf87(data3);
+        return fromUtf86(data3);
       }
       if (ArrayBuffer.isView(data3)) {
         return new Uint8Array(data3.buffer, data3.byteOffset, data3.byteLength / Uint8Array.BYTES_PER_ELEMENT);
@@ -24966,9 +24848,9 @@ var init_HeaderMarshaller = __esm({
     HeaderMarshaller = class {
       toUtf8;
       fromUtf8;
-      constructor(toUtf89, fromUtf87) {
-        this.toUtf8 = toUtf89;
-        this.fromUtf8 = fromUtf87;
+      constructor(toUtf88, fromUtf86) {
+        this.toUtf8 = toUtf88;
+        this.fromUtf8 = fromUtf86;
       }
       format(headers) {
         const chunks = [];
@@ -25195,8 +25077,8 @@ var init_EventStreamCodec = __esm({
       headerMarshaller;
       messageBuffer;
       isEndOfStream;
-      constructor(toUtf89, fromUtf87) {
-        this.headerMarshaller = new HeaderMarshaller(toUtf89, fromUtf87);
+      constructor(toUtf88, fromUtf86) {
+        this.headerMarshaller = new HeaderMarshaller(toUtf88, fromUtf86);
         this.messageBuffer = [];
         this.isEndOfStream = false;
       }
@@ -25434,7 +25316,7 @@ function getUnmarshalledStream(source, options) {
     }
   };
 }
-function getMessageUnmarshaller(deserializer, toUtf89) {
+function getMessageUnmarshaller(deserializer, toUtf88) {
   return async function(message) {
     const { value: messageType } = message.headers[":message-type"];
     if (messageType === "error") {
@@ -25446,7 +25328,7 @@ function getMessageUnmarshaller(deserializer, toUtf89) {
       const exception = { [code]: message };
       const deserializedException = await deserializer(exception);
       if (deserializedException.$unknown) {
-        const error3 = new Error(toUtf89(message.body));
+        const error3 = new Error(toUtf88(message.body));
         error3.name = code;
         throw error3;
       }
@@ -32686,20 +32568,20 @@ var require_dist_cjs32 = __commonJS({
   "node_modules/@smithy/util-utf8/dist-cjs/index.js"(exports2) {
     "use strict";
     var utilBufferFrom = require_dist_cjs31();
-    var fromUtf87 = (input) => {
+    var fromUtf86 = (input) => {
       const buf = utilBufferFrom.fromString(input, "utf8");
       return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength / Uint8Array.BYTES_PER_ELEMENT);
     };
     var toUint8Array3 = (data3) => {
       if (typeof data3 === "string") {
-        return fromUtf87(data3);
+        return fromUtf86(data3);
       }
       if (ArrayBuffer.isView(data3)) {
         return new Uint8Array(data3.buffer, data3.byteOffset, data3.byteLength / Uint8Array.BYTES_PER_ELEMENT);
       }
       return new Uint8Array(data3);
     };
-    var toUtf89 = (input) => {
+    var toUtf88 = (input) => {
       if (typeof input === "string") {
         return input;
       }
@@ -32708,9 +32590,9 @@ var require_dist_cjs32 = __commonJS({
       }
       return utilBufferFrom.fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("utf8");
     };
-    exports2.fromUtf8 = fromUtf87;
+    exports2.fromUtf8 = fromUtf86;
     exports2.toUint8Array = toUint8Array3;
-    exports2.toUtf8 = toUtf89;
+    exports2.toUtf8 = toUtf88;
   }
 });
 
@@ -34490,7 +34372,7 @@ var init_SmithyRpcV2CborProtocol = __esm({
         const ns = NormalizedSchema.of(errorSchema);
         const ErrorCtor = registry.getErrorCtor(errorSchema);
         const message = dataObject.message ?? dataObject.Message ?? "Unknown";
-        const exception = new ErrorCtor({});
+        const exception = new ErrorCtor(message);
         const output = {};
         for (const [name, member2] of ns.structIterator()) {
           output[name] = this.deserializer.readValue(member2, dataObject[name]);
@@ -34795,7 +34677,7 @@ var require_fromBase64 = __commonJS({
     exports2.fromBase64 = void 0;
     var util_buffer_from_1 = require_dist_cjs31();
     var BASE64_REGEX2 = /^[A-Za-z0-9+/]*={0,2}$/;
-    var fromBase649 = (input) => {
+    var fromBase648 = (input) => {
       if (input.length * 3 % 4 !== 0) {
         throw new TypeError(`Incorrect padding on base64 string.`);
       }
@@ -34805,7 +34687,7 @@ var require_fromBase64 = __commonJS({
       const buffer = (0, util_buffer_from_1.fromString)(input, "base64");
       return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
     };
-    exports2.fromBase64 = fromBase649;
+    exports2.fromBase64 = fromBase648;
   }
 });
 
@@ -34817,7 +34699,7 @@ var require_toBase64 = __commonJS({
     exports2.toBase64 = void 0;
     var util_buffer_from_1 = require_dist_cjs31();
     var util_utf8_1 = require_dist_cjs32();
-    var toBase6410 = (_input) => {
+    var toBase649 = (_input) => {
       let input;
       if (typeof _input === "string") {
         input = (0, util_utf8_1.fromUtf8)(_input);
@@ -34829,7 +34711,7 @@ var require_toBase64 = __commonJS({
       }
       return (0, util_buffer_from_1.fromArrayBuffer)(input.buffer, input.byteOffset, input.byteLength).toString("base64");
     };
-    exports2.toBase64 = toBase6410;
+    exports2.toBase64 = toBase649;
   }
 });
 
@@ -34837,21 +34719,21 @@ var require_toBase64 = __commonJS({
 var require_dist_cjs36 = __commonJS({
   "node_modules/@smithy/util-base64/dist-cjs/index.js"(exports2) {
     "use strict";
-    var fromBase649 = require_fromBase64();
-    var toBase6410 = require_toBase64();
-    Object.prototype.hasOwnProperty.call(fromBase649, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+    var fromBase648 = require_fromBase64();
+    var toBase649 = require_toBase64();
+    Object.prototype.hasOwnProperty.call(fromBase648, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
       enumerable: true,
-      value: fromBase649["__proto__"]
+      value: fromBase648["__proto__"]
     });
-    Object.keys(fromBase649).forEach(function(k5) {
-      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = fromBase649[k5];
+    Object.keys(fromBase648).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = fromBase648[k5];
     });
-    Object.prototype.hasOwnProperty.call(toBase6410, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+    Object.prototype.hasOwnProperty.call(toBase649, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
       enumerable: true,
-      value: toBase6410["__proto__"]
+      value: toBase649["__proto__"]
     });
-    Object.keys(toBase6410).forEach(function(k5) {
-      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = toBase6410[k5];
+    Object.keys(toBase649).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = toBase649[k5];
     });
   }
 });

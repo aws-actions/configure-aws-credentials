@@ -868,12 +868,12 @@ The following npm packages may be included in this product:
  - @aws-sdk/middleware-sdk-s3@3.972.37
  - @aws-sdk/middleware-user-agent@3.972.38
  - @aws-sdk/signature-v4-multi-region@3.996.25
- - @smithy/core@3.24.3
+ - @smithy/core@3.24.1
  - @smithy/invalid-dependency@4.2.14
  - @smithy/middleware-serde@4.2.20
  - @smithy/protocol-http@5.3.14
  - @smithy/smithy-client@4.12.13
- - @smithy/types@4.14.2
+ - @smithy/types@4.14.1
 
 These packages each contain the following license:
 
@@ -1710,7 +1710,7 @@ The following npm packages may be included in this product:
  - @smithy/middleware-content-length@4.2.14
  - @smithy/middleware-endpoint@4.4.32
  - @smithy/middleware-stack@4.2.14
- - @smithy/node-http-handler@4.7.3
+ - @smithy/node-http-handler@4.7.1
  - @smithy/property-provider@4.3.1
  - @smithy/shared-ini-file-loader@4.4.9
  - @smithy/signature-v4@5.3.14
