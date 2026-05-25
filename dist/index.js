@@ -52284,6 +52284,7 @@ var require_FtpContext = __commonJS({
     exports2.FTPError = FTPError;
     function doNothing() {
     }
+    var maxControlResponseLength = 2 ** 16;
     var FTPContext = class {
       /**
        * Instantiate an FTP context.
@@ -52501,6 +52502,10 @@ Closing reason: ${this._closingError.stack}`;
        */
       _onControlSocketData(chunk) {
         this.log(`< ${chunk}`);
+        if (this._partialResponse.length + chunk.length > maxControlResponseLength) {
+          this.closeWithError(new Error("FTP control response exceeded maximum allowed size"));
+          return;
+        }
         const completeResponse = this._partialResponse + chunk;
         const parsed = (0, parseControlResponse_1.parseControlResponse)(completeResponse);
         this._partialResponse = parsed.rest;
