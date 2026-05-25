@@ -13,8 +13,6 @@ import { run } from '../src/index';
 import * as profileManager from '../src/profileManager';
 import mocks from './mockinputs.test';
 
-vi.mock('node:fs');
-
 const mockedSTSClient = mockClient(STSClient);
 
 describe('Configure AWS Credentials', {}, () => {
@@ -155,6 +153,7 @@ describe('Configure AWS Credentials', {}, () => {
       vi.spyOn(core, 'getInput').mockImplementation(mocks.getInput(mocks.WEBIDENTITY_TOKEN_FILE_INPUTS));
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      vi.mock('node:fs');
       vol.reset();
       fs.mkdirSync('/home/github', { recursive: true });
       fs.writeFileSync('/home/github/file.txt', 'test-token');
@@ -374,6 +373,7 @@ describe('Configure AWS Credentials', {}, () => {
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
       mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+      vi.mock('node:fs');
       vol.reset();
       fs.mkdirSync('/home/github', { recursive: true });
       fs.writeFileSync('/home/github/file.txt', 'test-token');
@@ -828,6 +828,7 @@ describe('Configure AWS Credentials', {}, () => {
     beforeEach(() => {
       vi.clearAllMocks();
       mockedSTSClient.reset();
+      vi.mock('node:fs');
       vol.reset();
     });
 
