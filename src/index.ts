@@ -43,7 +43,6 @@ export async function run() {
     const roleSkipSessionTagging = getBooleanInput('role-skip-session-tagging', { required: false });
     const transitiveTagKeys = core.getMultilineInput('transitive-tag-keys', { required: false });
     const proxyServer = core.getInput('http-proxy', { required: false }) || process.env.HTTP_PROXY;
-    const customTags = core.getInput('custom-tags', { required: false });
     const inlineSessionPolicy = core.getInput('inline-session-policy', { required: false });
     const managedSessionPolicies = core.getMultilineInput('managed-session-policies', { required: false }).map((p) => {
       return { arn: p };
@@ -191,13 +190,6 @@ export async function run() {
       await credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds);
       sourceAccountId = await exportAccountId(credentialsClient, maskAccountId);
     }
-    if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
-      core.warning(
-        "'custom-tags' is set but will be ignored because session tags cannot be applied when using OIDC or web identity token authentication. " +
-          'Tags are controlled by the identity provider token claims in these authentication flows.',
-      );
-    }
-
     // Get role credentials if configured to do so
     if (roleToAssume) {
       let roleCredentials: AssumeRoleCommandOutput;
@@ -217,7 +209,6 @@ export async function run() {
               webIdentityToken,
               inlineSessionPolicy,
               managedSessionPolicies,
-              customTags,
             });
           },
           !disableRetry,
