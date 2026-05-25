@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
@@ -267,4 +269,89 @@ export function getBooleanInput(name: string, options?: core.InputOptions & { de
     `Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
       `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``,
   );
+}
+
+// O_NOFOLLOW is undefined on Windows. This sets it to 0 if it's not defined.
+const O_NOFOLLOW: number = (fs.constants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;
+
+export function isSymlink(filePath: string): boolean {
+  try {
+    return fs.lstatSync(filePath).isSymbolicLink();
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw err;
+  }
+}
+
+// Refuses if filePath or its parent directory is a symbolic link.
+function refuseSymlinkOnPath(filePath: string): void {
+  const parent = path.dirname(filePath);
+  if (parent !== filePath && isSymlink(parent)) {
+    throw new Error(`Refusing ${filePath} (parent directory is a symbolic link)`);
+  }
+  if (isSymlink(filePath)) {
+    throw new Error(`Refusing ${filePath} (path is a symbolic link)`);
+  }
+}
+
+function assertRegularFile(fd: number, filePath: string): void {
+  const stats = fs.fstatSync(fd);
+  if (!stats.isFile()) {
+    throw new Error(`${filePath} (path is not a regular file)`);
+  }
+}
+
+// ENOENT: file does not exist
+// ELOOP: too many symbolic links (from NOFOLLOW)
+
+export function readFileUtf8(filePath: string): string | null {
+  refuseSymlinkOnPath(filePath);
+  let fd: number;
+  try {
+    fd = fs.openSync(filePath, fs.constants.O_RDONLY | O_NOFOLLOW);
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT') return null;
+    if (code === 'ELOOP') {
+      throw new Error(`Refusing ${filePath} (path is a symbolic link)`);
+    }
+    throw err;
+  }
+  try {
+    assertRegularFile(fd, filePath);
+    return fs.readFileSync(fd, 'utf-8');
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+export function writeFileUtf8(filePath: string, content: string, mode = 0o600): void {
+  refuseSymlinkOnPath(filePath);
+  let fd: number;
+  try {
+    fd = fs.openSync(filePath, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_TRUNC | O_NOFOLLOW, mode);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ELOOP') {
+      throw new Error(`Refusing ${filePath} (path is a symbolic link)`);
+    }
+    throw err;
+  }
+  try {
+    assertRegularFile(fd, filePath);
+    // openSync only applies mode on creation.
+    // If the file already exists, we need to ensure the mode is correct.
+    if (process.platform !== 'win32') {
+      fs.fchmodSync(fd, mode);
+    }
+    fs.writeFileSync(fd, content);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+export function mkdir(dir: string, mode = 0o700): void {
+  fs.mkdirSync(dir, { recursive: true, mode });
+  if (isSymlink(dir)) {
+    throw new Error(`Refusing ${dir} (path is a symbolic link)`);
+  }
 }
