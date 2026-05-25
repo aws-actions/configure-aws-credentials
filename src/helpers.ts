@@ -1,32 +1,11 @@
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
-import type { UserAgent } from '@smithy/types';
 import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
-const USER_AGENT_PREFIX = 'configure-aws-credentials-for-github-actions';
-const UA_FIELDS: ReadonlyArray<{ env: string; label: string; pattern: RegExp }> = [
-  { env: 'GITHUB_ACTION', label: 'action', pattern: /^[A-Za-z0-9_-]{1,128}$/ },
-  { env: 'GITHUB_RUN_ID', label: 'run_id', pattern: /^[0-9]{1,20}$/ },
-  { env: 'GITHUB_RUN_ATTEMPT', label: 'attempt', pattern: /^[0-9]{1,10}$/ },
-];
-
-export function buildCustomUserAgent(): UserAgent {
-  const tokens: UserAgent = [[USER_AGENT_PREFIX]];
-  for (const { env, label, pattern } of UA_FIELDS) {
-    const value = process.env[env];
-    if (value === undefined) continue;
-    if (pattern.test(value)) {
-      tokens.push(['md', `${label}#${value}`]);
-    } else {
-      core.warning(`${env} has unexpected format; omitting from User-Agent`);
-    }
-  }
-  return tokens;
-}
 
 export function translateEnvVariables() {
   const envVars = [
@@ -210,7 +189,6 @@ export async function retryAndBackoff<T>(
   maxRetries = 12,
   retries = 0,
   base = 50,
-  label?: string,
 ): Promise<T> {
   try {
     return await fn();
@@ -222,21 +200,20 @@ export async function retryAndBackoff<T>(
     // It's retryable, so sleep and retry.
     const delay = Math.random() * (2 ** retries * base);
     const nextRetry = retries + 1;
-    const opName = label ? ` ${label}` : '';
 
-    core.info(
-      `Retry${opName}: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
+    core.debug(
+      `retryAndBackoff: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
         `Retrying after ${Math.floor(delay)}ms.`,
     );
 
     await sleep(delay);
 
     if (nextRetry >= maxRetries) {
-      core.info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
+      core.debug('retryAndBackoff: reached max retries; giving up.');
       throw err;
     }
 
-    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base, label);
+    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base);
   }
 }
 
