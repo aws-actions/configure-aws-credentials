@@ -431,11 +431,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -----------
 
-The following npm package may be included in this product:
+The following npm packages may be included in this product:
 
+ - @aws-crypto/crc32@5.2.0
  - @aws-crypto/util@5.2.0
 
-This package contains the following license:
+These packages each contain the following license:
 
 Apache License
                            Version 2.0, January 2004
@@ -867,12 +868,12 @@ The following npm packages may be included in this product:
  - @aws-sdk/middleware-sdk-s3@3.972.35
  - @aws-sdk/middleware-user-agent@3.972.36
  - @aws-sdk/signature-v4-multi-region@3.996.23
- - @smithy/core@3.23.17
+ - @smithy/core@3.24.4
  - @smithy/invalid-dependency@4.2.14
  - @smithy/middleware-serde@4.2.20
  - @smithy/protocol-http@5.3.14
  - @smithy/smithy-client@4.12.13
- - @smithy/types@4.14.1
+ - @smithy/types@4.14.2
 
 These packages each contain the following license:
 
@@ -1270,7 +1271,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.974.6
+ - @aws-sdk/core@3.974.13
 
 This package contains the following license:
 
@@ -1690,16 +1691,16 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.32
+ - @aws-sdk/credential-provider-env@3.972.39
  - @aws-sdk/credential-provider-ini@3.972.36
  - @aws-sdk/credential-provider-node@3.972.37
  - @aws-sdk/region-config-resolver@3.972.13
  - @aws-sdk/token-providers@3.1038.0
- - @aws-sdk/types@3.973.8
+ - @aws-sdk/types@3.973.9
  - @aws-sdk/util-arn-parser@3.972.3
  - @aws-sdk/util-endpoints@3.996.8
  - @aws-sdk/util-locate-window@3.965.5
- - @aws-sdk/xml-builder@3.972.21
+ - @aws-sdk/xml-builder@3.972.25
  - @smithy/config-resolver@4.4.17
  - @smithy/credential-provider-imds@4.2.14
  - @smithy/fetch-http-handler@5.3.17
@@ -1712,7 +1713,7 @@ The following npm packages may be included in this product:
  - @smithy/node-http-handler@4.6.1
  - @smithy/property-provider@4.2.14
  - @smithy/shared-ini-file-loader@4.4.9
- - @smithy/signature-v4@5.3.14
+ - @smithy/signature-v4@5.4.4
  - @smithy/util-base64@4.3.2
  - @smithy/util-body-length-browser@4.2.2
  - @smithy/util-body-length-node@4.2.3
@@ -2808,7 +2809,7 @@ MIT
 
 The following npm package may be included in this product:
 
- - fast-xml-parser@5.7.2
+ - fast-xml-parser@5.7.3
 
 This package contains the following license:
 
@@ -2838,7 +2839,7 @@ SOFTWARE.
 
 The following npm package may be included in this product:
 
- - strnum@2.2.3
+ - strnum@2.3.0
 
 This package contains the following license:
 
