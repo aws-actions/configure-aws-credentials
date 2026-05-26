@@ -28,6 +28,29 @@ describe('Configure AWS Credentials helpers', {}, () => {
     await expect(helpers.retryAndBackoff(fn, false)).rejects.toMatch('i am not retryable');
     expect(fn).toHaveBeenCalledTimes(1);
   });
+  it('retries and logs with label at info level', {}, async () => {
+    helpers.withsleep(() => Promise.resolve());
+    const fn = vi.fn().mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce('success');
+    const result = await helpers.retryAndBackoff(fn, true, 3, 0, 50, 'TestOp');
+    expect(result).toBe('success');
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry TestOp: attempt 1 of 3 failed'));
+    helpers.reset();
+  });
+  it('logs max retries reached with label', {}, async () => {
+    helpers.withsleep(() => Promise.resolve());
+    const fn = vi.fn().mockRejectedValue(new Error('persistent'));
+    await expect(helpers.retryAndBackoff(fn, true, 2, 0, 50, 'TestOp')).rejects.toThrow('persistent');
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry TestOp: reached max retries (2)'));
+    helpers.reset();
+  });
+  it('retries without a label (backward compat)', {}, async () => {
+    helpers.withsleep(() => Promise.resolve());
+    const fn = vi.fn().mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce('ok');
+    await helpers.retryAndBackoff(fn, true, 3);
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry: attempt 1 of 3 failed'));
+    helpers.reset();
+  });
   it('can output creds when told to', {}, () => {
     vi.spyOn(core, 'setOutput').mockImplementation(() => {});
     vi.spyOn(core, 'setSecret').mockImplementation(() => {});
@@ -84,13 +107,13 @@ describe('Configure AWS Credentials helpers', {}, () => {
   it('handles getBooleanInput correctly', {}, () => {
     vi.spyOn(core, 'getInput').mockReturnValue('true');
     expect(helpers.getBooleanInput('test')).toBe(true);
-    
+
     vi.spyOn(core, 'getInput').mockReturnValue('false');
     expect(helpers.getBooleanInput('test')).toBe(false);
-    
+
     vi.spyOn(core, 'getInput').mockReturnValue('');
     expect(helpers.getBooleanInput('test', { default: true })).toBe(true);
-    
+
     vi.spyOn(core, 'getInput').mockReturnValue('invalid');
     expect(() => helpers.getBooleanInput('test')).toThrow();
   });

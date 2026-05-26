@@ -644,7 +644,7 @@ Apache License
 
 The following npm package may be included in this product:
 
- - @aws-sdk/client-sts@3.1053.0
+ - @aws-sdk/client-sts@3.1049.0
 
 This package contains the following license:
 
@@ -854,8 +854,8 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/signature-v4-multi-region@3.996.28
- - @smithy/core@3.24.4
+ - @aws-sdk/signature-v4-multi-region@3.996.27
+ - @smithy/core@3.24.3
  - @smithy/types@4.14.2
 
 These packages each contain the following license:
@@ -1224,7 +1224,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @actions/http-client@3.0.2
+ - @actions/http-client@4.0.1
 
 This package contains the following license:
 
@@ -1254,7 +1254,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.974.13
+ - @aws-sdk/core@3.974.12
 
 This package contains the following license:
 
@@ -1674,18 +1674,18 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.39
- - @aws-sdk/credential-provider-ini@3.972.43
- - @aws-sdk/credential-provider-node@3.972.44
- - @aws-sdk/token-providers@3.1052.0
- - @aws-sdk/types@3.973.9
+ - @aws-sdk/credential-provider-env@3.972.38
+ - @aws-sdk/credential-provider-ini@3.972.42
+ - @aws-sdk/credential-provider-node@3.972.43
+ - @aws-sdk/token-providers@3.1049.0
+ - @aws-sdk/types@3.973.8
  - @aws-sdk/util-locate-window@3.965.5
- - @aws-sdk/xml-builder@3.972.25
- - @smithy/credential-provider-imds@4.3.4
- - @smithy/fetch-http-handler@5.4.4
+ - @aws-sdk/xml-builder@3.972.24
+ - @smithy/credential-provider-imds@4.3.3
+ - @smithy/fetch-http-handler@5.4.3
  - @smithy/is-array-buffer@2.2.0
- - @smithy/node-http-handler@4.7.4
- - @smithy/signature-v4@5.4.4
+ - @smithy/node-http-handler@4.7.3
+ - @smithy/signature-v4@5.4.3
  - @smithy/util-buffer-from@2.2.0
  - @smithy/util-utf8@2.3.0
 
@@ -1897,9 +1897,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-process@3.972.39
- - @aws-sdk/credential-provider-sso@3.972.43
- - @aws-sdk/credential-provider-web-identity@3.972.43
+ - @aws-sdk/credential-provider-process@3.972.38
+ - @aws-sdk/credential-provider-sso@3.972.42
+ - @aws-sdk/credential-provider-web-identity@3.972.42
 
 These packages each contain the following license:
 
@@ -2109,9 +2109,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-http@3.972.41
- - @aws-sdk/credential-provider-login@3.972.43
- - @aws-sdk/nested-clients@3.997.11
+ - @aws-sdk/credential-provider-http@3.972.40
+ - @aws-sdk/credential-provider-login@3.972.42
+ - @aws-sdk/nested-clients@3.997.10
 
 These packages each contain the following license:
 
@@ -2336,13 +2336,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The following npm packages may be included in this product:
 
  - @nodable/entities@2.1.0
- - netmask@2.1.0
  - quickjs-wasi@2.2.0
  - xml-naming@0.1.0
 
 These packages each contain the following license:
 
 MIT
+
+-----------
+
+The following npm package may be included in this product:
+
+ - netmask@2.1.1
+
+This package contains the following license:
+
+MIT License
+
+Copyright (c) 2011 Olivier Poitrey rs@rhapsodyk.net
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 -----------
 
@@ -2468,7 +2497,7 @@ SOFTWARE.
 
 The following npm package may be included in this product:
 
- - undici@6.24.0
+ - undici@6.25.0
 
 This package contains the following license:
 
@@ -2610,7 +2639,7 @@ THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - socks@2.8.7
+ - socks@2.8.8
 
 This package contains the following license:
 
@@ -2698,9 +2727,9 @@ SOFTWARE.
 
 The following npm packages may be included in this product:
 
- - @actions/core@2.0.2
- - @actions/exec@2.0.0
- - @actions/io@2.0.0
+ - @actions/core@3.0.1
+ - @actions/exec@3.0.0
+ - @actions/io@3.0.2
 
 These packages each contain the following license:
 
