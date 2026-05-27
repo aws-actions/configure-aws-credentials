@@ -74053,6 +74053,7 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
   info("Assuming role with web identity token file");
   try {
     delete params.Tags;
+    delete params.TransitiveTagKeys;
     const creds = await client.send(
       new import_client_sts2.AssumeRoleWithWebIdentityCommand({
         ...params,
