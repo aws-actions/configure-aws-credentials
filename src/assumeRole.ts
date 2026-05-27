@@ -1,11 +1,10 @@
 import assert from 'node:assert';
-import fs from 'node:fs';
 import path from 'node:path';
 import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, STSClient, Tag } from '@aws-sdk/client-sts';
 import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
-import { errorMessage, isDefined, sanitizeGitHubVariables } from './helpers';
+import { errorMessage, isDefined, readFileUtf8, sanitizeGitHubVariables } from './helpers';
 
 async function assumeRoleWithOIDC(params: AssumeRoleCommandInput, client: STSClient, webIdentityToken: string) {
   delete params.Tags;
@@ -36,12 +35,12 @@ async function assumeRoleWithWebIdentityTokenFile(
   const webIdentityTokenFilePath = path.isAbsolute(webIdentityTokenFile)
     ? webIdentityTokenFile
     : path.join(workspace, webIdentityTokenFile);
-  if (!fs.existsSync(webIdentityTokenFilePath)) {
+  const webIdentityToken = readFileUtf8(webIdentityTokenFilePath);
+  if (webIdentityToken === null) {
     throw new Error(`Web identity token file does not exist: ${webIdentityTokenFilePath}`);
   }
   core.info('Assuming role with web identity token file');
   try {
-    const webIdentityToken = fs.readFileSync(webIdentityTokenFilePath, 'utf8');
     delete params.Tags;
     delete params.TransitiveTagKeys;
     const creds = await client.send(

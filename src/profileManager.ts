@@ -1,8 +1,8 @@
-import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { Credentials } from '@aws-sdk/client-sts';
+import { mkdir, readFileUtf8, writeFileUtf8 } from './helpers';
 
 /**
  * Parse an INI-format string into a nested object.
@@ -87,10 +87,8 @@ export function getProfileFilePaths(): ProfileFilePaths {
  */
 export function ensureAwsDirectoryExists(filePath: string): void {
   const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    core.debug(`Creating directory: ${dir}`);
-    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  }
+  core.debug(`Ensuring directory exists: ${dir}`);
+  mkdir(dir, 0o700);
 }
 
 /**
@@ -127,14 +125,8 @@ export function mergeProfileSection(
   data: Record<string, string>,
   overwriteAwsProfile: boolean,
 ): void {
-  let existingContent: Record<string, Record<string, string>> = {};
-
-  // Read existing file if it exists
-  if (fs.existsSync(filePath)) {
-    core.debug(`Reading existing file: ${filePath}`);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    existingContent = parseIni(fileContent);
-  }
+  const fileContent = readFileUtf8(filePath);
+  const existingContent: Record<string, Record<string, string>> = fileContent === null ? {} : parseIni(fileContent);
 
   if (existingContent[sectionName] && !overwriteAwsProfile) {
     throw new Error(
@@ -147,7 +139,7 @@ export function mergeProfileSection(
   const content = stringifyIni(existingContent);
 
   core.debug(`Writing profile to ${filePath}`);
-  fs.writeFileSync(filePath, content, { mode: 0o600 });
+  writeFileUtf8(filePath, content, 0o600);
 }
 
 /**

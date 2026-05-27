@@ -17,10 +17,10 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.972.32",
+    "@aws-sdk/credential-provider-env": "^3.972.38",
     "@biomejs/biome": "2.4.15",
-    "@smithy/property-provider": "^4.3.1",
-    "@types/node": "^25.7.0",
+    "@smithy/property-provider": "^4.3.3",
+    "@types/node": "^25.9.0",
     "@vitest/coverage-v8": "^4.1.6",
     "aws-sdk-client-mock": "^4.1.0",
     "esbuild": "^0.28.0",
@@ -30,12 +30,12 @@
     "memfs": "^4.57.2",
     "standard-version": "^9.5.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.6"
   },
   "dependencies": {
     "@actions/core": "^3.0.1",
-    "@aws-sdk/client-sts": "^3.1045.0",
-    "@smithy/node-http-handler": "^4.7.1",
+    "@aws-sdk/client-sts": "^3.1049.0",
+    "@smithy/node-http-handler": "^4.7.3",
     "proxy-agent": "^8.0.1"
   },
   "keywords": [
