@@ -623,7 +623,7 @@ For further information on OIDC and GitHub Actions, please see:
 ## Running in AWS Containers
 
 To run this action using self-hosted action runners on AWS Containers such as
-Codebuild or EKS, you may need to set `role-chaining: true`. 
+Codebuild or EKS, you may need to set `role-chaining: true`.
 
 If you are using EKS and encountering an error related to the packed size of
 session tags, set `role-skip-session-tagging: true`.
