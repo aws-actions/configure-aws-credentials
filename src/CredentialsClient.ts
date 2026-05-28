@@ -3,18 +3,15 @@ import { STSClient } from '@aws-sdk/client-sts';
 import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { ProxyAgent } from 'proxy-agent';
-import { buildCustomUserAgent, errorMessage, getCallerIdentity } from './helpers';
+import { errorMessage, getCallerIdentity } from './helpers';
 import { ProxyResolver } from './ProxyResolver';
 
-if (!process.env.AWS_EXECUTION_ENV) {
-  process.env.AWS_EXECUTION_ENV = 'GitHubActions';
-}
+const USER_AGENT = 'configure-aws-credentials-for-github-actions';
 
 export interface CredentialsClientProps {
   region?: string;
   proxyServer?: string;
   noProxy?: string;
-  stsEndpoint?: string;
   roleChaining: boolean;
 }
 
@@ -22,7 +19,6 @@ export class CredentialsClient {
   public region?: string;
   private _stsClient?: STSClient;
   private readonly requestHandler?: NodeHttpHandler;
-  private readonly stsEndpoint?: string;
   private roleChaining?: boolean;
 
   constructor(props: CredentialsClientProps) {
@@ -45,20 +41,19 @@ export class CredentialsClient {
         httpAgent: handler,
       });
     }
-    if (props.stsEndpoint) {
-      this.stsEndpoint = props.stsEndpoint;
-    }
     this.roleChaining = props.roleChaining;
   }
 
   public get stsClient(): STSClient {
     if (!this._stsClient || this.roleChaining) {
-      this._stsClient = new STSClient({
-        customUserAgent: buildCustomUserAgent(),
-        ...(this.region !== undefined && { region: this.region }),
-        ...(this.stsEndpoint !== undefined && { endpoint: this.stsEndpoint }),
-        ...(this.requestHandler !== undefined && { requestHandler: this.requestHandler }),
-      });
+      const config = { customUserAgent: USER_AGENT } as {
+        customUserAgent: string;
+        region?: string;
+        requestHandler?: NodeHttpHandler;
+      };
+      if (this.region !== undefined) config.region = this.region;
+      if (this.requestHandler !== undefined) config.requestHandler = this.requestHandler;
+      this._stsClient = new STSClient(config);
     }
     return this._stsClient;
   }

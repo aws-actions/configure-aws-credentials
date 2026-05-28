@@ -1,5 +1,9 @@
 import * as core from '@actions/core';
-import { AssumeRoleWithWebIdentityCommand, GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import {
+  AssumeRoleWithWebIdentityCommand,
+  GetCallerIdentityCommand,
+  STSClient,
+} from '@aws-sdk/client-sts';
 import { mockClient } from 'aws-sdk-client-mock';
 import { fs, vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
