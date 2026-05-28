@@ -388,20 +388,20 @@ Tags whose source environment variable is unset are omitted (e.g., `BaseRef` and
 _Note: all tag values must conform to
 [the tag requirements][sts-tag-requirements].
 Values longer than 256 characters will be truncated, and characters outside the
-allowed set will be replaced with an underscore (`_`).\_
+allowed set will be replaced with an underscore (`_`)._
 
 [sts-tag-requirements]:
   https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html
 
-The action will use session tagging by default unless you are using OIDC.
+The action will use session tagging by default unless you are using OIDC or a
+Web Identify Token File.
 
 To [forward session tags to subsequent sessions in a role
-chain][session-tag-chaining], you can use
+chain][session-tag-chaining], you can use the `transitive-tag-keys` input to
+specify the keys of the tags to be passed.
 
 [session-tag-chaining]:
   https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html#id_session-tags_role-chaining
-
-the `transitive-tag-keys` input to specify the keys of the tags to be passed.
 
 _Note that all subsequent roles in the chain must have
 `role-skip-session-tagging` set to `true`_
@@ -626,7 +626,12 @@ To run this action using self-hosted action runners on AWS Containers such as
 Codebuild or EKS, you may need to set `role-chaining: true`.
 
 If you are using EKS and encountering an error related to the packed size of
-session tags, set `role-skip-session-tagging: true`.
+session tags, set `role-skip-session-tagging: true`. Alternatively, you may
+[disable EKS session tagging][eks-disable-session-tagging] in the EKS settings
+if you do not need those predefined tags.
+
+[eks-disable-session-tagging]:
+  https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html#pod-id-abac-tags
 
 ## Compatibility with non-GitHub Actions environments
 

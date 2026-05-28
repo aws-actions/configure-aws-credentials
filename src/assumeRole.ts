@@ -226,6 +226,7 @@ export async function assumeRole(params: assumeRoleParams) {
     core.debug('Role session tagging has been skipped.');
   } else {
     core.debug(`${tags.length} role session tags are being used:`);
+    core.debug(JSON.stringify(tagArray));
   }
 
   //only populate transitiveTagKeys array if user is actually using session tagging
