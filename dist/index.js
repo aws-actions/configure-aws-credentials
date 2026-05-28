@@ -75531,6 +75531,13 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``
   );
 }
 var O_NOFOLLOW = fs.constants.O_NOFOLLOW ?? 0;
+function isAllowListed(filePath) {
+  const KUBERNETES_TOKEN_PATH_REGEX = /^\/var\/run\/secrets\/[^/]+\/serviceaccount\/token$/;
+  if (process.platform !== "win32") {
+    return KUBERNETES_TOKEN_PATH_REGEX.test(path.posix.normalize(filePath));
+  }
+  return false;
+}
 function isSymlink(filePath) {
   try {
     return fs.lstatSync(filePath).isSymbolicLink();
@@ -75555,10 +75562,14 @@ function assertRegularFile(fd, filePath) {
   }
 }
 function readFileUtf8(filePath) {
-  refuseSymlinkOnPath(filePath);
+  const allowSymlink = isAllowListed(filePath);
+  if (!allowSymlink) {
+    refuseSymlinkOnPath(filePath);
+  }
+  const openFlags = fs.constants.O_RDONLY | (allowSymlink ? 0 : O_NOFOLLOW);
   let fd;
   try {
-    fd = fs.openSync(filePath, fs.constants.O_RDONLY | O_NOFOLLOW);
+    fd = fs.openSync(filePath, openFlags);
   } catch (err) {
     const code = err.code;
     if (code === "ENOENT") return null;
