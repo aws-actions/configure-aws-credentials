@@ -855,7 +855,7 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/signature-v4-multi-region@3.996.27
- - @smithy/core@3.24.3
+ - @smithy/core@3.24.5
  - @smithy/types@4.14.2
 
 These packages each contain the following license:
@@ -1254,7 +1254,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.974.12
+ - @aws-sdk/core@3.974.15
 
 This package contains the following license:
 
@@ -1674,18 +1674,18 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.38
+ - @aws-sdk/credential-provider-env@3.972.41
  - @aws-sdk/credential-provider-ini@3.972.42
  - @aws-sdk/credential-provider-node@3.972.43
  - @aws-sdk/token-providers@3.1049.0
- - @aws-sdk/types@3.973.8
+ - @aws-sdk/types@3.973.9
  - @aws-sdk/util-locate-window@3.965.5
- - @aws-sdk/xml-builder@3.972.24
+ - @aws-sdk/xml-builder@3.972.26
  - @smithy/credential-provider-imds@4.3.3
  - @smithy/fetch-http-handler@5.4.3
  - @smithy/is-array-buffer@2.2.0
  - @smithy/node-http-handler@4.7.3
- - @smithy/signature-v4@5.4.3
+ - @smithy/signature-v4@5.4.5
  - @smithy/util-buffer-from@2.2.0
  - @smithy/util-utf8@2.3.0
 
@@ -2335,7 +2335,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following npm packages may be included in this product:
 
- - @nodable/entities@2.1.0
+ - @nodable/entities@2.1.1
  - quickjs-wasi@2.2.0
  - xml-naming@0.1.0
 

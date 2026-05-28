@@ -297,6 +297,20 @@ export function getBooleanInput(name: string, options?: core.InputOptions & { de
 // O_NOFOLLOW is undefined on Windows. This sets it to 0 if it's not defined.
 const O_NOFOLLOW: number = (fs.constants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;
 
+export function isAllowListed(filePath: string): boolean {
+  // Kubelet projects service-account tokens through a symlink chain
+  // (token -> ..data/token, ..data -> ..<timestamp>/). The containing path is
+  // kubelet-controlled, so we allow symlink-following reads of this fixed
+  // location only.
+  const KUBERNETES_TOKEN_PATH_REGEX = /^\/var\/run\/secrets\/[^/]+\/serviceaccount\/token$/;
+
+  if (process.platform !== 'win32') {
+    // No Kubernetes token paths on Windows
+    return KUBERNETES_TOKEN_PATH_REGEX.test(path.posix.normalize(filePath));
+  }
+  return false;
+}
+
 export function isSymlink(filePath: string): boolean {
   try {
     return fs.lstatSync(filePath).isSymbolicLink();
@@ -328,10 +342,14 @@ function assertRegularFile(fd: number, filePath: string): void {
 // ELOOP: too many symbolic links (from NOFOLLOW)
 
 export function readFileUtf8(filePath: string): string | null {
-  refuseSymlinkOnPath(filePath);
+  const allowSymlink = isAllowListed(filePath);
+  if (!allowSymlink) {
+    refuseSymlinkOnPath(filePath);
+  }
+  const openFlags = fs.constants.O_RDONLY | (allowSymlink ? 0 : O_NOFOLLOW);
   let fd: number;
   try {
-    fd = fs.openSync(filePath, fs.constants.O_RDONLY | O_NOFOLLOW);
+    fd = fs.openSync(filePath, openFlags);
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === 'ENOENT') return null;

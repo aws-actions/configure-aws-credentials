@@ -17,11 +17,11 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.972.38",
+    "@aws-sdk/credential-provider-env": "^3.972.39",
     "@biomejs/biome": "2.4.15",
-    "@smithy/property-provider": "^4.3.3",
-    "@types/node": "^25.9.0",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@smithy/property-provider": "^4.3.4",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "4.1.5",
     "aws-sdk-client-mock": "^4.1.0",
     "esbuild": "^0.28.0",
     "generate-license-file": "^4.1.1",
@@ -30,7 +30,7 @@
     "memfs": "^4.57.2",
     "standard-version": "^9.5.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "4.1.5"
   },
   "dependencies": {
     "@actions/core": "^3.0.1",

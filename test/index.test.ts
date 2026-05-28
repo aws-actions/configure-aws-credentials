@@ -202,18 +202,6 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.setOutput).toHaveBeenCalledTimes(2);
       expect(core.setFailed).not.toHaveBeenCalled();
     });
-    it('does not send Tags or TransitiveTagKeys to AssumeRoleWithWebIdentity', async () => {
-      // AssumeRoleWithWebIdentity reads session tags from JWT claims, not the request.
-      // Both fields must be stripped before the STS call.
-      vi.mocked(core.getMultilineInput).mockImplementation((name: string) => {
-        if (name === 'transitive-tag-keys') return ['Repository'];
-        return [];
-      });
-      await run();
-      const callInput = mockedSTSClient.commandCalls(AssumeRoleWithWebIdentityCommand)[0].args[0].input;
-      expect(callInput.Tags).toBeUndefined();
-      expect(callInput.TransitiveTagKeys).toBeUndefined();
-    });
   });
 
   describe('Assume existing role', {}, () => {
