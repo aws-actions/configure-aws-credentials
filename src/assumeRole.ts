@@ -42,6 +42,7 @@ async function assumeRoleWithWebIdentityTokenFile(
   core.info('Assuming role with web identity token file');
   try {
     delete params.Tags;
+    delete params.TransitiveTagKeys;
     const creds = await client.send(
       new AssumeRoleWithWebIdentityCommand({
         ...params,
