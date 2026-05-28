@@ -154,6 +154,75 @@ describe('Configure AWS Credentials helpers', {}, () => {
         fs.mkdirSync('/dir/subdir', { recursive: true });
         expect(() => helpers.readFileUtf8('/dir/subdir')).toThrow(/not a regular file/);
       });
+
+      it.skipIf(process.platform === 'win32')(
+        'follows the kubelet projected-token symlink chain at /var/run/secrets/*/serviceaccount/token',
+        () => {
+          fs.mkdirSync('/var/run/secrets/eks.amazonaws.com/serviceaccount/..2026_05_28_00_00_00.123', {
+            recursive: true,
+          });
+          fs.writeFileSync(
+            '/var/run/secrets/eks.amazonaws.com/serviceaccount/..2026_05_28_00_00_00.123/token',
+            'jwt-token',
+          );
+          fs.symlinkSync(
+            '..2026_05_28_00_00_00.123',
+            '/var/run/secrets/eks.amazonaws.com/serviceaccount/..data',
+          );
+          fs.symlinkSync(
+            '..data/token',
+            '/var/run/secrets/eks.amazonaws.com/serviceaccount/token',
+          );
+          expect(helpers.readFileUtf8('/var/run/secrets/eks.amazonaws.com/serviceaccount/token')).toBe('jwt-token');
+        },
+      );
+
+      it.skipIf(process.platform === 'win32')(
+        'still refuses symlinks at lookalike paths outside the allowlist',
+        () => {
+          fs.mkdirSync('/var/run/secrets/eks.amazonaws.com/serviceaccount', { recursive: true });
+          fs.writeFileSync('/var/run/secrets/eks.amazonaws.com/serviceaccount/secret', 'jwt-token');
+          fs.symlinkSync(
+            '/var/run/secrets/eks.amazonaws.com/serviceaccount/secret',
+            '/var/run/secrets/eks.amazonaws.com/serviceaccount/token2',
+          );
+          expect(() =>
+            helpers.readFileUtf8('/var/run/secrets/eks.amazonaws.com/serviceaccount/token2'),
+          ).toThrow(/Refusing .* \(.* symbolic link\)/);
+        },
+      );
+    });
+
+    describe('isAllowListed', {}, () => {
+      it.skipIf(process.platform === 'win32')('matches the canonical kubelet projected-token path', () => {
+        expect(
+          helpers.isAllowListed('/var/run/secrets/eks.amazonaws.com/serviceaccount/token'),
+        ).toBe(true);
+        expect(
+          helpers.isAllowListed('/var/run/secrets/kubernetes.io/serviceaccount/token'),
+        ).toBe(true);
+      });
+
+      it.skipIf(process.platform === 'win32')('rejects nested or unrelated paths', () => {
+        expect(helpers.isAllowListed('/var/run/secrets/serviceaccount/token')).toBe(false);
+        expect(
+          helpers.isAllowListed('/var/run/secrets/a/b/serviceaccount/token'),
+        ).toBe(false);
+        expect(
+          helpers.isAllowListed('/var/run/secrets/eks.amazonaws.com/serviceaccount/token2'),
+        ).toBe(false);
+        expect(
+          helpers.isAllowListed('/etc/var/run/secrets/foo/serviceaccount/token'),
+        ).toBe(false);
+      });
+
+      it.skipIf(process.platform === 'win32')('normalizes path traversal attempts', () => {
+        expect(
+          helpers.isAllowListed(
+            '/var/run/secrets/foo/serviceaccount/../../../../etc/passwd',
+          ),
+        ).toBe(false);
+      });
     });
 
     describe('writeFileUtf8', {}, () => {
