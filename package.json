@@ -1,11 +1,11 @@
 {
   "name": "configure-aws-credentials",
   "description": "A GitHub Action to configure AWS credentials",
-  "version": "6.1.1",
+  "version": "6.1.2",
   "scripts": {
     "build": "tsc",
-    "lint": "biome check --error-on-warnings ./src ./test && markdownlint -i node_modules -i CHANGELOG.md '**/*.md'",
-    "lint:fix": "biome check --write ./src ./test && markdownlint -i node_modules -i CHANGELOG.md -f '**/*.md'",
+    "lint": "biome check --error-on-warnings ./src && markdownlint -i node_modules -i CHANGELOG.md '**/*.md'",
+    "lint:fix": "biome check --write ./src && markdownlint -i node_modules -i CHANGELOG.md -f '**/*.md'",
     "package": "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/index.js && esbuild src/cleanup/index.ts --bundle --platform=node --target=node24 --outfile=dist/cleanup/index.js && npm run license",
     "test": "npm run lint && vitest run && npm run build",
     "clean": "del-cli coverage test-reports node_modules",
@@ -17,25 +17,25 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.972.38",
-    "@biomejs/biome": "2.4.15",
-    "@smithy/property-provider": "^4.3.3",
-    "@types/node": "^25.9.0",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@aws-sdk/credential-provider-env": "^3.972.39",
+    "@biomejs/biome": "2.4.13",
+    "@smithy/property-provider": "^4.3.4",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "4.1.5",
     "aws-sdk-client-mock": "^4.1.0",
     "esbuild": "^0.28.0",
-    "generate-license-file": "^4.1.1",
+    "generate-license-file": "^4.2.1",
     "json-schema": "^0.4.0",
     "markdownlint-cli": "^0.48.0",
     "memfs": "^4.57.2",
     "standard-version": "^9.5.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "4.1.5"
   },
   "dependencies": {
-    "@actions/core": "^3.0.1",
-    "@aws-sdk/client-sts": "^3.1049.0",
-    "@smithy/node-http-handler": "^4.7.3",
+    "@actions/core": "^2.0.2",
+    "@aws-sdk/client-sts": "^3.1053.0",
+    "@smithy/node-http-handler": "^4.6.1",
     "proxy-agent": "^8.0.1"
   },
   "keywords": [

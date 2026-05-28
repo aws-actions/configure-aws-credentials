@@ -1,3 +1,4 @@
+
 name: '"Configure AWS Credentials" Action for GitHub Actions'
 description: Configures AWS credentials for use in subsequent steps in a GitHub Action workflow
 runs:
@@ -34,7 +35,7 @@ inputs:
     description: Use the web identity token file from the provided file system path in order to assume an IAM role using a web identity, e.g. from within an Amazon EKS worker node.
     required: false
   role-chaining:
-    description: Use existing credentials from the environment to assume a new role, rather than providing credentials as input. This is sometimes useful when running on a self-hosted runner with container-sourced credentials.
+    description: Use existing credentials from the environment to assume a new role, rather than providing credentials as input.
     required: false
   audience:
     description: The audience to use for the OIDC provider
@@ -100,12 +101,6 @@ inputs:
   action-timeout-s:
     required: false
     description: A global timeout in seconds for the action. When the timeout is reached, the action immediately exits. The default is to run without a timeout.
-  custom-tags:
-    description: Additional tags to apply to the assumed role session. Must be a JSON object provided as a string.
-    required: false
-  sts-endpoint:
-    description: Custom STS endpoint URL. Use this to point to an STS-compatible API (e.g. MinIO, LocalStack) instead of the default AWS STS endpoint for the region.
-    required: false
 
 outputs:
   aws-account-id:

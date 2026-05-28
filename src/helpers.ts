@@ -3,32 +3,11 @@ import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
-import type { UserAgent } from '@smithy/types';
 import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
 const SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
-const USER_AGENT_PREFIX = 'configure-aws-credentials-for-github-actions';
-const UA_FIELDS: ReadonlyArray<{ env: string; label: string; pattern: RegExp }> = [
-  { env: 'GITHUB_ACTION', label: 'action', pattern: /^[A-Za-z0-9_-]{1,128}$/ },
-  { env: 'GITHUB_RUN_ID', label: 'run_id', pattern: /^[0-9]{1,20}$/ },
-  { env: 'GITHUB_RUN_ATTEMPT', label: 'attempt', pattern: /^[0-9]{1,10}$/ },
-];
-
-export function buildCustomUserAgent(): UserAgent {
-  const tokens: UserAgent = [[USER_AGENT_PREFIX]];
-  for (const { env, label, pattern } of UA_FIELDS) {
-    const value = process.env[env];
-    if (value === undefined) continue;
-    if (pattern.test(value)) {
-      tokens.push(['md', `${label}#${value}`]);
-    } else {
-      core.warning(`${env} has unexpected format; omitting from User-Agent`);
-    }
-  }
-  return tokens;
-}
 
 export function translateEnvVariables() {
   const envVars = [
@@ -212,7 +191,6 @@ export async function retryAndBackoff<T>(
   maxRetries = 12,
   retries = 0,
   base = 50,
-  label?: string,
 ): Promise<T> {
   try {
     return await fn();
@@ -224,21 +202,20 @@ export async function retryAndBackoff<T>(
     // It's retryable, so sleep and retry.
     const delay = Math.random() * (2 ** retries * base);
     const nextRetry = retries + 1;
-    const opName = label ? ` ${label}` : '';
 
-    core.info(
-      `Retry${opName}: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
+    core.debug(
+      `retryAndBackoff: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
         `Retrying after ${Math.floor(delay)}ms.`,
     );
 
     await sleep(delay);
 
     if (nextRetry >= maxRetries) {
-      core.info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
+      core.debug('retryAndBackoff: reached max retries; giving up.');
       throw err;
     }
 
-    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base, label);
+    return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base);
   }
 }
 
@@ -297,6 +274,20 @@ export function getBooleanInput(name: string, options?: core.InputOptions & { de
 // O_NOFOLLOW is undefined on Windows. This sets it to 0 if it's not defined.
 const O_NOFOLLOW: number = (fs.constants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;
 
+export function isAllowListed(filePath: string): boolean {
+  // Kubelet projects service-account tokens through a symlink chain
+  // (token -> ..data/token, ..data -> ..<timestamp>/). The containing path is
+  // kubelet-controlled, so we allow symlink-following reads of this fixed
+  // location only.
+  const KUBERNETES_TOKEN_PATH_REGEX = /^\/var\/run\/secrets\/[^/]+\/serviceaccount\/token$/;
+
+  if (process.platform !== 'win32') {
+    // No Kubernetes token paths on Windows
+    return KUBERNETES_TOKEN_PATH_REGEX.test(path.posix.normalize(filePath));
+  }
+  return false;
+}
+
 export function isSymlink(filePath: string): boolean {
   try {
     return fs.lstatSync(filePath).isSymbolicLink();
@@ -328,10 +319,14 @@ function assertRegularFile(fd: number, filePath: string): void {
 // ELOOP: too many symbolic links (from NOFOLLOW)
 
 export function readFileUtf8(filePath: string): string | null {
-  refuseSymlinkOnPath(filePath);
+  const allowSymlink = isAllowListed(filePath);
+  if (!allowSymlink) {
+    refuseSymlinkOnPath(filePath);
+  }
+  const openFlags = fs.constants.O_RDONLY | (allowSymlink ? 0 : O_NOFOLLOW);
   let fd: number;
   try {
-    fd = fs.openSync(filePath, fs.constants.O_RDONLY | O_NOFOLLOW);
+    fd = fs.openSync(filePath, openFlags);
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === 'ENOENT') return null;
