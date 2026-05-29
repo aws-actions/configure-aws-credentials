@@ -353,8 +353,7 @@ documentation for `GITHUB_` environment variable definitions][gh-env-vars])
 [gh-env-vars]:
   https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
 
-**Protected tags** are always emitted when session tags are used, and cannot be
-overridden via `custom-tags`:
+**Default tags** are always emitted when session tags are used.
 
 | Key        | Value             |
 | ---------- | ----------------- |
@@ -366,21 +365,24 @@ overridden via `custom-tags`:
 | Commit     | GITHUB_SHA        |
 | Branch     | GITHUB_REF        |
 
-**Overrideable tags** are automatically added to the set of default session tags
-but may be overridden via `custom-tags`. AWS has a maximum limit of 50 session
-tags; tags from this list are dropped in reverse priority order if your
-`custom-tags` set plus the protected set exceeds this limit.
+**Droppable tags** are automatically added to the set of default session tags.
+If the session tags exceed the [packed size limit][packed-size-limit], these
+tags will be dropped, and the AssumeRole call will be retried. If it still
+fails, the action will error out. (It is difficult to predict the packed size
+before making the call, as session tags and session policies are compressed into
+a binary format as part of the call.)
 
-| Key             | Value                   | Priority |
-| --------------- | ----------------------- | -------- |
-| EventName       | GITHUB_EVENT_NAME       | 1        |
-| BaseRef         | GITHUB_BASE_REF         | 2        |
-| HeadRef         | GITHUB_HEAD_REF         | 3        |
-| RefName         | GITHUB_REF_NAME         | 4        |
-| RunId           | GITHUB_RUN_ID           | 5        |
-| RefType         | GITHUB_REF_TYPE         | 6        |
-| Job             | GITHUB_JOB              | 7        |
-| TriggeringActor | GITHUB_TRIGGERING_ACTOR | 8        |
+[packed-size-limit]:
+  https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html#id_session-tags_know
+
+| Key             | Value                   |
+| --------------- | ----------------------- |
+| EventName       | GITHUB_EVENT_NAME       |
+| BaseRef         | GITHUB_BASE_REF         |
+| HeadRef         | GITHUB_HEAD_REF         |
+| RunId           | GITHUB_RUN_ID           |
+| Job             | GITHUB_JOB              |
+| TriggeringActor | GITHUB_TRIGGERING_ACTOR |
 
 Tags whose source environment variable is unset are omitted (e.g., `BaseRef` and
 `HeadRef` are only set on `pull_request` events).
@@ -419,9 +421,10 @@ with:
 ### Custom session tags
 
 You can add custom session tags using the `custom-tags` input, which accepts a
-JSON object. Custom tags cannot override protected tags, but they can override
-overrideable tags (in which case the overrideable tag's slot is freed for the
-next overrideable tag in the priority list, if any).
+JSON object. Custom tags cannot override existing tags. Note that AWS allows a
+maximum of 50 tags (so you can supply a maximum of 43 custom tags), although it
+is likely that you will exceed the [packed size limit][packed-size-limit]
+before you exceed the maximum number of tags.
 
 ```yaml
 uses: aws-actions/configure-aws-credentials@v6
