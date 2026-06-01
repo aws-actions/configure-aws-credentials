@@ -590,7 +590,7 @@ claims ([1][gh-blog-oidc], [2][sub-claim-custom]).
 
 > **Warning:** Avoid `ForAllValues:` in `Allow` statements. These operators
 > return true when the claim is absent or misspelled, which can lead to
-> uninended access. Instead, use `StringEquals` or `StringLike` operators to
+> unintended access. Instead, use `StringEquals` or `StringLike` operators to
 > check for specific claim values.
 
 [least-privilege]:
