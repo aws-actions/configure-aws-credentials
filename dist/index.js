@@ -44986,7 +44986,7 @@ var require_errors2 = __commonJS({
       }
     };
     exports2.MalformedPolicyDocumentException = MalformedPolicyDocumentException2;
-    var PackedPolicyTooLargeException2 = class _PackedPolicyTooLargeException extends STSServiceException_1.STSServiceException {
+    var PackedPolicyTooLargeException3 = class _PackedPolicyTooLargeException extends STSServiceException_1.STSServiceException {
       name = "PackedPolicyTooLargeException";
       $fault = "client";
       constructor(opts) {
@@ -44998,7 +44998,7 @@ var require_errors2 = __commonJS({
         Object.setPrototypeOf(this, _PackedPolicyTooLargeException.prototype);
       }
     };
-    exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException2;
+    exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException3;
     var RegionDisabledException2 = class _RegionDisabledException extends STSServiceException_1.STSServiceException {
       name = "RegionDisabledException";
       $fault = "client";
@@ -74060,6 +74060,7 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
   info("Assuming role with web identity token file");
   try {
     delete params.Tags;
+    delete params.TransitiveTagKeys;
     const creds = await client.send(
       new import_client_sts2.AssumeRoleWithWebIdentityCommand({
         ...params,
@@ -74077,6 +74078,13 @@ async function assumeRoleWithCredentials(params, client) {
     const creds = await client.send(new import_client_sts2.AssumeRoleCommand({ ...params }));
     return creds;
   } catch (error3) {
+    if (error3 instanceof import_client_sts2.PackedPolicyTooLargeException) {
+      info("Session tag size is too large; dropping droppable tags and retrying.");
+      const droppableKeys = new Set(DROPPABLE_TAG_SOURCES.map((s) => s.key));
+      params.Tags = params.Tags?.filter((tag2) => !droppableKeys.has(tag2.Key ?? ""));
+      const creds = await client.send(new import_client_sts2.AssumeRoleCommand({ ...params }));
+      return creds;
+    }
     throw new Error(`Could not assume role with user credentials: ${errorMessage(error3)}`);
   }
 }
@@ -74085,7 +74093,7 @@ var TAG_VALUE_REGEX = /^[\p{L}\p{Z}\p{N}_.:/=+\-@]*$/u;
 var MAX_TAG_KEY_LENGTH = 128;
 var MAX_TAG_VALUE_LENGTH2 = 256;
 var MAX_SESSION_TAGS = 50;
-var PROTECTED_TAG_SOURCES = [
+var NON_DROPPABLE_TAG_SOURCES = [
   { key: "Repository", envVar: "GITHUB_REPOSITORY" },
   { key: "Workflow", envVar: "GITHUB_WORKFLOW" },
   { key: "Action", envVar: "GITHUB_ACTION" },
@@ -74093,17 +74101,19 @@ var PROTECTED_TAG_SOURCES = [
   { key: "Commit", envVar: "GITHUB_SHA" },
   { key: "Branch", envVar: "GITHUB_REF" }
 ];
-var OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY = [
+var DROPPABLE_TAG_SOURCES = [
   { key: "EventName", envVar: "GITHUB_EVENT_NAME" },
   { key: "BaseRef", envVar: "GITHUB_BASE_REF" },
   { key: "HeadRef", envVar: "GITHUB_HEAD_REF" },
-  { key: "RefName", envVar: "GITHUB_REF_NAME" },
   { key: "RunId", envVar: "GITHUB_RUN_ID" },
-  { key: "RefType", envVar: "GITHUB_REF_TYPE" },
   { key: "Job", envVar: "GITHUB_JOB" },
   { key: "TriggeringActor", envVar: "GITHUB_TRIGGERING_ACTOR" }
 ];
-var PROTECTED_TAG_KEYS = /* @__PURE__ */ new Set(["GitHub", ...PROTECTED_TAG_SOURCES.map((s) => s.key)]);
+var PROTECTED_TAG_KEYS = /* @__PURE__ */ new Set([
+  "GitHub",
+  ...NON_DROPPABLE_TAG_SOURCES.map((s) => s.key),
+  ...DROPPABLE_TAG_SOURCES.map((s) => s.key)
+]);
 function parseAndValidateCustomTags(customTags, existingTags) {
   let parsed;
   try {
@@ -74175,30 +74185,26 @@ async function assumeRole(params) {
     throw new Error("Missing required environment variables. Are you running in GitHub Actions?");
   }
   const protectedTags = [{ Key: "GitHub", Value: "Actions" }];
-  for (const { key, envVar } of PROTECTED_TAG_SOURCES) {
+  for (const { key, envVar } of NON_DROPPABLE_TAG_SOURCES) {
+    const value = process.env[envVar];
+    if (value) {
+      protectedTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
+    }
+  }
+  for (const { key, envVar } of DROPPABLE_TAG_SOURCES) {
     const value = process.env[envVar];
     if (value) {
       protectedTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
     }
   }
   const parsedCustomTags = customTags ? parseAndValidateCustomTags(customTags, protectedTags) : [];
-  const customTagKeys = new Set(parsedCustomTags.map((t) => t.Key));
-  const availableOverrideableSlots = MAX_SESSION_TAGS - protectedTags.length - parsedCustomTags.length;
-  const overrideableTags = [];
-  for (const { key, envVar } of OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY) {
-    if (overrideableTags.length >= availableOverrideableSlots) break;
-    if (customTagKeys.has(key)) continue;
-    const value = process.env[envVar];
-    if (value) {
-      overrideableTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
-    }
-  }
-  const tagArray = [...protectedTags, ...overrideableTags, ...parsedCustomTags];
+  const tagArray = [...protectedTags, ...parsedCustomTags];
   const tags = roleSkipSessionTagging ? void 0 : tagArray;
   if (!tags) {
     debug("Role session tagging has been skipped.");
   } else {
     debug(`${tags.length} role session tags are being used:`);
+    debug(JSON.stringify(tagArray));
   }
   const transitiveTagKeysArray = roleSkipSessionTagging ? void 0 : transitiveTagKeys?.filter((key) => tags?.some((tag2) => tag2.Key === key));
   let roleArn = roleToAssume;
