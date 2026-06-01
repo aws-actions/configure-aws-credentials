@@ -108,9 +108,8 @@ const NON_DROPPABLE_TAG_SOURCES: ReadonlyArray<{ key: string; envVar: string }> 
   { key: 'Branch', envVar: 'GITHUB_REF' },
 ];
 
-// Convenience metadata. Will be dropped if session tag size is too large.
-// Logic for dropping tags by priority has been removed; it seems unlikely that
-// the limit of 50 tags will be hit without first hitting the size limit.
+// Convenience metadata. If the AssumeRole call fails due to compressed size of
+// session tags being too large, we will drop these tags and retry once.
 const DROPPABLE_TAG_SOURCES: ReadonlyArray<{ key: string; envVar: string }> = [
   { key: 'EventName', envVar: 'GITHUB_EVENT_NAME' },
   { key: 'BaseRef', envVar: 'GITHUB_BASE_REF' },

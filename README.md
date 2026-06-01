@@ -623,15 +623,31 @@ For further information on OIDC and GitHub Actions, please see:
 - [GitHub docs: Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 - [GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
 
-## Running in AWS Containers
+## Getting Credentials in AWS Self-Hosted Runners
 
-To run this action using self-hosted action runners on AWS Containers such as
-Codebuild or EKS, you may need to set `role-chaining: true`.
+If you are running GitHub Actions in a self-hosted runner using an AWS Service
+(such as Codebuild or EKS) and you have properly configured the service,
+credentials should be available by default; the AWS CLI will fetch credentials
+using the AWS_CONTAINER_CREDENTIALS_FULL_URI or
+AWS_CONTAINER_CREDENTIALS_RELATIVE_URI environment variables. However, you may
+still want to use this action if you need to export those credentials for use
+with other tools in your workflow. You may also want to use this action in
+scenarios where you need to use that 'default' role to assume another role.
 
-If you are using EKS and encountering an error related to the packed size of
-session tags, set `role-skip-session-tagging: true`. Alternatively, you may
+To export credentials, simply run the action with `role-to-assume` set to the
+default role of the container.
+
+To assume another role from the container's default role, use the 
+`role-chaining: true` flag, so that the action fetches the default credentials
+from the environment before assuming the other role.
+
+If you are using EKS Pod Identities and encountering an error related to the
+packed size of session tags, you must either run the action with
+`role-skip-session-tagging: true` to disable the tags set by the action, or
 [disable EKS session tagging][eks-disable-session-tagging] in the EKS settings
-if you do not need those predefined tags.
+to disable the tags that are automatically set by the EKS Pod Identity Service.
+Check the values of the action's session tags and the session tags that are
+added by EKS so you can keep the set of tags which is more useful to you.
 
 [eks-disable-session-tagging]:
   https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html#pod-id-abac-tags
