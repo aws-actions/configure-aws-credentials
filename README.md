@@ -637,7 +637,7 @@ scenarios where you need to use that 'default' role to assume another role.
 To export credentials, simply run the action with `role-to-assume` set to the
 default role of the container.
 
-To assume another role from the container's default role, use the 
+To assume another role from the container's default role, use the
 `role-chaining: true` flag, so that the action fetches the default credentials
 from the environment before assuming the other role.
 
