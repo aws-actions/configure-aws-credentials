@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.1.4](https://github.com/aws-actions/configure-aws-credentials/compare/v6.1.3...v6.1.4) (2026-06-01)
+
+
+### Bug Fixes
+
+* assumeRole failing from session tag size too large ([#1808](https://github.com/aws-actions/configure-aws-credentials/issues/1808)) ([d6f5dc3](https://github.com/aws-actions/configure-aws-credentials/commit/d6f5dc331b44474b19a52caaf85fa4d637b13c8e))
+
 ## [6.1.2](https://github.com/aws-actions/configure-aws-credentials/compare/v6.1.1...v6.1.2) (2026-05-26)
 
 
