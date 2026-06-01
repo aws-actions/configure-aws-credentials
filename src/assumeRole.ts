@@ -2,7 +2,11 @@ import assert from 'node:assert';
 import path from 'node:path';
 import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, STSClient, Tag } from '@aws-sdk/client-sts';
-import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
+import {
+  AssumeRoleCommand,
+  AssumeRoleWithWebIdentityCommand,
+  PackedPolicyTooLargeException,
+} from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
 import { errorMessage, isDefined, readFileUtf8, sanitizeGitHubVariables } from './helpers';
 
@@ -42,6 +46,7 @@ async function assumeRoleWithWebIdentityTokenFile(
   core.info('Assuming role with web identity token file');
   try {
     delete params.Tags;
+    delete params.TransitiveTagKeys;
     const creds = await client.send(
       new AssumeRoleWithWebIdentityCommand({
         ...params,
@@ -60,6 +65,13 @@ async function assumeRoleWithCredentials(params: AssumeRoleCommandInput, client:
     const creds = await client.send(new AssumeRoleCommand({ ...params }));
     return creds;
   } catch (error) {
+    if (error instanceof PackedPolicyTooLargeException) {
+      core.info('Session tag size is too large; dropping droppable tags and retrying.');
+      const droppableKeys = new Set(DROPPABLE_TAG_SOURCES.map((s) => s.key));
+      params.Tags = params.Tags?.filter((tag) => !droppableKeys.has(tag.Key ?? ''));
+      const creds = await client.send(new AssumeRoleCommand({ ...params }));
+      return creds;
+    }
     throw new Error(`Could not assume role with user credentials: ${errorMessage(error)}`);
   }
 }
@@ -86,8 +98,8 @@ const MAX_TAG_KEY_LENGTH = 128;
 const MAX_TAG_VALUE_LENGTH = 256;
 const MAX_SESSION_TAGS = 50;
 
-// Identity/audit primitives. Always emitted and cannot be overridden by custom-tags.
-const PROTECTED_TAG_SOURCES: ReadonlyArray<{ key: string; envVar: string }> = [
+// Identity/audit primitives. Always emitted and cannot be dropped.
+const NON_DROPPABLE_TAG_SOURCES: ReadonlyArray<{ key: string; envVar: string }> = [
   { key: 'Repository', envVar: 'GITHUB_REPOSITORY' },
   { key: 'Workflow', envVar: 'GITHUB_WORKFLOW' },
   { key: 'Action', envVar: 'GITHUB_ACTION' },
@@ -96,21 +108,22 @@ const PROTECTED_TAG_SOURCES: ReadonlyArray<{ key: string; envVar: string }> = [
   { key: 'Branch', envVar: 'GITHUB_REF' },
 ];
 
-// Convenience metadata. Custom-tags may override (suppresses the default for that key).
-// Listed in priority order; lower-priority entries are dropped first if the user's custom-tags
-// would push the total above MAX_SESSION_TAGS.
-const OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY: ReadonlyArray<{ key: string; envVar: string }> = [
+// Convenience metadata. If the AssumeRole call fails due to compressed size of
+// session tags being too large, we will drop these tags and retry once.
+const DROPPABLE_TAG_SOURCES: ReadonlyArray<{ key: string; envVar: string }> = [
   { key: 'EventName', envVar: 'GITHUB_EVENT_NAME' },
   { key: 'BaseRef', envVar: 'GITHUB_BASE_REF' },
   { key: 'HeadRef', envVar: 'GITHUB_HEAD_REF' },
-  { key: 'RefName', envVar: 'GITHUB_REF_NAME' },
   { key: 'RunId', envVar: 'GITHUB_RUN_ID' },
-  { key: 'RefType', envVar: 'GITHUB_REF_TYPE' },
   { key: 'Job', envVar: 'GITHUB_JOB' },
   { key: 'TriggeringActor', envVar: 'GITHUB_TRIGGERING_ACTOR' },
 ];
 
-const PROTECTED_TAG_KEYS = new Set<string>(['GitHub', ...PROTECTED_TAG_SOURCES.map((s) => s.key)]);
+const PROTECTED_TAG_KEYS = new Set<string>([
+  'GitHub',
+  ...NON_DROPPABLE_TAG_SOURCES.map((s) => s.key),
+  ...DROPPABLE_TAG_SOURCES.map((s) => s.key),
+]);
 
 export function parseAndValidateCustomTags(customTags: string, existingTags: Tag[]): Tag[] {
   let parsed: unknown;
@@ -197,7 +210,13 @@ export async function assumeRole(params: assumeRoleParams) {
   // Build session tags. Values are sanitized because the AWS tag value spec is more
   // restrictive than permissible characters in environment variables.
   const protectedTags: Tag[] = [{ Key: 'GitHub', Value: 'Actions' }];
-  for (const { key, envVar } of PROTECTED_TAG_SOURCES) {
+  for (const { key, envVar } of NON_DROPPABLE_TAG_SOURCES) {
+    const value = process.env[envVar];
+    if (value) {
+      protectedTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
+    }
+  }
+  for (const { key, envVar } of DROPPABLE_TAG_SOURCES) {
     const value = process.env[envVar];
     if (value) {
       protectedTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
@@ -205,26 +224,15 @@ export async function assumeRole(params: assumeRoleParams) {
   }
 
   const parsedCustomTags: Tag[] = customTags ? parseAndValidateCustomTags(customTags, protectedTags) : [];
-  const customTagKeys = new Set(parsedCustomTags.map((t) => t.Key));
 
-  const availableOverrideableSlots = MAX_SESSION_TAGS - protectedTags.length - parsedCustomTags.length;
-  const overrideableTags: Tag[] = [];
-  for (const { key, envVar } of OVERRIDEABLE_TAG_SOURCES_BY_PRIORITY) {
-    if (overrideableTags.length >= availableOverrideableSlots) break;
-    if (customTagKeys.has(key)) continue;
-    const value = process.env[envVar];
-    if (value) {
-      overrideableTags.push({ Key: key, Value: sanitizeGitHubVariables(value) });
-    }
-  }
-
-  const tagArray: Tag[] = [...protectedTags, ...overrideableTags, ...parsedCustomTags];
+  const tagArray: Tag[] = [...protectedTags, ...parsedCustomTags];
 
   const tags = roleSkipSessionTagging ? undefined : tagArray;
   if (!tags) {
     core.debug('Role session tagging has been skipped.');
   } else {
     core.debug(`${tags.length} role session tags are being used:`);
+    core.debug(JSON.stringify(tagArray));
   }
 
   //only populate transitiveTagKeys array if user is actually using session tagging

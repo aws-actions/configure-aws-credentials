@@ -168,6 +168,7 @@ detail.
 | role-session-name             | Defaults to "GitHubActions", but may be changed if required.                                                                                                                                                                                                                                                                                                                                                                            | No       |
 | role-skip-session-tagging     | Skips session tagging if set.                                                                                                                                                                                                                                                                                                                                                                                                           | No       |
 | transitive-tag-keys           | Define a list of transitive tag keys to pass when assuming a role.                                                                                                                                                                                                                                                                                                                                                                      | No       |
+| custom-tags                   | Additional tags to apply to the assumed role session. Must be a JSON object provided as a string. Custom tags are not usable with OIDC or web identity token authentication.                                                                                                                                                                                                                                                            | No       |
 | inline-session-policy         | You may further restrict the assumed role policy by defining an inline policy here.                                                                                                                                                                                                                                                                                                                                                     | No       |
 | managed-session-policies      | You may further restrict the assumed role policy by specifying a managed policy here.                                                                                                                                                                                                                                                                                                                                                   | No       |
 | output-credentials            | When set, outputs fetched credentials as action step output. (Outputs aws-access-key-id, aws-secret-access-key, aws-session-token, aws-account-id, authenticated-arn, and aws-expiration). Defaults to false.                                                                                                                                                                                                                           | No       |
@@ -180,6 +181,8 @@ detail.
 | allowed-account-ids           | A comma-delimited list of expected AWS account IDs. The action will fail if we receive credentials for the wrong account.                                                                                                                                                                                                                                                                                                               | No       |
 | force-skip-oidc               | When set, the action will skip using GitHub OIDC provider even if the id-token permission is set.                                                                                                                                                                                                                                                                                                                                       | No       |
 | action-timeout-s              | Global timeout for the action in seconds. If set to a value greater than 0, the action will fail if it takes longer than this time to complete.                                                                                                                                                                                                                                                                                         | No       |
+| no-proxy                      |  Hosts to skip for the proxy configuration.                                                                                                                                                                                                                                                                                                                                                                                             | No       |
+| sts-endpoint                  | Custom STS endpoint URL. Use this to point to an STS-compatible API (e.g. MinIO, LocalStack) instead of the default AWS STS endpoint for the region.                                                                                                                                                                                                                                                                                    | No       |
 
 </details>
 
@@ -350,8 +353,7 @@ documentation for `GITHUB_` environment variable definitions][gh-env-vars])
 [gh-env-vars]:
   https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
 
-**Protected tags** are always emitted when session tags are used, and cannot be
-overridden via `custom-tags`:
+**Default tags** are always emitted when session tags are used.
 
 | Key        | Value             |
 | ---------- | ----------------- |
@@ -363,21 +365,24 @@ overridden via `custom-tags`:
 | Commit     | GITHUB_SHA        |
 | Branch     | GITHUB_REF        |
 
-**Overrideable tags** are automatically added to the set of default session tags
-but may be overridden via `custom-tags`. AWS has a maximum limit of 50 session
-tags; tags from this list are dropped in reverse priority order if your
-`custom-tags` set plus the protected set exceeds this limit.
+**Droppable tags** are automatically added to the set of default session tags.
+If the session tags exceed the [packed size limit][packed-size-limit], these
+tags will be dropped, and the AssumeRole call will be retried. If it still
+fails, the action will error out. (It is difficult to predict the packed size
+before making the call, as session tags and session policies are compressed into
+a binary format as part of the call.)
 
-| Key             | Value                   | Priority |
-| --------------- | ----------------------- | -------- |
-| EventName       | GITHUB_EVENT_NAME       | 1        |
-| BaseRef         | GITHUB_BASE_REF         | 2        |
-| HeadRef         | GITHUB_HEAD_REF         | 3        |
-| RefName         | GITHUB_REF_NAME         | 4        |
-| RunId           | GITHUB_RUN_ID           | 5        |
-| RefType         | GITHUB_REF_TYPE         | 6        |
-| Job             | GITHUB_JOB              | 7        |
-| TriggeringActor | GITHUB_TRIGGERING_ACTOR | 8        |
+[packed-size-limit]:
+  https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html#id_session-tags_know
+
+| Key             | Value                   |
+| --------------- | ----------------------- |
+| EventName       | GITHUB_EVENT_NAME       |
+| BaseRef         | GITHUB_BASE_REF         |
+| HeadRef         | GITHUB_HEAD_REF         |
+| RunId           | GITHUB_RUN_ID           |
+| Job             | GITHUB_JOB              |
+| TriggeringActor | GITHUB_TRIGGERING_ACTOR |
 
 Tags whose source environment variable is unset are omitted (e.g., `BaseRef` and
 `HeadRef` are only set on `pull_request` events).
@@ -385,20 +390,20 @@ Tags whose source environment variable is unset are omitted (e.g., `BaseRef` and
 _Note: all tag values must conform to
 [the tag requirements][sts-tag-requirements].
 Values longer than 256 characters will be truncated, and characters outside the
-allowed set will be replaced with an underscore (`_`).\_
+allowed set will be replaced with an underscore (`_`)._
 
 [sts-tag-requirements]:
   https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html
 
-The action will use session tagging by default unless you are using OIDC.
+The action will use session tagging by default unless you are using OIDC or a
+Web Identify Token File.
 
 To [forward session tags to subsequent sessions in a role
-chain][session-tag-chaining], you can use
+chain][session-tag-chaining], you can use the `transitive-tag-keys` input to
+specify the keys of the tags to be passed.
 
 [session-tag-chaining]:
   https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html#id_session-tags_role-chaining
-
-the `transitive-tag-keys` input to specify the keys of the tags to be passed.
 
 _Note that all subsequent roles in the chain must have
 `role-skip-session-tagging` set to `true`_
@@ -416,9 +421,10 @@ with:
 ### Custom session tags
 
 You can add custom session tags using the `custom-tags` input, which accepts a
-JSON object. Custom tags cannot override protected tags, but they can override
-overrideable tags (in which case the overrideable tag's slot is freed for the
-next overrideable tag in the priority list, if any).
+JSON object. Custom tags cannot override existing tags. Note that AWS allows a
+maximum of 50 tags (so you can supply a maximum of 43 custom tags), although it
+is likely that you will exceed the [packed size limit][packed-size-limit]
+before you exceed the maximum number of tags.
 
 ```yaml
 uses: aws-actions/configure-aws-credentials@v6
@@ -616,6 +622,35 @@ For further information on OIDC and GitHub Actions, please see:
 - [GitHub docs: About security hardening with OpenID Connect](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
 - [GitHub docs: Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 - [GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
+
+## Getting Credentials in AWS Self-Hosted Runners
+
+If you are running GitHub Actions in a self-hosted runner using an AWS Service
+(such as Codebuild or EKS) and you have properly configured the service,
+credentials should be available by default; the AWS CLI will fetch credentials
+using the AWS_CONTAINER_CREDENTIALS_FULL_URI or
+AWS_CONTAINER_CREDENTIALS_RELATIVE_URI environment variables. However, you may
+still want to use this action if you need to export those credentials for use
+with other tools in your workflow. You may also want to use this action in
+scenarios where you need to use that 'default' role to assume another role.
+
+To export credentials, simply run the action with `role-to-assume` set to the
+default role of the container.
+
+To assume another role from the container's default role, use the
+`role-chaining: true` flag, so that the action fetches the default credentials
+from the environment before assuming the other role.
+
+If you are using EKS Pod Identities and encountering an error related to the
+packed size of session tags, you must either run the action with
+`role-skip-session-tagging: true` to disable the tags set by the action, or
+[disable EKS session tagging][eks-disable-session-tagging] in the EKS settings
+to disable the tags that are automatically set by the EKS Pod Identity Service.
+Check the values of the action's session tags and the session tags that are
+added by EKS so you can keep the set of tags which is more useful to you.
+
+[eks-disable-session-tagging]:
+  https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html#pod-id-abac-tags
 
 ## Compatibility with non-GitHub Actions environments
 
