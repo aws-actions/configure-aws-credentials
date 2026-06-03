@@ -28857,7 +28857,7 @@ var init_constants4 = __esm({
     TRANSIENT_ERROR_CODES = ["TimeoutError", "RequestTimeout", "RequestTimeoutException"];
     TRANSIENT_ERROR_STATUS_CODES = [500, 502, 503, 504];
     NODEJS_TIMEOUT_ERROR_CODES = ["ECONNRESET", "ECONNREFUSED", "EPIPE", "ETIMEDOUT"];
-    NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND"];
+    NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND", "EAI_AGAIN"];
   }
 });
 
@@ -29019,9 +29019,6 @@ function bindRetryMiddleware(isStreamingPayload2) {
           try {
             retryToken = await retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo);
           } catch (refreshError) {
-            if (typeof refreshError.$backoff === "number") {
-              await cooldown(refreshError.$backoff);
-            }
             if (!lastError.$metadata) {
               lastError.$metadata = {};
             }
@@ -29031,8 +29028,10 @@ function bindRetryMiddleware(isStreamingPayload2) {
           }
           attempts = retryToken.getRetryCount();
           const delay = retryToken.getRetryDelay();
-          totalRetryDelay += delay;
-          await cooldown(delay);
+          totalRetryDelay += (retryToken?.$retryLog?.acquisitionDelay ?? 0) + delay;
+          if (delay > 0) {
+            await cooldown(delay);
+          }
         }
       }
     } else {
@@ -29267,6 +29266,9 @@ var init_DefaultRetryToken = __esm({
       count;
       cost;
       longPoll;
+      $retryLog = {
+        acquisitionDelay: 0
+      };
       constructor(delay, count, cost, longPoll) {
         this.delay = delay;
         this.count = count;
@@ -29318,8 +29320,8 @@ var init_StandardRetryStrategy = __esm({
     };
     StandardRetryStrategy = class {
       mode = RETRY_MODES.STANDARD;
-      capacity = INITIAL_RETRY_TOKENS;
       retryBackoffStrategy;
+      capacity = INITIAL_RETRY_TOKENS;
       maxAttemptsProvider;
       baseDelay;
       constructor(arg1) {
@@ -29353,13 +29355,17 @@ var init_StandardRetryStrategy = __esm({
             retryDelay = Math.max(delayFromErrorType, Math.min(errorInfo.retryAfterHint.getTime() - Date.now(), delayFromErrorType + 5e3));
           }
           if (!shouldRetry) {
-            throw Object.assign(new Error("No retry token available"), {
-              $backoff: Retry.v2026 && retryCode === refusal.capacity && isLongPoll ? retryDelay : 0
-            });
+            const longPollBackoff = Retry.v2026 && retryCode === refusal.capacity && isLongPoll ? retryDelay : 0;
+            if (longPollBackoff > 0) {
+              await new Promise((r5) => setTimeout(r5, longPollBackoff));
+            }
           } else {
             const capacityCost = this.getCapacityCost(errorType);
             this.capacity -= capacityCost;
-            return new DefaultRetryToken(retryDelay, token.getRetryCount() + 1, capacityCost, token.isLongPoll?.() ?? false);
+            const nextToken = new DefaultRetryToken(0, token.getRetryCount() + 1, capacityCost, token.isLongPoll?.() ?? false);
+            await new Promise((r5) => setTimeout(r5, retryDelay));
+            nextToken.$retryLog.acquisitionDelay = retryDelay;
+            return nextToken;
           }
         }
         throw new Error("No retry token available");
@@ -29454,11 +29460,10 @@ var init_ConfiguredRetryStrategy = __esm({
         } else {
           this.computeNextBackoffDelay = computeNextBackoffDelay;
         }
-      }
-      async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
-        const token = await super.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
-        token.getRetryDelay = () => this.computeNextBackoffDelay(token.getRetryCount());
-        return token;
+        this.retryBackoffStrategy.computeNextBackoffDelay = (completedAttempt) => {
+          const nextAttempt = completedAttempt + 1;
+          return this.computeNextBackoffDelay(nextAttempt);
+        };
       }
     };
   }
@@ -29658,6 +29663,7 @@ var init_configurations = __esm({
     init_AdaptiveRetryStrategy();
     init_StandardRetryStrategy();
     init_config3();
+    init_retries_2026_config();
     ENV_MAX_ATTEMPTS = "AWS_MAX_ATTEMPTS";
     CONFIG_MAX_ATTEMPTS = "max_attempts";
     NODE_MAX_ATTEMPT_CONFIG_OPTIONS = {
@@ -29683,13 +29689,27 @@ var init_configurations = __esm({
       },
       default: DEFAULT_MAX_ATTEMPTS
     };
-    resolveRetryConfig = (input) => {
+    resolveRetryConfig = (input, defaults) => {
       const { retryStrategy, retryMode } = input;
-      const maxAttempts = normalizeProvider(input.maxAttempts ?? DEFAULT_MAX_ATTEMPTS);
+      const { defaultMaxAttempts = DEFAULT_MAX_ATTEMPTS, defaultBaseDelay = Retry.delay() } = defaults ?? {};
+      const maxAttemptsProvider = normalizeProvider(input.maxAttempts ?? defaultMaxAttempts);
       let controller = retryStrategy ? Promise.resolve(retryStrategy) : void 0;
-      const getDefault = async () => await normalizeProvider(retryMode)() === RETRY_MODES.ADAPTIVE ? new AdaptiveRetryStrategy(maxAttempts) : new StandardRetryStrategy(maxAttempts);
+      const getDefault = async () => {
+        const maxAttempts = await maxAttemptsProvider();
+        const adaptive = await normalizeProvider(retryMode)() === RETRY_MODES.ADAPTIVE;
+        if (adaptive) {
+          return new AdaptiveRetryStrategy(maxAttemptsProvider, {
+            maxAttempts,
+            baseDelay: defaultBaseDelay
+          });
+        }
+        return new StandardRetryStrategy({
+          maxAttempts,
+          baseDelay: defaultBaseDelay
+        });
+      };
       return Object.assign(input, {
-        maxAttempts,
+        maxAttempts: maxAttemptsProvider,
         retryStrategy: () => controller ??= getDefault()
       });
     };
@@ -33625,7 +33645,7 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1049.0",
+      version: "3.1061.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
         "build:cjs": "node ../../scripts/compilation/inline client-sts",
@@ -33651,18 +33671,18 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.12",
-        "@aws-sdk/credential-provider-node": "^3.972.43",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.27",
-        "@aws-sdk/types": "^3.973.8",
-        "@smithy/core": "^3.24.2",
-        "@smithy/fetch-http-handler": "^5.4.2",
-        "@smithy/node-http-handler": "^4.7.2",
-        "@smithy/types": "^4.14.1",
+        "@aws-sdk/core": "^3.974.17",
+        "@aws-sdk/credential-provider-node": "^3.972.50",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.31",
+        "@aws-sdk/types": "^3.973.10",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@smithy/snapshot-testing": "^2.1.2",
+        "@smithy/snapshot-testing": "^2.1.7",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -33753,7 +33773,6 @@ var require_dist_cjs7 = __commonJS({
 var require_dist_cjs8 = __commonJS({
   "node_modules/@smithy/credential-provider-imds/dist-cjs/index.js"(exports2) {
     "use strict";
-    var node_url = require("node:url");
     var config = (init_config2(), __toCommonJS(config_exports));
     var node_http = require("node:http");
     var protocols2 = (init_protocols(), __toCommonJS(protocols_exports));
@@ -33838,14 +33857,8 @@ var require_dist_cjs8 = __commonJS({
       return buffer.toString();
     };
     var CMDS_IP = "169.254.170.2";
-    var GREENGRASS_HOSTS = {
-      localhost: true,
-      "127.0.0.1": true
-    };
-    var GREENGRASS_PROTOCOLS = {
-      "http:": true,
-      "https:": true
-    };
+    var GREENGRASS_HOSTS = /* @__PURE__ */ new Set(["localhost", "127.0.0.1"]);
+    var GREENGRASS_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:"]);
     var getCmdsUri = async ({ logger: logger2 }) => {
       if (process.env[ENV_CMDS_RELATIVE_URI]) {
         return {
@@ -33854,21 +33867,28 @@ var require_dist_cjs8 = __commonJS({
         };
       }
       if (process.env[ENV_CMDS_FULL_URI]) {
-        const parsed = node_url.parse(process.env[ENV_CMDS_FULL_URI]);
-        if (!parsed.hostname || !(parsed.hostname in GREENGRASS_HOSTS)) {
+        let parsed;
+        try {
+          parsed = new URL(process.env[ENV_CMDS_FULL_URI]);
+        } catch {
+          throw new config.CredentialsProviderError(`${process.env[ENV_CMDS_FULL_URI]} is not a valid container metadata service URL`, { tryNextLink: false, logger: logger2 });
+        }
+        if (!parsed.hostname || !GREENGRASS_HOSTS.has(parsed.hostname)) {
           throw new config.CredentialsProviderError(`${parsed.hostname} is not a valid container metadata service hostname`, {
             tryNextLink: false,
             logger: logger2
           });
         }
-        if (!parsed.protocol || !(parsed.protocol in GREENGRASS_PROTOCOLS)) {
+        if (!parsed.protocol || !GREENGRASS_PROTOCOLS.has(parsed.protocol)) {
           throw new config.CredentialsProviderError(`${parsed.protocol} is not a valid container metadata service protocol`, {
             tryNextLink: false,
             logger: logger2
           });
         }
         return {
-          ...parsed,
+          protocol: parsed.protocol,
+          hostname: parsed.hostname,
+          path: parsed.pathname + parsed.search,
           port: parsed.port ? parseInt(parsed.port, 10) : void 0
         };
       }
@@ -35107,11 +35127,9 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
       }
       const url = new URL(host);
       (0, checkUrl_1.checkUrl)(url, options.logger);
-      const requestHandler = node_http_handler_1.NodeHttpHandler.create({
-        requestTimeout: options.timeout ?? 1e3,
-        connectionTimeout: options.timeout ?? 1e3
-      });
-      return (0, retry_wrapper_1.retryWrapper)(async () => {
+      const requestHandler = node_http_handler_1.NodeHttpHandler.create({ connectionTimeout: options.timeout ?? 1e3 });
+      const requestTimeout = options.timeout ?? 1e3;
+      const provider = (0, retry_wrapper_1.retryWrapper)(async () => {
         const request = (0, requestHelpers_1.createGetRequest)(url);
         if (token) {
           request.headers.Authorization = token;
@@ -35119,12 +35137,19 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
           request.headers.Authorization = (await promises_1.default.readFile(tokenFile)).toString();
         }
         try {
-          const result = await requestHandler.handle(request);
+          const result = await requestHandler.handle(request, { requestTimeout });
           return (0, requestHelpers_1.getCredentials)(result.response).then((creds) => (0, client_1.setCredentialFeature)(creds, "CREDENTIALS_HTTP", "z"));
         } catch (e5) {
           throw new config_1.CredentialsProviderError(String(e5), { logger: options.logger });
         }
       }, options.maxRetries ?? 3, options.timeout ?? 1e3);
+      return async () => {
+        try {
+          return await provider();
+        } finally {
+          requestHandler.destroy?.();
+        }
+      };
     };
     exports2.fromHttp = fromHttp;
   }
@@ -35221,7 +35246,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.10",
+      version: "3.997.15",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -35250,13 +35275,13 @@ var init_package = __esm({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.12",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.27",
-        "@aws-sdk/types": "^3.973.8",
-        "@smithy/core": "^3.24.2",
-        "@smithy/fetch-http-handler": "^5.4.2",
-        "@smithy/node-http-handler": "^4.7.2",
-        "@smithy/types": "^4.14.1",
+        "@aws-sdk/core": "^3.974.17",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.31",
+        "@aws-sdk/types": "^3.973.10",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -44813,9 +44838,18 @@ var require_dist_cjs18 = __commonJS({
       let activeLock;
       let passiveLock;
       let credentials;
+      let forceRefreshLock;
       const provider = async (options) => {
         if (options?.forceRefresh) {
-          return await chain2(options);
+          if (!forceRefreshLock) {
+            forceRefreshLock = chain2(options).then((c5) => {
+              credentials = c5;
+            }).finally(() => {
+              forceRefreshLock = void 0;
+            });
+          }
+          await forceRefreshLock;
+          return credentials;
         }
         if (credentials?.expiration) {
           if (credentials?.expiration?.getTime() < Date.now()) {
