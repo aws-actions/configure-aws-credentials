@@ -47098,6 +47098,40 @@ var require_src = __commonJS({
   }
 });
 
+// node_modules/proxy-agent-negotiate/dist/index.js
+function createNegotiateAuth() {
+  return async ({ response, scheme }) => {
+    if (scheme.toLowerCase() !== "negotiate") {
+      throw new Error(`Expected Negotiate scheme but got "${scheme}"`);
+    }
+    let kerberos;
+    try {
+      kerberos = await import("kerberos");
+    } catch {
+      throw new Error('The "kerberos" package is required for Negotiate proxy authentication. Install it with: npm install kerberos');
+    }
+    const proxyAuthenticate = response.headers["proxy-authenticate"] || "";
+    const challengeHeader = Array.isArray(proxyAuthenticate) ? proxyAuthenticate[0] : proxyAuthenticate;
+    const serverToken = typeof challengeHeader === "string" && challengeHeader.includes(" ") ? challengeHeader.split(" ").slice(1).join(" ") : void 0;
+    const client = await kerberos.initializeClient("HTTP@proxy", {
+      mechOID: kerberos.GSS_MECH_OID_SPNEGO
+    });
+    const token = await client.step(serverToken || "");
+    if (!token) {
+      throw new Error("Kerberos client.step() returned no token");
+    }
+    return {
+      headers: {
+        "Proxy-Authorization": `Negotiate ${token}`
+      }
+    };
+  };
+}
+var init_dist2 = __esm({
+  "node_modules/proxy-agent-negotiate/dist/index.js"() {
+  }
+});
+
 // node_modules/proxy-agent/node_modules/http-proxy-agent/dist/index.js
 var dist_exports = {};
 __export(dist_exports, {
@@ -47114,7 +47148,7 @@ function omit(obj, ...keys) {
   return ret;
 }
 var net2, tls, import_debug5, import_events, import_url, debug2, HttpProxyAgent;
-var init_dist2 = __esm({
+var init_dist3 = __esm({
   "node_modules/proxy-agent/node_modules/http-proxy-agent/dist/index.js"() {
     net2 = __toESM(require("net"), 1);
     tls = __toESM(require("tls"), 1);
@@ -47122,6 +47156,7 @@ var init_dist2 = __esm({
     import_events = require("events");
     init_dist();
     import_url = require("url");
+    init_dist2();
     debug2 = (0, import_debug5.default)("http-proxy-agent");
     HttpProxyAgent = class extends Agent4 {
       constructor(proxy, opts) {
@@ -47129,10 +47164,15 @@ var init_dist2 = __esm({
         this.proxy = typeof proxy === "string" ? new import_url.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
         debug2("Creating new HttpProxyAgent instance: %o", this.proxy.href);
+        if (opts?.negotiate) {
+          this.onProxyAuth = createNegotiateAuth();
+        } else if (opts?.onProxyAuth) {
+          this.onProxyAuth = opts.onProxyAuth;
+        }
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
-          ...opts ? omit(opts, "headers") : null,
+          ...opts ? omit(opts, "headers", "onProxyAuth", "negotiate") : null,
           host,
           port
         };
@@ -47192,6 +47232,10 @@ var init_dist2 = __esm({
           socket = net2.connect(this.connectOpts);
         }
         await (0, import_events.once)(socket, "connect");
+        const connect13 = { socket };
+        req.emit("proxyConnect", connect13);
+        this.emit("proxyConnect", connect13, req);
+        req.emit("proxy", { proxy: this.proxy.href, socket });
         return socket;
       }
     };
@@ -47295,7 +47339,9 @@ __export(dist_exports2, {
   HttpsProxyAgent: () => HttpsProxyAgent
 });
 function resume(socket) {
-  socket.resume();
+  setImmediate(() => {
+    socket.resume();
+  });
 }
 function omit2(obj, ...keys) {
   const ret = {};
@@ -47308,7 +47354,7 @@ function omit2(obj, ...keys) {
   return ret;
 }
 var net3, tls2, import_assert, import_debug7, import_url2, debug4, setServernameFromNonIpHost, HttpsProxyAgent;
-var init_dist3 = __esm({
+var init_dist4 = __esm({
   "node_modules/proxy-agent/node_modules/https-proxy-agent/dist/index.js"() {
     net3 = __toESM(require("net"), 1);
     tls2 = __toESM(require("tls"), 1);
@@ -47317,6 +47363,7 @@ var init_dist3 = __esm({
     init_dist();
     import_url2 = require("url");
     init_parse_proxy_response();
+    init_dist2();
     debug4 = (0, import_debug7.default)("https-proxy-agent");
     setServernameFromNonIpHost = (options) => {
       if (options.servername === void 0 && options.host && !net3.isIP(options.host)) {
@@ -47334,12 +47381,17 @@ var init_dist3 = __esm({
         this.proxy = typeof proxy === "string" ? new import_url2.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
         debug4("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
+        if (opts?.negotiate) {
+          this.onProxyAuth = createNegotiateAuth();
+        } else if (opts?.onProxyAuth) {
+          this.onProxyAuth = opts.onProxyAuth;
+        }
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
           // Attempt to negotiate http/1.1 for proxy servers that support http/2
           ALPNProtocols: ["http/1.1"],
-          ...opts ? omit2(opts, "headers") : null,
+          ...opts ? omit2(opts, "headers", "onProxyAuth", "negotiate") : null,
           host,
           port
         };
@@ -47383,6 +47435,74 @@ var init_dist3 = __esm({
         const { connect: connect13, buffered } = await proxyResponsePromise;
         req.emit("proxyConnect", connect13);
         this.emit("proxyConnect", connect13, req);
+        req.emit("proxy", { proxy: this.proxy.href, socket });
+        if (connect13.statusCode === 200) {
+          req.once("socket", resume);
+          if (opts.secureEndpoint) {
+            debug4("Upgrading socket connection to TLS");
+            return tls2.connect({
+              ...omit2(setServernameFromNonIpHost(opts), "host", "path", "port"),
+              socket
+            });
+          }
+          return socket;
+        }
+        if (connect13.statusCode === 407 && this.onProxyAuth) {
+          debug4("Got 407 response, invoking onProxyAuth callback");
+          socket.destroy();
+          const proxyAuthenticate = connect13.headers["proxy-authenticate"] || "";
+          const scheme = Array.isArray(proxyAuthenticate) ? proxyAuthenticate[0].split(/\s/)[0] : proxyAuthenticate.split(/\s/)[0];
+          const authResponse = await this.onProxyAuth({
+            response: connect13,
+            scheme
+          });
+          return this._connectWithAuth(req, opts, authResponse.headers);
+        }
+        socket.destroy();
+        const fakeSocket = new net3.Socket({ writable: false });
+        fakeSocket.readable = true;
+        req.once("socket", (s) => {
+          debug4("Replaying proxy buffer for failed request");
+          (0, import_assert.default)(s.listenerCount("data") > 0);
+          s.push(buffered);
+          s.push(null);
+        });
+        return fakeSocket;
+      }
+      /**
+       * Retry a CONNECT request with additional auth headers.
+       */
+      async _connectWithAuth(req, opts, authHeaders) {
+        const { proxy } = this;
+        let socket;
+        if (proxy.protocol === "https:") {
+          socket = tls2.connect(setServernameFromNonIpHost(this.connectOpts));
+        } else {
+          socket = net3.connect(this.connectOpts);
+        }
+        const headers = typeof this.proxyHeaders === "function" ? this.proxyHeaders() : { ...this.proxyHeaders };
+        const host = net3.isIPv6(opts.host) ? `[${opts.host}]` : opts.host;
+        let payload2 = `CONNECT ${host}:${opts.port} HTTP/1.1\r
+`;
+        if (proxy.username || proxy.password) {
+          const auth = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
+          headers["Proxy-Authorization"] = `Basic ${Buffer.from(auth).toString("base64")}`;
+        }
+        Object.assign(headers, authHeaders);
+        headers.Host = `${host}:${opts.port}`;
+        if (!headers["Proxy-Connection"]) {
+          headers["Proxy-Connection"] = this.keepAlive ? "Keep-Alive" : "close";
+        }
+        for (const name of Object.keys(headers)) {
+          payload2 += `${name}: ${headers[name]}\r
+`;
+        }
+        const proxyResponsePromise = parseProxyResponse(socket);
+        socket.write(`${payload2}\r
+`);
+        const { connect: connect13 } = await proxyResponsePromise;
+        req.emit("proxyConnect", connect13);
+        this.emit("proxyConnect", connect13, req);
         if (connect13.statusCode === 200) {
           req.once("socket", resume);
           if (opts.secureEndpoint) {
@@ -47395,15 +47515,7 @@ var init_dist3 = __esm({
           return socket;
         }
         socket.destroy();
-        const fakeSocket = new net3.Socket({ writable: false });
-        fakeSocket.readable = true;
-        req.once("socket", (s) => {
-          debug4("Replaying proxy buffer for failed request");
-          (0, import_assert.default)(s.listenerCount("data") > 0);
-          s.push(buffered);
-          s.push(null);
-        });
-        return fakeSocket;
+        throw new Error(`Proxy authentication failed with status ${connect13.statusCode} after retry`);
       }
     };
     HttpsProxyAgent.protocols = ["http", "https"];
@@ -51617,7 +51729,7 @@ function omit3(obj, ...keys) {
   return ret;
 }
 var import_socks, import_debug8, dns, net4, tls3, import_url3, debug5, setServernameFromNonIpHost2, SocksProxyAgent;
-var init_dist4 = __esm({
+var init_dist5 = __esm({
   "node_modules/proxy-agent/node_modules/socks-proxy-agent/dist/index.js"() {
     import_socks = __toESM(require_build(), 1);
     init_dist();
@@ -51643,6 +51755,7 @@ var init_dist4 = __esm({
         const { proxy, lookup: lookup4 } = parseSocksURL(url);
         this.shouldLookup = lookup4;
         this.proxy = proxy;
+        this.proxyUrl = url.href;
         this.timeout = opts?.timeout ?? null;
         this.socketOptions = opts?.socketOptions ?? null;
       }
@@ -51689,6 +51802,7 @@ var init_dist4 = __esm({
         debug5("Creating socks proxy connection: %o", socksOpts);
         const { socket } = await import_socks.SocksClient.createConnection(socksOpts);
         debug5("Successfully created socks proxy connection");
+        req.emit("proxy", { proxy: this.proxyUrl, socket });
         if (timeout !== null) {
           socket.setTimeout(timeout);
           socket.on("timeout", () => cleanup());
@@ -51735,7 +51849,7 @@ var init_helpers2 = __esm({
 
 // node_modules/pac-proxy-agent/node_modules/agent-base/dist/index.js
 var net5, http3, import_https2, INTERNAL2, Agent6;
-var init_dist5 = __esm({
+var init_dist6 = __esm({
   "node_modules/pac-proxy-agent/node_modules/agent-base/dist/index.js"() {
     net5 = __toESM(require("net"), 1);
     http3 = __toESM(require("http"), 1);
@@ -54301,7 +54415,7 @@ async function getUri(uri, opts) {
   return getter(url, opts);
 }
 var import_debug13, debug10, protocols, VALID_PROTOCOLS;
-var init_dist6 = __esm({
+var init_dist7 = __esm({
   "node_modules/get-uri/dist/index.js"() {
     import_debug13 = __toESM(require_src(), 1);
     init_data();
@@ -68749,7 +68863,7 @@ var init_compile = __esm({
 });
 
 // node_modules/degenerator/dist/index.js
-var init_dist7 = __esm({
+var init_dist8 = __esm({
   "node_modules/degenerator/dist/index.js"() {
     init_degenerator();
     init_compile();
@@ -69547,9 +69661,9 @@ function isAsyncFunction(v) {
   return Boolean(v.async);
 }
 var sandbox;
-var init_dist8 = __esm({
+var init_dist9 = __esm({
   "node_modules/pac-resolver/dist/index.js"() {
-    init_dist7();
+    init_dist8();
     init_dateRange();
     init_dnsDomainIs();
     init_dnsDomainLevels();
@@ -69937,7 +70051,7 @@ var init_version = __esm({
 
 // node_modules/quickjs-wasi/dist/index.js
 var import_meta, __addDisposableResource2, __disposeResources2, EvalFlags, CompileFlags, Intrinsics, SNAPSHOT_MAGIC, SNAPSHOT_VERSION, SNAPSHOT_HEADER_SIZE, QuickJS, JSException, JSValueHandle;
-var init_dist9 = __esm({
+var init_dist10 = __esm({
   "node_modules/quickjs-wasi/dist/index.js"() {
     init_wasi_shim();
     init_extensions2();
@@ -71816,10 +71930,10 @@ function omit4(obj, ...keys) {
   return ret;
 }
 var import_socks2, import_debug14, dns2, net7, tls4, import_url5, debug11, setServernameFromNonIpHost3, SocksProxyAgent2;
-var init_dist10 = __esm({
+var init_dist11 = __esm({
   "node_modules/pac-proxy-agent/node_modules/socks-proxy-agent/dist/index.js"() {
     import_socks2 = __toESM(require_build(), 1);
-    init_dist5();
+    init_dist6();
     import_debug14 = __toESM(require_src(), 1);
     dns2 = __toESM(require("dns"), 1);
     net7 = __toESM(require("net"), 1);
@@ -71842,6 +71956,7 @@ var init_dist10 = __esm({
         const { proxy, lookup: lookup4 } = parseSocksURL2(url);
         this.shouldLookup = lookup4;
         this.proxy = proxy;
+        this.proxyUrl = url.href;
         this.timeout = opts?.timeout ?? null;
         this.socketOptions = opts?.socketOptions ?? null;
       }
@@ -71888,6 +72003,7 @@ var init_dist10 = __esm({
         debug11("Creating socks proxy connection: %o", socksOpts);
         const { socket } = await import_socks2.SocksClient.createConnection(socksOpts);
         debug11("Successfully created socks proxy connection");
+        req.emit("proxy", { proxy: this.proxyUrl, socket });
         if (timeout !== null) {
           socket.setTimeout(timeout);
           socket.on("timeout", () => cleanup());
@@ -72013,7 +72129,9 @@ __export(dist_exports5, {
   HttpsProxyAgent: () => HttpsProxyAgent2
 });
 function resume2(socket) {
-  socket.resume();
+  setImmediate(() => {
+    socket.resume();
+  });
 }
 function omit5(obj, ...keys) {
   const ret = {};
@@ -72026,15 +72144,16 @@ function omit5(obj, ...keys) {
   return ret;
 }
 var net8, tls5, import_assert2, import_debug16, import_url6, debug13, setServernameFromNonIpHost4, HttpsProxyAgent2;
-var init_dist11 = __esm({
+var init_dist12 = __esm({
   "node_modules/pac-proxy-agent/node_modules/https-proxy-agent/dist/index.js"() {
     net8 = __toESM(require("net"), 1);
     tls5 = __toESM(require("tls"), 1);
     import_assert2 = __toESM(require("assert"), 1);
     import_debug16 = __toESM(require_src(), 1);
-    init_dist5();
+    init_dist6();
     import_url6 = require("url");
     init_parse_proxy_response2();
+    init_dist2();
     debug13 = (0, import_debug16.default)("https-proxy-agent");
     setServernameFromNonIpHost4 = (options) => {
       if (options.servername === void 0 && options.host && !net8.isIP(options.host)) {
@@ -72052,12 +72171,17 @@ var init_dist11 = __esm({
         this.proxy = typeof proxy === "string" ? new import_url6.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
         debug13("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
+        if (opts?.negotiate) {
+          this.onProxyAuth = createNegotiateAuth();
+        } else if (opts?.onProxyAuth) {
+          this.onProxyAuth = opts.onProxyAuth;
+        }
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
           // Attempt to negotiate http/1.1 for proxy servers that support http/2
           ALPNProtocols: ["http/1.1"],
-          ...opts ? omit5(opts, "headers") : null,
+          ...opts ? omit5(opts, "headers", "onProxyAuth", "negotiate") : null,
           host,
           port
         };
@@ -72101,6 +72225,74 @@ var init_dist11 = __esm({
         const { connect: connect13, buffered } = await proxyResponsePromise;
         req.emit("proxyConnect", connect13);
         this.emit("proxyConnect", connect13, req);
+        req.emit("proxy", { proxy: this.proxy.href, socket });
+        if (connect13.statusCode === 200) {
+          req.once("socket", resume2);
+          if (opts.secureEndpoint) {
+            debug13("Upgrading socket connection to TLS");
+            return tls5.connect({
+              ...omit5(setServernameFromNonIpHost4(opts), "host", "path", "port"),
+              socket
+            });
+          }
+          return socket;
+        }
+        if (connect13.statusCode === 407 && this.onProxyAuth) {
+          debug13("Got 407 response, invoking onProxyAuth callback");
+          socket.destroy();
+          const proxyAuthenticate = connect13.headers["proxy-authenticate"] || "";
+          const scheme = Array.isArray(proxyAuthenticate) ? proxyAuthenticate[0].split(/\s/)[0] : proxyAuthenticate.split(/\s/)[0];
+          const authResponse = await this.onProxyAuth({
+            response: connect13,
+            scheme
+          });
+          return this._connectWithAuth(req, opts, authResponse.headers);
+        }
+        socket.destroy();
+        const fakeSocket = new net8.Socket({ writable: false });
+        fakeSocket.readable = true;
+        req.once("socket", (s) => {
+          debug13("Replaying proxy buffer for failed request");
+          (0, import_assert2.default)(s.listenerCount("data") > 0);
+          s.push(buffered);
+          s.push(null);
+        });
+        return fakeSocket;
+      }
+      /**
+       * Retry a CONNECT request with additional auth headers.
+       */
+      async _connectWithAuth(req, opts, authHeaders) {
+        const { proxy } = this;
+        let socket;
+        if (proxy.protocol === "https:") {
+          socket = tls5.connect(setServernameFromNonIpHost4(this.connectOpts));
+        } else {
+          socket = net8.connect(this.connectOpts);
+        }
+        const headers = typeof this.proxyHeaders === "function" ? this.proxyHeaders() : { ...this.proxyHeaders };
+        const host = net8.isIPv6(opts.host) ? `[${opts.host}]` : opts.host;
+        let payload2 = `CONNECT ${host}:${opts.port} HTTP/1.1\r
+`;
+        if (proxy.username || proxy.password) {
+          const auth = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
+          headers["Proxy-Authorization"] = `Basic ${Buffer.from(auth).toString("base64")}`;
+        }
+        Object.assign(headers, authHeaders);
+        headers.Host = `${host}:${opts.port}`;
+        if (!headers["Proxy-Connection"]) {
+          headers["Proxy-Connection"] = this.keepAlive ? "Keep-Alive" : "close";
+        }
+        for (const name of Object.keys(headers)) {
+          payload2 += `${name}: ${headers[name]}\r
+`;
+        }
+        const proxyResponsePromise = parseProxyResponse2(socket);
+        socket.write(`${payload2}\r
+`);
+        const { connect: connect13 } = await proxyResponsePromise;
+        req.emit("proxyConnect", connect13);
+        this.emit("proxyConnect", connect13, req);
         if (connect13.statusCode === 200) {
           req.once("socket", resume2);
           if (opts.secureEndpoint) {
@@ -72113,15 +72305,7 @@ var init_dist11 = __esm({
           return socket;
         }
         socket.destroy();
-        const fakeSocket = new net8.Socket({ writable: false });
-        fakeSocket.readable = true;
-        req.once("socket", (s) => {
-          debug13("Replaying proxy buffer for failed request");
-          (0, import_assert2.default)(s.listenerCount("data") > 0);
-          s.push(buffered);
-          s.push(null);
-        });
-        return fakeSocket;
+        throw new Error(`Proxy authentication failed with status ${connect13.statusCode} after retry`);
       }
     };
     HttpsProxyAgent2.protocols = ["http", "https"];
@@ -72144,14 +72328,15 @@ function omit6(obj, ...keys) {
   return ret;
 }
 var net9, tls6, import_debug17, import_events3, import_url7, debug14, HttpProxyAgent2;
-var init_dist12 = __esm({
+var init_dist13 = __esm({
   "node_modules/pac-proxy-agent/node_modules/http-proxy-agent/dist/index.js"() {
     net9 = __toESM(require("net"), 1);
     tls6 = __toESM(require("tls"), 1);
     import_debug17 = __toESM(require_src(), 1);
     import_events3 = require("events");
-    init_dist5();
+    init_dist6();
     import_url7 = require("url");
+    init_dist2();
     debug14 = (0, import_debug17.default)("http-proxy-agent");
     HttpProxyAgent2 = class extends Agent6 {
       constructor(proxy, opts) {
@@ -72159,10 +72344,15 @@ var init_dist12 = __esm({
         this.proxy = typeof proxy === "string" ? new import_url7.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
         debug14("Creating new HttpProxyAgent instance: %o", this.proxy.href);
+        if (opts?.negotiate) {
+          this.onProxyAuth = createNegotiateAuth();
+        } else if (opts?.onProxyAuth) {
+          this.onProxyAuth = opts.onProxyAuth;
+        }
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
-          ...opts ? omit6(opts, "headers") : null,
+          ...opts ? omit6(opts, "headers", "onProxyAuth", "negotiate") : null,
           host,
           port
         };
@@ -72222,6 +72412,10 @@ var init_dist12 = __esm({
           socket = net9.connect(this.connectOpts);
         }
         await (0, import_events3.once)(socket, "connect");
+        const connect13 = { socket };
+        req.emit("proxyConnect", connect13);
+        this.emit("proxyConnect", connect13, req);
+        req.emit("proxy", { proxy: this.proxy.href, socket });
         return socket;
       }
     };
@@ -72232,10 +72426,17 @@ var init_dist12 = __esm({
 // node_modules/pac-proxy-agent/dist/index.js
 var dist_exports7 = {};
 __export(dist_exports7, {
-  PacProxyAgent: () => PacProxyAgent
+  PacProxyAgent: () => PacProxyAgent,
+  sanitizeProxyResultCredentials: () => sanitizeProxyResultCredentials
 });
+function sanitizeProxyResultCredentials(result) {
+  if (!result) {
+    return "";
+  }
+  return String(result).replace(/(\b(?:PROXY|HTTPS?|SOCKS[45]?)\s+)[^\s@]+@/gi, "$1<credentials>@");
+}
 var net10, tls7, crypto3, import_events4, import_debug18, import_url8, debug15, setServernameFromNonIpHost5, PacProxyAgent;
-var init_dist13 = __esm({
+var init_dist14 = __esm({
   "node_modules/pac-proxy-agent/dist/index.js"() {
     net10 = __toESM(require("net"), 1);
     tls7 = __toESM(require("tls"), 1);
@@ -72243,10 +72444,10 @@ var init_dist13 = __esm({
     import_events4 = require("events");
     import_debug18 = __toESM(require_src(), 1);
     import_url8 = require("url");
-    init_dist5();
     init_dist6();
-    init_dist8();
+    init_dist7();
     init_dist9();
+    init_dist10();
     debug15 = (0, import_debug18.default)("pac-proxy-agent");
     setServernameFromNonIpHost5 = (options) => {
       if (options.servername === void 0 && options.host && !net10.isIP(options.host)) {
@@ -72352,7 +72553,7 @@ var init_dist13 = __esm({
           let agent = null;
           let socket = null;
           const [type, target] = proxy.split(/\s+/);
-          debug15("Attempting to use proxy: %o", proxy);
+          debug15("Attempting to use proxy: %o", sanitizeProxyResultCredentials(proxy));
           if (type === "DIRECT") {
             if (secureEndpoint) {
               socket = tls7.connect(setServernameFromNonIpHost5(opts));
@@ -72360,18 +72561,18 @@ var init_dist13 = __esm({
               socket = net10.connect(opts);
             }
           } else if (type === "SOCKS" || type === "SOCKS5") {
-            const { SocksProxyAgent: SocksProxyAgent3 } = await Promise.resolve().then(() => (init_dist10(), dist_exports4));
+            const { SocksProxyAgent: SocksProxyAgent3 } = await Promise.resolve().then(() => (init_dist11(), dist_exports4));
             agent = new SocksProxyAgent3(`socks://${target}`, this.opts);
           } else if (type === "SOCKS4") {
-            const { SocksProxyAgent: SocksProxyAgent3 } = await Promise.resolve().then(() => (init_dist10(), dist_exports4));
+            const { SocksProxyAgent: SocksProxyAgent3 } = await Promise.resolve().then(() => (init_dist11(), dist_exports4));
             agent = new SocksProxyAgent3(`socks4a://${target}`, this.opts);
           } else if (type === "PROXY" || type === "HTTP" || type === "HTTPS") {
             const proxyURL = `${type === "HTTPS" ? "https" : "http"}://${target}`;
             if (secureEndpoint || isWebSocket) {
-              const { HttpsProxyAgent: HttpsProxyAgent3 } = await Promise.resolve().then(() => (init_dist11(), dist_exports5));
+              const { HttpsProxyAgent: HttpsProxyAgent3 } = await Promise.resolve().then(() => (init_dist12(), dist_exports5));
               agent = new HttpsProxyAgent3(proxyURL, this.opts);
             } else {
-              const { HttpProxyAgent: HttpProxyAgent3 } = await Promise.resolve().then(() => (init_dist12(), dist_exports6));
+              const { HttpProxyAgent: HttpProxyAgent3 } = await Promise.resolve().then(() => (init_dist13(), dist_exports6));
               agent = new HttpProxyAgent3(proxyURL, this.opts);
             }
           }
@@ -72391,11 +72592,11 @@ var init_dist13 = __esm({
             }
             throw new Error(`Could not determine proxy type for: ${proxy}`);
           } catch (err) {
-            debug15("Got error for proxy %o: %o", proxy, err);
+            debug15("Got error for proxy %o: %o", sanitizeProxyResultCredentials(proxy), err);
             req.emit("proxy", { proxy, error: err });
           }
         }
-        throw new Error(`Failed to establish a socket connection to proxies: ${JSON.stringify(proxies2)}`);
+        throw new Error(`Failed to establish a socket connection to proxies: ${JSON.stringify(proxies2.map(sanitizeProxyResultCredentials))}`);
       }
     };
     PacProxyAgent.protocols = [
@@ -75359,10 +75560,10 @@ function getEnv(key) {
 // node_modules/proxy-agent/dist/index.js
 var debug16 = (0, import_debug19.default)("proxy-agent");
 var wellKnownAgents = {
-  http: async () => (await Promise.resolve().then(() => (init_dist2(), dist_exports))).HttpProxyAgent,
-  https: async () => (await Promise.resolve().then(() => (init_dist3(), dist_exports2))).HttpsProxyAgent,
-  socks: async () => (await Promise.resolve().then(() => (init_dist4(), dist_exports3))).SocksProxyAgent,
-  pac: async () => (await Promise.resolve().then(() => (init_dist13(), dist_exports7))).PacProxyAgent
+  http: async () => (await Promise.resolve().then(() => (init_dist3(), dist_exports))).HttpProxyAgent,
+  https: async () => (await Promise.resolve().then(() => (init_dist4(), dist_exports2))).HttpsProxyAgent,
+  socks: async () => (await Promise.resolve().then(() => (init_dist5(), dist_exports3))).SocksProxyAgent,
+  pac: async () => (await Promise.resolve().then(() => (init_dist14(), dist_exports7))).PacProxyAgent
 };
 var proxies = {
   http: [wellKnownAgents.http, wellKnownAgents.https],
