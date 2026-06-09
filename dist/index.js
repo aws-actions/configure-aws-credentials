@@ -32322,6 +32322,7 @@ var init_AwsSdkSigV4Signer = __esm({
             signingName = second?.signingName ?? signingName;
           }
         }
+        signingProperties._preRequestSystemClockOffset = config.systemClockOffset;
         const signedRequest = await signer.sign(httpRequest, {
           signingDate: getSkewCorrectedDate(config.systemClockOffset),
           signingRegion,
@@ -32331,14 +32332,18 @@ var init_AwsSdkSigV4Signer = __esm({
       }
       errorHandler(signingProperties) {
         return (error3) => {
-          const serverTime = error3.ServerTime ?? getDateHeader(error3.$response);
+          const errorException = error3;
+          const serverTime = errorException.ServerTime ?? getDateHeader(errorException.$response);
           if (serverTime) {
             const config = throwSigningPropertyError("config", signingProperties.config);
-            const initialSystemClockOffset = config.systemClockOffset;
-            config.systemClockOffset = getUpdatedSystemClockOffset(serverTime, config.systemClockOffset);
-            const clockSkewCorrected = config.systemClockOffset !== initialSystemClockOffset;
-            if (clockSkewCorrected && error3.$metadata) {
-              error3.$metadata.clockSkewCorrected = true;
+            const preRequestOffset = signingProperties._preRequestSystemClockOffset;
+            const newOffset = getUpdatedSystemClockOffset(serverTime, config.systemClockOffset);
+            const isLocalCorrection = newOffset !== config.systemClockOffset;
+            const isConcurrentCorrection = preRequestOffset !== void 0 && preRequestOffset !== newOffset;
+            const clockSkewCorrected = isLocalCorrection || isConcurrentCorrection;
+            if (clockSkewCorrected && errorException.$metadata) {
+              config.systemClockOffset = newOffset;
+              errorException.$metadata.clockSkewCorrected = true;
             }
           }
           throw error3;
@@ -32371,6 +32376,7 @@ var init_AwsSdkSigV4ASigner = __esm({
         const { config, signer, signingRegion, signingRegionSet, signingName } = await validateSigningProperties(signingProperties);
         const configResolvedSigningRegionSet = await config.sigv4aSigningRegionSet?.();
         const multiRegionOverride = (configResolvedSigningRegionSet ?? signingRegionSet ?? [signingRegion]).join(",");
+        signingProperties._preRequestSystemClockOffset = config.systemClockOffset;
         const signedRequest = await signer.sign(httpRequest, {
           signingDate: getSkewCorrectedDate(config.systemClockOffset),
           signingRegion: multiRegionOverride,
@@ -33645,10 +33651,10 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1061.0",
+      version: "3.1064.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-sts",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "premove ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json",
@@ -33671,10 +33677,10 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.17",
-        "@aws-sdk/credential-provider-node": "^3.972.50",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.31",
-        "@aws-sdk/types": "^3.973.10",
+        "@aws-sdk/core": "^3.974.19",
+        "@aws-sdk/credential-provider-node": "^3.972.53",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.33",
+        "@aws-sdk/types": "^3.973.12",
         "@smithy/core": "^3.24.6",
         "@smithy/fetch-http-handler": "^5.4.6",
         "@smithy/node-http-handler": "^4.7.6",
@@ -33706,7 +33712,7 @@ var require_package = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -35248,20 +35254,20 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.15",
+      version: "3.997.18",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
       types: "./dist-types/index.d.ts",
       scripts: {
         build: "yarn lint && concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline nested-clients",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
         "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
         clean: "premove dist-cjs dist-es dist-types tsconfig.cjs.tsbuildinfo tsconfig.es.tsbuildinfo tsconfig.types.tsbuildinfo",
-        lint: "node ../../scripts/validation/submodules-linter.js --pkg nested-clients",
+        lint: "node ../../scripts/validation/submodules-linter.js",
         test: "yarn g:vitest run",
         "test:watch": "yarn g:vitest watch"
       },
@@ -35271,15 +35277,15 @@ var init_package = __esm({
       sideEffects: false,
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.17",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.31",
-        "@aws-sdk/types": "^3.973.10",
+        "@aws-sdk/core": "^3.974.19",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.33",
+        "@aws-sdk/types": "^3.973.12",
         "@smithy/core": "^3.24.6",
         "@smithy/fetch-http-handler": "^5.4.6",
         "@smithy/node-http-handler": "^4.7.6",
@@ -40927,13 +40933,41 @@ var init_schemas_0 = __esm({
       [0, 0]
     ];
     n0_registry.registerError(AuthorizationPendingException$, AuthorizationPendingException);
-    ExpiredTokenException$ = [-3, n0, _ETE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    ExpiredTokenException$ = [
+      -3,
+      n0,
+      _ETE,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(ExpiredTokenException$, ExpiredTokenException);
-    InternalServerException$ = [-3, n0, _ISE, { [_e]: _se, [_hE]: 500 }, [_e, _ed], [0, 0]];
+    InternalServerException$ = [
+      -3,
+      n0,
+      _ISE,
+      { [_e]: _se, [_hE]: 500 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InternalServerException$, InternalServerException);
-    InvalidClientException$ = [-3, n0, _ICE, { [_e]: _c, [_hE]: 401 }, [_e, _ed], [0, 0]];
+    InvalidClientException$ = [
+      -3,
+      n0,
+      _ICE,
+      { [_e]: _c, [_hE]: 401 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InvalidClientException$, InvalidClientException);
-    InvalidGrantException$ = [-3, n0, _IGE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    InvalidGrantException$ = [
+      -3,
+      n0,
+      _IGE,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InvalidGrantException$, InvalidGrantException);
     InvalidRequestException$ = [
       -3,
@@ -40944,9 +40978,23 @@ var init_schemas_0 = __esm({
       [0, 0, 0]
     ];
     n0_registry.registerError(InvalidRequestException$, InvalidRequestException);
-    InvalidScopeException$ = [-3, n0, _ISEn, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    InvalidScopeException$ = [
+      -3,
+      n0,
+      _ISEn,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InvalidScopeException$, InvalidScopeException);
-    SlowDownException$ = [-3, n0, _SDE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    SlowDownException$ = [
+      -3,
+      n0,
+      _SDE,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(SlowDownException$, SlowDownException);
     UnauthorizedClientException$ = [
       -3,
@@ -40966,7 +41014,10 @@ var init_schemas_0 = __esm({
       [0, 0]
     ];
     n0_registry.registerError(UnsupportedGrantTypeException$, UnsupportedGrantTypeException);
-    errorTypeRegistries = [_s_registry, n0_registry];
+    errorTypeRegistries = [
+      _s_registry,
+      n0_registry
+    ];
     AccessToken = [0, n0, _AT, 8, 0];
     ClientSecret = [0, n0, _CS, 8, 0];
     CodeVerifier = [0, n0, _CV, 8, 0];
@@ -41773,15 +41824,46 @@ var init_schemas_02 = __esm({
     SSOServiceException$ = [-3, _s2, "SSOServiceException", 0, [], []];
     _s_registry2.registerError(SSOServiceException$, SSOServiceException);
     n0_registry2 = TypeRegistry.for(n02);
-    InvalidRequestException$2 = [-3, n02, _IRE2, { [_e2]: _c2, [_hE2]: 400 }, [_m], [0]];
+    InvalidRequestException$2 = [
+      -3,
+      n02,
+      _IRE2,
+      { [_e2]: _c2, [_hE2]: 400 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(InvalidRequestException$2, InvalidRequestException2);
-    ResourceNotFoundException$ = [-3, n02, _RNFE, { [_e2]: _c2, [_hE2]: 404 }, [_m], [0]];
+    ResourceNotFoundException$ = [
+      -3,
+      n02,
+      _RNFE,
+      { [_e2]: _c2, [_hE2]: 404 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(ResourceNotFoundException$, ResourceNotFoundException);
-    TooManyRequestsException$ = [-3, n02, _TMRE, { [_e2]: _c2, [_hE2]: 429 }, [_m], [0]];
+    TooManyRequestsException$ = [
+      -3,
+      n02,
+      _TMRE,
+      { [_e2]: _c2, [_hE2]: 429 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(TooManyRequestsException$, TooManyRequestsException);
-    UnauthorizedException$ = [-3, n02, _UE, { [_e2]: _c2, [_hE2]: 401 }, [_m], [0]];
+    UnauthorizedException$ = [
+      -3,
+      n02,
+      _UE,
+      { [_e2]: _c2, [_hE2]: 401 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(UnauthorizedException$, UnauthorizedException);
-    errorTypeRegistries2 = [_s_registry2, n0_registry2];
+    errorTypeRegistries2 = [
+      _s_registry2,
+      n0_registry2
+    ];
     AccessTokenType = [0, n02, _ATT, 8, 0];
     SecretAccessKeyType = [0, n02, _SAKT, 8, 0];
     SessionTokenType = [0, n02, _STT, 8, 0];
@@ -41791,11 +41873,7 @@ var init_schemas_02 = __esm({
       _GRCR,
       0,
       [_rN, _aI, _aT2],
-      [
-        [0, { [_hQ]: _rn }],
-        [0, { [_hQ]: _ai }],
-        [() => AccessTokenType, { [_hH]: _xasbt }]
-      ],
+      [[0, { [_hQ]: _rn }], [0, { [_hQ]: _ai }], [() => AccessTokenType, { [_hH]: _xasbt }]],
       3
     ];
     GetRoleCredentialsResponse$ = [
@@ -42397,7 +42475,7 @@ var init_bdd3 = __esm({
     g3 = "stringEquals";
     h3 = { [m]: "Endpoint" };
     i3 = { [m]: d3 };
-    j3 = { fn: f3, argv: [i3, "name"] };
+    j3 = { "fn": f3, "argv": [i3, "name"] };
     k3 = {};
     l = [{ [m]: "Region" }];
     _data3 = {
@@ -42632,15 +42710,50 @@ var init_schemas_03 = __esm({
     SigninServiceException$ = [-3, _s3, "SigninServiceException", 0, [], []];
     _s_registry3.registerError(SigninServiceException$, SigninServiceException);
     n0_registry3 = TypeRegistry.for(n03);
-    AccessDeniedException$2 = [-3, n03, _ADE2, { [_e3]: _c3 }, [_e3, _m2], [0, 0], 2];
+    AccessDeniedException$2 = [
+      -3,
+      n03,
+      _ADE2,
+      { [_e3]: _c3 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(AccessDeniedException$2, AccessDeniedException2);
-    InternalServerException$2 = [-3, n03, _ISE2, { [_e3]: _se2, [_hE3]: 500 }, [_e3, _m2], [0, 0], 2];
+    InternalServerException$2 = [
+      -3,
+      n03,
+      _ISE2,
+      { [_e3]: _se2, [_hE3]: 500 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(InternalServerException$2, InternalServerException2);
-    TooManyRequestsError$ = [-3, n03, _TMRE2, { [_e3]: _c3, [_hE3]: 429 }, [_e3, _m2], [0, 0], 2];
+    TooManyRequestsError$ = [
+      -3,
+      n03,
+      _TMRE2,
+      { [_e3]: _c3, [_hE3]: 429 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(TooManyRequestsError$, TooManyRequestsError);
-    ValidationException$ = [-3, n03, _VE, { [_e3]: _c3, [_hE3]: 400 }, [_e3, _m2], [0, 0], 2];
+    ValidationException$ = [
+      -3,
+      n03,
+      _VE,
+      { [_e3]: _c3, [_hE3]: 400 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(ValidationException$, ValidationException);
-    errorTypeRegistries3 = [_s_registry3, n0_registry3];
+    errorTypeRegistries3 = [
+      _s_registry3,
+      n0_registry3
+    ];
     RefreshToken2 = [0, n03, _RT2, 8, 0];
     AccessToken$ = [
       3,
@@ -42648,11 +42761,7 @@ var init_schemas_03 = __esm({
       _AT2,
       8,
       [_aKI2, _sAK2, _sT2],
-      [
-        [0, { [_jN]: _aKI2 }],
-        [0, { [_jN]: _sAK2 }],
-        [0, { [_jN]: _sT2 }]
-      ],
+      [[0, { [_jN]: _aKI2 }], [0, { [_jN]: _sAK2 }], [0, { [_jN]: _sT2 }]],
       3
     ];
     CreateOAuth2TokenRequest$ = [
@@ -42670,14 +42779,7 @@ var init_schemas_03 = __esm({
       _COATRB,
       0,
       [_cI2, _gT2, _co2, _rU2, _cV2, _rT2],
-      [
-        [0, { [_jN]: _cI2 }],
-        [0, { [_jN]: _gT2 }],
-        0,
-        [0, { [_jN]: _rU2 }],
-        [0, { [_jN]: _cV2 }],
-        [() => RefreshToken2, { [_jN]: _rT2 }]
-      ],
+      [[0, { [_jN]: _cI2 }], [0, { [_jN]: _gT2 }], 0, [0, { [_jN]: _rU2 }], [0, { [_jN]: _cV2 }], [() => RefreshToken2, { [_jN]: _rT2 }]],
       2
     ];
     CreateOAuth2TokenResponse$ = [
@@ -42695,13 +42797,7 @@ var init_schemas_03 = __esm({
       _COATRBr,
       0,
       [_aT3, _tT2, _eI2, _rT2, _iT2],
-      [
-        [() => AccessToken$, { [_jN]: _aT3 }],
-        [0, { [_jN]: _tT2 }],
-        [1, { [_jN]: _eI2 }],
-        [() => RefreshToken2, { [_jN]: _rT2 }],
-        [0, { [_jN]: _iT2 }]
-      ],
+      [[() => AccessToken$, { [_jN]: _aT3 }], [0, { [_jN]: _tT2 }], [1, { [_jN]: _eI2 }], [() => RefreshToken2, { [_jN]: _rT2 }], [0, { [_jN]: _iT2 }]],
       4
     ];
     CreateOAuth2Token$ = [
@@ -43893,10 +43989,21 @@ var init_schemas_04 = __esm({
       [0]
     ];
     n0_registry4.registerError(RegionDisabledException$, RegionDisabledException);
-    errorTypeRegistries4 = [_s_registry4, n0_registry4];
+    errorTypeRegistries4 = [
+      _s_registry4,
+      n0_registry4
+    ];
     accessKeySecretType = [0, n04, _aKST, 8, 0];
     clientTokenType = [0, n04, _cTT, 8, 0];
-    AssumedRoleUser$ = [3, n04, _ARU, 0, [_ARI, _A], [0, 0], 2];
+    AssumedRoleUser$ = [
+      3,
+      n04,
+      _ARU,
+      0,
+      [_ARI, _A],
+      [0, 0],
+      2
+    ];
     AssumeRoleRequest$ = [
       3,
       n04,
@@ -43940,14 +44047,61 @@ var init_schemas_04 = __esm({
       [0, [() => accessKeySecretType, 0], 0, 4],
       4
     ];
-    PolicyDescriptorType$ = [3, n04, _PDT, 0, [_a], [0]];
-    ProvidedContext$ = [3, n04, _PCr, 0, [_PAr, _CA], [0, 0]];
-    Tag$ = [3, n04, _Ta, 0, [_K, _V], [0, 0], 2];
-    policyDescriptorListType = [1, n04, _pDLT, 0, () => PolicyDescriptorType$];
-    ProvidedContextsListType = [1, n04, _PCLT, 0, () => ProvidedContext$];
+    PolicyDescriptorType$ = [
+      3,
+      n04,
+      _PDT,
+      0,
+      [_a],
+      [0]
+    ];
+    ProvidedContext$ = [
+      3,
+      n04,
+      _PCr,
+      0,
+      [_PAr, _CA],
+      [0, 0]
+    ];
+    Tag$ = [
+      3,
+      n04,
+      _Ta,
+      0,
+      [_K, _V],
+      [0, 0],
+      2
+    ];
+    policyDescriptorListType = [
+      1,
+      n04,
+      _pDLT,
+      0,
+      () => PolicyDescriptorType$
+    ];
+    ProvidedContextsListType = [
+      1,
+      n04,
+      _PCLT,
+      0,
+      () => ProvidedContext$
+    ];
     tagKeyListType = 64 | 0;
-    tagListType = [1, n04, _tLT, 0, () => Tag$];
-    AssumeRole$ = [9, n04, _AR, 0, () => AssumeRoleRequest$, () => AssumeRoleResponse$];
+    tagListType = [
+      1,
+      n04,
+      _tLT,
+      0,
+      () => Tag$
+    ];
+    AssumeRole$ = [
+      9,
+      n04,
+      _AR,
+      0,
+      () => AssumeRoleRequest$,
+      () => AssumeRoleResponse$
+    ];
     AssumeRoleWithWebIdentity$ = [
       9,
       n04,
