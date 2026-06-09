@@ -1684,7 +1684,7 @@ The following npm packages may be included in this product:
  - @smithy/credential-provider-imds@4.3.7
  - @smithy/fetch-http-handler@5.4.6
  - @smithy/is-array-buffer@2.2.0
- - @smithy/node-http-handler@4.7.6
+ - @smithy/node-http-handler@4.7.7
  - @smithy/signature-v4@5.4.6
  - @smithy/util-buffer-from@2.2.0
  - @smithy/util-utf8@2.3.0

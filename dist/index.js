@@ -34117,8 +34117,8 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
 var require_dist_cjs9 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
     "use strict";
-    var node_https = require("node:https");
     var protocols2 = (init_protocols(), __toCommonJS(protocols_exports));
+    var node_https = require("node:https");
     var node_stream = require("node:stream");
     var http22 = require("node:http2");
     function buildAbortError(abortSignal) {
@@ -34504,7 +34504,8 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           socketAcquisitionWarningTimeout,
           throwOnRequestTimeout,
           httpAgentProvider: async () => {
-            const { Agent: Agent9, request } = await import("node:http");
+            const node_http = await import("node:http");
+            const { Agent: Agent9, request } = node_http.default ?? node_http;
             hRequest = request;
             hAgent = Agent9;
             if (httpAgent instanceof hAgent || typeof httpAgent?.destroy === "function") {
@@ -34749,6 +34750,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return this.connectOptions === void 0 ? http22.connect(url) : http22.connect(url, this.connectOptions);
       }
     };
+    var { constants: constants4 } = http22;
     var NodeHttp2Handler = class _NodeHttp2Handler {
       config;
       configProvider;
@@ -34838,8 +34840,8 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           }
           const clientHttp2Stream = session.request({
             ...request.headers,
-            [http22.constants.HTTP2_HEADER_PATH]: path4,
-            [http22.constants.HTTP2_HEADER_METHOD]: method
+            [constants4.HTTP2_HEADER_PATH]: path4,
+            [constants4.HTTP2_HEADER_METHOD]: method
           });
           if (effectiveRequestTimeout) {
             clientHttp2Stream.setTimeout(effectiveRequestTimeout, () => {
