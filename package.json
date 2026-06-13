@@ -23,7 +23,7 @@
     "@types/node": "^25.9.2",
     "@vitest/coverage-v8": "4.1.8",
     "aws-sdk-client-mock": "^4.1.0",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.1",
     "generate-license-file": "^4.2.1",
     "json-schema": "^0.4.0",
     "markdownlint-cli": "^0.48.0",
