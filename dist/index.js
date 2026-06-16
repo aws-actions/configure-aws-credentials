@@ -34137,10 +34137,9 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
 // node_modules/@smithy/node-http-handler/dist-cjs/index.js
 var require_dist_cjs9 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var protocols2 = (init_protocols(), __toCommonJS(protocols_exports));
+    var { buildQueryString: buildQueryString2, HttpResponse: HttpResponse2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var node_https = require("node:https");
-    var node_stream = require("node:stream");
+    var { Readable: Readable7, Writable: Writable3 } = require("node:stream");
     var http22 = require("node:http2");
     function buildAbortError(abortSignal) {
       const reason = abortSignal && typeof abortSignal === "object" && "reason" in abortSignal ? abortSignal.reason : void 0;
@@ -34297,7 +34296,7 @@ var require_dist_cjs9 = __commonJS({
       }
     }
     function writeBody(httpRequest, body) {
-      if (body instanceof node_stream.Readable) {
+      if (body instanceof Readable7) {
         body.pipe(httpRequest);
         return;
       }
@@ -34425,7 +34424,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           socketWarningTimeoutId = timing.setTimeout(() => {
             this.socketWarningTimestamp = _NodeHttpHandler.checkSocketUsage(agent, this.socketWarningTimestamp, config.logger);
           }, config.socketAcquisitionWarningTimeout ?? (config.requestTimeout ?? 2e3) + (config.connectionTimeout ?? 1e3));
-          const queryString = request.query ? protocols2.buildQueryString(request.query) : "";
+          const queryString = request.query ? buildQueryString2(request.query) : "";
           let auth = void 0;
           if (request.username != null || request.password != null) {
             const username = request.username ?? "";
@@ -34456,7 +34455,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           };
           const requestFunc = isSSL ? node_https.request : hRequest;
           const req = requestFunc(nodeHttpsOptions, (res) => {
-            const httpResponse = new protocols2.HttpResponse({
+            const httpResponse = new HttpResponse2({
               statusCode: res.statusCode || -1,
               reason: res.statusMessage,
               headers: getTransformedHeaders(res.headers),
@@ -34525,7 +34524,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           socketAcquisitionWarningTimeout,
           throwOnRequestTimeout,
           httpAgentProvider: async () => {
-            const node_http = await import("node:http");
+            const node_http = require("node:http");
             const { Agent: Agent9, request } = node_http.default ?? node_http;
             hRequest = request;
             hAgent = Agent9;
@@ -34851,7 +34850,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             fulfilled = true;
             reject(err);
           };
-          const queryString = query ? protocols2.buildQueryString(query) : "";
+          const queryString = query ? buildQueryString2(query) : "";
           let path4 = request.path;
           if (queryString) {
             path4 += `?${queryString}`;
@@ -34894,7 +34893,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             rejectWithDestroy(new Error(`HTTP/2 stream is abnormally aborted in mid-communication with result code ${clientHttp2Stream.rstCode}.`));
           });
           clientHttp2Stream.on("response", (headers) => {
-            const httpResponse = new protocols2.HttpResponse({
+            const httpResponse = new HttpResponse2({
               statusCode: headers[":status"] ?? -1,
               headers: getTransformedHeaders(headers),
               body: clientHttp2Stream
@@ -34931,7 +34930,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return this.config ?? {};
       }
     };
-    var Collector3 = class extends node_stream.Writable {
+    var Collector3 = class extends Writable3 {
       bufferedBytes = [];
       _write(chunk, encoding, callback) {
         this.bufferedBytes.push(chunk);
