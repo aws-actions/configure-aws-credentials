@@ -50,7 +50,7 @@ describe('Profile Manager', {}, () => {
 
     it('guards against __proto__ section pollution', {}, () => {
       const result = parseIni('[__proto__]\npolluted=true\n[safe]\nkey=val\n');
-      expect(result.__proto__).not.toHaveProperty('polluted');
+      expect(Object.getPrototypeOf(result)).not.toHaveProperty('polluted');
       expect(result.safe).toEqual({ key: 'val' });
     });
 
