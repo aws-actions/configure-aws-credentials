@@ -18993,41 +18993,40 @@ var init_MiddlewareStack = __esm({
 // node_modules/@smithy/types/dist-cjs/index.js
 var require_dist_cjs = __commonJS({
   "node_modules/@smithy/types/dist-cjs/index.js"(exports2) {
-    "use strict";
-    exports2.HttpAuthLocation = void 0;
-    (function(HttpAuthLocation) {
-      HttpAuthLocation["HEADER"] = "header";
-      HttpAuthLocation["QUERY"] = "query";
-    })(exports2.HttpAuthLocation || (exports2.HttpAuthLocation = {}));
-    exports2.HttpApiKeyAuthLocation = void 0;
-    (function(HttpApiKeyAuthLocation2) {
-      HttpApiKeyAuthLocation2["HEADER"] = "header";
-      HttpApiKeyAuthLocation2["QUERY"] = "query";
-    })(exports2.HttpApiKeyAuthLocation || (exports2.HttpApiKeyAuthLocation = {}));
-    exports2.EndpointURLScheme = void 0;
-    (function(EndpointURLScheme2) {
-      EndpointURLScheme2["HTTP"] = "http";
-      EndpointURLScheme2["HTTPS"] = "https";
-    })(exports2.EndpointURLScheme || (exports2.EndpointURLScheme = {}));
-    exports2.AlgorithmId = void 0;
-    (function(AlgorithmId2) {
-      AlgorithmId2["MD5"] = "md5";
-      AlgorithmId2["CRC32"] = "crc32";
-      AlgorithmId2["CRC32C"] = "crc32c";
-      AlgorithmId2["SHA1"] = "sha1";
-      AlgorithmId2["SHA256"] = "sha256";
-    })(exports2.AlgorithmId || (exports2.AlgorithmId = {}));
+    var HttpAuthLocation;
+    (function(HttpAuthLocation2) {
+      HttpAuthLocation2["HEADER"] = "header";
+      HttpAuthLocation2["QUERY"] = "query";
+    })(HttpAuthLocation || (HttpAuthLocation = {}));
+    var HttpApiKeyAuthLocation2;
+    (function(HttpApiKeyAuthLocation3) {
+      HttpApiKeyAuthLocation3["HEADER"] = "header";
+      HttpApiKeyAuthLocation3["QUERY"] = "query";
+    })(HttpApiKeyAuthLocation2 || (HttpApiKeyAuthLocation2 = {}));
+    var EndpointURLScheme2;
+    (function(EndpointURLScheme3) {
+      EndpointURLScheme3["HTTP"] = "http";
+      EndpointURLScheme3["HTTPS"] = "https";
+    })(EndpointURLScheme2 || (EndpointURLScheme2 = {}));
+    var AlgorithmId2;
+    (function(AlgorithmId3) {
+      AlgorithmId3["MD5"] = "md5";
+      AlgorithmId3["CRC32"] = "crc32";
+      AlgorithmId3["CRC32C"] = "crc32c";
+      AlgorithmId3["SHA1"] = "sha1";
+      AlgorithmId3["SHA256"] = "sha256";
+    })(AlgorithmId2 || (AlgorithmId2 = {}));
     var getChecksumConfiguration2 = (runtimeConfig) => {
       const checksumAlgorithms = [];
       if (runtimeConfig.sha256 !== void 0) {
         checksumAlgorithms.push({
-          algorithmId: () => exports2.AlgorithmId.SHA256,
+          algorithmId: () => AlgorithmId2.SHA256,
           checksumConstructor: () => runtimeConfig.sha256
         });
       }
       if (runtimeConfig.md5 != void 0) {
         checksumAlgorithms.push({
-          algorithmId: () => exports2.AlgorithmId.MD5,
+          algorithmId: () => AlgorithmId2.MD5,
           checksumConstructor: () => runtimeConfig.md5
         });
       }
@@ -19053,24 +19052,31 @@ var require_dist_cjs = __commonJS({
     var resolveDefaultRuntimeConfig2 = (config) => {
       return resolveChecksumRuntimeConfig2(config);
     };
-    exports2.FieldPosition = void 0;
-    (function(FieldPosition2) {
-      FieldPosition2[FieldPosition2["HEADER"] = 0] = "HEADER";
-      FieldPosition2[FieldPosition2["TRAILER"] = 1] = "TRAILER";
-    })(exports2.FieldPosition || (exports2.FieldPosition = {}));
+    var FieldPosition2;
+    (function(FieldPosition3) {
+      FieldPosition3[FieldPosition3["HEADER"] = 0] = "HEADER";
+      FieldPosition3[FieldPosition3["TRAILER"] = 1] = "TRAILER";
+    })(FieldPosition2 || (FieldPosition2 = {}));
     var SMITHY_CONTEXT_KEY3 = "__smithy_context";
-    exports2.IniSectionType = void 0;
-    (function(IniSectionType4) {
-      IniSectionType4["PROFILE"] = "profile";
-      IniSectionType4["SSO_SESSION"] = "sso-session";
-      IniSectionType4["SERVICES"] = "services";
-    })(exports2.IniSectionType || (exports2.IniSectionType = {}));
-    exports2.RequestHandlerProtocol = void 0;
-    (function(RequestHandlerProtocol) {
-      RequestHandlerProtocol["HTTP_0_9"] = "http/0.9";
-      RequestHandlerProtocol["HTTP_1_0"] = "http/1.0";
-      RequestHandlerProtocol["TDS_8_0"] = "tds/8.0";
-    })(exports2.RequestHandlerProtocol || (exports2.RequestHandlerProtocol = {}));
+    var IniSectionType4;
+    (function(IniSectionType5) {
+      IniSectionType5["PROFILE"] = "profile";
+      IniSectionType5["SSO_SESSION"] = "sso-session";
+      IniSectionType5["SERVICES"] = "services";
+    })(IniSectionType4 || (IniSectionType4 = {}));
+    var RequestHandlerProtocol;
+    (function(RequestHandlerProtocol2) {
+      RequestHandlerProtocol2["HTTP_0_9"] = "http/0.9";
+      RequestHandlerProtocol2["HTTP_1_0"] = "http/1.0";
+      RequestHandlerProtocol2["TDS_8_0"] = "tds/8.0";
+    })(RequestHandlerProtocol || (RequestHandlerProtocol = {}));
+    exports2.AlgorithmId = AlgorithmId2;
+    exports2.EndpointURLScheme = EndpointURLScheme2;
+    exports2.FieldPosition = FieldPosition2;
+    exports2.HttpApiKeyAuthLocation = HttpApiKeyAuthLocation2;
+    exports2.HttpAuthLocation = HttpAuthLocation;
+    exports2.IniSectionType = IniSectionType4;
+    exports2.RequestHandlerProtocol = RequestHandlerProtocol;
     exports2.SMITHY_CONTEXT_KEY = SMITHY_CONTEXT_KEY3;
     exports2.getDefaultClientConfiguration = getDefaultClientConfiguration2;
     exports2.resolveDefaultRuntimeConfig = resolveDefaultRuntimeConfig2;
@@ -23491,7 +23497,7 @@ function bindEndpointMiddleware(getEndpointFromConfig2) {
 }
 var init_endpointMiddleware = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/endpointMiddleware.js"() {
-    init_client2();
+    init_transport();
     init_getEndpointFromInstructions();
   }
 });
@@ -29108,7 +29114,7 @@ var init_DefaultRateLimiter = __esm({
   "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js"() {
     init_service_error_classification();
     DefaultRateLimiter = class _DefaultRateLimiter {
-      static setTimeoutFn = setTimeout;
+      static setTimeoutFn = (fn, delay) => setTimeout(fn, delay);
       beta;
       minCapacity;
       minFillRate;
@@ -29628,9 +29634,9 @@ var init_StandardRetryStrategy2 = __esm({
       const retryAfter = response.headers[retryAfterHeaderName];
       const retryAfterSeconds = Number(retryAfter);
       if (!Number.isNaN(retryAfterSeconds))
-        return retryAfterSeconds * 1e3;
+        return Math.min(retryAfterSeconds * 1e3, 2e4);
       const retryAfterDate = new Date(retryAfter);
-      return retryAfterDate.getTime() - Date.now();
+      return Math.min(retryAfterDate.getTime() - Date.now(), 2e4);
     };
   }
 });
@@ -30168,7 +30174,7 @@ function convertHttpAuthSchemesToMap(httpAuthSchemes) {
 var httpAuthSchemeMiddleware;
 var init_httpAuthSchemeMiddleware = __esm({
   "node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/httpAuthSchemeMiddleware.js"() {
-    init_client2();
+    init_transport();
     init_resolveAuthOptions();
     httpAuthSchemeMiddleware = (config, mwOptions) => (next, context) => async (args) => {
       const options = config.httpAuthSchemeProvider(await mwOptions.httpAuthSchemeParametersProvider(config, context, args.input));
@@ -30267,8 +30273,8 @@ var init_middleware_http_auth_scheme = __esm({
 var defaultErrorHandler, defaultSuccessHandler, httpSigningMiddleware;
 var init_httpSigningMiddleware = __esm({
   "node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/httpSigningMiddleware.js"() {
-    init_client2();
     init_protocols();
+    init_transport();
     defaultErrorHandler = (signingProperties) => (error3) => {
       throw error3;
     };
@@ -36311,9 +36317,9 @@ var init_CborCodec = __esm({
 var SmithyRpcV2CborProtocol;
 var init_SmithyRpcV2CborProtocol = __esm({
   "node_modules/@smithy/core/dist-es/submodules/cbor/SmithyRpcV2CborProtocol.js"() {
-    init_client2();
     init_protocols();
     init_schema();
+    init_transport();
     init_CborCodec();
     init_parseCborBody();
     SmithyRpcV2CborProtocol = class extends RpcProtocol {
