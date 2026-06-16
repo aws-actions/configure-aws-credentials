@@ -33749,9 +33749,8 @@ var require_package = __commonJS({
 // node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js
 var require_dist_cjs7 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var client = (init_client3(), __toCommonJS(client_exports2));
-    var config = (init_config2(), __toCommonJS(config_exports));
+    var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
+    var { CredentialsProviderError: CredentialsProviderError2 } = (init_config2(), __toCommonJS(config_exports));
     var ENV_KEY = "AWS_ACCESS_KEY_ID";
     var ENV_SECRET = "AWS_SECRET_ACCESS_KEY";
     var ENV_SESSION = "AWS_SESSION_TOKEN";
@@ -33775,10 +33774,10 @@ var require_dist_cjs7 = __commonJS({
           ...credentialScope && { credentialScope },
           ...accountId && { accountId }
         };
-        client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
+        setCredentialFeature2(credentials, "CREDENTIALS_ENV_VARS", "g");
         return credentials;
       }
-      throw new config.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
+      throw new CredentialsProviderError2("Unable to find environment variable credentials.", { logger: init?.logger });
     };
     exports2.ENV_ACCOUNT_ID = ENV_ACCOUNT_ID;
     exports2.ENV_CREDENTIAL_SCOPE = ENV_CREDENTIAL_SCOPE;
@@ -39028,16 +39027,14 @@ var require_fxp = __commonJS({
 // node_modules/@aws-sdk/xml-builder/dist-cjs/xml-external/nodable_entities.js
 var require_nodable_entities = __commonJS({
   "node_modules/@aws-sdk/xml-builder/dist-cjs/xml-external/nodable_entities.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.EntityDecoderImpl = exports2.CURRENCY = exports2.COMMON_HTML = exports2.XML = void 0;
-    exports2.XML = {
+    var XML = {
       amp: "&",
       apos: "'",
       gt: ">",
       lt: "<",
       quot: '"'
     };
+    exports2.XML = XML;
     exports2.COMMON_HTML = {
       nbsp: "\xA0",
       copy: "\xA9",
@@ -39139,7 +39136,7 @@ var require_nodable_entities = __commonJS({
       const clampedNull = Math.max(nullLevel, NCR_LEVEL.remove);
       return { xmlVersion, onLevel, nullLevel: clampedNull };
     }
-    var EntityDecoderImpl = class EntityDecoderImpl {
+    exports2.EntityDecoderImpl = class EntityDecoderImpl {
       _limit;
       _maxTotalExpansions;
       _maxExpandedLength;
@@ -39163,7 +39160,7 @@ var require_nodable_entities = __commonJS({
         this._postCheck = typeof options.postCheck === "function" ? options.postCheck : (r5) => r5;
         this._limitTiers = parseLimitTiers(this._limit.applyLimitsTo ?? LIMIT_TIER_EXTERNAL);
         this._numericAllowed = options.numericAllowed ?? true;
-        this._baseMap = mergeEntityMaps(exports2.XML, options.namedEntities || null);
+        this._baseMap = mergeEntityMaps(XML, options.namedEntities || null);
         this._externalMap = /* @__PURE__ */ Object.create(null);
         this._inputMap = /* @__PURE__ */ Object.create(null);
         this._totalExpansions = 0;
@@ -39355,20 +39352,16 @@ var require_nodable_entities = __commonJS({
         return this._applyNCRAction(effective, token, cp);
       }
     };
-    exports2.EntityDecoderImpl = EntityDecoderImpl;
   }
 });
 
 // node_modules/@aws-sdk/xml-builder/dist-cjs/xml-parser.js
 var require_xml_parser = __commonJS({
   "node_modules/@aws-sdk/xml-builder/dist-cjs/xml-parser.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.parseXML = parseXML3;
-    var fast_xml_parser_1 = require_fxp();
-    var nodable_entities_1 = require_nodable_entities();
-    var entityDecoder = new nodable_entities_1.EntityDecoderImpl({
-      namedEntities: { ...nodable_entities_1.XML, ...nodable_entities_1.COMMON_HTML, ...nodable_entities_1.CURRENCY },
+    var { XMLParser } = require_fxp();
+    var { COMMON_HTML, CURRENCY, EntityDecoderImpl, XML } = require_nodable_entities();
+    var entityDecoder = new EntityDecoderImpl({
+      namedEntities: { ...XML, ...COMMON_HTML, ...CURRENCY },
       numericAllowed: true,
       limit: {
         maxTotalExpansions: Infinity
@@ -39377,7 +39370,7 @@ var require_xml_parser = __commonJS({
         xmlVersion: 1.1
       }
     });
-    var parser = new fast_xml_parser_1.XMLParser({
+    var parser = new XMLParser({
       attributeNamePrefix: "",
       processEntities: {
         enabled: true,
@@ -39406,17 +39399,17 @@ var require_xml_parser = __commonJS({
       tagValueProcessor: (_, val) => val.trim() === "" && val.includes("\n") ? "" : void 0,
       maxNestedTags: Infinity
     });
-    function parseXML3(xmlString) {
+    exports2.parseXML = function parseXML3(xmlString) {
       return parser.parse(xmlString, true);
-    }
+    };
   }
 });
 
 // node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
 var require_dist_cjs11 = __commonJS({
   "node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var xmlParser = require_xml_parser();
+    var { parseXML: parseXML3 } = require_xml_parser();
+    exports2.parseXML = parseXML3;
     var ATTR_ESCAPE_RE = /[&<>"]/g;
     var ATTR_ESCAPE_MAP = {
       "&": "&amp;",
@@ -39537,7 +39530,6 @@ var require_dist_cjs11 = __commonJS({
         return xmlText += !hasChildren ? "/>" : `>${this.children.map((c5) => c5.toString()).join("")}</${this.name}>`;
       }
     };
-    exports2.parseXML = xmlParser.parseXML;
     exports2.XmlNode = XmlNode2;
     exports2.XmlText = XmlText2;
   }

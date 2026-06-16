@@ -1254,7 +1254,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.974.19
+ - @aws-sdk/core@3.974.21
 
 This package contains the following license:
 
@@ -1674,13 +1674,13 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.45
+ - @aws-sdk/credential-provider-env@3.972.47
  - @aws-sdk/credential-provider-ini@3.972.51
  - @aws-sdk/credential-provider-node@3.972.53
  - @aws-sdk/token-providers@3.1064.0
- - @aws-sdk/types@3.973.12
+ - @aws-sdk/types@3.973.13
  - @aws-sdk/util-locate-window@3.965.7
- - @aws-sdk/xml-builder@3.972.29
+ - @aws-sdk/xml-builder@3.972.30
  - @smithy/credential-provider-imds@4.3.8
  - @smithy/fetch-http-handler@5.4.6
  - @smithy/is-array-buffer@2.2.0
@@ -2335,7 +2335,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following npm packages may be included in this product:
 
- - @nodable/entities@2.1.1
+ - @nodable/entities@2.2.0
  - proxy-agent-negotiate@1.1.0
  - quickjs-wasi@2.2.0
  - xml-naming@0.1.0
@@ -2408,7 +2408,7 @@ SOFTWARE.
 
 The following npm package may be included in this product:
 
- - strnum@2.3.0
+ - strnum@2.4.0
 
 This package contains the following license:
 
@@ -2466,11 +2466,12 @@ SOFTWARE.
 
 -----------
 
-The following npm package may be included in this product:
+The following npm packages may be included in this product:
 
+ - anynum@1.0.0
  - fast-xml-builder@1.2.0
 
-This package contains the following license:
+These packages each contain the following license:
 
 MIT License
 
