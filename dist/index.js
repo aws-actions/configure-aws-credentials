@@ -34050,7 +34050,7 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1069.0",
+      version: "3.1075.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
         "build:cjs": "node ../../scripts/compilation/inline",
@@ -34076,8 +34076,8 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.21",
-        "@aws-sdk/credential-provider-node": "^3.972.56",
+        "@aws-sdk/core": "^3.974.23",
+        "@aws-sdk/credential-provider-node": "^3.972.58",
         "@aws-sdk/signature-v4-multi-region": "^3.996.35",
         "@aws-sdk/types": "^3.973.13",
         "@smithy/core": "^3.24.6",
@@ -35633,7 +35633,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.21",
+      version: "3.997.23",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -35663,7 +35663,7 @@ var init_package = __esm({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.21",
+        "@aws-sdk/core": "^3.974.23",
         "@aws-sdk/signature-v4-multi-region": "^3.996.35",
         "@aws-sdk/types": "^3.973.13",
         "@smithy/core": "^3.24.6",
