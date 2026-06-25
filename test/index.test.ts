@@ -618,6 +618,9 @@ describe('Configure AWS Credentials', {}, () => {
     });
     it("doesn't export credentials as environment variables if told not to", {}, async () => {
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      // Credentials are validated (and their account resolved) even when not exported to the
+      // environment, so GetCallerIdentity is now called on the explicit assumed-role credentials.
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.NO_ENV_CREDS_INPUTS));
       vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -628,6 +631,7 @@ describe('Configure AWS Credentials', {}, () => {
     });
     it('can export creds as step outputs without exporting as env variables', {}, async () => {
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.STEP_BUT_NO_ENV_INPUTS));
       vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
@@ -897,6 +901,65 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.info).toHaveBeenCalledWith('Authenticated as assumedRoleId AROAFAKEASSUMEDROLEID');
     });
 
+    it('fails with OIDC when account ID does not match allowed list', async () => {
+      // Regression test for the allowed-account-ids bypass: in a real runner (GITHUB_ACTIONS=true)
+      // authenticating via OIDC, the account-ID guardrail was previously never enforced.
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'allowed-account-ids': '999999999999',
+        }),
+      );
+      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+      );
+    });
+
+    it('fails with OIDC and output-env-credentials false when account ID does not match', async () => {
+      // The guardrail must hold even when credentials are never written to the environment.
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.NO_ENV_CREDS_INPUTS,
+          'allowed-account-ids': '999999999999',
+        }),
+      );
+      vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
+
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+      );
+    });
+
+    it('fails with assume role when assumed account ID does not match allowed list', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.IAM_ASSUMEROLE_INPUTS,
+          'allowed-account-ids': '999999999999',
+        }),
+      );
+      mockedSTSClient.on(AssumeRoleCommand).resolves(mocks.outputs.STS_CREDENTIALS);
+      mockedSTSClient.on(GetCallerIdentityCommand).resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials')
+        .mockResolvedValueOnce({ accessKeyId: 'MYAWSACCESSKEYID' })
+        .mockResolvedValueOnce({ accessKeyId: 'STSAWSACCESSKEYID' });
+
+      await run();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+      );
+    });
+
     it('handles GetCallerIdentity API failure gracefully', async () => {
       vi.mocked(core.getInput).mockImplementation(
         mocks.getInput({
@@ -911,7 +974,11 @@ describe('Configure AWS Credentials', {}, () => {
       });
 
       await run();
-      expect(core.setFailed).toHaveBeenCalledWith('Could not validate account ID of credentials: API Error');
+      // The account allow-list now reuses the single liveness GetCallerIdentity call, so an STS
+      // failure surfaces as a credential-loading failure rather than a dedicated account-check error.
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'Credentials could not be loaded, please check your action inputs: API Error',
+      );
     });
 
     it('ignores validation when allowed-account-ids is empty', async () => {
@@ -1373,7 +1440,7 @@ describe('Configure AWS Credentials', {}, () => {
   });
 
   describe('Retry Behavior', {}, () => {
-    it('retries exportAccountId on transient GetCallerIdentity failure', async () => {
+    it('retries validateCredentials on transient GetCallerIdentity failure', async () => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
       // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
       vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValue({
@@ -1384,7 +1451,9 @@ describe('Configure AWS Credentials', {}, () => {
         .rejectsOnce(new Error('throttled'))
         .resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       await run();
-      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry exportAccountId'));
+      // The single liveness GetCallerIdentity call lives in validateCredentials, so transient STS
+      // failures are retried under that label (the account ID is then resolved without a second call).
+      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry validateCredentials'));
       expect(core.setFailed).not.toHaveBeenCalled();
     });
 
@@ -1414,7 +1483,7 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('Retry'));
     });
 
-    it('retries exportAccountId after role assumption (issue #1681)', async () => {
+    it('retries the post-assume identity check on a transient invalid-token error (issue #1681)', async () => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.GH_OIDC_INPUTS));
       vi.mocked(core.getIDToken).mockResolvedValue('testoidctoken');
       mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolves(mocks.outputs.STS_CREDENTIALS);
@@ -1424,7 +1493,9 @@ describe('Configure AWS Credentials', {}, () => {
         .resolves({ ...mocks.outputs.GET_CALLER_IDENTITY });
       process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'fake-token';
       await run();
-      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry exportAccountId'));
+      // Freshly-assumed credentials can be briefly rejected by STS (eventual consistency). The
+      // liveness GetCallerIdentity now runs inside validateCredentials, so the retry happens there.
+      expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry validateCredentials'));
       expect(core.info).toHaveBeenCalledWith(
         expect.stringContaining('The security token included in the request is invalid'),
       );
