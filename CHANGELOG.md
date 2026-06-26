@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.2.1](https://github.com/aws-actions/configure-aws-credentials/compare/v6.2.0...v6.2.1) (2026-06-26)
+
+
+### Bug Fixes
+
+* enforce allowed-account-ids on all auth paths ([#1847](https://github.com/aws-actions/configure-aws-credentials/issues/1847)) ([4d281fb](https://github.com/aws-actions/configure-aws-credentials/commit/4d281fbc56a82e63c3fc14f2cc22361f34c97493))
+
 ## [6.2.0](https://github.com/aws-actions/configure-aws-credentials/compare/v6.1.3...v6.2.0) (2026-06-01)
 
 ### Features
