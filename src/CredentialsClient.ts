@@ -104,21 +104,6 @@ export class CredentialsClient {
     }
   }
 
-  // Validates that the account of the already-resolved caller identity is in the allow-list provided via the
-  // `allowed-account-ids` input.
-  public validateAccountId(expectedAccountIds: string[] | undefined, account: string | undefined): void {
-    if (!expectedAccountIds || expectedAccountIds.length === 0 || expectedAccountIds[0] === '') {
-      return;
-    }
-    if (!account || !expectedAccountIds.includes(account)) {
-      throw new Error(
-        `The account ID of the provided credentials (${
-          account ?? 'unknown'
-        }) does not match any of the expected account IDs: ${expectedAccountIds.join(', ')}`,
-      );
-    }
-  }
-
   private async loadCredentials() {
     const config = {} as { requestHandler?: NodeHttpHandler };
     if (this.requestHandler !== undefined) config.requestHandler = this.requestHandler;

@@ -13,6 +13,7 @@ import {
   toCredentialIdentity,
   translateEnvVariables,
   unsetCredentials,
+  validateAccountId,
   verifyKeys,
 } from './helpers';
 import { writeProfileFiles } from './profileManager';
@@ -208,7 +209,7 @@ export async function run() {
       // Enforce the allowed-account-ids guardrail unless a role will be assumed, in which case the
       // final account is validated after assumeRole (these ambient credentials are the source account).
       if (!roleToAssume) {
-        credentialsClient.validateAccountId(expectedAccountIds, identity.Account);
+        validateAccountId(expectedAccountIds, identity.Account);
       }
       sourceAccountId = exportAccountId(identity, maskAccountId);
     }
@@ -226,7 +227,7 @@ export async function run() {
       // Enforce the allowed-account-ids guardrail unless a role will be assumed (the final account is
       // validated after assumeRole; these are the source credentials).
       if (!roleToAssume) {
-        credentialsClient.validateAccountId(expectedAccountIds, identity.Account);
+        validateAccountId(expectedAccountIds, identity.Account);
       }
       sourceAccountId = identity.Account;
       if (outputEnvCredentials) {
@@ -270,7 +271,7 @@ export async function run() {
         'validateCredentials',
       );
       // Enforce the allowed-account-ids guardrail against the assumed (final) account.
-      credentialsClient.validateAccountId(expectedAccountIds, identity.Account);
+      validateAccountId(expectedAccountIds, identity.Account);
       if (outputEnvCredentials) {
         exportAccountId(identity, maskAccountId);
       }

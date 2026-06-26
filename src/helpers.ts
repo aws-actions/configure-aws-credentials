@@ -164,6 +164,21 @@ export function exportAccountId(identity: { Account: string; Arn: string }, mask
   return accountId;
 }
 
+// Validates that the account of the already-resolved caller identity is in the allow-list provided via the
+// `allowed-account-ids` input.
+export function validateAccountId(expectedAccountIds: string[] | undefined, account: string | undefined): void {
+  if (!expectedAccountIds || expectedAccountIds.length === 0 || expectedAccountIds[0] === '') {
+    return;
+  }
+  if (!account || !expectedAccountIds.includes(account)) {
+    throw new Error(
+      `The account ID of the provided credentials (${
+        account ?? 'unknown'
+      }) does not match any of the expected account IDs: ${expectedAccountIds.join(', ')}`,
+    );
+  }
+}
+
 // Converts the STS Credentials shape (returned by AssumeRole and provided as action inputs) into
 // the AwsCredentialIdentity shape the SDK expects when credentials are supplied explicitly to a
 // client. Returns undefined if the access key ID or secret access key is missing.
