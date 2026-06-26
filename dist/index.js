@@ -73153,8 +73153,7 @@ async function getCallerIdentity(client) {
   }
   return result;
 }
-async function exportAccountId(credentialsClient, maskAccountId) {
-  const identity = await getCallerIdentity(credentialsClient.stsClient);
+function exportAccountId(identity, maskAccountId) {
   const accountId = identity.Account;
   const arn = identity.Arn;
   if (maskAccountId) {
@@ -73164,6 +73163,26 @@ async function exportAccountId(credentialsClient, maskAccountId) {
   setOutput("aws-account-id", accountId);
   setOutput("authenticated-arn", arn);
   return accountId;
+}
+function validateAccountId(expectedAccountIds, account) {
+  if (!expectedAccountIds || expectedAccountIds.length === 0 || expectedAccountIds[0] === "") {
+    return;
+  }
+  if (!account || !expectedAccountIds.includes(account)) {
+    throw new Error(
+      `The account ID of the provided credentials (${account ?? "unknown"}) does not match any of the expected account IDs: ${expectedAccountIds.join(", ")}`
+    );
+  }
+}
+function toCredentialIdentity(creds) {
+  if (!creds?.AccessKeyId || !creds.SecretAccessKey) {
+    return void 0;
+  }
+  return {
+    accessKeyId: creds.AccessKeyId,
+    secretAccessKey: creds.SecretAccessKey,
+    ...creds.SessionToken && { sessionToken: creds.SessionToken }
+  };
 }
 function sanitizeGitHubVariables(name) {
   const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+\-@]/gu, SANITIZATION_CHARACTER);
@@ -74777,45 +74796,47 @@ var CredentialsClient = class {
   }
   get stsClient() {
     if (!this._stsClient || this.roleChaining) {
-      this._stsClient = new import_client_sts3.STSClient({
-        customUserAgent: buildCustomUserAgent(),
-        ...this.region !== void 0 && { region: this.region },
-        ...this.stsEndpoint !== void 0 && { endpoint: this.stsEndpoint },
-        ...this.requestHandler !== void 0 && { requestHandler: this.requestHandler }
-      });
+      this._stsClient = this.createStsClient();
     }
     return this._stsClient;
   }
-  async validateCredentials(expectedAccessKeyId, roleChaining, expectedAccountIds) {
-    let credentials;
-    try {
-      credentials = await this.loadCredentials();
-      if (!credentials.accessKeyId) {
-        throw new Error("Access key ID empty after loading credentials");
-      }
-    } catch (error3) {
-      throw new Error(`Credentials could not be loaded, please check your action inputs: ${errorMessage(error3)}`);
-    }
-    if (expectedAccountIds && expectedAccountIds.length > 0 && expectedAccountIds[0] !== "") {
-      let callerIdentity;
+  // Builds an STS client using the action's configured region/endpoint/proxy. When explicit credentials are provided,
+  // the client uses them directly instead of the SDK default credential provider chain.
+  // This matters for validateAccountId.
+  createStsClient(credentials) {
+    return new import_client_sts3.STSClient({
+      customUserAgent: buildCustomUserAgent(),
+      ...this.region !== void 0 && { region: this.region },
+      ...this.stsEndpoint !== void 0 && { endpoint: this.stsEndpoint },
+      ...this.requestHandler !== void 0 && { requestHandler: this.requestHandler },
+      ...credentials !== void 0 && { credentials }
+    });
+  }
+  // Validates that the credentials the action will hand to subsequent steps actually work, and returns the resolved
+  // caller identity (account + ARN). "Work" is proven by a sts:GetCallerIdentity call, which both confirms the
+  // credentials are accepted by AWS and returns the identity for later checks and outputs to use.
+  async validateCredentials(credentials, expectedAccessKeyId, roleChaining) {
+    if (!credentials) {
+      let resolved;
       try {
-        callerIdentity = await getCallerIdentity(this.stsClient);
+        resolved = await this.loadCredentials();
+        if (!resolved.accessKeyId) {
+          throw new Error("Access key ID empty after loading credentials");
+        }
       } catch (error3) {
-        throw new Error(`Could not validate account ID of credentials: ${errorMessage(error3)}`);
+        throw new Error(`Credentials could not be loaded, please check your action inputs: ${errorMessage(error3)}`);
       }
-      if (!callerIdentity.Account || !expectedAccountIds.includes(callerIdentity.Account)) {
-        throw new Error(
-          `The account ID of the provided credentials (${callerIdentity.Account ?? "unknown"}) does not match any of the expected account IDs: ${expectedAccountIds.join(", ")}`
-        );
-      }
-    }
-    if (!roleChaining) {
-      const actualAccessKeyId = credentials.accessKeyId;
-      if (expectedAccessKeyId && expectedAccessKeyId !== actualAccessKeyId) {
+      if (!roleChaining && expectedAccessKeyId && expectedAccessKeyId !== resolved.accessKeyId) {
         throw new Error(
           "Credentials loaded by the SDK do not match the expected access key ID configured by the action"
         );
       }
+    }
+    const client = credentials ? this.createStsClient(credentials) : this.stsClient;
+    try {
+      return await getCallerIdentity(client);
+    } catch (error3) {
+      throw new Error(`Credentials could not be loaded, please check your action inputs: ${errorMessage(error3)}`);
     }
   }
   async loadCredentials() {
@@ -75073,19 +75094,27 @@ async function run() {
         writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
       }
     } else if (!webIdentityTokenFile && !roleChaining) {
-      await withRetry(
-        () => credentialsClient.validateCredentials(void 0, roleChaining, expectedAccountIds),
+      const identity = await withRetry(
+        () => credentialsClient.validateCredentials(void 0, void 0, roleChaining),
         "validateCredentials"
       );
-      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
+      if (!roleToAssume) {
+        validateAccountId(expectedAccountIds, identity.Account);
+      }
+      sourceAccountId = exportAccountId(identity, maskAccountId);
     }
     if (AccessKeyId || roleChaining) {
+      const resolutionCredentials = outputEnvCredentials || !AccessKeyId ? void 0 : toCredentialIdentity({ AccessKeyId, SecretAccessKey, SessionToken });
+      const identity = await withRetry(
+        () => credentialsClient.validateCredentials(resolutionCredentials, AccessKeyId, roleChaining),
+        "validateCredentials"
+      );
+      if (!roleToAssume) {
+        validateAccountId(expectedAccountIds, identity.Account);
+      }
+      sourceAccountId = identity.Account;
       if (outputEnvCredentials) {
-        await withRetry(
-          () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
-          "validateCredentials"
-        );
-        sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
+        exportAccountId(identity, maskAccountId);
       }
     }
     if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
@@ -75116,18 +75145,13 @@ async function run() {
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
-      if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile && outputEnvCredentials) {
-        await withRetry(
-          () => credentialsClient.validateCredentials(
-            roleCredentials.Credentials?.AccessKeyId,
-            roleChaining,
-            expectedAccountIds
-          ),
-          "validateCredentials"
-        );
-      }
+      const identity = await withRetry(
+        () => credentialsClient.validateCredentials(toCredentialIdentity(roleCredentials.Credentials)),
+        "validateCredentials"
+      );
+      validateAccountId(expectedAccountIds, identity.Account);
       if (outputEnvCredentials) {
-        await withRetry(() => exportAccountId(credentialsClient, maskAccountId), "exportAccountId");
+        exportAccountId(identity, maskAccountId);
       }
       if (awsProfile) {
         if (!roleCredentials.Credentials) {
@@ -75135,14 +75159,6 @@ async function run() {
         }
         if (AccessKeyId || !process.env.GITHUB_ACTIONS) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, true);
-          await withRetry(
-            () => credentialsClient.validateCredentials(
-              roleCredentials.Credentials?.AccessKeyId,
-              roleChaining,
-              expectedAccountIds
-            ),
-            "validateCredentials"
-          );
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, overwriteAwsProfile);
         }
