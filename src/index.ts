@@ -9,6 +9,7 @@ import {
   exportCredentials,
   exportRegion,
   getBooleanInput,
+  jwtExpiresWithin,
   retryAndBackoff,
   toCredentialIdentity,
   translateEnvVariables,
@@ -19,6 +20,7 @@ import {
 import { writeProfileFiles } from './profileManager';
 
 const DEFAULT_ROLE_DURATION = 3600; // One hour (seconds)
+const TOKEN_REFRESH_SKEW_SECONDS = 30;
 const ROLE_SESSION_NAME = 'GitHubActions';
 const REGION_REGEX = /^[a-z0-9-]+$/g;
 const ROLE_SESSION_NAME_REGEX = /^[\w+=,.@-]*$/;
@@ -246,6 +248,10 @@ export async function run() {
       let roleCredentials: AssumeRoleCommandOutput;
       do {
         roleCredentials = await withRetry(async () => {
+          if (useGitHubOIDCProvider() && jwtExpiresWithin(webIdentityToken, TOKEN_REFRESH_SKEW_SECONDS)) {
+            core.info('OIDC token has expired or is about to; requesting a fresh one before AssumeRole.');
+            webIdentityToken = await core.getIDToken(audience);
+          }
           return assumeRole({
             credentialsClient,
             sourceAccountId,

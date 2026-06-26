@@ -51,6 +51,33 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry: attempt 1 of 3 failed'));
     helpers.reset();
   });
+  describe('jwtExpiresWithin', {}, () => {
+    // Builds a JWT-shaped string (header.payload.signature) with the given payload. Only the payload
+    // segment is read by the helper; the signature is irrelevant since we never verify it.
+    const makeJwt = (payload: object) => {
+      const encode = (obj: object) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+      return `${encode({ alg: 'RS256' })}.${encode(payload)}.signature`;
+    };
+    it('returns true when the token is already expired', {}, () => {
+      const exp = Math.floor(Date.now() / 1000) - 60;
+      expect(helpers.jwtExpiresWithin(makeJwt({ exp }), 30)).toBe(true);
+    });
+    it('returns true when the token expires within the skew window', {}, () => {
+      const exp = Math.floor(Date.now() / 1000) + 10;
+      expect(helpers.jwtExpiresWithin(makeJwt({ exp }), 30)).toBe(true);
+    });
+    it('returns false when the token is comfortably valid', {}, () => {
+      const exp = Math.floor(Date.now() / 1000) + 900;
+      expect(helpers.jwtExpiresWithin(makeJwt({ exp }), 30)).toBe(false);
+    });
+    it('returns false for a token with no exp claim', {}, () => {
+      expect(helpers.jwtExpiresWithin(makeJwt({ sub: 'foo' }), 30)).toBe(false);
+    });
+    it('returns false for a malformed token', {}, () => {
+      expect(helpers.jwtExpiresWithin('not-a-jwt', 30)).toBe(false);
+      expect(helpers.jwtExpiresWithin('', 30)).toBe(false);
+    });
+  });
   it('can output creds when told to', {}, () => {
     vi.spyOn(core, 'setOutput').mockImplementation(() => {});
     vi.spyOn(core, 'setSecret').mockImplementation(() => {});

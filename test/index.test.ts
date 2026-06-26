@@ -89,6 +89,28 @@ describe('Configure AWS Credentials', {}, () => {
       expect(core.exportVariable).toHaveBeenCalledTimes(5);
       expect(core.setFailed).not.toHaveBeenCalled();
     });
+    it('re-mints the OIDC token when it has expired during retries', {}, async () => {
+      // Helper to build a JWT with a given exp (Unix seconds). Only the payload is read by the action.
+      const makeJwt = (exp: number) => {
+        const encode = (obj: object) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+        return `${encode({ alg: 'RS256' })}.${encode({ exp })}.sig`;
+      };
+      const expiredToken = makeJwt(Math.floor(Date.now() / 1000) - 60);
+      const freshToken = makeJwt(Math.floor(Date.now() / 1000) + 900);
+      // First call returns an already-expired token; the refresh inside the retry loop returns a fresh one.
+      vi.mocked(core.getIDToken).mockResolvedValueOnce(expiredToken).mockResolvedValueOnce(freshToken);
+      mockedSTSClient.on(AssumeRoleWithWebIdentityCommand).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      await run();
+      // Token fetched once up front, then re-minted because the first was expired.
+      expect(core.getIDToken).toHaveBeenCalledTimes(2);
+      expect(core.info).toHaveBeenCalledWith(
+        'OIDC token has expired or is about to; requesting a fresh one before AssumeRole.',
+      );
+      // The fresh token is the one actually sent to STS.
+      const call = mockedSTSClient.commandCalls(AssumeRoleWithWebIdentityCommand)[0];
+      expect(call.args[0].input.WebIdentityToken).toBe(freshToken);
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
   });
 
   describe('IAM User Authentication', {}, () => {
