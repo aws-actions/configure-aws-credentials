@@ -10,8 +10,10 @@ import {
   exportRegion,
   getBooleanInput,
   retryAndBackoff,
+  toCredentialIdentity,
   translateEnvVariables,
   unsetCredentials,
+  validateAccountId,
   verifyKeys,
 } from './helpers';
 import { writeProfileFiles } from './profileManager';
@@ -51,8 +53,8 @@ export async function run() {
     });
     const roleChaining = getBooleanInput('role-chaining', { required: false });
     const outputCredentials = getBooleanInput('output-credentials', { required: false });
-    // Default to always outputting environment credentials unless profile is specified. If profile is specified, default to
-    // no environment credentials (but still output them if the user specifically requests it).
+    // Default to always outputting environment credentials unless profile is specified. If profile is specified, default
+    // to no environment credentials (but still output them if the user specifically requests it).
     const outputEnvCredentials = getBooleanInput('output-env-credentials', { required: false, default: !awsProfile });
     const unsetCurrentCredentials = getBooleanInput('unset-current-credentials', { required: false });
     let disableRetry = getBooleanInput('disable-retry', { required: false });
@@ -198,27 +200,38 @@ export async function run() {
         writeProfileFiles(awsProfile, { AccessKeyId, SecretAccessKey, SessionToken }, region, overwriteAwsProfile);
       }
     } else if (!webIdentityTokenFile && !roleChaining) {
-      // Proceed only if credentials can be picked up
-      await withRetry(
-        () => credentialsClient.validateCredentials(undefined, roleChaining, expectedAccountIds),
+      // Proceed only if credentials can be picked up. validateCredentials resolves the ambient
+      // credentials via the SDK default chain, proves they work, and returns the caller identity.
+      const identity = await withRetry(
+        () => credentialsClient.validateCredentials(undefined, undefined, roleChaining),
         'validateCredentials',
       );
-      sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
+      // Enforce the allowed-account-ids guardrail unless a role will be assumed, in which case the
+      // final account is validated after assumeRole (these ambient credentials are the source account).
+      if (!roleToAssume) {
+        validateAccountId(expectedAccountIds, identity.Account);
+      }
+      sourceAccountId = exportAccountId(identity, maskAccountId);
     }
 
     if (AccessKeyId || roleChaining) {
-      // Validate that the SDK can actually pick up credentials.
-      // This validates cases where this action is using existing environment credentials,
-      // and cases where the user intended to provide input credentials but the secrets inputs resolved to empty strings.
-      // Skip when output-env-credentials is false: input IAM keys were not written to env, so
-      // the default chain would resolve to ambient runner credentials and the access-key check
-      // would spuriously fail (see #1554).
+      // Validate that the credentials the action will use actually work, and resolve their identity.
+      const resolutionCredentials =
+        outputEnvCredentials || !AccessKeyId
+          ? undefined
+          : toCredentialIdentity({ AccessKeyId, SecretAccessKey, SessionToken });
+      const identity = await withRetry(
+        () => credentialsClient.validateCredentials(resolutionCredentials, AccessKeyId, roleChaining),
+        'validateCredentials',
+      );
+      // Enforce the allowed-account-ids guardrail unless a role will be assumed (the final account is
+      // validated after assumeRole; these are the source credentials).
+      if (!roleToAssume) {
+        validateAccountId(expectedAccountIds, identity.Account);
+      }
+      sourceAccountId = identity.Account;
       if (outputEnvCredentials) {
-        await withRetry(
-          () => credentialsClient.validateCredentials(AccessKeyId, roleChaining, expectedAccountIds),
-          'validateCredentials',
-        );
-        sourceAccountId = await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
+        exportAccountId(identity, maskAccountId);
       }
     }
     if (customTags && (useGitHubOIDCProvider() || webIdentityTokenFile)) {
@@ -252,24 +265,15 @@ export async function run() {
       } while (specialCharacterWorkaround && !verifyKeys(roleCredentials.Credentials));
       core.info(`Authenticated as assumedRoleId ${roleCredentials.AssumedRoleUser?.AssumedRoleId}`);
       exportCredentials(roleCredentials.Credentials, outputCredentials, outputEnvCredentials);
-      // Validate that the SDK can pick up the assumed-role credentials from the environment.
-      // Skip when output-env-credentials is false: the credentials were never written to env,
-      // so the default credential provider chain would resolve to ambient runner credentials
-      // (e.g. an EC2 instance profile) and the access-key-id check would spuriously fail.
-      // Skip when using a profile: validation runs after the profile file is written below.
-      if ((!process.env.GITHUB_ACTIONS || AccessKeyId) && !awsProfile && outputEnvCredentials) {
-        await withRetry(
-          () =>
-            credentialsClient.validateCredentials(
-              roleCredentials.Credentials?.AccessKeyId,
-              roleChaining,
-              expectedAccountIds,
-            ),
-          'validateCredentials',
-        );
-      }
+      // Validate the assumed-role credentials and resolve their identity.
+      const identity = await withRetry(
+        () => credentialsClient.validateCredentials(toCredentialIdentity(roleCredentials.Credentials)),
+        'validateCredentials',
+      );
+      // Enforce the allowed-account-ids guardrail against the assumed (final) account.
+      validateAccountId(expectedAccountIds, identity.Account);
       if (outputEnvCredentials) {
-        await withRetry(() => exportAccountId(credentialsClient, maskAccountId), 'exportAccountId');
+        exportAccountId(identity, maskAccountId);
       }
 
       // Write profile files if profile mode is enabled
@@ -279,18 +283,8 @@ export async function run() {
         }
         // If user provided IAM User Credentials and then we assumed a role, overwrite the profile file to add
         // the session token. (this only overwrites the profile within a single run of the action).
-        // We then validate the credentials to make sure they work.
         if (AccessKeyId || !process.env.GITHUB_ACTIONS) {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, true);
-          await withRetry(
-            () =>
-              credentialsClient.validateCredentials(
-                roleCredentials.Credentials?.AccessKeyId,
-                roleChaining,
-                expectedAccountIds,
-              ),
-            'validateCredentials',
-          );
         } else {
           writeProfileFiles(awsProfile, roleCredentials.Credentials, region, overwriteAwsProfile);
         }

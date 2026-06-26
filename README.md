@@ -776,7 +776,10 @@ the environment (for example, on a self-hosted runner where you do not want the
 assumed-role credentials to shadow an existing EC2 instance profile), pair
 `output-credentials: true` with `output-env-credentials: false`. In that mode,
 the action does not run its post-credential SDK-pickup validation step, since
-the credentials were never written to the environment.
+the credentials were never written to the environment. The action still
+validates the resolved credentials by calling `sts:GetCallerIdentity` with the
+explicit credentials, so the `allowed-account-ids` check can be enforced if
+provided.
 
 ### Configure multiple AWS profiles in a single workflow
 

@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import type { UserAgent } from '@smithy/types';
 import type { CredentialsClient } from './CredentialsClient';
 
@@ -150,9 +151,8 @@ export async function getCallerIdentity(client: STSClient): Promise<{ Account: s
   return result;
 }
 
-// Obtains account ID from STS Client and sets it as output
-export async function exportAccountId(credentialsClient: CredentialsClient, maskAccountId?: boolean) {
-  const identity = await getCallerIdentity(credentialsClient.stsClient);
+// Emits the account ID and ARN of an already-resolved caller identity as action outputs.
+export function exportAccountId(identity: { Account: string; Arn: string }, maskAccountId?: boolean) {
   const accountId = identity.Account;
   const arn = identity.Arn;
   if (maskAccountId) {
@@ -162,6 +162,35 @@ export async function exportAccountId(credentialsClient: CredentialsClient, mask
   core.setOutput('aws-account-id', accountId);
   core.setOutput('authenticated-arn', arn);
   return accountId;
+}
+
+// Validates that the account of the already-resolved caller identity is in the allow-list provided via the
+// `allowed-account-ids` input.
+export function validateAccountId(expectedAccountIds: string[] | undefined, account: string | undefined): void {
+  if (!expectedAccountIds || expectedAccountIds.length === 0 || expectedAccountIds[0] === '') {
+    return;
+  }
+  if (!account || !expectedAccountIds.includes(account)) {
+    throw new Error(
+      `The account ID of the provided credentials (${
+        account ?? 'unknown'
+      }) does not match any of the expected account IDs: ${expectedAccountIds.join(', ')}`,
+    );
+  }
+}
+
+// Converts the STS Credentials shape (returned by AssumeRole and provided as action inputs) into
+// the AwsCredentialIdentity shape the SDK expects when credentials are supplied explicitly to a
+// client. Returns undefined if the access key ID or secret access key is missing.
+export function toCredentialIdentity(creds?: Partial<Credentials>): AwsCredentialIdentity | undefined {
+  if (!creds?.AccessKeyId || !creds.SecretAccessKey) {
+    return undefined;
+  }
+  return {
+    accessKeyId: creds.AccessKeyId,
+    secretAccessKey: creds.SecretAccessKey,
+    ...(creds.SessionToken && { sessionToken: creds.SessionToken }),
+  };
 }
 
 // Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
