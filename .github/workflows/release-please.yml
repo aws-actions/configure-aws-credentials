@@ -48,6 +48,7 @@
           uses: actions/checkout@v5
           with:
             fetch-depth: 0
+            persist-credentials: false
 
         - name: Tag Major Version
           if: ${{ steps.release.outputs.release_created }}
