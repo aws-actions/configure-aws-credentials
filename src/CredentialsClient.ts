@@ -10,6 +10,10 @@ if (!process.env.AWS_EXECUTION_ENV) {
   process.env.AWS_EXECUTION_ENV = 'GitHubActions';
 }
 
+// Bound how long a single STS call may hang. 60s per attempt keeps the total
+// failure time predictable.
+const STS_TIMEOUT_MS = 60_000;
+
 export interface CredentialsClientProps {
   region?: string;
   proxyServer?: string;
@@ -43,6 +47,14 @@ export class CredentialsClient {
       this.requestHandler = new NodeHttpHandler({
         httpsAgent: handler,
         httpAgent: handler,
+        connectionTimeout: STS_TIMEOUT_MS,
+        requestTimeout: STS_TIMEOUT_MS,
+      });
+    } else {
+      // No proxy
+      this.requestHandler = new NodeHttpHandler({
+        connectionTimeout: STS_TIMEOUT_MS,
+        requestTimeout: STS_TIMEOUT_MS,
       });
     }
     if (props.stsEndpoint) {

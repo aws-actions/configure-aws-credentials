@@ -281,6 +281,22 @@ export function isDefined<T>(i: T | undefined | null): i is T {
 }
 /* c8 ignore stop */
 
+// Reads the `exp` claim (Unix seconds) from a JWT and reports whether the token is already expired or will expire
+// within `skewSeconds`. This is to decide whether to re-mint the OIDC token before an AssumeRole attempt. On any parse
+// failure we return false so a malformed token can't start a re-mint loop.
+export function jwtExpiresWithin(token: string, skewSeconds: number): boolean {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return false;
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (typeof decoded.exp !== 'number') return false;
+    const nowSeconds = Date.now() / 1000;
+    return decoded.exp <= nowSeconds + skewSeconds;
+  } catch (_) {
+    return false;
+  }
+}
+
 export async function areCredentialsValid(credentialsClient: CredentialsClient) {
   const client = credentialsClient.stsClient;
   try {
