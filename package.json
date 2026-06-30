@@ -19,7 +19,7 @@
   "devDependencies": {
     "@aws-sdk/credential-provider-env": "^3.972.49",
     "@biomejs/biome": "2.5.1",
-    "@smithy/property-provider": "^4.4.2",
+    "@smithy/property-provider": "^4.4.4",
     "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "4.1.9",
     "aws-sdk-client-mock": "^4.1.0",
