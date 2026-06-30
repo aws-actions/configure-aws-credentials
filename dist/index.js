@@ -31858,15 +31858,14 @@ var init_resolveAwsSdkSigV4AConfig = __esm({
 // node_modules/@smithy/signature-v4/dist-cjs/index.js
 var require_dist_cjs2 = __commonJS({
   "node_modules/@smithy/signature-v4/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var serde = (init_serde(), __toCommonJS(serde_exports));
-    var client = (init_client2(), __toCommonJS(client_exports));
-    var protocols2 = (init_protocols(), __toCommonJS(protocols_exports));
+    var { fromUtf8: fromUtf83, fromHex: fromHex2, toHex: toHex2, toUint8Array: toUint8Array3, isArrayBuffer: isArrayBuffer2 } = (init_serde(), __toCommonJS(serde_exports));
+    var { normalizeProvider: normalizeProvider3 } = (init_client2(), __toCommonJS(client_exports));
+    var { escapeUri: escapeUri2, HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var HeaderFormatter = class {
       format(headers) {
         const chunks = [];
         for (const headerName of Object.keys(headers)) {
-          const bytes = serde.fromUtf8(headerName);
+          const bytes = fromUtf83(headerName);
           chunks.push(Uint8Array.from([bytes.byteLength]), bytes, this.formatHeaderValue(headers[headerName]));
         }
         const out = new Uint8Array(chunks.reduce((carry, bytes) => carry + bytes.byteLength, 0));
@@ -31906,7 +31905,7 @@ var require_dist_cjs2 = __commonJS({
             binBytes.set(header.value, 3);
             return binBytes;
           case "string":
-            const utf8Bytes = serde.fromUtf8(header.value);
+            const utf8Bytes = fromUtf83(header.value);
             const strView = new DataView(new ArrayBuffer(3 + utf8Bytes.byteLength));
             strView.setUint8(0, 7);
             strView.setUint16(1, utf8Bytes.byteLength, false);
@@ -31924,7 +31923,7 @@ var require_dist_cjs2 = __commonJS({
             }
             const uuidBytes = new Uint8Array(17);
             uuidBytes[0] = 9;
-            uuidBytes.set(serde.fromHex(header.value.replace(/\-/g, "")), 1);
+            uuidBytes.set(fromHex2(header.value.replace(/\-/g, "")), 1);
             return uuidBytes;
         }
       }
@@ -31970,7 +31969,7 @@ var require_dist_cjs2 = __commonJS({
         if (negative) {
           negate2(bytes);
         }
-        return parseInt(serde.toHex(bytes), 16) * (negative ? -1 : 1);
+        return parseInt(toHex2(bytes), 16) * (negative ? -1 : 1);
       }
       toString() {
         return String(this.valueOf());
@@ -32036,13 +32035,13 @@ var require_dist_cjs2 = __commonJS({
         if (key.toLowerCase() === SIGNATURE_HEADER) {
           continue;
         }
-        const encodedKey = protocols2.escapeUri(key);
+        const encodedKey = escapeUri2(key);
         keys.push(encodedKey);
         const value = query[key];
         if (typeof value === "string") {
-          serialized[encodedKey] = `${encodedKey}=${protocols2.escapeUri(value)}`;
+          serialized[encodedKey] = `${encodedKey}=${escapeUri2(value)}`;
         } else if (Array.isArray(value)) {
-          serialized[encodedKey] = value.slice(0).reduce((encoded, value2) => encoded.concat([`${encodedKey}=${protocols2.escapeUri(value2)}`]), []).sort().join("&");
+          serialized[encodedKey] = value.slice(0).reduce((encoded, value2) => encoded.concat([`${encodedKey}=${escapeUri2(value2)}`]), []).sort().join("&");
         }
       }
       return keys.sort().map((key) => serialized[key]).filter((serialized2) => serialized2).join("&");
@@ -32072,8 +32071,8 @@ var require_dist_cjs2 = __commonJS({
         this.sha256 = sha256;
         this.uriEscapePath = uriEscapePath;
         this.applyChecksum = typeof applyChecksum === "boolean" ? applyChecksum : true;
-        this.regionProvider = client.normalizeProvider(region);
-        this.credentialProvider = client.normalizeProvider(credentials);
+        this.regionProvider = normalizeProvider3(region);
+        this.credentialProvider = normalizeProvider3(credentials);
       }
       createCanonicalRequest(request, canonicalHeaders, payloadHash) {
         const sortedHeaders = Object.keys(canonicalHeaders).sort();
@@ -32087,12 +32086,12 @@ ${payloadHash}`;
       }
       async createStringToSign(longDate, credentialScope, canonicalRequest, algorithmIdentifier) {
         const hash = new this.sha256();
-        hash.update(serde.toUint8Array(canonicalRequest));
+        hash.update(toUint8Array3(canonicalRequest));
         const hashedRequest = await hash.digest();
         return `${algorithmIdentifier}
 ${longDate}
 ${credentialScope}
-${serde.toHex(hashedRequest)}`;
+${toHex2(hashedRequest)}`;
       }
       getCanonicalPath({ path: path4 }) {
         if (this.uriEscapePath) {
@@ -32109,7 +32108,7 @@ ${serde.toHex(hashedRequest)}`;
             }
           }
           const normalizedPath = `${path4?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path4?.endsWith("/") ? "/" : ""}`;
-          const doubleEncoded = protocols2.escapeUri(normalizedPath);
+          const doubleEncoded = escapeUri2(normalizedPath);
           return doubleEncoded.replace(/%2F/g, "/");
         }
         return path4;
@@ -32135,7 +32134,7 @@ ${serde.toHex(hashedRequest)}`;
     var createScope = (shortDate, region, service) => `${shortDate}/${region}/${service}/${KEY_TYPE_IDENTIFIER}`;
     var getSigningKey = async (sha256Constructor, credentials, shortDate, region, service) => {
       const credsHash = await hmac(sha256Constructor, credentials.secretAccessKey, credentials.accessKeyId);
-      const cacheKey = `${shortDate}:${region}:${service}:${serde.toHex(credsHash)}:${credentials.sessionToken}`;
+      const cacheKey = `${shortDate}:${region}:${service}:${toHex2(credsHash)}:${credentials.sessionToken}`;
       if (cacheKey in signingKeyCache) {
         return signingKeyCache[cacheKey];
       }
@@ -32157,7 +32156,7 @@ ${serde.toHex(hashedRequest)}`;
     };
     var hmac = (ctor, secret, data3) => {
       const hash = new ctor(secret);
-      hash.update(serde.toUint8Array(data3));
+      hash.update(toUint8Array3(data3));
       return hash.digest();
     };
     var getCanonicalHeaders = ({ headers }, unsignableHeaders, signableHeaders) => {
@@ -32184,10 +32183,10 @@ ${serde.toHex(hashedRequest)}`;
       }
       if (body == void 0) {
         return "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-      } else if (typeof body === "string" || ArrayBuffer.isView(body) || serde.isArrayBuffer(body)) {
+      } else if (typeof body === "string" || ArrayBuffer.isView(body) || isArrayBuffer2(body)) {
         const hashCtor = new hashConstructor();
-        hashCtor.update(serde.toUint8Array(body));
-        return serde.toHex(await hashCtor.digest());
+        hashCtor.update(toUint8Array3(body));
+        return toHex2(await hashCtor.digest());
       }
       return UNSIGNED_PAYLOAD;
     };
@@ -32201,7 +32200,7 @@ ${serde.toHex(hashedRequest)}`;
       return false;
     };
     var moveHeadersToQuery = (request, options = {}) => {
-      const { headers, query = {} } = protocols2.HttpRequest.clone(request);
+      const { headers, query = {} } = HttpRequest2.clone(request);
       for (const name of Object.keys(headers)) {
         const lname = name.toLowerCase();
         if (lname.slice(0, 6) === "x-amz-" && !options.unhoistableHeaders?.has(lname) || options.hoistableHeaders?.has(lname)) {
@@ -32216,7 +32215,7 @@ ${serde.toHex(hashedRequest)}`;
       };
     };
     var prepareRequest = (request) => {
-      request = protocols2.HttpRequest.clone(request);
+      request = HttpRequest2.clone(request);
       for (const headerName of Object.keys(request.headers)) {
         if (GENERATED_HEADERS.indexOf(headerName.toLowerCase()) > -1) {
           delete request.headers[headerName];
@@ -32277,7 +32276,7 @@ ${serde.toHex(hashedRequest)}`;
         const hashedPayload = await getPayloadHash({ headers: {}, body: payload2 }, this.sha256);
         const hash = new this.sha256();
         hash.update(headers);
-        const hashedHeaders = serde.toHex(await hash.digest());
+        const hashedHeaders = toHex2(await hash.digest());
         const stringToSign = [
           EVENT_ALGORITHM_IDENTIFIER,
           longDate,
@@ -32314,8 +32313,8 @@ ${serde.toHex(hashedRequest)}`;
         const region = signingRegion ?? await this.regionProvider();
         const { shortDate } = this.formatDate(signingDate);
         const hash = new this.sha256(await this.getSigningKey(credentials, region, shortDate, signingService));
-        hash.update(serde.toUint8Array(stringToSign));
-        return serde.toHex(await hash.digest());
+        hash.update(toUint8Array3(stringToSign));
+        return toHex2(await hash.digest());
       }
       async signRequest(requestToSign, { signingDate = /* @__PURE__ */ new Date(), signableHeaders, unsignableHeaders, signingRegion, signingService } = {}) {
         const credentials = await this.credentialProvider();
@@ -32340,8 +32339,8 @@ ${serde.toHex(hashedRequest)}`;
       async getSignature(longDate, credentialScope, keyPromise, canonicalRequest) {
         const stringToSign = await this.createStringToSign(longDate, credentialScope, canonicalRequest, ALGORITHM_IDENTIFIER);
         const hash = new this.sha256(await keyPromise);
-        hash.update(serde.toUint8Array(stringToSign));
-        return serde.toHex(await hash.digest());
+        hash.update(toUint8Array3(stringToSign));
+        return toHex2(await hash.digest());
       }
       getSigningKey(credentials, region, shortDate, service) {
         return getSigningKey(this.sha256, credentials, shortDate, region, service || this.service);
@@ -32691,421 +32690,6 @@ var require_dist_cjs3 = __commonJS({
     exports2.SignatureV4MultiRegion = SignatureV4MultiRegion3;
     exports2.SignatureV4SignWithCredentials = SignatureV4SignWithCredentials;
     exports2.signatureV4CrtContainer = signatureV4CrtContainer;
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/bdd.js
-var require_bdd = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/bdd.js"(exports2) {
-    var { BinaryDecisionDiagram: BinaryDecisionDiagram2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
-    var q2 = "ref";
-    var a5 = -1;
-    var b6 = true;
-    var c5 = "isSet";
-    var d5 = "PartitionResult";
-    var e5 = "booleanEquals";
-    var f5 = "stringEquals";
-    var g5 = "getAttr";
-    var h5 = "us-east-1";
-    var i5 = "sigv4";
-    var j5 = "sts";
-    var k5 = "https://sts.{Region}.{PartitionResult#dnsSuffix}";
-    var l3 = { [q2]: "Endpoint" };
-    var m3 = { [q2]: "Region" };
-    var n4 = { [q2]: d5 };
-    var o3 = {};
-    var p3 = [m3];
-    var _data5 = {
-      conditions: [
-        [c5, [l3]],
-        [c5, p3],
-        ["aws.partition", p3, d5],
-        [e5, [{ [q2]: "UseFIPS" }, b6]],
-        [e5, [{ [q2]: "UseDualStack" }, b6]],
-        [f5, [m3, "aws-global"]],
-        [e5, [{ [q2]: "UseGlobalEndpoint" }, b6]],
-        [f5, [m3, "eu-central-1"]],
-        [e5, [{ fn: g5, argv: [n4, "supportsDualStack"] }, b6]],
-        [e5, [{ fn: g5, argv: [n4, "supportsFIPS"] }, b6]],
-        [f5, [m3, "ap-south-1"]],
-        [f5, [m3, "eu-north-1"]],
-        [f5, [m3, "eu-west-1"]],
-        [f5, [m3, "eu-west-2"]],
-        [f5, [m3, "eu-west-3"]],
-        [f5, [m3, "sa-east-1"]],
-        [f5, [m3, h5]],
-        [f5, [m3, "us-east-2"]],
-        [f5, [m3, "us-west-2"]],
-        [f5, [m3, "us-west-1"]],
-        [f5, [m3, "ca-central-1"]],
-        [f5, [m3, "ap-southeast-1"]],
-        [f5, [m3, "ap-northeast-1"]],
-        [f5, [m3, "ap-southeast-2"]],
-        [f5, [{ fn: g5, argv: [n4, "name"] }, "aws-us-gov"]]
-      ],
-      results: [
-        [a5],
-        ["https://sts.amazonaws.com", { authSchemes: [{ name: i5, signingName: j5, signingRegion: h5 }] }],
-        [k5, { authSchemes: [{ name: i5, signingName: j5, signingRegion: "{Region}" }] }],
-        [a5, "Invalid Configuration: FIPS and custom endpoint are not supported"],
-        [a5, "Invalid Configuration: Dualstack and custom endpoint are not supported"],
-        [l3, o3],
-        ["https://sts-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", o3],
-        [a5, "FIPS and DualStack are enabled, but this partition does not support one or both"],
-        ["https://sts.{Region}.amazonaws.com", o3],
-        ["https://sts-fips.{Region}.{PartitionResult#dnsSuffix}", o3],
-        [a5, "FIPS is enabled but this partition does not support FIPS"],
-        ["https://sts.{Region}.{PartitionResult#dualStackDnsSuffix}", o3],
-        [a5, "DualStack is enabled but this partition does not support DualStack"],
-        [k5, o3],
-        [a5, "Invalid Configuration: Missing Region"]
-      ]
-    };
-    var root5 = 2;
-    var r5 = 1e8;
-    var nodes5 = new Int32Array([
-      -1,
-      1,
-      -1,
-      0,
-      30,
-      3,
-      1,
-      4,
-      r5 + 14,
-      2,
-      5,
-      r5 + 14,
-      3,
-      25,
-      6,
-      4,
-      24,
-      7,
-      5,
-      r5 + 1,
-      8,
-      6,
-      9,
-      r5 + 13,
-      7,
-      r5 + 1,
-      10,
-      10,
-      r5 + 1,
-      11,
-      11,
-      r5 + 1,
-      12,
-      12,
-      r5 + 1,
-      13,
-      13,
-      r5 + 1,
-      14,
-      14,
-      r5 + 1,
-      15,
-      15,
-      r5 + 1,
-      16,
-      16,
-      r5 + 1,
-      17,
-      17,
-      r5 + 1,
-      18,
-      18,
-      r5 + 1,
-      19,
-      19,
-      r5 + 1,
-      20,
-      20,
-      r5 + 1,
-      21,
-      21,
-      r5 + 1,
-      22,
-      22,
-      r5 + 1,
-      23,
-      23,
-      r5 + 1,
-      r5 + 2,
-      8,
-      r5 + 11,
-      r5 + 12,
-      4,
-      28,
-      26,
-      9,
-      27,
-      r5 + 10,
-      24,
-      r5 + 8,
-      r5 + 9,
-      8,
-      29,
-      r5 + 7,
-      9,
-      r5 + 6,
-      r5 + 7,
-      3,
-      r5 + 3,
-      31,
-      4,
-      r5 + 4,
-      r5 + 5
-    ]);
-    exports2.bdd = BinaryDecisionDiagram2.from(nodes5, root5, _data5.conditions, _data5.results);
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/endpointResolver.js
-var require_endpointResolver = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/endpointResolver.js"(exports2) {
-    var { awsEndpointFunctions: awsEndpointFunctions2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { customEndpointFunctions: customEndpointFunctions2, decideEndpoint: decideEndpoint2, EndpointCache: EndpointCache2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
-    var { bdd: bdd5 } = require_bdd();
-    var cache5 = new EndpointCache2({
-      size: 50,
-      params: ["Endpoint", "Region", "UseDualStack", "UseFIPS", "UseGlobalEndpoint"]
-    });
-    exports2.defaultEndpointResolver = (endpointParams, context = {}) => {
-      return cache5.get(endpointParams, () => decideEndpoint2(bdd5, {
-        endpointParams,
-        logger: context.logger
-      }));
-    };
-    customEndpointFunctions2.aws = awsEndpointFunctions2;
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/auth/httpAuthSchemeProvider.js
-var require_httpAuthSchemeProvider = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/auth/httpAuthSchemeProvider.js"(exports2) {
-    var { resolveAwsSdkSigV4AConfig: resolveAwsSdkSigV4AConfig2, resolveAwsSdkSigV4Config: resolveAwsSdkSigV4Config2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
-    var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs3();
-    var { getSmithyContext: getSmithyContext2, normalizeProvider: normalizeProvider3 } = (init_client2(), __toCommonJS(client_exports));
-    var { resolveParams: resolveParams2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
-    var { defaultEndpointResolver: defaultEndpointResolver5 } = require_endpointResolver();
-    var createEndpointRuleSetHttpAuthSchemeParametersProvider2 = (defaultHttpAuthSchemeParametersProvider) => async (config, context, input) => {
-      if (!input) {
-        throw new Error("Could not find `input` for `defaultEndpointRuleSetHttpAuthSchemeParametersProvider`");
-      }
-      const defaultParameters = await defaultHttpAuthSchemeParametersProvider(config, context, input);
-      const instructionsFn = getSmithyContext2(context)?.commandInstance?.constructor?.getEndpointParameterInstructions;
-      if (!instructionsFn) {
-        throw new Error(`getEndpointParameterInstructions() is not defined on '${context.commandName}'`);
-      }
-      const endpointParameters = await resolveParams2(input, { getEndpointParameterInstructions: instructionsFn }, config);
-      return Object.assign(defaultParameters, endpointParameters);
-    };
-    var _defaultSTSHttpAuthSchemeParametersProvider2 = async (config, context, input) => {
-      return {
-        operation: getSmithyContext2(context).operation,
-        region: await normalizeProvider3(config.region)() || (() => {
-          throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
-        })()
-      };
-    };
-    exports2.defaultSTSHttpAuthSchemeParametersProvider = createEndpointRuleSetHttpAuthSchemeParametersProvider2(_defaultSTSHttpAuthSchemeParametersProvider2);
-    function createAwsAuthSigv4HttpAuthOption5(authParameters) {
-      return {
-        schemeId: "aws.auth#sigv4",
-        signingProperties: {
-          name: "sts",
-          region: authParameters.region
-        },
-        propertiesExtractor: (config, context) => ({
-          signingProperties: {
-            config,
-            context
-          }
-        })
-      };
-    }
-    function createAwsAuthSigv4aHttpAuthOption2(authParameters) {
-      return {
-        schemeId: "aws.auth#sigv4a",
-        signingProperties: {
-          name: "sts",
-          region: authParameters.region
-        },
-        propertiesExtractor: (config, context) => ({
-          signingProperties: {
-            config,
-            context
-          }
-        })
-      };
-    }
-    function createSmithyApiNoAuthHttpAuthOption5(authParameters) {
-      return {
-        schemeId: "smithy.api#noAuth"
-      };
-    }
-    var createEndpointRuleSetHttpAuthSchemeProvider2 = (defaultEndpointResolver6, defaultHttpAuthSchemeResolver, createHttpAuthOptionFunctions) => {
-      const endpointRuleSetHttpAuthSchemeProvider = (authParameters) => {
-        const endpoint = defaultEndpointResolver6(authParameters);
-        const authSchemes = endpoint.properties?.authSchemes;
-        if (!authSchemes) {
-          return defaultHttpAuthSchemeResolver(authParameters);
-        }
-        const options = [];
-        for (const scheme of authSchemes) {
-          const { name: resolvedName, properties = {}, ...rest } = scheme;
-          const name = resolvedName.toLowerCase();
-          if (resolvedName !== name) {
-            console.warn(`HttpAuthScheme has been normalized with lowercasing: '${resolvedName}' to '${name}'`);
-          }
-          let schemeId;
-          if (name === "sigv4a") {
-            schemeId = "aws.auth#sigv4a";
-            const sigv4Present = authSchemes.find((s) => {
-              const name2 = s.name.toLowerCase();
-              return name2 !== "sigv4a" && name2.startsWith("sigv4");
-            });
-            if (SignatureV4MultiRegion3.sigv4aDependency() === "none" && sigv4Present) {
-              continue;
-            }
-          } else if (name.startsWith("sigv4")) {
-            schemeId = "aws.auth#sigv4";
-          } else {
-            throw new Error(`Unknown HttpAuthScheme found in '@smithy.rules#endpointRuleSet': '${name}'`);
-          }
-          const createOption = createHttpAuthOptionFunctions[schemeId];
-          if (!createOption) {
-            throw new Error(`Could not find HttpAuthOption create function for '${schemeId}'`);
-          }
-          const option = createOption(authParameters);
-          option.schemeId = schemeId;
-          option.signingProperties = { ...option.signingProperties || {}, ...rest, ...properties };
-          options.push(option);
-        }
-        return options;
-      };
-      return endpointRuleSetHttpAuthSchemeProvider;
-    };
-    var _defaultSTSHttpAuthSchemeProvider2 = (authParameters) => {
-      const options = [];
-      switch (authParameters.operation) {
-        case "AssumeRoleWithSAML": {
-          options.push(createSmithyApiNoAuthHttpAuthOption5(authParameters));
-          options.push(createAwsAuthSigv4aHttpAuthOption2(authParameters));
-          break;
-        }
-        case "AssumeRoleWithWebIdentity": {
-          options.push(createSmithyApiNoAuthHttpAuthOption5(authParameters));
-          options.push(createAwsAuthSigv4aHttpAuthOption2(authParameters));
-          break;
-        }
-        default: {
-          options.push(createAwsAuthSigv4HttpAuthOption5(authParameters));
-          options.push(createAwsAuthSigv4aHttpAuthOption2(authParameters));
-        }
-      }
-      return options;
-    };
-    exports2.defaultSTSHttpAuthSchemeProvider = createEndpointRuleSetHttpAuthSchemeProvider2(defaultEndpointResolver5, _defaultSTSHttpAuthSchemeProvider2, {
-      "aws.auth#sigv4": createAwsAuthSigv4HttpAuthOption5,
-      "aws.auth#sigv4a": createAwsAuthSigv4aHttpAuthOption2,
-      "smithy.api#noAuth": createSmithyApiNoAuthHttpAuthOption5
-    });
-    exports2.resolveHttpAuthSchemeConfig = (config) => {
-      const config_0 = resolveAwsSdkSigV4Config2(config);
-      const config_1 = resolveAwsSdkSigV4AConfig2(config_0);
-      return Object.assign(config_1, {
-        authSchemePreference: normalizeProvider3(config.authSchemePreference ?? [])
-      });
-    };
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/package.json
-var require_package = __commonJS({
-  "node_modules/@aws-sdk/client-sts/package.json"(exports2, module2) {
-    module2.exports = {
-      name: "@aws-sdk/client-sts",
-      description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1075.0",
-      scripts: {
-        build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline",
-        "build:es": "premove dist-es && tsc -p tsconfig.es.json",
-        "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
-        "build:types": "premove dist-types && tsc -p tsconfig.types.json",
-        "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
-        clean: "premove dist-cjs dist-es dist-types",
-        "extract:docs": "api-extractor run --local",
-        "generate:client": "node ../../scripts/generate-clients/single-service",
-        test: "yarn g:vitest run --passWithNoTests",
-        "test:watch": "yarn g:vitest watch --passWithNoTests",
-        "test:integration": "yarn g:vitest run --passWithNoTests -c vitest.config.integ.mts",
-        "test:integration:watch": "yarn g:vitest watch --passWithNoTests -c vitest.config.integ.mts",
-        "test:e2e": "yarn g:vitest run -c vitest.config.e2e.mts",
-        "test:e2e:watch": "yarn g:vitest watch -c vitest.config.e2e.mts",
-        "test:index": "tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs"
-      },
-      main: "./dist-cjs/index.js",
-      types: "./dist-types/index.d.ts",
-      module: "./dist-es/index.js",
-      sideEffects: false,
-      dependencies: {
-        "@aws-crypto/sha256-browser": "5.2.0",
-        "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.23",
-        "@aws-sdk/credential-provider-node": "^3.972.58",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.35",
-        "@aws-sdk/types": "^3.973.13",
-        "@smithy/core": "^3.24.6",
-        "@smithy/fetch-http-handler": "^5.4.6",
-        "@smithy/node-http-handler": "^4.7.6",
-        "@smithy/types": "^4.14.3",
-        tslib: "^2.6.2"
-      },
-      devDependencies: {
-        "@smithy/snapshot-testing": "^2.1.7",
-        "@tsconfig/node20": "20.1.8",
-        "@types/node": "^20.14.8",
-        concurrently: "7.0.0",
-        "downlevel-dts": "0.10.1",
-        premove: "4.0.0",
-        typescript: "~5.8.3",
-        vitest: "^4.0.17"
-      },
-      engines: {
-        node: ">=20.0.0"
-      },
-      typesVersions: {
-        "<4.5": {
-          "dist-types/*": [
-            "dist-types/ts3.4/*"
-          ]
-        }
-      },
-      files: [
-        "dist-*/**"
-      ],
-      author: {
-        name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/sdk-for-javascript/"
-      },
-      license: "Apache-2.0",
-      browser: {
-        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.browser"
-      },
-      "react-native": {
-        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.native"
-      },
-      homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts",
-      repository: {
-        type: "git",
-        url: "https://github.com/aws/aws-sdk-js-v3.git",
-        directory: "clients/client-sts"
-      }
-    };
   }
 });
 
@@ -34300,14 +33884,19 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
   }
 });
 
-// node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/checkUrl.js
-var require_checkUrl = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/checkUrl.js"(exports2) {
+// node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js
+var require_dist_cjs7 = __commonJS({
+  "node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js"(exports2) {
+    var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2 } = (init_config2(), __toCommonJS(config_exports));
+    var { NodeHttpHandler: NodeHttpHandler2 } = require_dist_cjs6();
+    var fs4 = require("node:fs/promises");
+    var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
+    var { sdkStreamMixin: sdkStreamMixin3, parseRfc3339DateTime: parseRfc3339DateTime2 } = (init_serde(), __toCommonJS(serde_exports));
     var ECS_CONTAINER_HOST = "169.254.170.2";
     var EKS_CONTAINER_HOST_IPv4 = "169.254.170.23";
     var EKS_CONTAINER_HOST_IPv6 = "[fd00:ec2::23]";
-    exports2.checkUrl = (url, logger2) => {
+    var checkUrl = (url, logger2) => {
       if (url.protocol === "https:") {
         return;
       }
@@ -34336,17 +33925,7 @@ var require_checkUrl = __commonJS({
   - ECS container host 169.254.170.2
   - EKS container host 169.254.170.23 or [fd00:ec2::23]`, { logger: logger2 });
     };
-  }
-});
-
-// node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/requestHelpers.js
-var require_requestHelpers = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/requestHelpers.js"(exports2) {
-    var { CredentialsProviderError: CredentialsProviderError2 } = (init_config2(), __toCommonJS(config_exports));
-    var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
-    var { parseRfc3339DateTime: parseRfc3339DateTime2 } = (init_serde(), __toCommonJS(serde_exports));
-    var { sdkStreamMixin: sdkStreamMixin3 } = (init_serde(), __toCommonJS(serde_exports));
-    exports2.createGetRequest = function createGetRequest(url) {
+    function createGetRequest(url) {
       return new HttpRequest2({
         protocol: url.protocol,
         hostname: url.hostname,
@@ -34358,8 +33937,8 @@ var require_requestHelpers = __commonJS({
         }, {}),
         fragment: url.hash
       });
-    };
-    exports2.getCredentials = async function getCredentials(response, logger2) {
+    }
+    async function getCredentials(response, logger2) {
       const stream = sdkStreamMixin3(response.body);
       const str = await stream.transformToString();
       if (response.statusCode === 200) {
@@ -34386,14 +33965,8 @@ var require_requestHelpers = __commonJS({
         });
       }
       throw new CredentialsProviderError2(`Server responded with status: ${response.statusCode}`, { logger: logger2 });
-    };
-  }
-});
-
-// node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/retry-wrapper.js
-var require_retry_wrapper = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/retry-wrapper.js"(exports2) {
-    exports2.retryWrapper = (toRetry, maxRetries, delayMs) => {
+    }
+    var retryWrapper = (toRetry, maxRetries, delayMs) => {
       return async () => {
         for (let i5 = 0; i5 < maxRetries; ++i5) {
           try {
@@ -34405,25 +33978,12 @@ var require_retry_wrapper = __commonJS({
         return await toRetry();
       };
     };
-  }
-});
-
-// node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/fromHttp.js
-var require_fromHttp = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/fromHttp.js"(exports2) {
-    var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { CredentialsProviderError: CredentialsProviderError2 } = (init_config2(), __toCommonJS(config_exports));
-    var { NodeHttpHandler: NodeHttpHandler2 } = require_dist_cjs6();
-    var fs4 = require("node:fs/promises");
-    var { checkUrl } = require_checkUrl();
-    var { createGetRequest, getCredentials } = require_requestHelpers();
-    var { retryWrapper } = require_retry_wrapper();
     var AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
     var DEFAULT_LINK_LOCAL_HOST = "http://169.254.170.2";
     var AWS_CONTAINER_CREDENTIALS_FULL_URI = "AWS_CONTAINER_CREDENTIALS_FULL_URI";
     var AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE = "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE";
     var AWS_CONTAINER_AUTHORIZATION_TOKEN = "AWS_CONTAINER_AUTHORIZATION_TOKEN";
-    exports2.fromHttp = (options = {}) => {
+    var fromHttp = (options = {}) => {
       options.logger?.debug("@aws-sdk/credential-provider-http - fromHttp");
       let host;
       const relative = options.awsContainerCredentialsRelativeUri ?? process.env[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI];
@@ -34473,13 +34033,6 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
         }
       };
     };
-  }
-});
-
-// node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js
-var require_dist_cjs7 = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js"(exports2) {
-    var { fromHttp } = require_fromHttp();
     exports2.fromHttp = fromHttp;
   }
 });
@@ -34566,7 +34119,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.23",
+      version: "3.997.24",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -34596,13 +34149,13 @@ var init_package = __esm({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.23",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.35",
-        "@aws-sdk/types": "^3.973.13",
-        "@smithy/core": "^3.24.6",
-        "@smithy/fetch-http-handler": "^5.4.6",
-        "@smithy/node-http-handler": "^4.7.6",
-        "@smithy/types": "^4.14.3",
+        "@aws-sdk/core": "^3.974.24",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.36",
+        "@aws-sdk/types": "^3.973.14",
+        "@smithy/core": "^3.27.0",
+        "@smithy/fetch-http-handler": "^5.6.0",
+        "@smithy/node-http-handler": "^4.9.0",
+        "@smithy/types": "^4.15.0",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -36954,13 +36507,133 @@ var init_awsExpectUnion = __esm({
   }
 });
 
-// node_modules/@aws-sdk/xml-builder/dist-cjs/xml-parser.js
-var require_xml_parser = __commonJS({
-  "node_modules/@aws-sdk/xml-builder/dist-cjs/xml-parser.js"(exports2) {
-    exports2.parseXML = function parseXML3(xml) {
+// node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
+var require_dist_cjs8 = __commonJS({
+  "node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports2) {
+    var ATTR_ESCAPE_RE = /[&<>"]/g;
+    var ATTR_ESCAPE_MAP = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;"
+    };
+    function escapeAttribute(value) {
+      return value.replace(ATTR_ESCAPE_RE, (ch) => ATTR_ESCAPE_MAP[ch]);
+    }
+    var ELEMENT_ESCAPE_RE = /[&"'<>\r\n\u0085\u2028]/g;
+    var ELEMENT_ESCAPE_MAP = {
+      "&": "&amp;",
+      '"': "&quot;",
+      "'": "&apos;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\r": "&#x0D;",
+      "\n": "&#x0A;",
+      "\x85": "&#x85;",
+      "\u2028": "&#x2028;"
+    };
+    function escapeElement(value) {
+      return value.replace(ELEMENT_ESCAPE_RE, (ch) => ELEMENT_ESCAPE_MAP[ch]);
+    }
+    var XmlText2 = class {
+      value;
+      constructor(value) {
+        this.value = value;
+      }
+      toString() {
+        return escapeElement("" + this.value);
+      }
+    };
+    var XmlNode2 = class _XmlNode {
+      name;
+      children;
+      attributes = {};
+      static of(name, childText, withName) {
+        const node = new _XmlNode(name);
+        if (childText !== void 0) {
+          node.addChildNode(new XmlText2(childText));
+        }
+        if (withName !== void 0) {
+          node.withName(withName);
+        }
+        return node;
+      }
+      constructor(name, children = []) {
+        this.name = name;
+        this.children = children;
+      }
+      withName(name) {
+        this.name = name;
+        return this;
+      }
+      addAttribute(name, value) {
+        this.attributes[name] = value;
+        return this;
+      }
+      addChildNode(child) {
+        this.children.push(child);
+        return this;
+      }
+      removeAttribute(name) {
+        delete this.attributes[name];
+        return this;
+      }
+      n(name) {
+        this.name = name;
+        return this;
+      }
+      c(child) {
+        this.children.push(child);
+        return this;
+      }
+      a(name, value) {
+        if (value != null) {
+          this.attributes[name] = value;
+        }
+        return this;
+      }
+      cc(input, field, withName = field) {
+        if (input[field] != null) {
+          const node = _XmlNode.of(field, input[field]).withName(withName);
+          this.c(node);
+        }
+      }
+      l(input, listName, memberName, valueProvider) {
+        if (input[listName] != null) {
+          const nodes5 = valueProvider();
+          nodes5.map((node) => {
+            node.withName(memberName);
+            this.c(node);
+          });
+        }
+      }
+      lc(input, listName, memberName, valueProvider) {
+        if (input[listName] != null) {
+          const nodes5 = valueProvider();
+          const containerNode = new _XmlNode(memberName);
+          nodes5.map((node) => {
+            containerNode.c(node);
+          });
+          this.c(containerNode);
+        }
+      }
+      toString() {
+        const hasChildren = Boolean(this.children.length);
+        let xmlText = `<${this.name}`;
+        const attributes = this.attributes;
+        for (const attributeName of Object.keys(attributes)) {
+          const attribute = attributes[attributeName];
+          if (attribute != null) {
+            xmlText += ` ${attributeName}="${escapeAttribute("" + attribute)}"`;
+          }
+        }
+        return xmlText += !hasChildren ? "/>" : `>${this.children.map((c5) => c5.toString()).join("")}</${this.name}>`;
+      }
+    };
+    function parseXML3(xml) {
       const state2 = new AwsXmlParser(xml);
       return state2.parse();
-    };
+    }
     var AwsXmlParser = class _AwsXmlParser {
       x;
       i = 0;
@@ -37179,136 +36852,9 @@ var require_xml_parser = __commonJS({
         });
       }
     };
-  }
-});
-
-// node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
-var require_dist_cjs8 = __commonJS({
-  "node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports2) {
-    var { parseXML: parseXML3 } = require_xml_parser();
-    exports2.parseXML = parseXML3;
-    var ATTR_ESCAPE_RE = /[&<>"]/g;
-    var ATTR_ESCAPE_MAP = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;"
-    };
-    function escapeAttribute(value) {
-      return value.replace(ATTR_ESCAPE_RE, (ch) => ATTR_ESCAPE_MAP[ch]);
-    }
-    var ELEMENT_ESCAPE_RE = /[&"'<>\r\n\u0085\u2028]/g;
-    var ELEMENT_ESCAPE_MAP = {
-      "&": "&amp;",
-      '"': "&quot;",
-      "'": "&apos;",
-      "<": "&lt;",
-      ">": "&gt;",
-      "\r": "&#x0D;",
-      "\n": "&#x0A;",
-      "\x85": "&#x85;",
-      "\u2028": "&#x2028;"
-    };
-    function escapeElement(value) {
-      return value.replace(ELEMENT_ESCAPE_RE, (ch) => ELEMENT_ESCAPE_MAP[ch]);
-    }
-    var XmlText2 = class {
-      value;
-      constructor(value) {
-        this.value = value;
-      }
-      toString() {
-        return escapeElement("" + this.value);
-      }
-    };
-    var XmlNode2 = class _XmlNode {
-      name;
-      children;
-      attributes = {};
-      static of(name, childText, withName) {
-        const node = new _XmlNode(name);
-        if (childText !== void 0) {
-          node.addChildNode(new XmlText2(childText));
-        }
-        if (withName !== void 0) {
-          node.withName(withName);
-        }
-        return node;
-      }
-      constructor(name, children = []) {
-        this.name = name;
-        this.children = children;
-      }
-      withName(name) {
-        this.name = name;
-        return this;
-      }
-      addAttribute(name, value) {
-        this.attributes[name] = value;
-        return this;
-      }
-      addChildNode(child) {
-        this.children.push(child);
-        return this;
-      }
-      removeAttribute(name) {
-        delete this.attributes[name];
-        return this;
-      }
-      n(name) {
-        this.name = name;
-        return this;
-      }
-      c(child) {
-        this.children.push(child);
-        return this;
-      }
-      a(name, value) {
-        if (value != null) {
-          this.attributes[name] = value;
-        }
-        return this;
-      }
-      cc(input, field, withName = field) {
-        if (input[field] != null) {
-          const node = _XmlNode.of(field, input[field]).withName(withName);
-          this.c(node);
-        }
-      }
-      l(input, listName, memberName, valueProvider) {
-        if (input[listName] != null) {
-          const nodes5 = valueProvider();
-          nodes5.map((node) => {
-            node.withName(memberName);
-            this.c(node);
-          });
-        }
-      }
-      lc(input, listName, memberName, valueProvider) {
-        if (input[listName] != null) {
-          const nodes5 = valueProvider();
-          const containerNode = new _XmlNode(memberName);
-          nodes5.map((node) => {
-            containerNode.c(node);
-          });
-          this.c(containerNode);
-        }
-      }
-      toString() {
-        const hasChildren = Boolean(this.children.length);
-        let xmlText = `<${this.name}`;
-        const attributes = this.attributes;
-        for (const attributeName of Object.keys(attributes)) {
-          const attribute = attributes[attributeName];
-          if (attribute != null) {
-            xmlText += ` ${attributeName}="${escapeAttribute("" + attribute)}"`;
-          }
-        }
-        return xmlText += !hasChildren ? "/>" : `>${this.children.map((c5) => c5.toString()).join("")}</${this.name}>`;
-      }
-    };
     exports2.XmlNode = XmlNode2;
     exports2.XmlText = XmlText2;
+    exports2.parseXML = parseXML3;
   }
 });
 
@@ -42538,10 +42084,13 @@ var require_dist_cjs12 = __commonJS({
   }
 });
 
-// node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/fromWebToken.js
-var require_fromWebToken = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/fromWebToken.js"(exports2) {
-    exports2.fromWebToken = (init) => async (awsIdentityProperties) => {
+// node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js
+var require_dist_cjs13 = __commonJS({
+  "node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js"(exports2) {
+    var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
+    var { CredentialsProviderError: CredentialsProviderError2, externalDataInterceptor: externalDataInterceptor2 } = (init_config2(), __toCommonJS(config_exports));
+    var { readFileSync: readFileSync2 } = require("node:fs");
+    var fromWebToken = (init) => async (awsIdentityProperties) => {
       init.logger?.debug("@aws-sdk/credential-provider-web-identity - fromWebToken");
       const { roleArn, roleSessionName, webIdentityToken, providerId, policyArns, policy, durationSeconds } = init;
       let { roleAssumerWithWebIdentity } = init;
@@ -42566,20 +42115,10 @@ var require_fromWebToken = __commonJS({
         DurationSeconds: durationSeconds
       });
     };
-  }
-});
-
-// node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/fromTokenFile.js
-var require_fromTokenFile = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/fromTokenFile.js"(exports2) {
-    var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { CredentialsProviderError: CredentialsProviderError2, externalDataInterceptor: externalDataInterceptor2 } = (init_config2(), __toCommonJS(config_exports));
-    var { readFileSync: readFileSync2 } = require("node:fs");
-    var { fromWebToken } = require_fromWebToken();
     var ENV_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
     var ENV_ROLE_ARN = "AWS_ROLE_ARN";
     var ENV_ROLE_SESSION_NAME = "AWS_ROLE_SESSION_NAME";
-    exports2.fromTokenFile = (init = {}) => async (awsIdentityProperties) => {
+    var fromTokenFile = (init = {}) => async (awsIdentityProperties) => {
       init.logger?.debug("@aws-sdk/credential-provider-web-identity - fromTokenFile");
       const webIdentityTokenFile = init?.webIdentityTokenFile ?? process.env[ENV_TOKEN_FILE];
       const roleArn = init?.roleArn ?? process.env[ENV_ROLE_ARN];
@@ -42600,17 +42139,8 @@ var require_fromTokenFile = __commonJS({
       }
       return credentials;
     };
-  }
-});
-
-// node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js
-var require_dist_cjs13 = __commonJS({
-  "node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js"(exports2) {
-    var __exportStar2 = (m3, e5) => {
-      Object.assign(e5, m3);
-    };
-    __exportStar2(require_fromTokenFile(), exports2);
-    __exportStar2(require_fromWebToken(), exports2);
+    exports2.fromTokenFile = fromTokenFile;
+    exports2.fromWebToken = fromWebToken;
   }
 });
 
@@ -42966,25 +42496,353 @@ var require_dist_cjs15 = __commonJS({
   }
 });
 
-// node_modules/@aws-sdk/client-sts/dist-cjs/models/STSServiceException.js
-var require_STSServiceException = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/models/STSServiceException.js"(exports2) {
-    var { ServiceException: __ServiceException } = (init_client2(), __toCommonJS(client_exports));
-    exports2.__ServiceException = __ServiceException;
-    exports2.STSServiceException = class STSServiceException2 extends __ServiceException {
+// node_modules/@aws-sdk/client-sts/dist-cjs/index.js
+var require_dist_cjs16 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/index.js"(exports2) {
+    var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2, setCredentialFeature: setCredentialFeature2, stsRegionDefaultResolver: stsRegionDefaultResolver2 } = (init_client3(), __toCommonJS(client_exports2));
+    var { NoAuthSigner: NoAuthSigner2, getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client3, Command: Command3, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = Command3;
+    exports2.__Client = Client3;
+    var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
+    var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveParams: resolveParams2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
+    var { parseUrl: parseUrl3, getHttpHandlerExtensionConfiguration: getHttpHandlerExtensionConfiguration2, resolveHttpHandlerRuntimeConfig: resolveHttpHandlerRuntimeConfig2, getContentLengthPlugin: getContentLengthPlugin2 } = (init_protocols(), __toCommonJS(protocols_exports));
+    var { DEFAULT_RETRY_MODE: DEFAULT_RETRY_MODE2, NODE_RETRY_MODE_CONFIG_OPTIONS: NODE_RETRY_MODE_CONFIG_OPTIONS2, NODE_MAX_ATTEMPT_CONFIG_OPTIONS: NODE_MAX_ATTEMPT_CONFIG_OPTIONS2, resolveRetryConfig: resolveRetryConfig2, getRetryPlugin: getRetryPlugin2 } = (init_retry2(), __toCommonJS(retry_exports));
+    var { TypeRegistry: TypeRegistry2, getSchemaSerdePlugin: getSchemaSerdePlugin2 } = (init_schema(), __toCommonJS(schema_exports));
+    var { resolveAwsSdkSigV4Config: resolveAwsSdkSigV4Config2, resolveAwsSdkSigV4AConfig: resolveAwsSdkSigV4AConfig2, AwsSdkSigV4Signer: AwsSdkSigV4Signer2, AwsSdkSigV4ASigner: AwsSdkSigV4ASigner2, NODE_SIGV4A_CONFIG_OPTIONS: NODE_SIGV4A_CONFIG_OPTIONS2, NODE_AUTH_SCHEME_PREFERENCE_OPTIONS: NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
+    var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs3();
+    var { defaultProvider } = require_dist_cjs15();
+    var { toUtf8: toUtf83, fromUtf8: fromUtf83, toBase64: toBase643, fromBase64: fromBase642, Hash: Hash2, calculateBodyLength: calculateBodyLength2 } = (init_serde(), __toCommonJS(serde_exports));
+    var { streamCollector: streamCollector7, NodeHttpHandler: NodeHttpHandler2 } = require_dist_cjs6();
+    var { AwsQueryProtocol: AwsQueryProtocol2 } = (init_protocols2(), __toCommonJS(protocols_exports2));
+    var q2 = "ref";
+    var a5 = -1;
+    var b6 = true;
+    var c5 = "isSet";
+    var d5 = "PartitionResult";
+    var e5 = "booleanEquals";
+    var f5 = "stringEquals";
+    var g5 = "getAttr";
+    var h5 = "us-east-1";
+    var i5 = "sigv4";
+    var j5 = "sts";
+    var k5 = "https://sts.{Region}.{PartitionResult#dnsSuffix}";
+    var l3 = { [q2]: "Endpoint" };
+    var m3 = { [q2]: "Region" };
+    var n4 = { [q2]: d5 };
+    var o3 = {};
+    var p3 = [m3];
+    var _data5 = {
+      conditions: [
+        [c5, [l3]],
+        [c5, p3],
+        ["aws.partition", p3, d5],
+        [e5, [{ [q2]: "UseFIPS" }, b6]],
+        [e5, [{ [q2]: "UseDualStack" }, b6]],
+        [f5, [m3, "aws-global"]],
+        [e5, [{ [q2]: "UseGlobalEndpoint" }, b6]],
+        [f5, [m3, "eu-central-1"]],
+        [e5, [{ fn: g5, argv: [n4, "supportsDualStack"] }, b6]],
+        [e5, [{ fn: g5, argv: [n4, "supportsFIPS"] }, b6]],
+        [f5, [m3, "ap-south-1"]],
+        [f5, [m3, "eu-north-1"]],
+        [f5, [m3, "eu-west-1"]],
+        [f5, [m3, "eu-west-2"]],
+        [f5, [m3, "eu-west-3"]],
+        [f5, [m3, "sa-east-1"]],
+        [f5, [m3, h5]],
+        [f5, [m3, "us-east-2"]],
+        [f5, [m3, "us-west-2"]],
+        [f5, [m3, "us-west-1"]],
+        [f5, [m3, "ca-central-1"]],
+        [f5, [m3, "ap-southeast-1"]],
+        [f5, [m3, "ap-northeast-1"]],
+        [f5, [m3, "ap-southeast-2"]],
+        [f5, [{ fn: g5, argv: [n4, "name"] }, "aws-us-gov"]]
+      ],
+      results: [
+        [a5],
+        ["https://sts.amazonaws.com", { authSchemes: [{ name: i5, signingName: j5, signingRegion: h5 }] }],
+        [k5, { authSchemes: [{ name: i5, signingName: j5, signingRegion: "{Region}" }] }],
+        [a5, "Invalid Configuration: FIPS and custom endpoint are not supported"],
+        [a5, "Invalid Configuration: Dualstack and custom endpoint are not supported"],
+        [l3, o3],
+        ["https://sts-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", o3],
+        [a5, "FIPS and DualStack are enabled, but this partition does not support one or both"],
+        ["https://sts.{Region}.amazonaws.com", o3],
+        ["https://sts-fips.{Region}.{PartitionResult#dnsSuffix}", o3],
+        [a5, "FIPS is enabled but this partition does not support FIPS"],
+        ["https://sts.{Region}.{PartitionResult#dualStackDnsSuffix}", o3],
+        [a5, "DualStack is enabled but this partition does not support DualStack"],
+        [k5, o3],
+        [a5, "Invalid Configuration: Missing Region"]
+      ]
+    };
+    var root5 = 2;
+    var r5 = 1e8;
+    var nodes5 = new Int32Array([
+      -1,
+      1,
+      -1,
+      0,
+      30,
+      3,
+      1,
+      4,
+      r5 + 14,
+      2,
+      5,
+      r5 + 14,
+      3,
+      25,
+      6,
+      4,
+      24,
+      7,
+      5,
+      r5 + 1,
+      8,
+      6,
+      9,
+      r5 + 13,
+      7,
+      r5 + 1,
+      10,
+      10,
+      r5 + 1,
+      11,
+      11,
+      r5 + 1,
+      12,
+      12,
+      r5 + 1,
+      13,
+      13,
+      r5 + 1,
+      14,
+      14,
+      r5 + 1,
+      15,
+      15,
+      r5 + 1,
+      16,
+      16,
+      r5 + 1,
+      17,
+      17,
+      r5 + 1,
+      18,
+      18,
+      r5 + 1,
+      19,
+      19,
+      r5 + 1,
+      20,
+      20,
+      r5 + 1,
+      21,
+      21,
+      r5 + 1,
+      22,
+      22,
+      r5 + 1,
+      23,
+      23,
+      r5 + 1,
+      r5 + 2,
+      8,
+      r5 + 11,
+      r5 + 12,
+      4,
+      28,
+      26,
+      9,
+      27,
+      r5 + 10,
+      24,
+      r5 + 8,
+      r5 + 9,
+      8,
+      29,
+      r5 + 7,
+      9,
+      r5 + 6,
+      r5 + 7,
+      3,
+      r5 + 3,
+      31,
+      4,
+      r5 + 4,
+      r5 + 5
+    ]);
+    var bdd5 = BinaryDecisionDiagram2.from(nodes5, root5, _data5.conditions, _data5.results);
+    var cache5 = new EndpointCache2({
+      size: 50,
+      params: ["Endpoint", "Region", "UseDualStack", "UseFIPS", "UseGlobalEndpoint"]
+    });
+    var defaultEndpointResolver5 = (endpointParams, context = {}) => {
+      return cache5.get(endpointParams, () => decideEndpoint2(bdd5, {
+        endpointParams,
+        logger: context.logger
+      }));
+    };
+    customEndpointFunctions2.aws = awsEndpointFunctions2;
+    var createEndpointRuleSetHttpAuthSchemeParametersProvider2 = (defaultHttpAuthSchemeParametersProvider) => async (config, context, input) => {
+      if (!input) {
+        throw new Error("Could not find `input` for `defaultEndpointRuleSetHttpAuthSchemeParametersProvider`");
+      }
+      const defaultParameters = await defaultHttpAuthSchemeParametersProvider(config, context, input);
+      const instructionsFn = getSmithyContext2(context)?.commandInstance?.constructor?.getEndpointParameterInstructions;
+      if (!instructionsFn) {
+        throw new Error(`getEndpointParameterInstructions() is not defined on '${context.commandName}'`);
+      }
+      const endpointParameters = await resolveParams2(input, { getEndpointParameterInstructions: instructionsFn }, config);
+      return Object.assign(defaultParameters, endpointParameters);
+    };
+    var _defaultSTSHttpAuthSchemeParametersProvider2 = async (config, context, input) => {
+      return {
+        operation: getSmithyContext2(context).operation,
+        region: await normalizeProvider3(config.region)() || (() => {
+          throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
+        })()
+      };
+    };
+    var defaultSTSHttpAuthSchemeParametersProvider2 = createEndpointRuleSetHttpAuthSchemeParametersProvider2(_defaultSTSHttpAuthSchemeParametersProvider2);
+    function createAwsAuthSigv4HttpAuthOption5(authParameters) {
+      return {
+        schemeId: "aws.auth#sigv4",
+        signingProperties: {
+          name: "sts",
+          region: authParameters.region
+        },
+        propertiesExtractor: (config, context) => ({
+          signingProperties: {
+            config,
+            context
+          }
+        })
+      };
+    }
+    function createAwsAuthSigv4aHttpAuthOption2(authParameters) {
+      return {
+        schemeId: "aws.auth#sigv4a",
+        signingProperties: {
+          name: "sts",
+          region: authParameters.region
+        },
+        propertiesExtractor: (config, context) => ({
+          signingProperties: {
+            config,
+            context
+          }
+        })
+      };
+    }
+    function createSmithyApiNoAuthHttpAuthOption5(authParameters) {
+      return {
+        schemeId: "smithy.api#noAuth"
+      };
+    }
+    var createEndpointRuleSetHttpAuthSchemeProvider2 = (defaultEndpointResolver6, defaultHttpAuthSchemeResolver, createHttpAuthOptionFunctions) => {
+      const endpointRuleSetHttpAuthSchemeProvider = (authParameters) => {
+        const endpoint = defaultEndpointResolver6(authParameters);
+        const authSchemes = endpoint.properties?.authSchemes;
+        if (!authSchemes) {
+          return defaultHttpAuthSchemeResolver(authParameters);
+        }
+        const options = [];
+        for (const scheme of authSchemes) {
+          const { name: resolvedName, properties = {}, ...rest } = scheme;
+          const name = resolvedName.toLowerCase();
+          if (resolvedName !== name) {
+            console.warn(`HttpAuthScheme has been normalized with lowercasing: '${resolvedName}' to '${name}'`);
+          }
+          let schemeId;
+          if (name === "sigv4a") {
+            schemeId = "aws.auth#sigv4a";
+            const sigv4Present = authSchemes.find((s) => {
+              const name2 = s.name.toLowerCase();
+              return name2 !== "sigv4a" && name2.startsWith("sigv4");
+            });
+            if (SignatureV4MultiRegion3.sigv4aDependency() === "none" && sigv4Present) {
+              continue;
+            }
+          } else if (name.startsWith("sigv4")) {
+            schemeId = "aws.auth#sigv4";
+          } else {
+            throw new Error(`Unknown HttpAuthScheme found in '@smithy.rules#endpointRuleSet': '${name}'`);
+          }
+          const createOption = createHttpAuthOptionFunctions[schemeId];
+          if (!createOption) {
+            throw new Error(`Could not find HttpAuthOption create function for '${schemeId}'`);
+          }
+          const option = createOption(authParameters);
+          option.schemeId = schemeId;
+          option.signingProperties = { ...option.signingProperties || {}, ...rest, ...properties };
+          options.push(option);
+        }
+        return options;
+      };
+      return endpointRuleSetHttpAuthSchemeProvider;
+    };
+    var _defaultSTSHttpAuthSchemeProvider2 = (authParameters) => {
+      const options = [];
+      switch (authParameters.operation) {
+        case "AssumeRoleWithSAML": {
+          options.push(createSmithyApiNoAuthHttpAuthOption5());
+          options.push(createAwsAuthSigv4aHttpAuthOption2(authParameters));
+          break;
+        }
+        case "AssumeRoleWithWebIdentity": {
+          options.push(createSmithyApiNoAuthHttpAuthOption5());
+          options.push(createAwsAuthSigv4aHttpAuthOption2(authParameters));
+          break;
+        }
+        default: {
+          options.push(createAwsAuthSigv4HttpAuthOption5(authParameters));
+          options.push(createAwsAuthSigv4aHttpAuthOption2(authParameters));
+        }
+      }
+      return options;
+    };
+    var defaultSTSHttpAuthSchemeProvider2 = createEndpointRuleSetHttpAuthSchemeProvider2(defaultEndpointResolver5, _defaultSTSHttpAuthSchemeProvider2, {
+      "aws.auth#sigv4": createAwsAuthSigv4HttpAuthOption5,
+      "aws.auth#sigv4a": createAwsAuthSigv4aHttpAuthOption2,
+      "smithy.api#noAuth": createSmithyApiNoAuthHttpAuthOption5
+    });
+    var resolveHttpAuthSchemeConfig5 = (config) => {
+      const config_0 = resolveAwsSdkSigV4Config2(config);
+      const config_1 = resolveAwsSdkSigV4AConfig2(config_0);
+      return Object.assign(config_1, {
+        authSchemePreference: normalizeProvider3(config.authSchemePreference ?? [])
+      });
+    };
+    var resolveClientEndpointParameters5 = (options) => {
+      return Object.assign(options, {
+        useDualstackEndpoint: options.useDualstackEndpoint ?? false,
+        useFipsEndpoint: options.useFipsEndpoint ?? false,
+        useGlobalEndpoint: options.useGlobalEndpoint ?? false,
+        defaultSigningName: "sts"
+      });
+    };
+    var commonParams5 = {
+      UseGlobalEndpoint: { type: "builtInParams", name: "useGlobalEndpoint" },
+      UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
+      Endpoint: { type: "builtInParams", name: "endpoint" },
+      Region: { type: "builtInParams", name: "region" },
+      UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
+    };
+    var version = "3.1075.0";
+    var packageInfo = {
+      version
+    };
+    var STSServiceException2 = class _STSServiceException extends ServiceException2 {
       constructor(options) {
         super(options);
-        Object.setPrototypeOf(this, STSServiceException2.prototype);
+        Object.setPrototypeOf(this, _STSServiceException.prototype);
       }
     };
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/models/errors.js
-var require_errors2 = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/models/errors.js"(exports2) {
-    var { STSServiceException: __BaseException } = require_STSServiceException();
-    exports2.ExpiredTokenException = class ExpiredTokenException3 extends __BaseException {
+    var ExpiredTokenException3 = class _ExpiredTokenException extends STSServiceException2 {
       name = "ExpiredTokenException";
       $fault = "client";
       constructor(opts) {
@@ -42993,10 +42851,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, ExpiredTokenException3.prototype);
+        Object.setPrototypeOf(this, _ExpiredTokenException.prototype);
       }
     };
-    exports2.MalformedPolicyDocumentException = class MalformedPolicyDocumentException2 extends __BaseException {
+    var MalformedPolicyDocumentException2 = class _MalformedPolicyDocumentException extends STSServiceException2 {
       name = "MalformedPolicyDocumentException";
       $fault = "client";
       constructor(opts) {
@@ -43005,10 +42863,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, MalformedPolicyDocumentException2.prototype);
+        Object.setPrototypeOf(this, _MalformedPolicyDocumentException.prototype);
       }
     };
-    exports2.PackedPolicyTooLargeException = class PackedPolicyTooLargeException3 extends __BaseException {
+    var PackedPolicyTooLargeException3 = class _PackedPolicyTooLargeException extends STSServiceException2 {
       name = "PackedPolicyTooLargeException";
       $fault = "client";
       constructor(opts) {
@@ -43017,10 +42875,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, PackedPolicyTooLargeException3.prototype);
+        Object.setPrototypeOf(this, _PackedPolicyTooLargeException.prototype);
       }
     };
-    exports2.RegionDisabledException = class RegionDisabledException2 extends __BaseException {
+    var RegionDisabledException2 = class _RegionDisabledException extends STSServiceException2 {
       name = "RegionDisabledException";
       $fault = "client";
       constructor(opts) {
@@ -43029,10 +42887,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, RegionDisabledException2.prototype);
+        Object.setPrototypeOf(this, _RegionDisabledException.prototype);
       }
     };
-    exports2.IDPRejectedClaimException = class IDPRejectedClaimException2 extends __BaseException {
+    var IDPRejectedClaimException2 = class _IDPRejectedClaimException extends STSServiceException2 {
       name = "IDPRejectedClaimException";
       $fault = "client";
       constructor(opts) {
@@ -43041,10 +42899,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, IDPRejectedClaimException2.prototype);
+        Object.setPrototypeOf(this, _IDPRejectedClaimException.prototype);
       }
     };
-    exports2.InvalidIdentityTokenException = class InvalidIdentityTokenException2 extends __BaseException {
+    var InvalidIdentityTokenException2 = class _InvalidIdentityTokenException extends STSServiceException2 {
       name = "InvalidIdentityTokenException";
       $fault = "client";
       constructor(opts) {
@@ -43053,10 +42911,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, InvalidIdentityTokenException2.prototype);
+        Object.setPrototypeOf(this, _InvalidIdentityTokenException.prototype);
       }
     };
-    exports2.IDPCommunicationErrorException = class IDPCommunicationErrorException2 extends __BaseException {
+    var IDPCommunicationErrorException2 = class _IDPCommunicationErrorException extends STSServiceException2 {
       name = "IDPCommunicationErrorException";
       $fault = "client";
       $retryable = {};
@@ -43066,10 +42924,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, IDPCommunicationErrorException2.prototype);
+        Object.setPrototypeOf(this, _IDPCommunicationErrorException.prototype);
       }
     };
-    exports2.InvalidAuthorizationMessageException = class InvalidAuthorizationMessageException extends __BaseException {
+    var InvalidAuthorizationMessageException = class _InvalidAuthorizationMessageException extends STSServiceException2 {
       name = "InvalidAuthorizationMessageException";
       $fault = "client";
       constructor(opts) {
@@ -43078,10 +42936,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, InvalidAuthorizationMessageException.prototype);
+        Object.setPrototypeOf(this, _InvalidAuthorizationMessageException.prototype);
       }
     };
-    exports2.ExpiredTradeInTokenException = class ExpiredTradeInTokenException extends __BaseException {
+    var ExpiredTradeInTokenException = class _ExpiredTradeInTokenException extends STSServiceException2 {
       name = "ExpiredTradeInTokenException";
       $fault = "client";
       constructor(opts) {
@@ -43090,10 +42948,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, ExpiredTradeInTokenException.prototype);
+        Object.setPrototypeOf(this, _ExpiredTradeInTokenException.prototype);
       }
     };
-    exports2.JWTPayloadSizeExceededException = class JWTPayloadSizeExceededException extends __BaseException {
+    var JWTPayloadSizeExceededException = class _JWTPayloadSizeExceededException extends STSServiceException2 {
       name = "JWTPayloadSizeExceededException";
       $fault = "client";
       constructor(opts) {
@@ -43102,10 +42960,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, JWTPayloadSizeExceededException.prototype);
+        Object.setPrototypeOf(this, _JWTPayloadSizeExceededException.prototype);
       }
     };
-    exports2.OutboundWebIdentityFederationDisabledException = class OutboundWebIdentityFederationDisabledException extends __BaseException {
+    var OutboundWebIdentityFederationDisabledException = class _OutboundWebIdentityFederationDisabledException extends STSServiceException2 {
       name = "OutboundWebIdentityFederationDisabledException";
       $fault = "client";
       constructor(opts) {
@@ -43114,10 +42972,10 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, OutboundWebIdentityFederationDisabledException.prototype);
+        Object.setPrototypeOf(this, _OutboundWebIdentityFederationDisabledException.prototype);
       }
     };
-    exports2.SessionDurationEscalationException = class SessionDurationEscalationException extends __BaseException {
+    var SessionDurationEscalationException = class _SessionDurationEscalationException extends STSServiceException2 {
       name = "SessionDurationEscalationException";
       $fault = "client";
       constructor(opts) {
@@ -43126,15 +42984,9 @@ var require_errors2 = __commonJS({
           $fault: "client",
           ...opts
         });
-        Object.setPrototypeOf(this, SessionDurationEscalationException.prototype);
+        Object.setPrototypeOf(this, _SessionDurationEscalationException.prototype);
       }
     };
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/schemas/schemas_0.js
-var require_schemas_0 = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/schemas/schemas_0.js"(exports2) {
     var _A2 = "Arn";
     var _AKI2 = "AccessKeyId";
     var _AP = "AssumedPrincipal";
@@ -43247,12 +43099,8 @@ var require_schemas_0 = __commonJS({
     var _tLT2 = "tagListType";
     var _wITT = "webIdentityTokenType";
     var n05 = "com.amazonaws.sts";
-    var { TypeRegistry: TypeRegistry2 } = (init_schema(), __toCommonJS(schema_exports));
-    var { ExpiredTokenException: ExpiredTokenException3, ExpiredTradeInTokenException, IDPCommunicationErrorException: IDPCommunicationErrorException2, IDPRejectedClaimException: IDPRejectedClaimException2, InvalidAuthorizationMessageException, InvalidIdentityTokenException: InvalidIdentityTokenException2, JWTPayloadSizeExceededException, MalformedPolicyDocumentException: MalformedPolicyDocumentException2, OutboundWebIdentityFederationDisabledException, PackedPolicyTooLargeException: PackedPolicyTooLargeException3, RegionDisabledException: RegionDisabledException2, SessionDurationEscalationException } = require_errors2();
-    var { STSServiceException: STSServiceException2 } = require_STSServiceException();
     var _s_registry5 = TypeRegistry2.for(_s5);
     var STSServiceException$2 = [-3, _s5, "STSServiceException", 0, [], []];
-    exports2.STSServiceException$ = STSServiceException$2;
     _s_registry5.registerError(STSServiceException$2, STSServiceException2);
     var n0_registry5 = TypeRegistry2.for(n05);
     var ExpiredTokenException$3 = [
@@ -43263,7 +43111,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.ExpiredTokenException$ = ExpiredTokenException$3;
     n0_registry5.registerError(ExpiredTokenException$3, ExpiredTokenException3);
     var ExpiredTradeInTokenException$ = [
       -3,
@@ -43273,7 +43120,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.ExpiredTradeInTokenException$ = ExpiredTradeInTokenException$;
     n0_registry5.registerError(ExpiredTradeInTokenException$, ExpiredTradeInTokenException);
     var IDPCommunicationErrorException$2 = [
       -3,
@@ -43283,7 +43129,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.IDPCommunicationErrorException$ = IDPCommunicationErrorException$2;
     n0_registry5.registerError(IDPCommunicationErrorException$2, IDPCommunicationErrorException2);
     var IDPRejectedClaimException$2 = [
       -3,
@@ -43293,7 +43138,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.IDPRejectedClaimException$ = IDPRejectedClaimException$2;
     n0_registry5.registerError(IDPRejectedClaimException$2, IDPRejectedClaimException2);
     var InvalidAuthorizationMessageException$ = [
       -3,
@@ -43303,7 +43147,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.InvalidAuthorizationMessageException$ = InvalidAuthorizationMessageException$;
     n0_registry5.registerError(InvalidAuthorizationMessageException$, InvalidAuthorizationMessageException);
     var InvalidIdentityTokenException$2 = [
       -3,
@@ -43313,7 +43156,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.InvalidIdentityTokenException$ = InvalidIdentityTokenException$2;
     n0_registry5.registerError(InvalidIdentityTokenException$2, InvalidIdentityTokenException2);
     var JWTPayloadSizeExceededException$ = [
       -3,
@@ -43323,7 +43165,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.JWTPayloadSizeExceededException$ = JWTPayloadSizeExceededException$;
     n0_registry5.registerError(JWTPayloadSizeExceededException$, JWTPayloadSizeExceededException);
     var MalformedPolicyDocumentException$2 = [
       -3,
@@ -43333,7 +43174,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.MalformedPolicyDocumentException$ = MalformedPolicyDocumentException$2;
     n0_registry5.registerError(MalformedPolicyDocumentException$2, MalformedPolicyDocumentException2);
     var OutboundWebIdentityFederationDisabledException$ = [
       -3,
@@ -43343,7 +43183,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.OutboundWebIdentityFederationDisabledException$ = OutboundWebIdentityFederationDisabledException$;
     n0_registry5.registerError(OutboundWebIdentityFederationDisabledException$, OutboundWebIdentityFederationDisabledException);
     var PackedPolicyTooLargeException$2 = [
       -3,
@@ -43353,7 +43192,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.PackedPolicyTooLargeException$ = PackedPolicyTooLargeException$2;
     n0_registry5.registerError(PackedPolicyTooLargeException$2, PackedPolicyTooLargeException3);
     var RegionDisabledException$2 = [
       -3,
@@ -43363,7 +43201,6 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.RegionDisabledException$ = RegionDisabledException$2;
     n0_registry5.registerError(RegionDisabledException$2, RegionDisabledException2);
     var SessionDurationEscalationException$ = [
       -3,
@@ -43373,9 +43210,8 @@ var require_schemas_0 = __commonJS({
       [_m4],
       [0]
     ];
-    exports2.SessionDurationEscalationException$ = SessionDurationEscalationException$;
     n0_registry5.registerError(SessionDurationEscalationException$, SessionDurationEscalationException);
-    exports2.errorTypeRegistries = [
+    var errorTypeRegistries5 = [
       _s_registry5,
       n0_registry5
     ];
@@ -43393,7 +43229,6 @@ var require_schemas_0 = __commonJS({
       [0, 0],
       2
     ];
-    exports2.AssumedRoleUser$ = AssumedRoleUser$2;
     var AssumeRoleRequest$2 = [
       3,
       n05,
@@ -43403,7 +43238,6 @@ var require_schemas_0 = __commonJS({
       [0, 0, () => policyDescriptorListType2, 0, 1, () => tagListType2, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType2],
       2
     ];
-    exports2.AssumeRoleRequest$ = AssumeRoleRequest$2;
     var AssumeRoleResponse$2 = [
       3,
       n05,
@@ -43412,7 +43246,6 @@ var require_schemas_0 = __commonJS({
       [_C2, _ARU2, _PPS2, _SI2],
       [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0]
     ];
-    exports2.AssumeRoleResponse$ = AssumeRoleResponse$2;
     var AssumeRoleWithSAMLRequest$ = [
       3,
       n05,
@@ -43422,7 +43255,6 @@ var require_schemas_0 = __commonJS({
       [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType2, 0, 1],
       3
     ];
-    exports2.AssumeRoleWithSAMLRequest$ = AssumeRoleWithSAMLRequest$;
     var AssumeRoleWithSAMLResponse$ = [
       3,
       n05,
@@ -43431,7 +43263,6 @@ var require_schemas_0 = __commonJS({
       [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2],
       [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0]
     ];
-    exports2.AssumeRoleWithSAMLResponse$ = AssumeRoleWithSAMLResponse$;
     var AssumeRoleWithWebIdentityRequest$2 = [
       3,
       n05,
@@ -43441,7 +43272,6 @@ var require_schemas_0 = __commonJS({
       [0, 0, [() => clientTokenType2, 0], 0, () => policyDescriptorListType2, 0, 1],
       3
     ];
-    exports2.AssumeRoleWithWebIdentityRequest$ = AssumeRoleWithWebIdentityRequest$2;
     var AssumeRoleWithWebIdentityResponse$2 = [
       3,
       n05,
@@ -43450,7 +43280,6 @@ var require_schemas_0 = __commonJS({
       [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2],
       [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0]
     ];
-    exports2.AssumeRoleWithWebIdentityResponse$ = AssumeRoleWithWebIdentityResponse$2;
     var AssumeRootRequest$ = [
       3,
       n05,
@@ -43460,7 +43289,6 @@ var require_schemas_0 = __commonJS({
       [0, () => PolicyDescriptorType$2, 1],
       2
     ];
-    exports2.AssumeRootRequest$ = AssumeRootRequest$;
     var AssumeRootResponse$ = [
       3,
       n05,
@@ -43469,7 +43297,6 @@ var require_schemas_0 = __commonJS({
       [_C2, _SI2],
       [[() => Credentials$2, 0], 0]
     ];
-    exports2.AssumeRootResponse$ = AssumeRootResponse$;
     var Credentials$2 = [
       3,
       n05,
@@ -43479,7 +43306,6 @@ var require_schemas_0 = __commonJS({
       [0, [() => accessKeySecretType2, 0], 0, 4],
       4
     ];
-    exports2.Credentials$ = Credentials$2;
     var DecodeAuthorizationMessageRequest$ = [
       3,
       n05,
@@ -43489,7 +43315,6 @@ var require_schemas_0 = __commonJS({
       [0],
       1
     ];
-    exports2.DecodeAuthorizationMessageRequest$ = DecodeAuthorizationMessageRequest$;
     var DecodeAuthorizationMessageResponse$ = [
       3,
       n05,
@@ -43498,7 +43323,6 @@ var require_schemas_0 = __commonJS({
       [_DM],
       [0]
     ];
-    exports2.DecodeAuthorizationMessageResponse$ = DecodeAuthorizationMessageResponse$;
     var FederatedUser$ = [
       3,
       n05,
@@ -43508,7 +43332,6 @@ var require_schemas_0 = __commonJS({
       [0, 0],
       2
     ];
-    exports2.FederatedUser$ = FederatedUser$;
     var GetAccessKeyInfoRequest$ = [
       3,
       n05,
@@ -43518,7 +43341,6 @@ var require_schemas_0 = __commonJS({
       [0],
       1
     ];
-    exports2.GetAccessKeyInfoRequest$ = GetAccessKeyInfoRequest$;
     var GetAccessKeyInfoResponse$ = [
       3,
       n05,
@@ -43527,7 +43349,6 @@ var require_schemas_0 = __commonJS({
       [_Ac],
       [0]
     ];
-    exports2.GetAccessKeyInfoResponse$ = GetAccessKeyInfoResponse$;
     var GetCallerIdentityRequest$ = [
       3,
       n05,
@@ -43536,7 +43357,6 @@ var require_schemas_0 = __commonJS({
       [],
       []
     ];
-    exports2.GetCallerIdentityRequest$ = GetCallerIdentityRequest$;
     var GetCallerIdentityResponse$ = [
       3,
       n05,
@@ -43545,7 +43365,6 @@ var require_schemas_0 = __commonJS({
       [_UI, _Ac, _A2],
       [0, 0, 0]
     ];
-    exports2.GetCallerIdentityResponse$ = GetCallerIdentityResponse$;
     var GetDelegatedAccessTokenRequest$ = [
       3,
       n05,
@@ -43555,7 +43374,6 @@ var require_schemas_0 = __commonJS({
       [[() => tradeInTokenType, 0]],
       1
     ];
-    exports2.GetDelegatedAccessTokenRequest$ = GetDelegatedAccessTokenRequest$;
     var GetDelegatedAccessTokenResponse$ = [
       3,
       n05,
@@ -43564,7 +43382,6 @@ var require_schemas_0 = __commonJS({
       [_C2, _PPS2, _AP],
       [[() => Credentials$2, 0], 1, 0]
     ];
-    exports2.GetDelegatedAccessTokenResponse$ = GetDelegatedAccessTokenResponse$;
     var GetFederationTokenRequest$ = [
       3,
       n05,
@@ -43574,7 +43391,6 @@ var require_schemas_0 = __commonJS({
       [0, 0, () => policyDescriptorListType2, 1, () => tagListType2],
       1
     ];
-    exports2.GetFederationTokenRequest$ = GetFederationTokenRequest$;
     var GetFederationTokenResponse$ = [
       3,
       n05,
@@ -43583,7 +43399,6 @@ var require_schemas_0 = __commonJS({
       [_C2, _FU, _PPS2],
       [[() => Credentials$2, 0], () => FederatedUser$, 1]
     ];
-    exports2.GetFederationTokenResponse$ = GetFederationTokenResponse$;
     var GetSessionTokenRequest$ = [
       3,
       n05,
@@ -43592,7 +43407,6 @@ var require_schemas_0 = __commonJS({
       [_DS2, _SN2, _TC2],
       [1, 0, 0]
     ];
-    exports2.GetSessionTokenRequest$ = GetSessionTokenRequest$;
     var GetSessionTokenResponse$ = [
       3,
       n05,
@@ -43601,7 +43415,6 @@ var require_schemas_0 = __commonJS({
       [_C2],
       [[() => Credentials$2, 0]]
     ];
-    exports2.GetSessionTokenResponse$ = GetSessionTokenResponse$;
     var GetWebIdentityTokenRequest$ = [
       3,
       n05,
@@ -43611,7 +43424,6 @@ var require_schemas_0 = __commonJS({
       [64 | 0, 0, 1, () => tagListType2],
       2
     ];
-    exports2.GetWebIdentityTokenRequest$ = GetWebIdentityTokenRequest$;
     var GetWebIdentityTokenResponse$ = [
       3,
       n05,
@@ -43620,7 +43432,6 @@ var require_schemas_0 = __commonJS({
       [_WIT2, _E2],
       [[() => webIdentityTokenType, 0], 4]
     ];
-    exports2.GetWebIdentityTokenResponse$ = GetWebIdentityTokenResponse$;
     var PolicyDescriptorType$2 = [
       3,
       n05,
@@ -43629,7 +43440,6 @@ var require_schemas_0 = __commonJS({
       [_a2],
       [0]
     ];
-    exports2.PolicyDescriptorType$ = PolicyDescriptorType$2;
     var ProvidedContext$2 = [
       3,
       n05,
@@ -43638,7 +43448,6 @@ var require_schemas_0 = __commonJS({
       [_PAro, _CA2],
       [0, 0]
     ];
-    exports2.ProvidedContext$ = ProvidedContext$2;
     var Tag$2 = [
       3,
       n05,
@@ -43648,7 +43457,6 @@ var require_schemas_0 = __commonJS({
       [0, 0],
       2
     ];
-    exports2.Tag$ = Tag$2;
     var policyDescriptorListType2 = [
       1,
       n05,
@@ -43663,7 +43471,6 @@ var require_schemas_0 = __commonJS({
       0,
       () => ProvidedContext$2
     ];
-    var tagKeyListType2 = 64 | 0;
     var tagListType2 = [
       1,
       n05,
@@ -43671,8 +43478,7 @@ var require_schemas_0 = __commonJS({
       0,
       () => Tag$2
     ];
-    var webIdentityTokenAudienceListType = 64 | 0;
-    exports2.AssumeRole$ = [
+    var AssumeRole$2 = [
       9,
       n05,
       _AR2,
@@ -43680,7 +43486,7 @@ var require_schemas_0 = __commonJS({
       () => AssumeRoleRequest$2,
       () => AssumeRoleResponse$2
     ];
-    exports2.AssumeRoleWithSAML$ = [
+    var AssumeRoleWithSAML$ = [
       9,
       n05,
       _ARWSAML,
@@ -43688,7 +43494,7 @@ var require_schemas_0 = __commonJS({
       () => AssumeRoleWithSAMLRequest$,
       () => AssumeRoleWithSAMLResponse$
     ];
-    exports2.AssumeRoleWithWebIdentity$ = [
+    var AssumeRoleWithWebIdentity$2 = [
       9,
       n05,
       _ARWWI2,
@@ -43696,7 +43502,7 @@ var require_schemas_0 = __commonJS({
       () => AssumeRoleWithWebIdentityRequest$2,
       () => AssumeRoleWithWebIdentityResponse$2
     ];
-    exports2.AssumeRoot$ = [
+    var AssumeRoot$ = [
       9,
       n05,
       _ARs,
@@ -43704,7 +43510,7 @@ var require_schemas_0 = __commonJS({
       () => AssumeRootRequest$,
       () => AssumeRootResponse$
     ];
-    exports2.DecodeAuthorizationMessage$ = [
+    var DecodeAuthorizationMessage$ = [
       9,
       n05,
       _DAM,
@@ -43712,7 +43518,7 @@ var require_schemas_0 = __commonJS({
       () => DecodeAuthorizationMessageRequest$,
       () => DecodeAuthorizationMessageResponse$
     ];
-    exports2.GetAccessKeyInfo$ = [
+    var GetAccessKeyInfo$ = [
       9,
       n05,
       _GAKI,
@@ -43720,7 +43526,7 @@ var require_schemas_0 = __commonJS({
       () => GetAccessKeyInfoRequest$,
       () => GetAccessKeyInfoResponse$
     ];
-    exports2.GetCallerIdentity$ = [
+    var GetCallerIdentity$ = [
       9,
       n05,
       _GCI,
@@ -43728,7 +43534,7 @@ var require_schemas_0 = __commonJS({
       () => GetCallerIdentityRequest$,
       () => GetCallerIdentityResponse$
     ];
-    exports2.GetDelegatedAccessToken$ = [
+    var GetDelegatedAccessToken$ = [
       9,
       n05,
       _GDAT,
@@ -43736,7 +43542,7 @@ var require_schemas_0 = __commonJS({
       () => GetDelegatedAccessTokenRequest$,
       () => GetDelegatedAccessTokenResponse$
     ];
-    exports2.GetFederationToken$ = [
+    var GetFederationToken$ = [
       9,
       n05,
       _GFT,
@@ -43744,7 +43550,7 @@ var require_schemas_0 = __commonJS({
       () => GetFederationTokenRequest$,
       () => GetFederationTokenResponse$
     ];
-    exports2.GetSessionToken$ = [
+    var GetSessionToken$ = [
       9,
       n05,
       _GST,
@@ -43752,7 +43558,7 @@ var require_schemas_0 = __commonJS({
       () => GetSessionTokenRequest$,
       () => GetSessionTokenResponse$
     ];
-    exports2.GetWebIdentityToken$ = [
+    var GetWebIdentityToken$ = [
       9,
       n05,
       _GWIT,
@@ -43760,23 +43566,7 @@ var require_schemas_0 = __commonJS({
       () => GetWebIdentityTokenRequest$,
       () => GetWebIdentityTokenResponse$
     ];
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.shared.js
-var require_runtimeConfig_shared = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.shared.js"(exports2) {
-    var { AwsSdkSigV4ASigner: AwsSdkSigV4ASigner2, AwsSdkSigV4Signer: AwsSdkSigV4Signer2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
-    var { AwsQueryProtocol: AwsQueryProtocol2 } = (init_protocols2(), __toCommonJS(protocols_exports2));
-    var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs3();
-    var { NoAuthSigner: NoAuthSigner2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { NoOpLogger: NoOpLogger2 } = (init_client2(), __toCommonJS(client_exports));
-    var { parseUrl: parseUrl3 } = (init_protocols(), __toCommonJS(protocols_exports));
-    var { fromBase64: fromBase642, fromUtf8: fromUtf83, toBase64: toBase643, toUtf8: toUtf83 } = (init_serde(), __toCommonJS(serde_exports));
-    var { defaultSTSHttpAuthSchemeProvider: defaultSTSHttpAuthSchemeProvider2 } = require_httpAuthSchemeProvider();
-    var { defaultEndpointResolver: defaultEndpointResolver5 } = require_endpointResolver();
-    var { errorTypeRegistries: errorTypeRegistries5 } = require_schemas_0();
-    exports2.getRuntimeConfig = (config) => {
+    var getRuntimeConfig$1 = (config) => {
       return {
         apiVersion: "2011-06-15",
         base64Decoder: config?.base64Decoder ?? fromBase642,
@@ -43818,29 +43608,12 @@ var require_runtimeConfig_shared = __commonJS({
         utf8Encoder: config?.utf8Encoder ?? toUtf83
       };
     };
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.js
-var require_runtimeConfig = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.js"(exports2) {
-    var packageInfo = require_package();
-    var { createDefaultUserAgentProvider: createDefaultUserAgentProvider2, emitWarningIfUnsupportedVersion: awsCheckVersion, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { AwsSdkSigV4ASigner: AwsSdkSigV4ASigner2, AwsSdkSigV4Signer: AwsSdkSigV4Signer2, NODE_AUTH_SCHEME_PREFERENCE_OPTIONS: NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2, NODE_SIGV4A_CONFIG_OPTIONS: NODE_SIGV4A_CONFIG_OPTIONS2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
-    var { defaultProvider: credentialDefaultProvider } = require_dist_cjs15();
-    var { NoAuthSigner: NoAuthSigner2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2 } = (init_client2(), __toCommonJS(client_exports));
-    var { loadConfig: loadNodeConfig, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, resolveDefaultsModeConfig: resolveDefaultsModeConfig2 } = (init_config2(), __toCommonJS(config_exports));
-    var { DEFAULT_RETRY_MODE: DEFAULT_RETRY_MODE2, NODE_MAX_ATTEMPT_CONFIG_OPTIONS: NODE_MAX_ATTEMPT_CONFIG_OPTIONS2, NODE_RETRY_MODE_CONFIG_OPTIONS: NODE_RETRY_MODE_CONFIG_OPTIONS2 } = (init_retry2(), __toCommonJS(retry_exports));
-    var { calculateBodyLength: calculateBodyLength2, Hash: Hash2 } = (init_serde(), __toCommonJS(serde_exports));
-    var { NodeHttpHandler: RequestHandler5, streamCollector: streamCollector7 } = require_dist_cjs6();
-    var { getRuntimeConfig: getSharedRuntimeConfig } = require_runtimeConfig_shared();
     var getRuntimeConfig9 = (config) => {
       emitWarningIfUnsupportedVersion3(process.version);
       const defaultsMode = resolveDefaultsModeConfig2(config);
       const defaultConfigProvider = () => defaultsMode().then(loadConfigsForDefaultMode2);
-      const clientSharedValues = getSharedRuntimeConfig(config);
-      awsCheckVersion(process.version);
+      const clientSharedValues = getRuntimeConfig$1(config);
+      emitWarningIfUnsupportedVersion$1(process.version);
       const loaderConfig = {
         profile: config?.profile,
         logger: clientSharedValues.logger
@@ -43850,14 +43623,14 @@ var require_runtimeConfig = __commonJS({
         ...config,
         runtime: "node",
         defaultsMode,
-        authSchemePreference: config?.authSchemePreference ?? loadNodeConfig(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2, loaderConfig),
+        authSchemePreference: config?.authSchemePreference ?? loadConfig2(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2, loaderConfig),
         bodyLengthChecker: config?.bodyLengthChecker ?? calculateBodyLength2,
-        credentialDefaultProvider: config?.credentialDefaultProvider ?? credentialDefaultProvider,
+        credentialDefaultProvider: config?.credentialDefaultProvider ?? defaultProvider,
         defaultUserAgentProvider: config?.defaultUserAgentProvider ?? createDefaultUserAgentProvider2({ serviceId: clientSharedValues.serviceId, clientVersion: packageInfo.version }),
         httpAuthSchemes: config?.httpAuthSchemes ?? [
           {
             schemeId: "aws.auth#sigv4",
-            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await credentialDefaultProvider(idProps?.__config || {})()),
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await defaultProvider(idProps?.__config || {})()),
             signer: new AwsSdkSigV4Signer2()
           },
           {
@@ -43871,62 +43644,20 @@ var require_runtimeConfig = __commonJS({
             signer: new NoAuthSigner2()
           }
         ],
-        maxAttempts: config?.maxAttempts ?? loadNodeConfig(NODE_MAX_ATTEMPT_CONFIG_OPTIONS2, config),
-        region: config?.region ?? loadNodeConfig(NODE_REGION_CONFIG_OPTIONS2, { ...NODE_REGION_CONFIG_FILE_OPTIONS2, ...loaderConfig }),
-        requestHandler: RequestHandler5.create(config?.requestHandler ?? defaultConfigProvider),
-        retryMode: config?.retryMode ?? loadNodeConfig({
+        maxAttempts: config?.maxAttempts ?? loadConfig2(NODE_MAX_ATTEMPT_CONFIG_OPTIONS2, config),
+        region: config?.region ?? loadConfig2(NODE_REGION_CONFIG_OPTIONS2, { ...NODE_REGION_CONFIG_FILE_OPTIONS2, ...loaderConfig }),
+        requestHandler: NodeHttpHandler2.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? loadConfig2({
           ...NODE_RETRY_MODE_CONFIG_OPTIONS2,
           default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE2
         }, config),
         sha256: config?.sha256 ?? Hash2.bind(null, "sha256"),
-        sigv4aSigningRegionSet: config?.sigv4aSigningRegionSet ?? loadNodeConfig(NODE_SIGV4A_CONFIG_OPTIONS2, loaderConfig),
+        sigv4aSigningRegionSet: config?.sigv4aSigningRegionSet ?? loadConfig2(NODE_SIGV4A_CONFIG_OPTIONS2, loaderConfig),
         streamCollector: config?.streamCollector ?? streamCollector7,
-        useDualstackEndpoint: config?.useDualstackEndpoint ?? loadNodeConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, loaderConfig),
-        useFipsEndpoint: config?.useFipsEndpoint ?? loadNodeConfig(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, loaderConfig),
-        userAgentAppId: config?.userAgentAppId ?? loadNodeConfig(NODE_APP_ID_CONFIG_OPTIONS2, loaderConfig)
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig2(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? loadConfig2(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? loadConfig2(NODE_APP_ID_CONFIG_OPTIONS2, loaderConfig)
       };
-    };
-    exports2.getRuntimeConfig = getRuntimeConfig9;
-  }
-});
-
-// node_modules/@aws-sdk/client-sts/dist-cjs/index.js
-var require_dist_cjs16 = __commonJS({
-  "node_modules/@aws-sdk/client-sts/dist-cjs/index.js"(exports2) {
-    var __exportStar2 = (m3, e5) => {
-      Object.assign(e5, m3);
-    };
-    var { getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2, setCredentialFeature: setCredentialFeature2, stsRegionDefaultResolver: stsRegionDefaultResolver2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client3, Command: Command3, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command3;
-    exports2.__Client = Client3;
-    var { resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
-    var { resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
-    var { getHttpHandlerExtensionConfiguration: getHttpHandlerExtensionConfiguration2, resolveHttpHandlerRuntimeConfig: resolveHttpHandlerRuntimeConfig2, getContentLengthPlugin: getContentLengthPlugin2 } = (init_protocols(), __toCommonJS(protocols_exports));
-    var { resolveRetryConfig: resolveRetryConfig2, getRetryPlugin: getRetryPlugin2 } = (init_retry2(), __toCommonJS(retry_exports));
-    var { getSchemaSerdePlugin: getSchemaSerdePlugin2 } = (init_schema(), __toCommonJS(schema_exports));
-    var { resolveHttpAuthSchemeConfig: resolveHttpAuthSchemeConfig5, defaultSTSHttpAuthSchemeParametersProvider: defaultSTSHttpAuthSchemeParametersProvider2 } = require_httpAuthSchemeProvider();
-    var { getRuntimeConfig: getRuntimeConfig9 } = require_runtimeConfig();
-    var { AssumeRole$: AssumeRole$2, AssumeRoleWithSAML$, AssumeRoleWithWebIdentity$: AssumeRoleWithWebIdentity$2, AssumeRoot$, DecodeAuthorizationMessage$, GetAccessKeyInfo$, GetCallerIdentity$, GetDelegatedAccessToken$, GetFederationToken$, GetSessionToken$, GetWebIdentityToken$ } = require_schemas_0();
-    __exportStar2(require_schemas_0(), exports2);
-    __exportStar2(require_errors2(), exports2);
-    var { STSServiceException: STSServiceException2 } = require_STSServiceException();
-    exports2.STSServiceException = STSServiceException2;
-    var resolveClientEndpointParameters5 = (options) => {
-      return Object.assign(options, {
-        useDualstackEndpoint: options.useDualstackEndpoint ?? false,
-        useFipsEndpoint: options.useFipsEndpoint ?? false,
-        useGlobalEndpoint: options.useGlobalEndpoint ?? false,
-        defaultSigningName: "sts"
-      });
-    };
-    var commonParams5 = {
-      UseGlobalEndpoint: { type: "builtInParams", name: "useGlobalEndpoint" },
-      UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
-      Endpoint: { type: "builtInParams", name: "endpoint" },
-      Region: { type: "builtInParams", name: "region" },
-      UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
     var getHttpAuthExtensionConfiguration5 = (runtimeConfig) => {
       const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
@@ -44005,47 +43736,47 @@ var require_dist_cjs16 = __commonJS({
         super.destroy();
       }
     };
-    var AssumeRoleCommand3 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var AssumeRoleCommand3 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "AssumeRole", {}).n("STSClient", "AssumeRoleCommand").sc(AssumeRole$2).build() {
     };
-    var AssumeRoleWithSAMLCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var AssumeRoleWithSAMLCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithSAML", {}).n("STSClient", "AssumeRoleWithSAMLCommand").sc(AssumeRoleWithSAML$).build() {
     };
-    var AssumeRoleWithWebIdentityCommand3 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var AssumeRoleWithWebIdentityCommand3 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {}).n("STSClient", "AssumeRoleWithWebIdentityCommand").sc(AssumeRoleWithWebIdentity$2).build() {
     };
-    var AssumeRootCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var AssumeRootCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "AssumeRoot", {}).n("STSClient", "AssumeRootCommand").sc(AssumeRoot$).build() {
     };
-    var DecodeAuthorizationMessageCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var DecodeAuthorizationMessageCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "DecodeAuthorizationMessage", {}).n("STSClient", "DecodeAuthorizationMessageCommand").sc(DecodeAuthorizationMessage$).build() {
     };
-    var GetAccessKeyInfoCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var GetAccessKeyInfoCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "GetAccessKeyInfo", {}).n("STSClient", "GetAccessKeyInfoCommand").sc(GetAccessKeyInfo$).build() {
     };
-    var GetCallerIdentityCommand2 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var GetCallerIdentityCommand2 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "GetCallerIdentity", {}).n("STSClient", "GetCallerIdentityCommand").sc(GetCallerIdentity$).build() {
     };
-    var GetDelegatedAccessTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var GetDelegatedAccessTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "GetDelegatedAccessToken", {}).n("STSClient", "GetDelegatedAccessTokenCommand").sc(GetDelegatedAccessToken$).build() {
     };
-    var GetFederationTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var GetFederationTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "GetFederationToken", {}).n("STSClient", "GetFederationTokenCommand").sc(GetFederationToken$).build() {
     };
-    var GetSessionTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var GetSessionTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "GetSessionToken", {}).n("STSClient", "GetSessionTokenCommand").sc(GetSessionToken$).build() {
     };
-    var GetWebIdentityTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o3) {
+    var GetWebIdentityTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
       return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
     }).s("AWSSecurityTokenServiceV20110615", "GetWebIdentityToken", {}).n("STSClient", "GetWebIdentityTokenCommand").sc(GetWebIdentityToken$).build() {
     };
@@ -44183,20 +43914,86 @@ var require_dist_cjs16 = __commonJS({
       roleAssumerWithWebIdentity: getDefaultRoleAssumerWithWebIdentity3(input),
       ...input
     });
+    exports2.AssumeRole$ = AssumeRole$2;
     exports2.AssumeRoleCommand = AssumeRoleCommand3;
+    exports2.AssumeRoleRequest$ = AssumeRoleRequest$2;
+    exports2.AssumeRoleResponse$ = AssumeRoleResponse$2;
+    exports2.AssumeRoleWithSAML$ = AssumeRoleWithSAML$;
     exports2.AssumeRoleWithSAMLCommand = AssumeRoleWithSAMLCommand;
+    exports2.AssumeRoleWithSAMLRequest$ = AssumeRoleWithSAMLRequest$;
+    exports2.AssumeRoleWithSAMLResponse$ = AssumeRoleWithSAMLResponse$;
+    exports2.AssumeRoleWithWebIdentity$ = AssumeRoleWithWebIdentity$2;
     exports2.AssumeRoleWithWebIdentityCommand = AssumeRoleWithWebIdentityCommand3;
+    exports2.AssumeRoleWithWebIdentityRequest$ = AssumeRoleWithWebIdentityRequest$2;
+    exports2.AssumeRoleWithWebIdentityResponse$ = AssumeRoleWithWebIdentityResponse$2;
+    exports2.AssumeRoot$ = AssumeRoot$;
     exports2.AssumeRootCommand = AssumeRootCommand;
+    exports2.AssumeRootRequest$ = AssumeRootRequest$;
+    exports2.AssumeRootResponse$ = AssumeRootResponse$;
+    exports2.AssumedRoleUser$ = AssumedRoleUser$2;
+    exports2.Credentials$ = Credentials$2;
+    exports2.DecodeAuthorizationMessage$ = DecodeAuthorizationMessage$;
     exports2.DecodeAuthorizationMessageCommand = DecodeAuthorizationMessageCommand;
+    exports2.DecodeAuthorizationMessageRequest$ = DecodeAuthorizationMessageRequest$;
+    exports2.DecodeAuthorizationMessageResponse$ = DecodeAuthorizationMessageResponse$;
+    exports2.ExpiredTokenException = ExpiredTokenException3;
+    exports2.ExpiredTokenException$ = ExpiredTokenException$3;
+    exports2.ExpiredTradeInTokenException = ExpiredTradeInTokenException;
+    exports2.ExpiredTradeInTokenException$ = ExpiredTradeInTokenException$;
+    exports2.FederatedUser$ = FederatedUser$;
+    exports2.GetAccessKeyInfo$ = GetAccessKeyInfo$;
     exports2.GetAccessKeyInfoCommand = GetAccessKeyInfoCommand;
+    exports2.GetAccessKeyInfoRequest$ = GetAccessKeyInfoRequest$;
+    exports2.GetAccessKeyInfoResponse$ = GetAccessKeyInfoResponse$;
+    exports2.GetCallerIdentity$ = GetCallerIdentity$;
     exports2.GetCallerIdentityCommand = GetCallerIdentityCommand2;
+    exports2.GetCallerIdentityRequest$ = GetCallerIdentityRequest$;
+    exports2.GetCallerIdentityResponse$ = GetCallerIdentityResponse$;
+    exports2.GetDelegatedAccessToken$ = GetDelegatedAccessToken$;
     exports2.GetDelegatedAccessTokenCommand = GetDelegatedAccessTokenCommand;
+    exports2.GetDelegatedAccessTokenRequest$ = GetDelegatedAccessTokenRequest$;
+    exports2.GetDelegatedAccessTokenResponse$ = GetDelegatedAccessTokenResponse$;
+    exports2.GetFederationToken$ = GetFederationToken$;
     exports2.GetFederationTokenCommand = GetFederationTokenCommand;
+    exports2.GetFederationTokenRequest$ = GetFederationTokenRequest$;
+    exports2.GetFederationTokenResponse$ = GetFederationTokenResponse$;
+    exports2.GetSessionToken$ = GetSessionToken$;
     exports2.GetSessionTokenCommand = GetSessionTokenCommand;
+    exports2.GetSessionTokenRequest$ = GetSessionTokenRequest$;
+    exports2.GetSessionTokenResponse$ = GetSessionTokenResponse$;
+    exports2.GetWebIdentityToken$ = GetWebIdentityToken$;
     exports2.GetWebIdentityTokenCommand = GetWebIdentityTokenCommand;
+    exports2.GetWebIdentityTokenRequest$ = GetWebIdentityTokenRequest$;
+    exports2.GetWebIdentityTokenResponse$ = GetWebIdentityTokenResponse$;
+    exports2.IDPCommunicationErrorException = IDPCommunicationErrorException2;
+    exports2.IDPCommunicationErrorException$ = IDPCommunicationErrorException$2;
+    exports2.IDPRejectedClaimException = IDPRejectedClaimException2;
+    exports2.IDPRejectedClaimException$ = IDPRejectedClaimException$2;
+    exports2.InvalidAuthorizationMessageException = InvalidAuthorizationMessageException;
+    exports2.InvalidAuthorizationMessageException$ = InvalidAuthorizationMessageException$;
+    exports2.InvalidIdentityTokenException = InvalidIdentityTokenException2;
+    exports2.InvalidIdentityTokenException$ = InvalidIdentityTokenException$2;
+    exports2.JWTPayloadSizeExceededException = JWTPayloadSizeExceededException;
+    exports2.JWTPayloadSizeExceededException$ = JWTPayloadSizeExceededException$;
+    exports2.MalformedPolicyDocumentException = MalformedPolicyDocumentException2;
+    exports2.MalformedPolicyDocumentException$ = MalformedPolicyDocumentException$2;
+    exports2.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException;
+    exports2.OutboundWebIdentityFederationDisabledException$ = OutboundWebIdentityFederationDisabledException$;
+    exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException3;
+    exports2.PackedPolicyTooLargeException$ = PackedPolicyTooLargeException$2;
+    exports2.PolicyDescriptorType$ = PolicyDescriptorType$2;
+    exports2.ProvidedContext$ = ProvidedContext$2;
+    exports2.RegionDisabledException = RegionDisabledException2;
+    exports2.RegionDisabledException$ = RegionDisabledException$2;
     exports2.STS = STS2;
     exports2.STSClient = STSClient3;
+    exports2.STSServiceException = STSServiceException2;
+    exports2.STSServiceException$ = STSServiceException$2;
+    exports2.SessionDurationEscalationException = SessionDurationEscalationException;
+    exports2.SessionDurationEscalationException$ = SessionDurationEscalationException$;
+    exports2.Tag$ = Tag$2;
     exports2.decorateDefaultCredentialProvider = decorateDefaultCredentialProvider2;
+    exports2.errorTypeRegistries = errorTypeRegistries5;
     exports2.getDefaultRoleAssumer = getDefaultRoleAssumer3;
     exports2.getDefaultRoleAssumerWithWebIdentity = getDefaultRoleAssumerWithWebIdentity3;
   }
@@ -55156,7 +54953,7 @@ var require_source_map = __commonJS({
 });
 
 // node_modules/escodegen/package.json
-var require_package2 = __commonJS({
+var require_package = __commonJS({
   "node_modules/escodegen/package.json"(exports2, module2) {
     module2.exports = {
       name: "escodegen",
@@ -57297,7 +57094,7 @@ var require_escodegen = __commonJS({
         semicolons: false
       };
       FORMAT_DEFAULTS = getDefaultOptions().format;
-      exports2.version = require_package2().version;
+      exports2.version = require_package().version;
       exports2.generate = generate2;
       exports2.attachComments = estraverse.attachComments;
       exports2.Precedence = updateDeeply({}, Precedence);
