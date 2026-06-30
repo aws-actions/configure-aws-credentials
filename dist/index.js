@@ -4013,7 +4013,7 @@ var require_util2 = __commonJS({
   "node_modules/undici/lib/web/fetch/util.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("node:stream");
-    var zlib = require("node:zlib");
+    var zlib2 = require("node:zlib");
     var { redirectStatusSet, referrerPolicySet: referrerPolicyTokens, badPortsSet } = require_constants3();
     var { getGlobalOrigin } = require_global();
     var { collectASequenceOfCodePoints, collectAnHTTPQuotedString, removeChars, parseMIMEType } = require_data_url();
@@ -4713,7 +4713,7 @@ var require_util2 = __commonJS({
             callback();
             return;
           }
-          this._inflateStream = (chunk[0] & 15) === 8 ? zlib.createInflate(this.#zlibOptions) : zlib.createInflateRaw(this.#zlibOptions);
+          this._inflateStream = (chunk[0] & 15) === 8 ? zlib2.createInflate(this.#zlibOptions) : zlib2.createInflateRaw(this.#zlibOptions);
           this._inflateStream.on("data", this.push.bind(this));
           this._inflateStream.on("end", () => this.push(null));
           this._inflateStream.on("error", (err) => this.destroy(err));
@@ -13352,7 +13352,7 @@ var require_fetch = __commonJS({
     } = require_response();
     var { HeadersList } = require_headers();
     var { Request, cloneRequest } = require_request2();
-    var zlib = require("node:zlib");
+    var zlib2 = require("node:zlib");
     var {
       bytesMatch,
       makePolicyContainer,
@@ -14314,23 +14314,23 @@ var require_fetch = __commonJS({
                 for (let i5 = codings.length - 1; i5 >= 0; --i5) {
                   const coding = codings[i5].trim();
                   if (coding === "x-gzip" || coding === "gzip") {
-                    decoders.push(zlib.createGunzip({
+                    decoders.push(zlib2.createGunzip({
                       // Be less strict when decoding compressed responses, since sometimes
                       // servers send slightly invalid responses that are still accepted
                       // by common browsers.
                       // Always using Z_SYNC_FLUSH is what cURL does.
-                      flush: zlib.constants.Z_SYNC_FLUSH,
-                      finishFlush: zlib.constants.Z_SYNC_FLUSH
+                      flush: zlib2.constants.Z_SYNC_FLUSH,
+                      finishFlush: zlib2.constants.Z_SYNC_FLUSH
                     }));
                   } else if (coding === "deflate") {
                     decoders.push(createInflate({
-                      flush: zlib.constants.Z_SYNC_FLUSH,
-                      finishFlush: zlib.constants.Z_SYNC_FLUSH
+                      flush: zlib2.constants.Z_SYNC_FLUSH,
+                      finishFlush: zlib2.constants.Z_SYNC_FLUSH
                     }));
                   } else if (coding === "br") {
-                    decoders.push(zlib.createBrotliDecompress({
-                      flush: zlib.constants.BROTLI_OPERATION_FLUSH,
-                      finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH
+                    decoders.push(zlib2.createBrotliDecompress({
+                      flush: zlib2.constants.BROTLI_OPERATION_FLUSH,
+                      finishFlush: zlib2.constants.BROTLI_OPERATION_FLUSH
                     }));
                   } else {
                     decoders.length = 0;
@@ -14978,7 +14978,7 @@ var require_filereader = __commonJS({
     } = require_symbols3();
     var { webidl } = require_webidl();
     var { kEnumerableProperty } = require_util();
-    var FileReader2 = class _FileReader extends EventTarget {
+    var FileReader = class _FileReader extends EventTarget {
       constructor() {
         super();
         this[kState] = "empty";
@@ -15180,10 +15180,10 @@ var require_filereader = __commonJS({
         }
       }
     };
-    FileReader2.EMPTY = FileReader2.prototype.EMPTY = 0;
-    FileReader2.LOADING = FileReader2.prototype.LOADING = 1;
-    FileReader2.DONE = FileReader2.prototype.DONE = 2;
-    Object.defineProperties(FileReader2.prototype, {
+    FileReader.EMPTY = FileReader.prototype.EMPTY = 0;
+    FileReader.LOADING = FileReader.prototype.LOADING = 1;
+    FileReader.DONE = FileReader.prototype.DONE = 2;
+    Object.defineProperties(FileReader.prototype, {
       EMPTY: staticPropertyDescriptors,
       LOADING: staticPropertyDescriptors,
       DONE: staticPropertyDescriptors,
@@ -15208,13 +15208,13 @@ var require_filereader = __commonJS({
         configurable: true
       }
     });
-    Object.defineProperties(FileReader2, {
+    Object.defineProperties(FileReader, {
       EMPTY: staticPropertyDescriptors,
       LOADING: staticPropertyDescriptors,
       DONE: staticPropertyDescriptors
     });
     module2.exports = {
-      FileReader: FileReader2
+      FileReader
     };
   }
 });
@@ -21354,12 +21354,12 @@ var init_toBase64 = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js
-function bindUint8ArrayBlobAdapter(toUtf83, fromUtf83, toBase643, fromBase643) {
+function bindUint8ArrayBlobAdapter(toUtf83, fromUtf83, toBase643, fromBase642) {
   return class Uint8ArrayBlobAdapter2 extends Uint8Array {
     static fromString(source, encoding = "utf-8") {
       if (typeof source === "string") {
         if (encoding === "base64") {
-          return Uint8ArrayBlobAdapter2.mutate(fromBase643(source));
+          return Uint8ArrayBlobAdapter2.mutate(fromBase642(source));
         }
         return Uint8ArrayBlobAdapter2.mutate(fromUtf83(source));
       }
@@ -22183,6 +22183,9 @@ var init_toUint8Array = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js"() {
     init_fromUtf8();
     toUint8Array = (data3) => {
+      if (data3 instanceof Uint8Array) {
+        return data3;
+      }
       if (typeof data3 === "string") {
         return fromUtf8(data3);
       }
@@ -22191,6 +22194,27 @@ var init_toUint8Array = __esm({
       }
       return new Uint8Array(data3);
     };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js
+function concatBytes(arrays, length) {
+  if (length === void 0) {
+    length = 0;
+    for (const bytes of arrays) {
+      length += bytes.byteLength;
+    }
+  }
+  const result = new Uint8Array(length);
+  let offset = 0;
+  for (const buf of arrays) {
+    result.set(buf, offset);
+    offset += buf.byteLength;
+  }
+  return result;
+}
+var init_concatBytes = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js"() {
   }
 });
 
@@ -22957,16 +22981,133 @@ var init_resolveEndpointsConfig = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js
+var AWS_EXECUTION_ENV, AWS_REGION_ENV, AWS_DEFAULT_REGION_ENV, ENV_IMDS_DISABLED, DEFAULTS_MODE_OPTIONS, IMDS_REGION_PATH, IMDS_TOKEN_PATH, X_AWS_EC2_METADATA_TOKEN, X_AWS_EC2_METADATA_TOKEN_TTL;
+var init_constants3 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js"() {
+    AWS_EXECUTION_ENV = "AWS_EXECUTION_ENV";
+    AWS_REGION_ENV = "AWS_REGION";
+    AWS_DEFAULT_REGION_ENV = "AWS_DEFAULT_REGION";
+    ENV_IMDS_DISABLED = "AWS_EC2_METADATA_DISABLED";
+    DEFAULTS_MODE_OPTIONS = ["in-region", "cross-region", "mobile", "standard", "legacy"];
+    IMDS_REGION_PATH = "/latest/meta-data/placement/region";
+    IMDS_TOKEN_PATH = "/latest/api/token";
+    X_AWS_EC2_METADATA_TOKEN = "x-aws-ec2-metadata-token";
+    X_AWS_EC2_METADATA_TOKEN_TTL = "x-aws-ec2-metadata-token-ttl-seconds";
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getInstanceMetadataRegion.js
+var TIMEOUT_MS, NEG_CACHE_TTL_MS, negativeCacheUntil, getInstanceMetadataRegion, cacheNegativeAndReturnUndefined, resolveImdsEndpoint, imdsRequest;
+var init_getInstanceMetadataRegion = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getInstanceMetadataRegion.js"() {
+    init_constants3();
+    TIMEOUT_MS = 1e3;
+    NEG_CACHE_TTL_MS = 6e4;
+    negativeCacheUntil = 0;
+    getInstanceMetadataRegion = async () => {
+      if (process.env[ENV_IMDS_DISABLED]) {
+        return void 0;
+      }
+      if (Date.now() < negativeCacheUntil) {
+        return void 0;
+      }
+      try {
+        const endpoint = resolveImdsEndpoint();
+        const token = (await imdsRequest({
+          ...endpoint,
+          path: IMDS_TOKEN_PATH,
+          method: "PUT",
+          headers: {
+            [X_AWS_EC2_METADATA_TOKEN_TTL]: "21600"
+          }
+        })).toString();
+        const region = (await imdsRequest({
+          ...endpoint,
+          path: IMDS_REGION_PATH,
+          method: "GET",
+          headers: {
+            [X_AWS_EC2_METADATA_TOKEN]: token
+          }
+        })).toString().trim();
+        return region || cacheNegativeAndReturnUndefined();
+      } catch {
+        return cacheNegativeAndReturnUndefined();
+      }
+    };
+    cacheNegativeAndReturnUndefined = () => {
+      negativeCacheUntil = Date.now() + NEG_CACHE_TTL_MS;
+      return void 0;
+    };
+    resolveImdsEndpoint = () => {
+      const envEndpoint = process.env.AWS_EC2_METADATA_SERVICE_ENDPOINT;
+      if (envEndpoint) {
+        const url = new URL(envEndpoint);
+        return {
+          hostname: url.hostname.replace(/^\[(.+)]$/, "$1"),
+          port: url.port ? Number(url.port) : void 0
+        };
+      }
+      if (process.env.AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE === "IPv6") {
+        return { hostname: "fd00:ec2::254" };
+      }
+      return { hostname: "169.254.169.254" };
+    };
+    imdsRequest = async (options) => {
+      const { request } = await import("node:http");
+      return new Promise((resolve, reject) => {
+        const req = request({
+          hostname: options.hostname,
+          port: options.port,
+          path: options.path,
+          method: options.method,
+          headers: options.headers,
+          timeout: TIMEOUT_MS,
+          signal: AbortSignal.timeout(TIMEOUT_MS)
+        });
+        req.on("error", (err) => {
+          reject(err);
+          req.destroy();
+        });
+        req.on("timeout", () => {
+          reject(new Error("TimeoutError from instance metadata service"));
+          req.destroy();
+        });
+        req.on("response", (res) => {
+          const { statusCode = 400 } = res;
+          if (statusCode < 200 || statusCode >= 300) {
+            reject(Object.assign(new Error("Error response received from instance metadata service"), { statusCode }));
+            req.destroy();
+            return;
+          }
+          const chunks = [];
+          res.on("data", (chunk) => chunks.push(chunk));
+          res.on("end", () => {
+            resolve(Buffer.concat(chunks));
+            req.destroy();
+          });
+        });
+        req.end();
+      });
+    };
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/config.js
 var REGION_ENV_NAME, REGION_INI_NAME, NODE_REGION_CONFIG_OPTIONS, NODE_REGION_CONFIG_FILE_OPTIONS;
 var init_config = __esm({
   "node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/config.js"() {
+    init_getInstanceMetadataRegion();
     REGION_ENV_NAME = "AWS_REGION";
     REGION_INI_NAME = "region";
     NODE_REGION_CONFIG_OPTIONS = {
       environmentVariableSelector: (env2) => env2[REGION_ENV_NAME],
       configFileSelector: (profile) => profile[REGION_INI_NAME],
-      default: () => {
+      default: async () => {
+        const region = await getInstanceMetadataRegion();
+        if (region) {
+          return region;
+        }
         throw new Error("Region is missing");
       }
     };
@@ -23122,19 +23263,6 @@ var init_getRegionInfo = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js
-var AWS_EXECUTION_ENV, AWS_REGION_ENV, AWS_DEFAULT_REGION_ENV, ENV_IMDS_DISABLED, DEFAULTS_MODE_OPTIONS, IMDS_REGION_PATH;
-var init_constants3 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js"() {
-    AWS_EXECUTION_ENV = "AWS_EXECUTION_ENV";
-    AWS_REGION_ENV = "AWS_REGION";
-    AWS_DEFAULT_REGION_ENV = "AWS_DEFAULT_REGION";
-    ENV_IMDS_DISABLED = "AWS_EC2_METADATA_DISABLED";
-    DEFAULTS_MODE_OPTIONS = ["in-region", "cross-region", "mobile", "standard", "legacy"];
-    IMDS_REGION_PATH = "/latest/meta-data/placement/region";
-  }
-});
-
 // node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/defaultsModeConfig.js
 var AWS_DEFAULTS_MODE_ENV, AWS_DEFAULTS_MODE_CONFIG, NODE_DEFAULTS_MODE_CONFIG_OPTIONS;
 var init_defaultsModeConfig = __esm({
@@ -23154,10 +23282,11 @@ var init_defaultsModeConfig = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/resolveDefaultsModeConfig.js
-var resolveDefaultsModeConfig, resolveNodeDefaultsModeAuto, inferPhysicalRegion, getImdsEndpoint, imdsHttpGet;
+var resolveDefaultsModeConfig, resolveNodeDefaultsModeAuto, inferPhysicalRegion;
 var init_resolveDefaultsModeConfig = __esm({
   "node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/resolveDefaultsModeConfig.js"() {
     init_config();
+    init_getInstanceMetadataRegion();
     init_configLoader();
     init_memoize();
     init_constants3();
@@ -23198,60 +23327,7 @@ var init_resolveDefaultsModeConfig = __esm({
       if (process.env[AWS_EXECUTION_ENV] && (process.env[AWS_REGION_ENV] || process.env[AWS_DEFAULT_REGION_ENV])) {
         return process.env[AWS_REGION_ENV] ?? process.env[AWS_DEFAULT_REGION_ENV];
       }
-      if (!process.env[ENV_IMDS_DISABLED]) {
-        try {
-          const endpoint = await getImdsEndpoint();
-          return (await imdsHttpGet({ hostname: endpoint.hostname, path: IMDS_REGION_PATH })).toString();
-        } catch (e5) {
-        }
-      }
-    };
-    getImdsEndpoint = async () => {
-      const envEndpoint = process.env.AWS_EC2_METADATA_SERVICE_ENDPOINT;
-      if (envEndpoint) {
-        const url = new URL(envEndpoint);
-        return { hostname: url.hostname, path: url.pathname };
-      }
-      const envMode = process.env.AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE;
-      if (envMode === "IPv6") {
-        return { hostname: "fd00:ec2::254", path: "/" };
-      }
-      return { hostname: "169.254.169.254", path: "/" };
-    };
-    imdsHttpGet = async ({ hostname, path: path4 }) => {
-      const { request } = await import("node:http");
-      return new Promise((resolve, reject) => {
-        const req = request({
-          method: "GET",
-          hostname: hostname.replace(/^\[(.+)]$/, "$1"),
-          path: path4,
-          timeout: 1e3,
-          signal: AbortSignal.timeout(1e3)
-        });
-        req.on("error", (err) => {
-          reject(err);
-          req.destroy();
-        });
-        req.on("timeout", () => {
-          reject(new Error("TimeoutError from instance metadata service"));
-          req.destroy();
-        });
-        req.on("response", (res) => {
-          const { statusCode = 400 } = res;
-          if (statusCode < 200 || 300 <= statusCode) {
-            reject(Object.assign(new Error("Error response received from instance metadata service"), { statusCode }));
-            req.destroy();
-            return;
-          }
-          const chunks = [];
-          res.on("data", (chunk) => chunks.push(chunk));
-          res.on("end", () => {
-            resolve(Buffer.concat(chunks));
-            req.destroy();
-          });
-        });
-        req.end();
-      });
+      return getInstanceMetadataRegion();
     };
   }
 });
@@ -24748,6 +24824,10 @@ var init_ChecksumStream = __esm({
         this.push(null);
         return callback();
       }
+      _destroy(error3, callback) {
+        this.source?.destroy();
+        callback(error3);
+      }
     };
   }
 });
@@ -25214,6 +25294,7 @@ var import_node_stream5, headStream2, Collector;
 var init_headStream = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.js"() {
     import_node_stream5 = require("node:stream");
+    init_concatBytes();
     init_headStream_browser();
     init_stream_type_check();
     headStream2 = (stream, bytes) => {
@@ -25230,7 +25311,7 @@ var init_headStream = __esm({
         });
         collector.on("error", reject);
         collector.on("finish", function() {
-          const bytes2 = new Uint8Array(Buffer.concat(this.buffers));
+          const bytes2 = concatBytes(this.buffers);
           resolve(bytes2);
         });
       });
@@ -25270,103 +25351,36 @@ var init_toUtf8_browser = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.browser.js
-var fromBase642;
-var init_fromBase64_browser = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.browser.js"() {
-    init_constants_for_browser();
-    fromBase642 = (input) => {
-      let totalByteLength = input.length / 4 * 3;
-      if (input.slice(-2) === "==") {
-        totalByteLength -= 2;
-      } else if (input.slice(-1) === "=") {
-        totalByteLength--;
-      }
-      const out = new ArrayBuffer(totalByteLength);
-      const dataView3 = new DataView(out);
-      for (let i5 = 0; i5 < input.length; i5 += 4) {
-        let bits = 0;
-        let bitLength = 0;
-        for (let j5 = i5, limit = i5 + 3; j5 <= limit; j5++) {
-          if (input[j5] !== "=") {
-            if (!(input[j5] in alphabetByEncoding)) {
-              throw new TypeError(`Invalid character ${input[j5]} in base64 string.`);
-            }
-            bits |= alphabetByEncoding[input[j5]] << (limit - j5) * bitsPerLetter;
-            bitLength += bitsPerLetter;
-          } else {
-            bits >>= bitsPerLetter;
-          }
-        }
-        const chunkOffset = i5 / 4 * 3;
-        bits >>= bitLength % bitsPerByte;
-        const byteLength = Math.floor(bitLength / bitsPerByte);
-        for (let k5 = 0; k5 < byteLength; k5++) {
-          const offset = (byteLength - k5 - 1) * bitsPerByte;
-          dataView3.setUint8(chunkOffset + k5, (bits & 255 << offset) >> offset);
-        }
-      }
-      return new Uint8Array(out);
-    };
-  }
-});
-
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js
 async function collectBlob(blob) {
-  const base64 = await readToBase64(blob);
-  const arrayBuffer = fromBase642(base64);
-  return new Uint8Array(arrayBuffer);
+  return blob.arrayBuffer().then((ab) => new Uint8Array(ab));
 }
-async function collectStream(stream) {
+async function collectReadableStream(stream) {
   const chunks = [];
   const reader = stream.getReader();
-  let isDone = false;
   let length = 0;
-  while (!isDone) {
+  while (true) {
     const { done, value } = await reader.read();
     if (value) {
       chunks.push(value);
       length += value.length;
     }
-    isDone = done;
+    if (done) {
+      break;
+    }
   }
-  const collected = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    collected.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return collected;
-}
-function readToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.readyState !== 2) {
-        return reject(new Error("Reader aborted too early"));
-      }
-      const result = reader.result ?? "";
-      const commaIndex = result.indexOf(",");
-      const dataOffset = commaIndex > -1 ? commaIndex + 1 : result.length;
-      resolve(result.substring(dataOffset));
-    };
-    reader.onabort = () => reject(new Error("Read aborted"));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(blob);
-  });
+  return concatBytes(chunks, length);
 }
 var streamCollector;
 var init_stream_collector_browser = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js"() {
-    init_fromBase64_browser();
+    init_concatBytes();
+    init_stream_type_check();
     streamCollector = async (stream) => {
-      if (typeof Blob === "function" && stream instanceof Blob || stream.constructor?.name === "Blob") {
-        if (Blob.prototype.arrayBuffer !== void 0) {
-          return new Uint8Array(await stream.arrayBuffer());
-        }
+      if (isBlob(stream)) {
         return collectBlob(stream);
       }
-      return collectStream(stream);
+      return collectReadableStream(stream);
     };
   }
 });
@@ -25436,56 +25450,41 @@ var init_sdk_stream_mixin_browser = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js
-async function collectReadableStream(stream) {
-  const chunks = [];
-  const reader = stream.getReader();
-  let isDone = false;
-  let length = 0;
-  while (!isDone) {
-    const { done, value } = await reader.read();
-    if (value) {
-      chunks.push(value);
-      length += value.length;
-    }
-    isDone = done;
-  }
-  const collected = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    collected.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return collected;
-}
-var import_node_stream6, Collector2, isReadableStreamInstance, streamCollector2;
+var import_node_stream6, streamCollector2, Collector2;
 var init_stream_collector = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js"() {
     import_node_stream6 = require("node:stream");
+    init_concatBytes();
+    init_stream_collector_browser();
+    init_stream_type_check();
+    streamCollector2 = (stream) => {
+      if (isBlob(stream)) {
+        return collectBlob(stream);
+      }
+      if (isReadableStream(stream)) {
+        return collectReadableStream(stream);
+      }
+      return new Promise((resolve, reject) => {
+        const collector = new Collector2();
+        const nodeStream = stream;
+        nodeStream.pipe(collector);
+        nodeStream.on("error", (err) => {
+          collector.end();
+          reject(err);
+        });
+        collector.on("error", reject);
+        collector.on("finish", function() {
+          const bytes = concatBytes(this.bufferedBytes);
+          resolve(bytes);
+        });
+      });
+    };
     Collector2 = class extends import_node_stream6.Writable {
       bufferedBytes = [];
       _write(chunk, encoding, callback) {
         this.bufferedBytes.push(chunk);
         callback();
       }
-    };
-    isReadableStreamInstance = (stream) => typeof ReadableStream === "function" && stream instanceof ReadableStream;
-    streamCollector2 = (stream) => {
-      if (isReadableStreamInstance(stream)) {
-        return collectReadableStream(stream);
-      }
-      return new Promise((resolve, reject) => {
-        const collector = new Collector2();
-        stream.pipe(collector);
-        stream.on("error", (err) => {
-          collector.end();
-          reject(err);
-        });
-        collector.on("error", reject);
-        collector.on("finish", function() {
-          const bytes = new Uint8Array(Buffer.concat(this.bufferedBytes));
-          resolve(bytes);
-        });
-      });
     };
   }
 });
@@ -25590,6 +25589,7 @@ __export(serde_exports, {
   _parseRfc3339DateTimeWithOffset: () => _parseRfc3339DateTimeWithOffset,
   _parseRfc7231DateTime: () => _parseRfc7231DateTime,
   calculateBodyLength: () => calculateBodyLength,
+  concatBytes: () => concatBytes,
   copyDocumentWithTransform: () => copyDocumentWithTransform,
   createBufferedReadable: () => createBufferedReadable,
   createChecksumStream: () => createChecksumStream2,
@@ -25638,6 +25638,7 @@ __export(serde_exports, {
   splitEvery: () => splitEvery,
   splitHeader: () => splitHeader,
   splitStream: () => splitStream2,
+  streamCollector: () => streamCollector2,
   strictParseByte: () => strictParseByte,
   strictParseDouble: () => strictParseDouble,
   strictParseFloat: () => strictParseFloat,
@@ -25674,6 +25675,7 @@ var init_serde = __esm({
     init_hex_encoding();
     init_calculateBodyLength();
     init_toUint8Array();
+    init_concatBytes();
     init_buffer_from();
     init_is_array_buffer();
     init_deserializerMiddleware();
@@ -25688,6 +25690,7 @@ var init_serde = __esm({
     init_sdk_stream_mixin();
     init_splitStream();
     init_stream_type_check();
+    init_stream_collector();
     Uint8ArrayBlobAdapter = class extends bindUint8ArrayBlobAdapter(toUtf8, fromUtf8, toBase64, fromBase64) {
     };
     _getRandomValues = import_node_crypto3.getRandomValues;
@@ -25738,1108 +25741,78 @@ var init_SerdeContext = __esm({
   }
 });
 
-// node_modules/tslib/tslib.es6.mjs
-var tslib_es6_exports = {};
-__export(tslib_es6_exports, {
-  __addDisposableResource: () => __addDisposableResource,
-  __assign: () => __assign,
-  __asyncDelegator: () => __asyncDelegator,
-  __asyncGenerator: () => __asyncGenerator,
-  __asyncValues: () => __asyncValues,
-  __await: () => __await,
-  __awaiter: () => __awaiter6,
-  __classPrivateFieldGet: () => __classPrivateFieldGet,
-  __classPrivateFieldIn: () => __classPrivateFieldIn,
-  __classPrivateFieldSet: () => __classPrivateFieldSet,
-  __createBinding: () => __createBinding,
-  __decorate: () => __decorate,
-  __disposeResources: () => __disposeResources,
-  __esDecorate: () => __esDecorate,
-  __exportStar: () => __exportStar,
-  __extends: () => __extends,
-  __generator: () => __generator,
-  __importDefault: () => __importDefault,
-  __importStar: () => __importStar,
-  __makeTemplateObject: () => __makeTemplateObject,
-  __metadata: () => __metadata,
-  __param: () => __param,
-  __propKey: () => __propKey,
-  __read: () => __read,
-  __rest: () => __rest,
-  __rewriteRelativeImportExtension: () => __rewriteRelativeImportExtension,
-  __runInitializers: () => __runInitializers,
-  __setFunctionName: () => __setFunctionName,
-  __spread: () => __spread,
-  __spreadArray: () => __spreadArray,
-  __spreadArrays: () => __spreadArrays,
-  __values: () => __values,
-  default: () => tslib_es6_default
-});
-function __extends(d5, b6) {
-  if (typeof b6 !== "function" && b6 !== null)
-    throw new TypeError("Class extends value " + String(b6) + " is not a constructor or null");
-  extendStatics(d5, b6);
-  function __() {
-    this.constructor = d5;
-  }
-  d5.prototype = b6 === null ? Object.create(b6) : (__.prototype = b6.prototype, new __());
-}
-function __rest(s, e5) {
-  var t = {};
-  for (var p3 in s) if (Object.prototype.hasOwnProperty.call(s, p3) && e5.indexOf(p3) < 0)
-    t[p3] = s[p3];
-  if (s != null && typeof Object.getOwnPropertySymbols === "function")
-    for (var i5 = 0, p3 = Object.getOwnPropertySymbols(s); i5 < p3.length; i5++) {
-      if (e5.indexOf(p3[i5]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p3[i5]))
-        t[p3[i5]] = s[p3[i5]];
+// node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Js.js
+var CRC32_TABLE, ONES, Crc32Js;
+var init_Crc32Js = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Js.js"() {
+    CRC32_TABLE = new Uint32Array(256);
+    for (let i5 = 0; i5 < 256; ++i5) {
+      let c5 = i5;
+      for (let j5 = 0; j5 < 8; ++j5) {
+        c5 = c5 & 1 ? 3988292384 ^ c5 >>> 1 : c5 >>> 1;
+      }
+      CRC32_TABLE[i5] = c5 >>> 0;
     }
-  return t;
-}
-function __decorate(decorators, target, key, desc) {
-  var c5 = arguments.length, r5 = c5 < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d5;
-  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r5 = Reflect.decorate(decorators, target, key, desc);
-  else for (var i5 = decorators.length - 1; i5 >= 0; i5--) if (d5 = decorators[i5]) r5 = (c5 < 3 ? d5(r5) : c5 > 3 ? d5(target, key, r5) : d5(target, key)) || r5;
-  return c5 > 3 && r5 && Object.defineProperty(target, key, r5), r5;
-}
-function __param(paramIndex, decorator) {
-  return function(target, key) {
-    decorator(target, key, paramIndex);
+    ONES = 4294967295;
+    Crc32Js = class {
+      digestLength = 4;
+      checksum = ONES;
+      update(data3) {
+        for (let i5 = 0; i5 < data3.length; ++i5) {
+          this.checksum = this.checksum >>> 8 ^ CRC32_TABLE[(this.checksum ^ data3[i5]) & 255];
+        }
+      }
+      digestSync() {
+        return (this.checksum ^ ONES) >>> 0;
+      }
+      async digest() {
+        const value = this.digestSync();
+        const out = new Uint8Array(4);
+        new DataView(out.buffer).setUint32(0, value, false);
+        return out;
+      }
+      reset() {
+        this.checksum = ONES;
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Node.js
+function buildNativeClass(nativeCrc32) {
+  return class Crc32Node {
+    digestLength = 4;
+    value = 0;
+    update(data3) {
+      this.value = nativeCrc32(data3, this.value);
+    }
+    digestSync() {
+      return this.value >>> 0;
+    }
+    async digest() {
+      const out = new Uint8Array(4);
+      new DataView(out.buffer).setUint32(0, this.digestSync(), false);
+      return out;
+    }
+    reset() {
+      this.value = 0;
+    }
   };
 }
-function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
-  function accept(f5) {
-    if (f5 !== void 0 && typeof f5 !== "function") throw new TypeError("Function expected");
-    return f5;
-  }
-  var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-  var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-  var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
-  var _, done = false;
-  for (var i5 = decorators.length - 1; i5 >= 0; i5--) {
-    var context = {};
-    for (var p3 in contextIn) context[p3] = p3 === "access" ? {} : contextIn[p3];
-    for (var p3 in contextIn.access) context.access[p3] = contextIn.access[p3];
-    context.addInitializer = function(f5) {
-      if (done) throw new TypeError("Cannot add initializers after decoration has completed");
-      extraInitializers.push(accept(f5 || null));
-    };
-    var result = (0, decorators[i5])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
-    if (kind === "accessor") {
-      if (result === void 0) continue;
-      if (result === null || typeof result !== "object") throw new TypeError("Object expected");
-      if (_ = accept(result.get)) descriptor.get = _;
-      if (_ = accept(result.set)) descriptor.set = _;
-      if (_ = accept(result.init)) initializers.unshift(_);
-    } else if (_ = accept(result)) {
-      if (kind === "field") initializers.unshift(_);
-      else descriptor[key] = _;
-    }
-  }
-  if (target) Object.defineProperty(target, contextIn.name, descriptor);
-  done = true;
-}
-function __runInitializers(thisArg, initializers, value) {
-  var useValue = arguments.length > 2;
-  for (var i5 = 0; i5 < initializers.length; i5++) {
-    value = useValue ? initializers[i5].call(thisArg, value) : initializers[i5].call(thisArg);
-  }
-  return useValue ? value : void 0;
-}
-function __propKey(x) {
-  return typeof x === "symbol" ? x : "".concat(x);
-}
-function __setFunctionName(f5, name, prefix) {
-  if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
-  return Object.defineProperty(f5, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
-}
-function __metadata(metadataKey, metadataValue) {
-  if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-}
-function __awaiter6(thisArg, _arguments, P, generator) {
-  function adopt(value) {
-    return value instanceof P ? value : new P(function(resolve) {
-      resolve(value);
-    });
-  }
-  return new (P || (P = Promise))(function(resolve, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e5) {
-        reject(e5);
-      }
-    }
-    function rejected(value) {
-      try {
-        step(generator["throw"](value));
-      } catch (e5) {
-        reject(e5);
-      }
-    }
-    function step(result) {
-      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-    }
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-}
-function __generator(thisArg, body) {
-  var _ = { label: 0, sent: function() {
-    if (t[0] & 1) throw t[1];
-    return t[1];
-  }, trys: [], ops: [] }, f5, y, t, g5 = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-  return g5.next = verb(0), g5["throw"] = verb(1), g5["return"] = verb(2), typeof Symbol === "function" && (g5[Symbol.iterator] = function() {
-    return this;
-  }), g5;
-  function verb(n4) {
-    return function(v) {
-      return step([n4, v]);
-    };
-  }
-  function step(op2) {
-    if (f5) throw new TypeError("Generator is already executing.");
-    while (g5 && (g5 = 0, op2[0] && (_ = 0)), _) try {
-      if (f5 = 1, y && (t = op2[0] & 2 ? y["return"] : op2[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op2[1])).done) return t;
-      if (y = 0, t) op2 = [op2[0] & 2, t.value];
-      switch (op2[0]) {
-        case 0:
-        case 1:
-          t = op2;
-          break;
-        case 4:
-          _.label++;
-          return { value: op2[1], done: false };
-        case 5:
-          _.label++;
-          y = op2[1];
-          op2 = [0];
-          continue;
-        case 7:
-          op2 = _.ops.pop();
-          _.trys.pop();
-          continue;
-        default:
-          if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op2[0] === 6 || op2[0] === 2)) {
-            _ = 0;
-            continue;
-          }
-          if (op2[0] === 3 && (!t || op2[1] > t[0] && op2[1] < t[3])) {
-            _.label = op2[1];
-            break;
-          }
-          if (op2[0] === 6 && _.label < t[1]) {
-            _.label = t[1];
-            t = op2;
-            break;
-          }
-          if (t && _.label < t[2]) {
-            _.label = t[2];
-            _.ops.push(op2);
-            break;
-          }
-          if (t[2]) _.ops.pop();
-          _.trys.pop();
-          continue;
-      }
-      op2 = body.call(thisArg, _);
-    } catch (e5) {
-      op2 = [6, e5];
-      y = 0;
-    } finally {
-      f5 = t = 0;
-    }
-    if (op2[0] & 5) throw op2[1];
-    return { value: op2[0] ? op2[1] : void 0, done: true };
-  }
-}
-function __exportStar(m3, o3) {
-  for (var p3 in m3) if (p3 !== "default" && !Object.prototype.hasOwnProperty.call(o3, p3)) __createBinding(o3, m3, p3);
-}
-function __values(o3) {
-  var s = typeof Symbol === "function" && Symbol.iterator, m3 = s && o3[s], i5 = 0;
-  if (m3) return m3.call(o3);
-  if (o3 && typeof o3.length === "number") return {
-    next: function() {
-      if (o3 && i5 >= o3.length) o3 = void 0;
-      return { value: o3 && o3[i5++], done: !o3 };
-    }
-  };
-  throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-}
-function __read(o3, n4) {
-  var m3 = typeof Symbol === "function" && o3[Symbol.iterator];
-  if (!m3) return o3;
-  var i5 = m3.call(o3), r5, ar = [], e5;
-  try {
-    while ((n4 === void 0 || n4-- > 0) && !(r5 = i5.next()).done) ar.push(r5.value);
-  } catch (error3) {
-    e5 = { error: error3 };
-  } finally {
-    try {
-      if (r5 && !r5.done && (m3 = i5["return"])) m3.call(i5);
-    } finally {
-      if (e5) throw e5.error;
-    }
-  }
-  return ar;
-}
-function __spread() {
-  for (var ar = [], i5 = 0; i5 < arguments.length; i5++)
-    ar = ar.concat(__read(arguments[i5]));
-  return ar;
-}
-function __spreadArrays() {
-  for (var s = 0, i5 = 0, il = arguments.length; i5 < il; i5++) s += arguments[i5].length;
-  for (var r5 = Array(s), k5 = 0, i5 = 0; i5 < il; i5++)
-    for (var a5 = arguments[i5], j5 = 0, jl = a5.length; j5 < jl; j5++, k5++)
-      r5[k5] = a5[j5];
-  return r5;
-}
-function __spreadArray(to, from, pack) {
-  if (pack || arguments.length === 2) for (var i5 = 0, l3 = from.length, ar; i5 < l3; i5++) {
-    if (ar || !(i5 in from)) {
-      if (!ar) ar = Array.prototype.slice.call(from, 0, i5);
-      ar[i5] = from[i5];
-    }
-  }
-  return to.concat(ar || Array.prototype.slice.call(from));
-}
-function __await(v) {
-  return this instanceof __await ? (this.v = v, this) : new __await(v);
-}
-function __asyncGenerator(thisArg, _arguments, generator) {
-  if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-  var g5 = generator.apply(thisArg, _arguments || []), i5, q2 = [];
-  return i5 = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i5[Symbol.asyncIterator] = function() {
-    return this;
-  }, i5;
-  function awaitReturn(f5) {
-    return function(v) {
-      return Promise.resolve(v).then(f5, reject);
-    };
-  }
-  function verb(n4, f5) {
-    if (g5[n4]) {
-      i5[n4] = function(v) {
-        return new Promise(function(a5, b6) {
-          q2.push([n4, v, a5, b6]) > 1 || resume3(n4, v);
-        });
-      };
-      if (f5) i5[n4] = f5(i5[n4]);
-    }
-  }
-  function resume3(n4, v) {
-    try {
-      step(g5[n4](v));
-    } catch (e5) {
-      settle(q2[0][3], e5);
-    }
-  }
-  function step(r5) {
-    r5.value instanceof __await ? Promise.resolve(r5.value.v).then(fulfill, reject) : settle(q2[0][2], r5);
-  }
-  function fulfill(value) {
-    resume3("next", value);
-  }
-  function reject(value) {
-    resume3("throw", value);
-  }
-  function settle(f5, v) {
-    if (f5(v), q2.shift(), q2.length) resume3(q2[0][0], q2[0][1]);
-  }
-}
-function __asyncDelegator(o3) {
-  var i5, p3;
-  return i5 = {}, verb("next"), verb("throw", function(e5) {
-    throw e5;
-  }), verb("return"), i5[Symbol.iterator] = function() {
-    return this;
-  }, i5;
-  function verb(n4, f5) {
-    i5[n4] = o3[n4] ? function(v) {
-      return (p3 = !p3) ? { value: __await(o3[n4](v)), done: false } : f5 ? f5(v) : v;
-    } : f5;
-  }
-}
-function __asyncValues(o3) {
-  if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-  var m3 = o3[Symbol.asyncIterator], i5;
-  return m3 ? m3.call(o3) : (o3 = typeof __values === "function" ? __values(o3) : o3[Symbol.iterator](), i5 = {}, verb("next"), verb("throw"), verb("return"), i5[Symbol.asyncIterator] = function() {
-    return this;
-  }, i5);
-  function verb(n4) {
-    i5[n4] = o3[n4] && function(v) {
-      return new Promise(function(resolve, reject) {
-        v = o3[n4](v), settle(resolve, reject, v.done, v.value);
-      });
-    };
-  }
-  function settle(resolve, reject, d5, v) {
-    Promise.resolve(v).then(function(v2) {
-      resolve({ value: v2, done: d5 });
-    }, reject);
-  }
-}
-function __makeTemplateObject(cooked, raw) {
-  if (Object.defineProperty) {
-    Object.defineProperty(cooked, "raw", { value: raw });
-  } else {
-    cooked.raw = raw;
-  }
-  return cooked;
-}
-function __importStar(mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) {
-    for (var k5 = ownKeys(mod), i5 = 0; i5 < k5.length; i5++) if (k5[i5] !== "default") __createBinding(result, mod, k5[i5]);
-  }
-  __setModuleDefault(result, mod);
-  return result;
-}
-function __importDefault(mod) {
-  return mod && mod.__esModule ? mod : { default: mod };
-}
-function __classPrivateFieldGet(receiver, state2, kind, f5) {
-  if (kind === "a" && !f5) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state2 === "function" ? receiver !== state2 || !f5 : !state2.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f5 : kind === "a" ? f5.call(receiver) : f5 ? f5.value : state2.get(receiver);
-}
-function __classPrivateFieldSet(receiver, state2, value, kind, f5) {
-  if (kind === "m") throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f5) throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state2 === "function" ? receiver !== state2 || !f5 : !state2.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f5.call(receiver, value) : f5 ? f5.value = value : state2.set(receiver, value), value;
-}
-function __classPrivateFieldIn(state2, receiver) {
-  if (receiver === null || typeof receiver !== "object" && typeof receiver !== "function") throw new TypeError("Cannot use 'in' operator on non-object");
-  return typeof state2 === "function" ? receiver === state2 : state2.has(receiver);
-}
-function __addDisposableResource(env2, value, async) {
-  if (value !== null && value !== void 0) {
-    if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
-    var dispose, inner;
-    if (async) {
-      if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
-      dispose = value[Symbol.asyncDispose];
-    }
-    if (dispose === void 0) {
-      if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
-      dispose = value[Symbol.dispose];
-      if (async) inner = dispose;
-    }
-    if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
-    if (inner) dispose = function() {
-      try {
-        inner.call(this);
-      } catch (e5) {
-        return Promise.reject(e5);
-      }
-    };
-    env2.stack.push({ value, dispose, async });
-  } else if (async) {
-    env2.stack.push({ async: true });
-  }
-  return value;
-}
-function __disposeResources(env2) {
-  function fail(e5) {
-    env2.error = env2.hasError ? new _SuppressedError(e5, env2.error, "An error was suppressed during disposal.") : e5;
-    env2.hasError = true;
-  }
-  var r5, s = 0;
-  function next() {
-    while (r5 = env2.stack.pop()) {
-      try {
-        if (!r5.async && s === 1) return s = 0, env2.stack.push(r5), Promise.resolve().then(next);
-        if (r5.dispose) {
-          var result = r5.dispose.call(r5.value);
-          if (r5.async) return s |= 2, Promise.resolve(result).then(next, function(e5) {
-            fail(e5);
-            return next();
-          });
-        } else s |= 1;
-      } catch (e5) {
-        fail(e5);
-      }
-    }
-    if (s === 1) return env2.hasError ? Promise.reject(env2.error) : Promise.resolve();
-    if (env2.hasError) throw env2.error;
-  }
-  return next();
-}
-function __rewriteRelativeImportExtension(path4, preserveJsx) {
-  if (typeof path4 === "string" && /^\.\.?\//.test(path4)) {
-    return path4.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m3, tsx, d5, ext, cm) {
-      return tsx ? preserveJsx ? ".jsx" : ".js" : d5 && (!ext || !cm) ? m3 : d5 + ext + "." + cm.toLowerCase() + "js";
-    });
-  }
-  return path4;
-}
-var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
-var init_tslib_es6 = __esm({
-  "node_modules/tslib/tslib.es6.mjs"() {
-    extendStatics = function(d5, b6) {
-      extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d6, b7) {
-        d6.__proto__ = b7;
-      } || function(d6, b7) {
-        for (var p3 in b7) if (Object.prototype.hasOwnProperty.call(b7, p3)) d6[p3] = b7[p3];
-      };
-      return extendStatics(d5, b6);
-    };
-    __assign = function() {
-      __assign = Object.assign || function __assign2(t) {
-        for (var s, i5 = 1, n4 = arguments.length; i5 < n4; i5++) {
-          s = arguments[i5];
-          for (var p3 in s) if (Object.prototype.hasOwnProperty.call(s, p3)) t[p3] = s[p3];
-        }
-        return t;
-      };
-      return __assign.apply(this, arguments);
-    };
-    __createBinding = Object.create ? (function(o3, m3, k5, k22) {
-      if (k22 === void 0) k22 = k5;
-      var desc = Object.getOwnPropertyDescriptor(m3, k5);
-      if (!desc || ("get" in desc ? !m3.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function() {
-          return m3[k5];
-        } };
-      }
-      Object.defineProperty(o3, k22, desc);
-    }) : (function(o3, m3, k5, k22) {
-      if (k22 === void 0) k22 = k5;
-      o3[k22] = m3[k5];
-    });
-    __setModuleDefault = Object.create ? (function(o3, v) {
-      Object.defineProperty(o3, "default", { enumerable: true, value: v });
-    }) : function(o3, v) {
-      o3["default"] = v;
-    };
-    ownKeys = function(o3) {
-      ownKeys = Object.getOwnPropertyNames || function(o4) {
-        var ar = [];
-        for (var k5 in o4) if (Object.prototype.hasOwnProperty.call(o4, k5)) ar[ar.length] = k5;
-        return ar;
-      };
-      return ownKeys(o3);
-    };
-    _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function(error3, suppressed, message) {
-      var e5 = new Error(message);
-      return e5.name = "SuppressedError", e5.error = error3, e5.suppressed = suppressed, e5;
-    };
-    tslib_es6_default = {
-      __extends,
-      __assign,
-      __rest,
-      __decorate,
-      __param,
-      __esDecorate,
-      __runInitializers,
-      __propKey,
-      __setFunctionName,
-      __metadata,
-      __awaiter: __awaiter6,
-      __generator,
-      __createBinding,
-      __exportStar,
-      __values,
-      __read,
-      __spread,
-      __spreadArrays,
-      __spreadArray,
-      __await,
-      __asyncGenerator,
-      __asyncDelegator,
-      __asyncValues,
-      __makeTemplateObject,
-      __importStar,
-      __importDefault,
-      __classPrivateFieldGet,
-      __classPrivateFieldSet,
-      __classPrivateFieldIn,
-      __addDisposableResource,
-      __disposeResources,
-      __rewriteRelativeImportExtension
-    };
+var zlib, zlibCrc32, Crc32Node;
+var init_Crc32Node = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Node.js"() {
+    zlib = __toESM(require("node:zlib"));
+    init_Crc32Js();
+    zlibCrc32 = typeof zlib.crc32 === "function" ? zlib.crc32 : void 0;
+    Crc32Node = zlibCrc32 ? buildNativeClass(zlibCrc32) : Crc32Js;
   }
 });
 
-// node_modules/@smithy/is-array-buffer/dist-cjs/index.js
-var require_dist_cjs2 = __commonJS({
-  "node_modules/@smithy/is-array-buffer/dist-cjs/index.js"(exports2, module2) {
-    var __defProp2 = Object.defineProperty;
-    var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
-    var __getOwnPropNames2 = Object.getOwnPropertyNames;
-    var __hasOwnProp2 = Object.prototype.hasOwnProperty;
-    var __name = (target, value) => __defProp2(target, "name", { value, configurable: true });
-    var __export2 = (target, all) => {
-      for (var name in all)
-        __defProp2(target, name, { get: all[name], enumerable: true });
-    };
-    var __copyProps2 = (to, from, except, desc) => {
-      if (from && typeof from === "object" || typeof from === "function") {
-        for (let key of __getOwnPropNames2(from))
-          if (!__hasOwnProp2.call(to, key) && key !== except)
-            __defProp2(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc2(from, key)) || desc.enumerable });
-      }
-      return to;
-    };
-    var __toCommonJS2 = (mod) => __copyProps2(__defProp2({}, "__esModule", { value: true }), mod);
-    var src_exports = {};
-    __export2(src_exports, {
-      isArrayBuffer: () => isArrayBuffer2
-    });
-    module2.exports = __toCommonJS2(src_exports);
-    var isArrayBuffer2 = /* @__PURE__ */ __name((arg) => typeof ArrayBuffer === "function" && arg instanceof ArrayBuffer || Object.prototype.toString.call(arg) === "[object ArrayBuffer]", "isArrayBuffer");
-  }
-});
-
-// node_modules/@smithy/util-buffer-from/dist-cjs/index.js
-var require_dist_cjs3 = __commonJS({
-  "node_modules/@smithy/util-buffer-from/dist-cjs/index.js"(exports2, module2) {
-    var __defProp2 = Object.defineProperty;
-    var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
-    var __getOwnPropNames2 = Object.getOwnPropertyNames;
-    var __hasOwnProp2 = Object.prototype.hasOwnProperty;
-    var __name = (target, value) => __defProp2(target, "name", { value, configurable: true });
-    var __export2 = (target, all) => {
-      for (var name in all)
-        __defProp2(target, name, { get: all[name], enumerable: true });
-    };
-    var __copyProps2 = (to, from, except, desc) => {
-      if (from && typeof from === "object" || typeof from === "function") {
-        for (let key of __getOwnPropNames2(from))
-          if (!__hasOwnProp2.call(to, key) && key !== except)
-            __defProp2(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc2(from, key)) || desc.enumerable });
-      }
-      return to;
-    };
-    var __toCommonJS2 = (mod) => __copyProps2(__defProp2({}, "__esModule", { value: true }), mod);
-    var src_exports = {};
-    __export2(src_exports, {
-      fromArrayBuffer: () => fromArrayBuffer2,
-      fromString: () => fromString2
-    });
-    module2.exports = __toCommonJS2(src_exports);
-    var import_is_array_buffer3 = require_dist_cjs2();
-    var import_buffer = require("buffer");
-    var fromArrayBuffer2 = /* @__PURE__ */ __name((input, offset = 0, length = input.byteLength - offset) => {
-      if (!(0, import_is_array_buffer3.isArrayBuffer)(input)) {
-        throw new TypeError(`The "input" argument must be ArrayBuffer. Received type ${typeof input} (${input})`);
-      }
-      return import_buffer.Buffer.from(input, offset, length);
-    }, "fromArrayBuffer");
-    var fromString2 = /* @__PURE__ */ __name((input, encoding) => {
-      if (typeof input !== "string") {
-        throw new TypeError(`The "input" argument must be of type string. Received type ${typeof input} (${input})`);
-      }
-      return encoding ? import_buffer.Buffer.from(input, encoding) : import_buffer.Buffer.from(input);
-    }, "fromString");
-  }
-});
-
-// node_modules/@smithy/util-utf8/dist-cjs/index.js
-var require_dist_cjs4 = __commonJS({
-  "node_modules/@smithy/util-utf8/dist-cjs/index.js"(exports2, module2) {
-    var __defProp2 = Object.defineProperty;
-    var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
-    var __getOwnPropNames2 = Object.getOwnPropertyNames;
-    var __hasOwnProp2 = Object.prototype.hasOwnProperty;
-    var __name = (target, value) => __defProp2(target, "name", { value, configurable: true });
-    var __export2 = (target, all) => {
-      for (var name in all)
-        __defProp2(target, name, { get: all[name], enumerable: true });
-    };
-    var __copyProps2 = (to, from, except, desc) => {
-      if (from && typeof from === "object" || typeof from === "function") {
-        for (let key of __getOwnPropNames2(from))
-          if (!__hasOwnProp2.call(to, key) && key !== except)
-            __defProp2(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc2(from, key)) || desc.enumerable });
-      }
-      return to;
-    };
-    var __toCommonJS2 = (mod) => __copyProps2(__defProp2({}, "__esModule", { value: true }), mod);
-    var src_exports = {};
-    __export2(src_exports, {
-      fromUtf8: () => fromUtf83,
-      toUint8Array: () => toUint8Array3,
-      toUtf8: () => toUtf83
-    });
-    module2.exports = __toCommonJS2(src_exports);
-    var import_util_buffer_from = require_dist_cjs3();
-    var fromUtf83 = /* @__PURE__ */ __name((input) => {
-      const buf = (0, import_util_buffer_from.fromString)(input, "utf8");
-      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength / Uint8Array.BYTES_PER_ELEMENT);
-    }, "fromUtf8");
-    var toUint8Array3 = /* @__PURE__ */ __name((data3) => {
-      if (typeof data3 === "string") {
-        return fromUtf83(data3);
-      }
-      if (ArrayBuffer.isView(data3)) {
-        return new Uint8Array(data3.buffer, data3.byteOffset, data3.byteLength / Uint8Array.BYTES_PER_ELEMENT);
-      }
-      return new Uint8Array(data3);
-    }, "toUint8Array");
-    var toUtf83 = /* @__PURE__ */ __name((input) => {
-      if (typeof input === "string") {
-        return input;
-      }
-      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
-        throw new Error("@smithy/util-utf8: toUtf8 encoder function only accepts string | Uint8Array.");
-      }
-      return (0, import_util_buffer_from.fromArrayBuffer)(input.buffer, input.byteOffset, input.byteLength).toString("utf8");
-    }, "toUtf8");
-  }
-});
-
-// node_modules/@aws-crypto/util/build/main/convertToBuffer.js
-var require_convertToBuffer = __commonJS({
-  "node_modules/@aws-crypto/util/build/main/convertToBuffer.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.convertToBuffer = void 0;
-    var util_utf8_1 = require_dist_cjs4();
-    var fromUtf83 = typeof Buffer !== "undefined" && Buffer.from ? function(input) {
-      return Buffer.from(input, "utf8");
-    } : util_utf8_1.fromUtf8;
-    function convertToBuffer(data3) {
-      if (data3 instanceof Uint8Array)
-        return data3;
-      if (typeof data3 === "string") {
-        return fromUtf83(data3);
-      }
-      if (ArrayBuffer.isView(data3)) {
-        return new Uint8Array(data3.buffer, data3.byteOffset, data3.byteLength / Uint8Array.BYTES_PER_ELEMENT);
-      }
-      return new Uint8Array(data3);
-    }
-    exports2.convertToBuffer = convertToBuffer;
-  }
-});
-
-// node_modules/@aws-crypto/util/build/main/isEmptyData.js
-var require_isEmptyData = __commonJS({
-  "node_modules/@aws-crypto/util/build/main/isEmptyData.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.isEmptyData = void 0;
-    function isEmptyData(data3) {
-      if (typeof data3 === "string") {
-        return data3.length === 0;
-      }
-      return data3.byteLength === 0;
-    }
-    exports2.isEmptyData = isEmptyData;
-  }
-});
-
-// node_modules/@aws-crypto/util/build/main/numToUint8.js
-var require_numToUint8 = __commonJS({
-  "node_modules/@aws-crypto/util/build/main/numToUint8.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.numToUint8 = void 0;
-    function numToUint8(num) {
-      return new Uint8Array([
-        (num & 4278190080) >> 24,
-        (num & 16711680) >> 16,
-        (num & 65280) >> 8,
-        num & 255
-      ]);
-    }
-    exports2.numToUint8 = numToUint8;
-  }
-});
-
-// node_modules/@aws-crypto/util/build/main/uint32ArrayFrom.js
-var require_uint32ArrayFrom = __commonJS({
-  "node_modules/@aws-crypto/util/build/main/uint32ArrayFrom.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.uint32ArrayFrom = void 0;
-    function uint32ArrayFrom(a_lookUpTable) {
-      if (!Uint32Array.from) {
-        var return_array = new Uint32Array(a_lookUpTable.length);
-        var a_index = 0;
-        while (a_index < a_lookUpTable.length) {
-          return_array[a_index] = a_lookUpTable[a_index];
-          a_index += 1;
-        }
-        return return_array;
-      }
-      return Uint32Array.from(a_lookUpTable);
-    }
-    exports2.uint32ArrayFrom = uint32ArrayFrom;
-  }
-});
-
-// node_modules/@aws-crypto/util/build/main/index.js
-var require_main = __commonJS({
-  "node_modules/@aws-crypto/util/build/main/index.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.uint32ArrayFrom = exports2.numToUint8 = exports2.isEmptyData = exports2.convertToBuffer = void 0;
-    var convertToBuffer_1 = require_convertToBuffer();
-    Object.defineProperty(exports2, "convertToBuffer", { enumerable: true, get: function() {
-      return convertToBuffer_1.convertToBuffer;
-    } });
-    var isEmptyData_1 = require_isEmptyData();
-    Object.defineProperty(exports2, "isEmptyData", { enumerable: true, get: function() {
-      return isEmptyData_1.isEmptyData;
-    } });
-    var numToUint8_1 = require_numToUint8();
-    Object.defineProperty(exports2, "numToUint8", { enumerable: true, get: function() {
-      return numToUint8_1.numToUint8;
-    } });
-    var uint32ArrayFrom_1 = require_uint32ArrayFrom();
-    Object.defineProperty(exports2, "uint32ArrayFrom", { enumerable: true, get: function() {
-      return uint32ArrayFrom_1.uint32ArrayFrom;
-    } });
-  }
-});
-
-// node_modules/@aws-crypto/crc32/build/main/aws_crc32.js
-var require_aws_crc32 = __commonJS({
-  "node_modules/@aws-crypto/crc32/build/main/aws_crc32.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.AwsCrc32 = void 0;
-    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
-    var util_1 = require_main();
-    var index_1 = require_main2();
-    var AwsCrc32 = (
-      /** @class */
-      (function() {
-        function AwsCrc322() {
-          this.crc32 = new index_1.Crc32();
-        }
-        AwsCrc322.prototype.update = function(toHash) {
-          if ((0, util_1.isEmptyData)(toHash))
-            return;
-          this.crc32.update((0, util_1.convertToBuffer)(toHash));
-        };
-        AwsCrc322.prototype.digest = function() {
-          return tslib_1.__awaiter(this, void 0, void 0, function() {
-            return tslib_1.__generator(this, function(_a2) {
-              return [2, (0, util_1.numToUint8)(this.crc32.digest())];
-            });
-          });
-        };
-        AwsCrc322.prototype.reset = function() {
-          this.crc32 = new index_1.Crc32();
-        };
-        return AwsCrc322;
-      })()
-    );
-    exports2.AwsCrc32 = AwsCrc32;
-  }
-});
-
-// node_modules/@aws-crypto/crc32/build/main/index.js
-var require_main2 = __commonJS({
-  "node_modules/@aws-crypto/crc32/build/main/index.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.AwsCrc32 = exports2.Crc32 = exports2.crc32 = void 0;
-    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
-    var util_1 = require_main();
-    function crc32(data3) {
-      return new Crc323().update(data3).digest();
-    }
-    exports2.crc32 = crc32;
-    var Crc323 = (
-      /** @class */
-      (function() {
-        function Crc324() {
-          this.checksum = 4294967295;
-        }
-        Crc324.prototype.update = function(data3) {
-          var e_1, _a2;
-          try {
-            for (var data_1 = tslib_1.__values(data3), data_1_1 = data_1.next(); !data_1_1.done; data_1_1 = data_1.next()) {
-              var byte = data_1_1.value;
-              this.checksum = this.checksum >>> 8 ^ lookupTable[(this.checksum ^ byte) & 255];
-            }
-          } catch (e_1_1) {
-            e_1 = { error: e_1_1 };
-          } finally {
-            try {
-              if (data_1_1 && !data_1_1.done && (_a2 = data_1.return)) _a2.call(data_1);
-            } finally {
-              if (e_1) throw e_1.error;
-            }
-          }
-          return this;
-        };
-        Crc324.prototype.digest = function() {
-          return (this.checksum ^ 4294967295) >>> 0;
-        };
-        return Crc324;
-      })()
-    );
-    exports2.Crc32 = Crc323;
-    var a_lookUpTable = [
-      0,
-      1996959894,
-      3993919788,
-      2567524794,
-      124634137,
-      1886057615,
-      3915621685,
-      2657392035,
-      249268274,
-      2044508324,
-      3772115230,
-      2547177864,
-      162941995,
-      2125561021,
-      3887607047,
-      2428444049,
-      498536548,
-      1789927666,
-      4089016648,
-      2227061214,
-      450548861,
-      1843258603,
-      4107580753,
-      2211677639,
-      325883990,
-      1684777152,
-      4251122042,
-      2321926636,
-      335633487,
-      1661365465,
-      4195302755,
-      2366115317,
-      997073096,
-      1281953886,
-      3579855332,
-      2724688242,
-      1006888145,
-      1258607687,
-      3524101629,
-      2768942443,
-      901097722,
-      1119000684,
-      3686517206,
-      2898065728,
-      853044451,
-      1172266101,
-      3705015759,
-      2882616665,
-      651767980,
-      1373503546,
-      3369554304,
-      3218104598,
-      565507253,
-      1454621731,
-      3485111705,
-      3099436303,
-      671266974,
-      1594198024,
-      3322730930,
-      2970347812,
-      795835527,
-      1483230225,
-      3244367275,
-      3060149565,
-      1994146192,
-      31158534,
-      2563907772,
-      4023717930,
-      1907459465,
-      112637215,
-      2680153253,
-      3904427059,
-      2013776290,
-      251722036,
-      2517215374,
-      3775830040,
-      2137656763,
-      141376813,
-      2439277719,
-      3865271297,
-      1802195444,
-      476864866,
-      2238001368,
-      4066508878,
-      1812370925,
-      453092731,
-      2181625025,
-      4111451223,
-      1706088902,
-      314042704,
-      2344532202,
-      4240017532,
-      1658658271,
-      366619977,
-      2362670323,
-      4224994405,
-      1303535960,
-      984961486,
-      2747007092,
-      3569037538,
-      1256170817,
-      1037604311,
-      2765210733,
-      3554079995,
-      1131014506,
-      879679996,
-      2909243462,
-      3663771856,
-      1141124467,
-      855842277,
-      2852801631,
-      3708648649,
-      1342533948,
-      654459306,
-      3188396048,
-      3373015174,
-      1466479909,
-      544179635,
-      3110523913,
-      3462522015,
-      1591671054,
-      702138776,
-      2966460450,
-      3352799412,
-      1504918807,
-      783551873,
-      3082640443,
-      3233442989,
-      3988292384,
-      2596254646,
-      62317068,
-      1957810842,
-      3939845945,
-      2647816111,
-      81470997,
-      1943803523,
-      3814918930,
-      2489596804,
-      225274430,
-      2053790376,
-      3826175755,
-      2466906013,
-      167816743,
-      2097651377,
-      4027552580,
-      2265490386,
-      503444072,
-      1762050814,
-      4150417245,
-      2154129355,
-      426522225,
-      1852507879,
-      4275313526,
-      2312317920,
-      282753626,
-      1742555852,
-      4189708143,
-      2394877945,
-      397917763,
-      1622183637,
-      3604390888,
-      2714866558,
-      953729732,
-      1340076626,
-      3518719985,
-      2797360999,
-      1068828381,
-      1219638859,
-      3624741850,
-      2936675148,
-      906185462,
-      1090812512,
-      3747672003,
-      2825379669,
-      829329135,
-      1181335161,
-      3412177804,
-      3160834842,
-      628085408,
-      1382605366,
-      3423369109,
-      3138078467,
-      570562233,
-      1426400815,
-      3317316542,
-      2998733608,
-      733239954,
-      1555261956,
-      3268935591,
-      3050360625,
-      752459403,
-      1541320221,
-      2607071920,
-      3965973030,
-      1969922972,
-      40735498,
-      2617837225,
-      3943577151,
-      1913087877,
-      83908371,
-      2512341634,
-      3803740692,
-      2075208622,
-      213261112,
-      2463272603,
-      3855990285,
-      2094854071,
-      198958881,
-      2262029012,
-      4057260610,
-      1759359992,
-      534414190,
-      2176718541,
-      4139329115,
-      1873836001,
-      414664567,
-      2282248934,
-      4279200368,
-      1711684554,
-      285281116,
-      2405801727,
-      4167216745,
-      1634467795,
-      376229701,
-      2685067896,
-      3608007406,
-      1308918612,
-      956543938,
-      2808555105,
-      3495958263,
-      1231636301,
-      1047427035,
-      2932959818,
-      3654703836,
-      1088359270,
-      936918e3,
-      2847714899,
-      3736837829,
-      1202900863,
-      817233897,
-      3183342108,
-      3401237130,
-      1404277552,
-      615818150,
-      3134207493,
-      3453421203,
-      1423857449,
-      601450431,
-      3009837614,
-      3294710456,
-      1567103746,
-      711928724,
-      3020668471,
-      3272380065,
-      1510334235,
-      755167117
-    ];
-    var lookupTable = (0, util_1.uint32ArrayFrom)(a_lookUpTable);
-    var aws_crc32_1 = require_aws_crc32();
-    Object.defineProperty(exports2, "AwsCrc32", { enumerable: true, get: function() {
-      return aws_crc32_1.AwsCrc32;
-    } });
+// node_modules/@smithy/core/dist-es/submodules/checksum/index.js
+var init_checksum2 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/index.js"() {
+    init_Crc32Node();
   }
 });
 
@@ -27097,23 +26070,24 @@ function splitMessage({ byteLength, byteOffset, buffer }) {
   const headerLength = view.getUint32(PRELUDE_MEMBER_LENGTH, false);
   const expectedPreludeChecksum = view.getUint32(PRELUDE_LENGTH, false);
   const expectedMessageChecksum = view.getUint32(byteLength - CHECKSUM_LENGTH, false);
-  const checksummer = new import_crc32.Crc32().update(new Uint8Array(buffer, byteOffset, PRELUDE_LENGTH));
-  if (expectedPreludeChecksum !== checksummer.digest()) {
-    throw new Error(`The prelude checksum specified in the message (${expectedPreludeChecksum}) does not match the calculated CRC32 checksum (${checksummer.digest()})`);
+  const checksummer = new Crc32Node();
+  checksummer.update(new Uint8Array(buffer, byteOffset, PRELUDE_LENGTH));
+  if (expectedPreludeChecksum !== checksummer.digestSync()) {
+    throw new Error(`The prelude checksum specified in the message (${expectedPreludeChecksum}) does not match the calculated CRC32 checksum (${checksummer.digestSync()})`);
   }
   checksummer.update(new Uint8Array(buffer, byteOffset + PRELUDE_LENGTH, byteLength - (PRELUDE_LENGTH + CHECKSUM_LENGTH)));
-  if (expectedMessageChecksum !== checksummer.digest()) {
-    throw new Error(`The message checksum (${checksummer.digest()}) did not match the expected value of ${expectedMessageChecksum}`);
+  if (expectedMessageChecksum !== checksummer.digestSync()) {
+    throw new Error(`The message checksum (${checksummer.digestSync()}) did not match the expected value of ${expectedMessageChecksum}`);
   }
   return {
     headers: new DataView(buffer, byteOffset + PRELUDE_LENGTH + CHECKSUM_LENGTH, headerLength),
     body: new Uint8Array(buffer, byteOffset + PRELUDE_LENGTH + CHECKSUM_LENGTH + headerLength, messageLength - headerLength - (PRELUDE_LENGTH + CHECKSUM_LENGTH + CHECKSUM_LENGTH))
   };
 }
-var import_crc32, PRELUDE_MEMBER_LENGTH, PRELUDE_LENGTH, CHECKSUM_LENGTH, MINIMUM_MESSAGE_LENGTH;
+var PRELUDE_MEMBER_LENGTH, PRELUDE_LENGTH, CHECKSUM_LENGTH, MINIMUM_MESSAGE_LENGTH;
 var init_splitMessage = __esm({
   "node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/splitMessage.js"() {
-    import_crc32 = __toESM(require_main2());
+    init_checksum2();
     PRELUDE_MEMBER_LENGTH = 4;
     PRELUDE_LENGTH = PRELUDE_MEMBER_LENGTH * 2;
     CHECKSUM_LENGTH = 4;
@@ -27122,10 +26096,10 @@ var init_splitMessage = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/EventStreamCodec.js
-var import_crc322, EventStreamCodec;
+var EventStreamCodec;
 var init_EventStreamCodec = __esm({
   "node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/EventStreamCodec.js"() {
-    import_crc322 = __toESM(require_main2());
+    init_checksum2();
     init_HeaderMarshaller();
     init_splitMessage();
     EventStreamCodec = class {
@@ -27173,13 +26147,15 @@ var init_EventStreamCodec = __esm({
         const length = headers.byteLength + body.byteLength + 16;
         const out = new Uint8Array(length);
         const view = new DataView(out.buffer, out.byteOffset, out.byteLength);
-        const checksum = new import_crc322.Crc32();
+        const checksum = new Crc32Node();
         view.setUint32(0, length, false);
         view.setUint32(4, headers.byteLength, false);
-        view.setUint32(8, checksum.update(out.subarray(0, 8)).digest(), false);
+        checksum.update(out.subarray(0, 8));
+        view.setUint32(8, checksum.digestSync(), false);
         out.set(headers, 12);
         out.set(body, headers.byteLength + 12);
-        view.setUint32(length - 4, checksum.update(out.subarray(8, length - 4)).digest(), false);
+        checksum.update(out.subarray(8, length - 4));
+        view.setUint32(length - 4, checksum.digestSync(), false);
         return out;
       }
       decode(message) {
@@ -27919,6 +26895,9 @@ var init_HttpProtocol = __esm({
               hostPrefix = hostPrefix.replace(`{${name}}`, replacement);
             }
             request.hostname = hostPrefix + request.hostname;
+            if (!isValidHostname(request.hostname)) {
+              throw new Error(`[${request.hostname}] is not a valid hostname.`);
+            }
           }
         }
       }
@@ -32877,7 +31856,7 @@ var init_resolveAwsSdkSigV4AConfig = __esm({
 });
 
 // node_modules/@smithy/signature-v4/dist-cjs/index.js
-var require_dist_cjs5 = __commonJS({
+var require_dist_cjs2 = __commonJS({
   "node_modules/@smithy/signature-v4/dist-cjs/index.js"(exports2) {
     "use strict";
     var serde = (init_serde(), __toCommonJS(serde_exports));
@@ -33450,7 +32429,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4Config.js"() {
     init_client3();
     init_dist_es();
-    import_signature_v4 = __toESM(require_dist_cjs5());
+    import_signature_v4 = __toESM(require_dist_cjs2());
     resolveAwsSdkSigV4Config = (config) => {
       let inputCredentials = config.credentials;
       let isUserSupplied = !!config.credentials;
@@ -33584,9 +32563,9 @@ var init_httpAuthSchemes2 = __esm({
 });
 
 // node_modules/@aws-sdk/signature-v4-multi-region/dist-cjs/index.js
-var require_dist_cjs6 = __commonJS({
+var require_dist_cjs3 = __commonJS({
   "node_modules/@aws-sdk/signature-v4-multi-region/dist-cjs/index.js"(exports2) {
-    var { SignatureV4: SignatureV42, signatureV4aContainer } = require_dist_cjs5();
+    var { SignatureV4: SignatureV42, signatureV4aContainer } = require_dist_cjs2();
     var signatureV4CrtContainer = {
       CrtSignerV4: null
     };
@@ -33907,7 +32886,7 @@ var require_endpointResolver = __commonJS({
 var require_httpAuthSchemeProvider = __commonJS({
   "node_modules/@aws-sdk/client-sts/dist-cjs/auth/httpAuthSchemeProvider.js"(exports2) {
     var { resolveAwsSdkSigV4AConfig: resolveAwsSdkSigV4AConfig2, resolveAwsSdkSigV4Config: resolveAwsSdkSigV4Config2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
-    var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs6();
+    var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs3();
     var { getSmithyContext: getSmithyContext2, normalizeProvider: normalizeProvider3 } = (init_client2(), __toCommonJS(client_exports));
     var { resolveParams: resolveParams2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
     var { defaultEndpointResolver: defaultEndpointResolver5 } = require_endpointResolver();
@@ -34131,7 +33110,7 @@ var require_package = __commonJS({
 });
 
 // node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js
-var require_dist_cjs7 = __commonJS({
+var require_dist_cjs4 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js"(exports2) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2 } = (init_config2(), __toCommonJS(config_exports));
@@ -34174,7 +33153,7 @@ var require_dist_cjs7 = __commonJS({
 });
 
 // node_modules/@smithy/credential-provider-imds/dist-cjs/index.js
-var require_dist_cjs8 = __commonJS({
+var require_dist_cjs5 = __commonJS({
   "node_modules/@smithy/credential-provider-imds/dist-cjs/index.js"(exports2) {
     var { ProviderError: ProviderError2, CredentialsProviderError: CredentialsProviderError2, loadConfig: loadConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var node_http = require("node:http");
@@ -34384,17 +33363,17 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
       };
     };
     var IMDS_PATH = "/latest/meta-data/iam/security-credentials/";
-    var IMDS_TOKEN_PATH = "/latest/api/token";
+    var IMDS_TOKEN_PATH2 = "/latest/api/token";
     var AWS_EC2_METADATA_V1_DISABLED = "AWS_EC2_METADATA_V1_DISABLED";
     var PROFILE_AWS_EC2_METADATA_V1_DISABLED = "ec2_metadata_v1_disabled";
-    var X_AWS_EC2_METADATA_TOKEN = "x-aws-ec2-metadata-token";
+    var X_AWS_EC2_METADATA_TOKEN2 = "x-aws-ec2-metadata-token";
     var fromInstanceMetadata = (init = {}) => staticStabilityProvider(getInstanceMetadataProvider(init), { logger: init.logger });
     var getInstanceMetadataProvider = (init = {}) => {
       let disableFetchToken = false;
       const { logger: logger2, profile } = init;
       const { timeout, maxRetries } = providerConfigFromInit(init);
       const getCredentials = async (maxRetries2, options) => {
-        const isImdsV1Fallback = disableFetchToken || options.headers?.[X_AWS_EC2_METADATA_TOKEN] == null;
+        const isImdsV1Fallback = disableFetchToken || options.headers?.[X_AWS_EC2_METADATA_TOKEN2] == null;
         if (isImdsV1Fallback) {
           let fallbackBlockedFromProfile = false;
           let fallbackBlockedFromProcessEnv = false;
@@ -34475,7 +33454,7 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
           return getCredentials(maxRetries, {
             ...endpoint,
             headers: {
-              [X_AWS_EC2_METADATA_TOKEN]: token
+              [X_AWS_EC2_METADATA_TOKEN2]: token
             },
             timeout
           });
@@ -34484,7 +33463,7 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
     };
     var getMetadataToken = async (options) => httpRequest({
       ...options,
-      path: IMDS_TOKEN_PATH,
+      path: IMDS_TOKEN_PATH2,
       method: "PUT",
       headers: {
         "x-aws-ec2-metadata-token-ttl-seconds": "21600"
@@ -34518,12 +33497,14 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
 });
 
 // node_modules/@smithy/node-http-handler/dist-cjs/index.js
-var require_dist_cjs9 = __commonJS({
+var require_dist_cjs6 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
     var { buildQueryString: buildQueryString2, HttpResponse: HttpResponse2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var node_https = require("node:https");
-    var { Readable: Readable7, Writable: Writable3 } = require("node:stream");
+    var { Readable: Readable7 } = require("node:stream");
     var http22 = require("node:http2");
+    var { streamCollector: streamCollector7 } = (init_serde(), __toCommonJS(serde_exports));
+    exports2.streamCollector = streamCollector7;
     function buildAbortError(abortSignal) {
       const reason = abortSignal && typeof abortSignal === "object" && "reason" in abortSignal ? abortSignal.reason : void 0;
       if (reason) {
@@ -35313,57 +34294,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return this.config ?? {};
       }
     };
-    var Collector3 = class extends Writable3 {
-      bufferedBytes = [];
-      _write(chunk, encoding, callback) {
-        this.bufferedBytes.push(chunk);
-        callback();
-      }
-    };
-    var streamCollector7 = (stream) => {
-      if (isReadableStreamInstance2(stream)) {
-        return collectReadableStream2(stream);
-      }
-      return new Promise((resolve, reject) => {
-        const collector = new Collector3();
-        stream.pipe(collector);
-        stream.on("error", (err) => {
-          collector.end();
-          reject(err);
-        });
-        collector.on("error", reject);
-        collector.on("finish", function() {
-          const bytes = new Uint8Array(Buffer.concat(this.bufferedBytes));
-          resolve(bytes);
-        });
-      });
-    };
-    var isReadableStreamInstance2 = (stream) => typeof ReadableStream === "function" && stream instanceof ReadableStream;
-    async function collectReadableStream2(stream) {
-      const chunks = [];
-      const reader = stream.getReader();
-      let isDone = false;
-      let length = 0;
-      while (!isDone) {
-        const { done, value } = await reader.read();
-        if (value) {
-          chunks.push(value);
-          length += value.length;
-        }
-        isDone = done;
-      }
-      const collected = new Uint8Array(length);
-      let offset = 0;
-      for (const chunk of chunks) {
-        collected.set(chunk, offset);
-        offset += chunk.length;
-      }
-      return collected;
-    }
     exports2.DEFAULT_REQUEST_TIMEOUT = DEFAULT_REQUEST_TIMEOUT;
     exports2.NodeHttp2Handler = NodeHttp2Handler;
     exports2.NodeHttpHandler = NodeHttpHandler2;
-    exports2.streamCollector = streamCollector7;
   }
 });
 
@@ -35480,7 +34413,7 @@ var require_fromHttp = __commonJS({
   "node_modules/@aws-sdk/credential-provider-http/dist-cjs/fromHttp/fromHttp.js"(exports2) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2 } = (init_config2(), __toCommonJS(config_exports));
-    var { NodeHttpHandler: NodeHttpHandler2 } = require_dist_cjs9();
+    var { NodeHttpHandler: NodeHttpHandler2 } = require_dist_cjs6();
     var fs4 = require("node:fs/promises");
     var { checkUrl } = require_checkUrl();
     var { createGetRequest, getCredentials } = require_requestHelpers();
@@ -35544,7 +34477,7 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
 });
 
 // node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js
-var require_dist_cjs10 = __commonJS({
+var require_dist_cjs7 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js"(exports2) {
     var { fromHttp } = require_fromHttp();
     exports2.fromHttp = fromHttp;
@@ -38250,7 +37183,7 @@ var require_xml_parser = __commonJS({
 });
 
 // node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
-var require_dist_cjs11 = __commonJS({
+var require_dist_cjs8 = __commonJS({
   "node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports2) {
     var { parseXML: parseXML3 } = require_xml_parser();
     exports2.parseXML = parseXML3;
@@ -38383,7 +37316,7 @@ var require_dist_cjs11 = __commonJS({
 var import_xml_builder, XmlShapeDeserializer;
 var init_XmlShapeDeserializer = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeDeserializer.js"() {
-    import_xml_builder = __toESM(require_dist_cjs11());
+    import_xml_builder = __toESM(require_dist_cjs8());
     init_client2();
     init_protocols();
     init_schema();
@@ -38890,7 +37823,7 @@ var init_QuerySerializerSettings = __esm({
 var import_xml_builder2, parseXmlBody, parseXmlErrorBody, loadRestXmlErrorCode;
 var init_parseXmlBody = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/parseXmlBody.js"() {
-    import_xml_builder2 = __toESM(require_dist_cjs11());
+    import_xml_builder2 = __toESM(require_dist_cjs8());
     init_client2();
     init_common();
     parseXmlBody = (streamBody, context) => collectBodyString(streamBody, context).then((encoded) => {
@@ -38942,7 +37875,7 @@ var init_parseXmlBody = __esm({
 var import_xml_builder3, XmlShapeSerializer;
 var init_XmlShapeSerializer = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeSerializer.js"() {
-    import_xml_builder3 = __toESM(require_dist_cjs11());
+    import_xml_builder3 = __toESM(require_dist_cjs8());
     init_protocols();
     init_schema();
     init_serde();
@@ -39964,7 +38897,7 @@ var init_runtimeConfig = __esm({
     init_config2();
     init_retry2();
     init_serde();
-    import_node_http_handler = __toESM(require_dist_cjs9());
+    import_node_http_handler = __toESM(require_dist_cjs6());
     init_runtimeConfig_shared();
     getRuntimeConfig2 = (config) => {
       emitWarningIfUnsupportedVersion2(process.version);
@@ -40227,7 +39160,7 @@ var init_sso_oidc = __esm({
 });
 
 // node_modules/@aws-sdk/token-providers/dist-cjs/index.js
-var require_dist_cjs12 = __commonJS({
+var require_dist_cjs9 = __commonJS({
   "node_modules/@aws-sdk/token-providers/dist-cjs/index.js"(exports2) {
     var { setTokenFeature: setTokenFeature2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getBearerTokenEnvKey: getBearerTokenEnvKey2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
@@ -40814,7 +39747,7 @@ var init_runtimeConfig2 = __esm({
     init_config2();
     init_retry2();
     init_serde();
-    import_node_http_handler2 = __toESM(require_dist_cjs9());
+    import_node_http_handler2 = __toESM(require_dist_cjs6());
     init_runtimeConfig_shared2();
     getRuntimeConfig4 = (config) => {
       emitWarningIfUnsupportedVersion2(process.version);
@@ -41054,11 +39987,11 @@ var require_loadSso_BGYXHf8s = __commonJS({
 });
 
 // node_modules/@aws-sdk/credential-provider-sso/dist-cjs/index.js
-var require_dist_cjs13 = __commonJS({
+var require_dist_cjs10 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-sso/dist-cjs/index.js"(exports2) {
     var { CredentialsProviderError: CredentialsProviderError2, getSSOTokenFromFile: getSSOTokenFromFile2, getProfileName: getProfileName2, parseKnownFiles: parseKnownFiles2, loadSsoSessionData: loadSsoSessionData2 } = (init_config2(), __toCommonJS(config_exports));
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { fromSso } = require_dist_cjs12();
+    var { fromSso } = require_dist_cjs9();
     var isSsoProfile = (arg) => arg && (typeof arg.sso_start_url === "string" || typeof arg.sso_account_id === "string" || typeof arg.sso_session === "string" || typeof arg.sso_region === "string" || typeof arg.sso_role_name === "string");
     var SHOULD_FAIL_CREDENTIAL_CHAIN = false;
     var resolveSSOCredentials = async ({ ssoStartUrl, ssoSession, ssoAccountId, ssoRegion, ssoRoleName, ssoClient, clientConfig, parentClientConfig, callerClientConfig, profile, filepath, configFilepath, ignoreCache, logger: logger2 }) => {
@@ -41793,7 +40726,7 @@ var init_runtimeConfig3 = __esm({
     init_config2();
     init_retry2();
     init_serde();
-    import_node_http_handler3 = __toESM(require_dist_cjs9());
+    import_node_http_handler3 = __toESM(require_dist_cjs6());
     init_runtimeConfig_shared3();
     getRuntimeConfig6 = (config) => {
       emitWarningIfUnsupportedVersion2(process.version);
@@ -42049,7 +40982,7 @@ var init_signin = __esm({
 });
 
 // node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js
-var require_dist_cjs14 = __commonJS({
+var require_dist_cjs11 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports2) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile4, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
@@ -42555,7 +41488,7 @@ var import_signature_v4_multi_region, createEndpointRuleSetHttpAuthSchemeParamet
 var init_httpAuthSchemeProvider4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js"() {
     init_httpAuthSchemes2();
-    import_signature_v4_multi_region = __toESM(require_dist_cjs6());
+    import_signature_v4_multi_region = __toESM(require_dist_cjs3());
     init_client2();
     init_endpoints();
     init_endpointResolver4();
@@ -43044,7 +41977,7 @@ var init_runtimeConfig_shared4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js"() {
     init_httpAuthSchemes2();
     init_protocols2();
-    import_signature_v4_multi_region2 = __toESM(require_dist_cjs6());
+    import_signature_v4_multi_region2 = __toESM(require_dist_cjs3());
     init_dist_es();
     init_client2();
     init_protocols();
@@ -43109,7 +42042,7 @@ var init_runtimeConfig4 = __esm({
     init_config2();
     init_retry2();
     init_serde();
-    import_node_http_handler4 = __toESM(require_dist_cjs9());
+    import_node_http_handler4 = __toESM(require_dist_cjs6());
     init_runtimeConfig_shared4();
     getRuntimeConfig8 = (config) => {
       emitWarningIfUnsupportedVersion2(process.version);
@@ -43532,7 +42465,7 @@ var init_sts = __esm({
 });
 
 // node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js
-var require_dist_cjs15 = __commonJS({
+var require_dist_cjs12 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports2) {
     var { externalDataInterceptor: externalDataInterceptor2, CredentialsProviderError: CredentialsProviderError2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
     var { exec } = require("node:child_process");
@@ -43671,7 +42604,7 @@ var require_fromTokenFile = __commonJS({
 });
 
 // node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js
-var require_dist_cjs16 = __commonJS({
+var require_dist_cjs13 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js"(exports2) {
     var __exportStar2 = (m3, e5) => {
       Object.assign(e5, m3);
@@ -43682,27 +42615,27 @@ var require_dist_cjs16 = __commonJS({
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js
-var require_dist_cjs17 = __commonJS({
+var require_dist_cjs14 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js"(exports2) {
     var { CredentialsProviderError: CredentialsProviderError2, chain: chain2, getProfileName: getProfileName2, parseKnownFiles: parseKnownFiles2 } = (init_config2(), __toCommonJS(config_exports));
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { fromLoginCredentials } = require_dist_cjs14();
+    var { fromLoginCredentials } = require_dist_cjs11();
     var resolveCredentialSource = (credentialSource, profileName, logger2) => {
       const sourceProvidersMap = {
         EcsContainer: async (options) => {
-          const { fromHttp } = require_dist_cjs10();
-          const { fromContainerMetadata } = require_dist_cjs8();
+          const { fromHttp } = require_dist_cjs7();
+          const { fromContainerMetadata } = require_dist_cjs5();
           logger2?.debug("@aws-sdk/credential-provider-ini - credential_source is EcsContainer");
           return async () => chain2(fromHttp(options ?? {}), fromContainerMetadata(options))().then(setNamedProvider);
         },
         Ec2InstanceMetadata: async (options) => {
           logger2?.debug("@aws-sdk/credential-provider-ini - credential_source is Ec2InstanceMetadata");
-          const { fromInstanceMetadata } = require_dist_cjs8();
+          const { fromInstanceMetadata } = require_dist_cjs5();
           return async () => fromInstanceMetadata(options)().then(setNamedProvider);
         },
         Environment: async (options) => {
           logger2?.debug("@aws-sdk/credential-provider-ini - credential_source is Environment");
-          const { fromEnv: fromEnv2 } = require_dist_cjs7();
+          const { fromEnv: fromEnv2 } = require_dist_cjs4();
           return async () => fromEnv2(options)().then(setNamedProvider);
         }
       };
@@ -43790,7 +42723,7 @@ var require_dist_cjs17 = __commonJS({
     };
     var isProcessProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.credential_process === "string";
     var resolveProcessCredentials = async (options, profile) => {
-      const { fromProcess } = require_dist_cjs15();
+      const { fromProcess } = require_dist_cjs12();
       const credentials = await fromProcess({
         ...options,
         profile
@@ -43798,7 +42731,7 @@ var require_dist_cjs17 = __commonJS({
       return setCredentialFeature2(credentials, "CREDENTIALS_PROFILE_PROCESS", "v");
     };
     var resolveSsoCredentials = async (profile, profileData, options = {}, callerClientConfig) => {
-      const { fromSSO } = require_dist_cjs13();
+      const { fromSSO } = require_dist_cjs10();
       return fromSSO({
         profile,
         logger: options.logger,
@@ -43829,7 +42762,7 @@ var require_dist_cjs17 = __commonJS({
     };
     var isWebIdentityProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.web_identity_token_file === "string" && typeof arg.role_arn === "string" && ["undefined", "string"].indexOf(typeof arg.role_session_name) > -1;
     var resolveWebIdentityCredentials = async (profile, options, callerClientConfig) => {
-      const { fromTokenFile } = require_dist_cjs16();
+      const { fromTokenFile } = require_dist_cjs13();
       const credentials = await fromTokenFile({
         webIdentityTokenFile: profile.web_identity_token_file,
         roleArn: profile.role_arn,
@@ -43879,16 +42812,16 @@ var require_dist_cjs17 = __commonJS({
 });
 
 // node_modules/@aws-sdk/credential-provider-node/dist-cjs/index.js
-var require_dist_cjs18 = __commonJS({
+var require_dist_cjs15 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-node/dist-cjs/index.js"(exports2) {
-    var { ENV_KEY, ENV_SECRET, fromEnv: fromEnv2 } = require_dist_cjs7();
+    var { ENV_KEY, ENV_SECRET, fromEnv: fromEnv2 } = require_dist_cjs4();
     var { chain: chain2, CredentialsProviderError: CredentialsProviderError2, ENV_PROFILE: ENV_PROFILE2 } = (init_config2(), __toCommonJS(config_exports));
     var ENV_IMDS_DISABLED2 = "AWS_EC2_METADATA_DISABLED";
     var remoteProvider = async (init) => {
-      const { ENV_CMDS_FULL_URI, ENV_CMDS_RELATIVE_URI, fromContainerMetadata, fromInstanceMetadata } = require_dist_cjs8();
+      const { ENV_CMDS_FULL_URI, ENV_CMDS_RELATIVE_URI, fromContainerMetadata, fromInstanceMetadata } = require_dist_cjs5();
       if (process.env[ENV_CMDS_RELATIVE_URI] || process.env[ENV_CMDS_FULL_URI]) {
         init.logger?.debug("@aws-sdk/credential-provider-node - remoteProvider::fromHttp/fromContainerMetadata");
-        const { fromHttp } = require_dist_cjs10();
+        const { fromHttp } = require_dist_cjs7();
         return chain2(fromHttp(init), fromContainerMetadata(init));
       }
       if (process.env[ENV_IMDS_DISABLED2] && process.env[ENV_IMDS_DISABLED2] !== "false") {
@@ -43996,22 +42929,22 @@ var require_dist_cjs18 = __commonJS({
         if (!ssoStartUrl && !ssoAccountId && !ssoRegion && !ssoRoleName && !ssoSession) {
           throw new CredentialsProviderError2("Skipping SSO provider in default chain (inputs do not include SSO fields).", { logger: init.logger });
         }
-        const { fromSSO } = require_dist_cjs13();
+        const { fromSSO } = require_dist_cjs10();
         return fromSSO(init)(awsIdentityProperties);
       },
       async (awsIdentityProperties) => {
         init.logger?.debug("@aws-sdk/credential-provider-node - defaultProvider::fromIni");
-        const { fromIni } = require_dist_cjs17();
+        const { fromIni } = require_dist_cjs14();
         return fromIni(init)(awsIdentityProperties);
       },
       async (awsIdentityProperties) => {
         init.logger?.debug("@aws-sdk/credential-provider-node - defaultProvider::fromProcess");
-        const { fromProcess } = require_dist_cjs15();
+        const { fromProcess } = require_dist_cjs12();
         return fromProcess(init)(awsIdentityProperties);
       },
       async (awsIdentityProperties) => {
         init.logger?.debug("@aws-sdk/credential-provider-node - defaultProvider::fromTokenFile");
-        const { fromTokenFile } = require_dist_cjs16();
+        const { fromTokenFile } = require_dist_cjs13();
         return fromTokenFile(init)(awsIdentityProperties);
       },
       async () => {
@@ -44835,18 +43768,18 @@ var require_runtimeConfig_shared = __commonJS({
   "node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.shared.js"(exports2) {
     var { AwsSdkSigV4ASigner: AwsSdkSigV4ASigner2, AwsSdkSigV4Signer: AwsSdkSigV4Signer2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
     var { AwsQueryProtocol: AwsQueryProtocol2 } = (init_protocols2(), __toCommonJS(protocols_exports2));
-    var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs6();
+    var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs3();
     var { NoAuthSigner: NoAuthSigner2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
     var { NoOpLogger: NoOpLogger2 } = (init_client2(), __toCommonJS(client_exports));
     var { parseUrl: parseUrl3 } = (init_protocols(), __toCommonJS(protocols_exports));
-    var { fromBase64: fromBase643, fromUtf8: fromUtf83, toBase64: toBase643, toUtf8: toUtf83 } = (init_serde(), __toCommonJS(serde_exports));
+    var { fromBase64: fromBase642, fromUtf8: fromUtf83, toBase64: toBase643, toUtf8: toUtf83 } = (init_serde(), __toCommonJS(serde_exports));
     var { defaultSTSHttpAuthSchemeProvider: defaultSTSHttpAuthSchemeProvider2 } = require_httpAuthSchemeProvider();
     var { defaultEndpointResolver: defaultEndpointResolver5 } = require_endpointResolver();
     var { errorTypeRegistries: errorTypeRegistries5 } = require_schemas_0();
     exports2.getRuntimeConfig = (config) => {
       return {
         apiVersion: "2011-06-15",
-        base64Decoder: config?.base64Decoder ?? fromBase643,
+        base64Decoder: config?.base64Decoder ?? fromBase642,
         base64Encoder: config?.base64Encoder ?? toBase643,
         disableHostPrefix: config?.disableHostPrefix ?? false,
         endpointProvider: config?.endpointProvider ?? defaultEndpointResolver5,
@@ -44894,13 +43827,13 @@ var require_runtimeConfig = __commonJS({
     var packageInfo = require_package();
     var { createDefaultUserAgentProvider: createDefaultUserAgentProvider2, emitWarningIfUnsupportedVersion: awsCheckVersion, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2 } = (init_client3(), __toCommonJS(client_exports2));
     var { AwsSdkSigV4ASigner: AwsSdkSigV4ASigner2, AwsSdkSigV4Signer: AwsSdkSigV4Signer2, NODE_AUTH_SCHEME_PREFERENCE_OPTIONS: NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2, NODE_SIGV4A_CONFIG_OPTIONS: NODE_SIGV4A_CONFIG_OPTIONS2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
-    var { defaultProvider: credentialDefaultProvider } = require_dist_cjs18();
+    var { defaultProvider: credentialDefaultProvider } = require_dist_cjs15();
     var { NoAuthSigner: NoAuthSigner2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
     var { emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2 } = (init_client2(), __toCommonJS(client_exports));
     var { loadConfig: loadNodeConfig, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, resolveDefaultsModeConfig: resolveDefaultsModeConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { DEFAULT_RETRY_MODE: DEFAULT_RETRY_MODE2, NODE_MAX_ATTEMPT_CONFIG_OPTIONS: NODE_MAX_ATTEMPT_CONFIG_OPTIONS2, NODE_RETRY_MODE_CONFIG_OPTIONS: NODE_RETRY_MODE_CONFIG_OPTIONS2 } = (init_retry2(), __toCommonJS(retry_exports));
     var { calculateBodyLength: calculateBodyLength2, Hash: Hash2 } = (init_serde(), __toCommonJS(serde_exports));
-    var { NodeHttpHandler: RequestHandler5, streamCollector: streamCollector7 } = require_dist_cjs9();
+    var { NodeHttpHandler: RequestHandler5, streamCollector: streamCollector7 } = require_dist_cjs6();
     var { getRuntimeConfig: getSharedRuntimeConfig } = require_runtimeConfig_shared();
     var getRuntimeConfig9 = (config) => {
       emitWarningIfUnsupportedVersion3(process.version);
@@ -44958,7 +43891,7 @@ var require_runtimeConfig = __commonJS({
 });
 
 // node_modules/@aws-sdk/client-sts/dist-cjs/index.js
-var require_dist_cjs19 = __commonJS({
+var require_dist_cjs16 = __commonJS({
   "node_modules/@aws-sdk/client-sts/dist-cjs/index.js"(exports2) {
     var __exportStar2 = (m3, e5) => {
       Object.assign(e5, m3);
@@ -64610,6 +63543,531 @@ var require_esprima = __commonJS({
   }
 });
 
+// node_modules/tslib/tslib.es6.mjs
+var tslib_es6_exports = {};
+__export(tslib_es6_exports, {
+  __addDisposableResource: () => __addDisposableResource,
+  __assign: () => __assign,
+  __asyncDelegator: () => __asyncDelegator,
+  __asyncGenerator: () => __asyncGenerator,
+  __asyncValues: () => __asyncValues,
+  __await: () => __await,
+  __awaiter: () => __awaiter6,
+  __classPrivateFieldGet: () => __classPrivateFieldGet,
+  __classPrivateFieldIn: () => __classPrivateFieldIn,
+  __classPrivateFieldSet: () => __classPrivateFieldSet,
+  __createBinding: () => __createBinding,
+  __decorate: () => __decorate,
+  __disposeResources: () => __disposeResources,
+  __esDecorate: () => __esDecorate,
+  __exportStar: () => __exportStar,
+  __extends: () => __extends,
+  __generator: () => __generator,
+  __importDefault: () => __importDefault,
+  __importStar: () => __importStar,
+  __makeTemplateObject: () => __makeTemplateObject,
+  __metadata: () => __metadata,
+  __param: () => __param,
+  __propKey: () => __propKey,
+  __read: () => __read,
+  __rest: () => __rest,
+  __rewriteRelativeImportExtension: () => __rewriteRelativeImportExtension,
+  __runInitializers: () => __runInitializers,
+  __setFunctionName: () => __setFunctionName,
+  __spread: () => __spread,
+  __spreadArray: () => __spreadArray,
+  __spreadArrays: () => __spreadArrays,
+  __values: () => __values,
+  default: () => tslib_es6_default
+});
+function __extends(d5, b6) {
+  if (typeof b6 !== "function" && b6 !== null)
+    throw new TypeError("Class extends value " + String(b6) + " is not a constructor or null");
+  extendStatics(d5, b6);
+  function __() {
+    this.constructor = d5;
+  }
+  d5.prototype = b6 === null ? Object.create(b6) : (__.prototype = b6.prototype, new __());
+}
+function __rest(s, e5) {
+  var t = {};
+  for (var p3 in s) if (Object.prototype.hasOwnProperty.call(s, p3) && e5.indexOf(p3) < 0)
+    t[p3] = s[p3];
+  if (s != null && typeof Object.getOwnPropertySymbols === "function")
+    for (var i5 = 0, p3 = Object.getOwnPropertySymbols(s); i5 < p3.length; i5++) {
+      if (e5.indexOf(p3[i5]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p3[i5]))
+        t[p3[i5]] = s[p3[i5]];
+    }
+  return t;
+}
+function __decorate(decorators, target, key, desc) {
+  var c5 = arguments.length, r5 = c5 < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d5;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r5 = Reflect.decorate(decorators, target, key, desc);
+  else for (var i5 = decorators.length - 1; i5 >= 0; i5--) if (d5 = decorators[i5]) r5 = (c5 < 3 ? d5(r5) : c5 > 3 ? d5(target, key, r5) : d5(target, key)) || r5;
+  return c5 > 3 && r5 && Object.defineProperty(target, key, r5), r5;
+}
+function __param(paramIndex, decorator) {
+  return function(target, key) {
+    decorator(target, key, paramIndex);
+  };
+}
+function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+  function accept(f5) {
+    if (f5 !== void 0 && typeof f5 !== "function") throw new TypeError("Function expected");
+    return f5;
+  }
+  var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+  var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+  var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+  var _, done = false;
+  for (var i5 = decorators.length - 1; i5 >= 0; i5--) {
+    var context = {};
+    for (var p3 in contextIn) context[p3] = p3 === "access" ? {} : contextIn[p3];
+    for (var p3 in contextIn.access) context.access[p3] = contextIn.access[p3];
+    context.addInitializer = function(f5) {
+      if (done) throw new TypeError("Cannot add initializers after decoration has completed");
+      extraInitializers.push(accept(f5 || null));
+    };
+    var result = (0, decorators[i5])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+    if (kind === "accessor") {
+      if (result === void 0) continue;
+      if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+      if (_ = accept(result.get)) descriptor.get = _;
+      if (_ = accept(result.set)) descriptor.set = _;
+      if (_ = accept(result.init)) initializers.unshift(_);
+    } else if (_ = accept(result)) {
+      if (kind === "field") initializers.unshift(_);
+      else descriptor[key] = _;
+    }
+  }
+  if (target) Object.defineProperty(target, contextIn.name, descriptor);
+  done = true;
+}
+function __runInitializers(thisArg, initializers, value) {
+  var useValue = arguments.length > 2;
+  for (var i5 = 0; i5 < initializers.length; i5++) {
+    value = useValue ? initializers[i5].call(thisArg, value) : initializers[i5].call(thisArg);
+  }
+  return useValue ? value : void 0;
+}
+function __propKey(x) {
+  return typeof x === "symbol" ? x : "".concat(x);
+}
+function __setFunctionName(f5, name, prefix) {
+  if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+  return Object.defineProperty(f5, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
+}
+function __metadata(metadataKey, metadataValue) {
+  if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+}
+function __awaiter6(thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function(resolve) {
+      resolve(value);
+    });
+  }
+  return new (P || (P = Promise))(function(resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e5) {
+        reject(e5);
+      }
+    }
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e5) {
+        reject(e5);
+      }
+    }
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+}
+function __generator(thisArg, body) {
+  var _ = { label: 0, sent: function() {
+    if (t[0] & 1) throw t[1];
+    return t[1];
+  }, trys: [], ops: [] }, f5, y, t, g5 = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+  return g5.next = verb(0), g5["throw"] = verb(1), g5["return"] = verb(2), typeof Symbol === "function" && (g5[Symbol.iterator] = function() {
+    return this;
+  }), g5;
+  function verb(n4) {
+    return function(v) {
+      return step([n4, v]);
+    };
+  }
+  function step(op2) {
+    if (f5) throw new TypeError("Generator is already executing.");
+    while (g5 && (g5 = 0, op2[0] && (_ = 0)), _) try {
+      if (f5 = 1, y && (t = op2[0] & 2 ? y["return"] : op2[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op2[1])).done) return t;
+      if (y = 0, t) op2 = [op2[0] & 2, t.value];
+      switch (op2[0]) {
+        case 0:
+        case 1:
+          t = op2;
+          break;
+        case 4:
+          _.label++;
+          return { value: op2[1], done: false };
+        case 5:
+          _.label++;
+          y = op2[1];
+          op2 = [0];
+          continue;
+        case 7:
+          op2 = _.ops.pop();
+          _.trys.pop();
+          continue;
+        default:
+          if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op2[0] === 6 || op2[0] === 2)) {
+            _ = 0;
+            continue;
+          }
+          if (op2[0] === 3 && (!t || op2[1] > t[0] && op2[1] < t[3])) {
+            _.label = op2[1];
+            break;
+          }
+          if (op2[0] === 6 && _.label < t[1]) {
+            _.label = t[1];
+            t = op2;
+            break;
+          }
+          if (t && _.label < t[2]) {
+            _.label = t[2];
+            _.ops.push(op2);
+            break;
+          }
+          if (t[2]) _.ops.pop();
+          _.trys.pop();
+          continue;
+      }
+      op2 = body.call(thisArg, _);
+    } catch (e5) {
+      op2 = [6, e5];
+      y = 0;
+    } finally {
+      f5 = t = 0;
+    }
+    if (op2[0] & 5) throw op2[1];
+    return { value: op2[0] ? op2[1] : void 0, done: true };
+  }
+}
+function __exportStar(m3, o3) {
+  for (var p3 in m3) if (p3 !== "default" && !Object.prototype.hasOwnProperty.call(o3, p3)) __createBinding(o3, m3, p3);
+}
+function __values(o3) {
+  var s = typeof Symbol === "function" && Symbol.iterator, m3 = s && o3[s], i5 = 0;
+  if (m3) return m3.call(o3);
+  if (o3 && typeof o3.length === "number") return {
+    next: function() {
+      if (o3 && i5 >= o3.length) o3 = void 0;
+      return { value: o3 && o3[i5++], done: !o3 };
+    }
+  };
+  throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+function __read(o3, n4) {
+  var m3 = typeof Symbol === "function" && o3[Symbol.iterator];
+  if (!m3) return o3;
+  var i5 = m3.call(o3), r5, ar = [], e5;
+  try {
+    while ((n4 === void 0 || n4-- > 0) && !(r5 = i5.next()).done) ar.push(r5.value);
+  } catch (error3) {
+    e5 = { error: error3 };
+  } finally {
+    try {
+      if (r5 && !r5.done && (m3 = i5["return"])) m3.call(i5);
+    } finally {
+      if (e5) throw e5.error;
+    }
+  }
+  return ar;
+}
+function __spread() {
+  for (var ar = [], i5 = 0; i5 < arguments.length; i5++)
+    ar = ar.concat(__read(arguments[i5]));
+  return ar;
+}
+function __spreadArrays() {
+  for (var s = 0, i5 = 0, il = arguments.length; i5 < il; i5++) s += arguments[i5].length;
+  for (var r5 = Array(s), k5 = 0, i5 = 0; i5 < il; i5++)
+    for (var a5 = arguments[i5], j5 = 0, jl = a5.length; j5 < jl; j5++, k5++)
+      r5[k5] = a5[j5];
+  return r5;
+}
+function __spreadArray(to, from, pack) {
+  if (pack || arguments.length === 2) for (var i5 = 0, l3 = from.length, ar; i5 < l3; i5++) {
+    if (ar || !(i5 in from)) {
+      if (!ar) ar = Array.prototype.slice.call(from, 0, i5);
+      ar[i5] = from[i5];
+    }
+  }
+  return to.concat(ar || Array.prototype.slice.call(from));
+}
+function __await(v) {
+  return this instanceof __await ? (this.v = v, this) : new __await(v);
+}
+function __asyncGenerator(thisArg, _arguments, generator) {
+  if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+  var g5 = generator.apply(thisArg, _arguments || []), i5, q2 = [];
+  return i5 = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i5[Symbol.asyncIterator] = function() {
+    return this;
+  }, i5;
+  function awaitReturn(f5) {
+    return function(v) {
+      return Promise.resolve(v).then(f5, reject);
+    };
+  }
+  function verb(n4, f5) {
+    if (g5[n4]) {
+      i5[n4] = function(v) {
+        return new Promise(function(a5, b6) {
+          q2.push([n4, v, a5, b6]) > 1 || resume3(n4, v);
+        });
+      };
+      if (f5) i5[n4] = f5(i5[n4]);
+    }
+  }
+  function resume3(n4, v) {
+    try {
+      step(g5[n4](v));
+    } catch (e5) {
+      settle(q2[0][3], e5);
+    }
+  }
+  function step(r5) {
+    r5.value instanceof __await ? Promise.resolve(r5.value.v).then(fulfill, reject) : settle(q2[0][2], r5);
+  }
+  function fulfill(value) {
+    resume3("next", value);
+  }
+  function reject(value) {
+    resume3("throw", value);
+  }
+  function settle(f5, v) {
+    if (f5(v), q2.shift(), q2.length) resume3(q2[0][0], q2[0][1]);
+  }
+}
+function __asyncDelegator(o3) {
+  var i5, p3;
+  return i5 = {}, verb("next"), verb("throw", function(e5) {
+    throw e5;
+  }), verb("return"), i5[Symbol.iterator] = function() {
+    return this;
+  }, i5;
+  function verb(n4, f5) {
+    i5[n4] = o3[n4] ? function(v) {
+      return (p3 = !p3) ? { value: __await(o3[n4](v)), done: false } : f5 ? f5(v) : v;
+    } : f5;
+  }
+}
+function __asyncValues(o3) {
+  if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+  var m3 = o3[Symbol.asyncIterator], i5;
+  return m3 ? m3.call(o3) : (o3 = typeof __values === "function" ? __values(o3) : o3[Symbol.iterator](), i5 = {}, verb("next"), verb("throw"), verb("return"), i5[Symbol.asyncIterator] = function() {
+    return this;
+  }, i5);
+  function verb(n4) {
+    i5[n4] = o3[n4] && function(v) {
+      return new Promise(function(resolve, reject) {
+        v = o3[n4](v), settle(resolve, reject, v.done, v.value);
+      });
+    };
+  }
+  function settle(resolve, reject, d5, v) {
+    Promise.resolve(v).then(function(v2) {
+      resolve({ value: v2, done: d5 });
+    }, reject);
+  }
+}
+function __makeTemplateObject(cooked, raw) {
+  if (Object.defineProperty) {
+    Object.defineProperty(cooked, "raw", { value: raw });
+  } else {
+    cooked.raw = raw;
+  }
+  return cooked;
+}
+function __importStar(mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) {
+    for (var k5 = ownKeys(mod), i5 = 0; i5 < k5.length; i5++) if (k5[i5] !== "default") __createBinding(result, mod, k5[i5]);
+  }
+  __setModuleDefault(result, mod);
+  return result;
+}
+function __importDefault(mod) {
+  return mod && mod.__esModule ? mod : { default: mod };
+}
+function __classPrivateFieldGet(receiver, state2, kind, f5) {
+  if (kind === "a" && !f5) throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state2 === "function" ? receiver !== state2 || !f5 : !state2.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f5 : kind === "a" ? f5.call(receiver) : f5 ? f5.value : state2.get(receiver);
+}
+function __classPrivateFieldSet(receiver, state2, value, kind, f5) {
+  if (kind === "m") throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f5) throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state2 === "function" ? receiver !== state2 || !f5 : !state2.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f5.call(receiver, value) : f5 ? f5.value = value : state2.set(receiver, value), value;
+}
+function __classPrivateFieldIn(state2, receiver) {
+  if (receiver === null || typeof receiver !== "object" && typeof receiver !== "function") throw new TypeError("Cannot use 'in' operator on non-object");
+  return typeof state2 === "function" ? receiver === state2 : state2.has(receiver);
+}
+function __addDisposableResource(env2, value, async) {
+  if (value !== null && value !== void 0) {
+    if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
+    var dispose, inner;
+    if (async) {
+      if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
+      dispose = value[Symbol.asyncDispose];
+    }
+    if (dispose === void 0) {
+      if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
+      dispose = value[Symbol.dispose];
+      if (async) inner = dispose;
+    }
+    if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
+    if (inner) dispose = function() {
+      try {
+        inner.call(this);
+      } catch (e5) {
+        return Promise.reject(e5);
+      }
+    };
+    env2.stack.push({ value, dispose, async });
+  } else if (async) {
+    env2.stack.push({ async: true });
+  }
+  return value;
+}
+function __disposeResources(env2) {
+  function fail(e5) {
+    env2.error = env2.hasError ? new _SuppressedError(e5, env2.error, "An error was suppressed during disposal.") : e5;
+    env2.hasError = true;
+  }
+  var r5, s = 0;
+  function next() {
+    while (r5 = env2.stack.pop()) {
+      try {
+        if (!r5.async && s === 1) return s = 0, env2.stack.push(r5), Promise.resolve().then(next);
+        if (r5.dispose) {
+          var result = r5.dispose.call(r5.value);
+          if (r5.async) return s |= 2, Promise.resolve(result).then(next, function(e5) {
+            fail(e5);
+            return next();
+          });
+        } else s |= 1;
+      } catch (e5) {
+        fail(e5);
+      }
+    }
+    if (s === 1) return env2.hasError ? Promise.reject(env2.error) : Promise.resolve();
+    if (env2.hasError) throw env2.error;
+  }
+  return next();
+}
+function __rewriteRelativeImportExtension(path4, preserveJsx) {
+  if (typeof path4 === "string" && /^\.\.?\//.test(path4)) {
+    return path4.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m3, tsx, d5, ext, cm) {
+      return tsx ? preserveJsx ? ".jsx" : ".js" : d5 && (!ext || !cm) ? m3 : d5 + ext + "." + cm.toLowerCase() + "js";
+    });
+  }
+  return path4;
+}
+var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
+var init_tslib_es6 = __esm({
+  "node_modules/tslib/tslib.es6.mjs"() {
+    extendStatics = function(d5, b6) {
+      extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d6, b7) {
+        d6.__proto__ = b7;
+      } || function(d6, b7) {
+        for (var p3 in b7) if (Object.prototype.hasOwnProperty.call(b7, p3)) d6[p3] = b7[p3];
+      };
+      return extendStatics(d5, b6);
+    };
+    __assign = function() {
+      __assign = Object.assign || function __assign2(t) {
+        for (var s, i5 = 1, n4 = arguments.length; i5 < n4; i5++) {
+          s = arguments[i5];
+          for (var p3 in s) if (Object.prototype.hasOwnProperty.call(s, p3)) t[p3] = s[p3];
+        }
+        return t;
+      };
+      return __assign.apply(this, arguments);
+    };
+    __createBinding = Object.create ? (function(o3, m3, k5, k22) {
+      if (k22 === void 0) k22 = k5;
+      var desc = Object.getOwnPropertyDescriptor(m3, k5);
+      if (!desc || ("get" in desc ? !m3.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() {
+          return m3[k5];
+        } };
+      }
+      Object.defineProperty(o3, k22, desc);
+    }) : (function(o3, m3, k5, k22) {
+      if (k22 === void 0) k22 = k5;
+      o3[k22] = m3[k5];
+    });
+    __setModuleDefault = Object.create ? (function(o3, v) {
+      Object.defineProperty(o3, "default", { enumerable: true, value: v });
+    }) : function(o3, v) {
+      o3["default"] = v;
+    };
+    ownKeys = function(o3) {
+      ownKeys = Object.getOwnPropertyNames || function(o4) {
+        var ar = [];
+        for (var k5 in o4) if (Object.prototype.hasOwnProperty.call(o4, k5)) ar[ar.length] = k5;
+        return ar;
+      };
+      return ownKeys(o3);
+    };
+    _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function(error3, suppressed, message) {
+      var e5 = new Error(message);
+      return e5.name = "SuppressedError", e5.error = error3, e5.suppressed = suppressed, e5;
+    };
+    tslib_es6_default = {
+      __extends,
+      __assign,
+      __rest,
+      __decorate,
+      __param,
+      __esDecorate,
+      __runInitializers,
+      __propKey,
+      __setFunctionName,
+      __metadata,
+      __awaiter: __awaiter6,
+      __generator,
+      __createBinding,
+      __exportStar,
+      __values,
+      __read,
+      __spread,
+      __spreadArrays,
+      __spreadArray,
+      __await,
+      __asyncGenerator,
+      __asyncDelegator,
+      __asyncValues,
+      __makeTemplateObject,
+      __importStar,
+      __importDefault,
+      __classPrivateFieldGet,
+      __classPrivateFieldSet,
+      __classPrivateFieldIn,
+      __addDisposableResource,
+      __disposeResources,
+      __rewriteRelativeImportExtension
+    };
+  }
+});
+
 // node_modules/ast-types/lib/types.js
 var require_types = __commonJS({
   "node_modules/ast-types/lib/types.js"(exports2) {
@@ -67612,7 +67070,7 @@ var require_namedTypes = __commonJS({
 });
 
 // node_modules/ast-types/main.js
-var require_main3 = __commonJS({
+var require_main = __commonJS({
   "node_modules/ast-types/main.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
@@ -67796,7 +67254,7 @@ var init_degenerator = __esm({
     import_util3 = require("util");
     import_escodegen = __toESM(require_escodegen(), 1);
     import_esprima = __toESM(require_esprima(), 1);
-    import_ast_types = __toESM(require_main3(), 1);
+    import_ast_types = __toESM(require_main(), 1);
   }
 });
 
@@ -73025,12 +72483,12 @@ function getIDToken(aud) {
 // src/assumeRole.ts
 var import_node_assert = __toESM(require("node:assert"));
 var import_node_path8 = __toESM(require("node:path"));
-var import_client_sts2 = __toESM(require_dist_cjs19());
+var import_client_sts2 = __toESM(require_dist_cjs16());
 
 // src/helpers.ts
 var fs3 = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
-var import_client_sts = __toESM(require_dist_cjs19());
+var import_client_sts = __toESM(require_dist_cjs16());
 var MAX_TAG_VALUE_LENGTH = 256;
 var SANITIZATION_CHARACTER = "_";
 var SPECIAL_CHARS_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/;
@@ -73564,8 +73022,8 @@ async function assumeRole(params) {
 }
 
 // src/CredentialsClient.ts
-var import_client_sts3 = __toESM(require_dist_cjs19());
-var import_node_http_handler5 = __toESM(require_dist_cjs9());
+var import_client_sts3 = __toESM(require_dist_cjs16());
+var import_node_http_handler5 = __toESM(require_dist_cjs6());
 
 // node_modules/proxy-agent/dist/index.js
 var http5 = __toESM(require("http"), 1);

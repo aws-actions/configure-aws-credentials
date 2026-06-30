@@ -431,12 +431,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -----------
 
-The following npm packages may be included in this product:
+The following npm package may be included in this product:
 
- - @aws-crypto/crc32@5.2.0
  - @aws-crypto/util@5.2.0
 
-These packages each contain the following license:
+This package contains the following license:
 
 Apache License
                            Version 2.0, January 2004
@@ -855,7 +854,7 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/signature-v4-multi-region@3.996.35
- - @smithy/core@3.26.0
+ - @smithy/core@3.28.0
  - @smithy/types@4.15.0
 
 These packages each contain the following license:
@@ -1684,7 +1683,7 @@ The following npm packages may be included in this product:
  - @smithy/credential-provider-imds@4.4.2
  - @smithy/fetch-http-handler@5.5.2
  - @smithy/is-array-buffer@2.2.0
- - @smithy/node-http-handler@4.8.2
+ - @smithy/node-http-handler@4.9.1
  - @smithy/signature-v4@5.4.6
  - @smithy/util-buffer-from@2.2.0
  - @smithy/util-utf8@2.3.0
