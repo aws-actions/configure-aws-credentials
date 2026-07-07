@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.2.2](https://github.com/aws-actions/configure-aws-credentials/compare/v6.2.1...v6.2.2) (2026-07-07)
+
+
+### Miscellaneous Chores
+
+* release 6.2.2 ([d01d678](https://github.com/aws-actions/configure-aws-credentials/commit/d01d678e65d6d2bd9d5ca7a95d6f07b00e25f2c2))
+
 ## [6.2.1](https://github.com/aws-actions/configure-aws-credentials/compare/v6.2.0...v6.2.1) (2026-06-26)
 
 
