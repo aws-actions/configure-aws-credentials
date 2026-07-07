@@ -3933,12 +3933,12 @@ var require_webidl = __commonJS({
       }
       return V;
     };
-    webidl.converters.TypedArray = function(V, T, prefix, name, opts) {
-      if (webidl.util.Type(V) !== "Object" || !types3.isTypedArray(V) || V.constructor.name !== T.name) {
+    webidl.converters.TypedArray = function(V, T2, prefix, name, opts) {
+      if (webidl.util.Type(V) !== "Object" || !types3.isTypedArray(V) || V.constructor.name !== T2.name) {
         throw webidl.errors.conversionFailed({
           prefix,
           argument: `${name} ("${webidl.util.Stringify(V)}")`,
-          types: [T.name]
+          types: [T2.name]
         });
       }
       if (opts?.allowShared === false && types3.isSharedArrayBuffer(V.buffer)) {
@@ -9279,7 +9279,7 @@ var require_readable = __commonJS({
   "node_modules/undici/lib/api/readable.js"(exports2, module2) {
     "use strict";
     var assert4 = require("node:assert");
-    var { Readable: Readable7 } = require("node:stream");
+    var { Readable: Readable8 } = require("node:stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError, AbortError } = require_errors();
     var util = require_util();
     var { ReadableStreamFrom } = require_util();
@@ -9291,7 +9291,7 @@ var require_readable = __commonJS({
     var kContentLength = /* @__PURE__ */ Symbol("kContentLength");
     var noop = () => {
     };
-    var BodyReadable = class extends Readable7 {
+    var BodyReadable = class extends Readable8 {
       constructor({
         resume: resume3,
         abort,
@@ -9633,7 +9633,7 @@ var require_api_request = __commonJS({
   "node_modules/undici/lib/api/api-request.js"(exports2, module2) {
     "use strict";
     var assert4 = require("node:assert");
-    var { Readable: Readable7 } = require_readable();
+    var { Readable: Readable8 } = require_readable();
     var { InvalidArgumentError, RequestAbortedError } = require_errors();
     var util = require_util();
     var { getResolveErrorBodyCallback } = require_util3();
@@ -9728,7 +9728,7 @@ var require_api_request = __commonJS({
         const parsedHeaders = responseHeaders === "raw" ? util.parseHeaders(rawHeaders) : headers;
         const contentType = parsedHeaders["content-type"];
         const contentLength = parsedHeaders["content-length"];
-        const res = new Readable7({
+        const res = new Readable8({
           resume: resume3,
           abort,
           contentType,
@@ -10043,8 +10043,8 @@ var require_api_pipeline = __commonJS({
   "node_modules/undici/lib/api/api-pipeline.js"(exports2, module2) {
     "use strict";
     var {
-      Readable: Readable7,
-      Duplex: Duplex2,
+      Readable: Readable8,
+      Duplex,
       PassThrough: PassThrough3
     } = require("node:stream");
     var {
@@ -10057,7 +10057,7 @@ var require_api_pipeline = __commonJS({
     var { addSignal, removeSignal } = require_abort_signal();
     var assert4 = require("node:assert");
     var kResume = /* @__PURE__ */ Symbol("resume");
-    var PipelineRequest = class extends Readable7 {
+    var PipelineRequest = class extends Readable8 {
       constructor() {
         super({ autoDestroy: true });
         this[kResume] = null;
@@ -10074,7 +10074,7 @@ var require_api_pipeline = __commonJS({
         callback(err);
       }
     };
-    var PipelineResponse = class extends Readable7 {
+    var PipelineResponse = class extends Readable8 {
       constructor(resume3) {
         super({ autoDestroy: true });
         this[kResume] = resume3;
@@ -10115,7 +10115,7 @@ var require_api_pipeline = __commonJS({
         this.context = null;
         this.onInfo = onInfo || null;
         this.req = new PipelineRequest().on("error", util.nop);
-        this.ret = new Duplex2({
+        this.ret = new Duplex({
           readableObjectMode: opts.objectMode,
           autoDestroy: true,
           read: () => {
@@ -13399,7 +13399,7 @@ var require_fetch = __commonJS({
       subresourceSet
     } = require_constants3();
     var EE = require("node:events");
-    var { Readable: Readable7, pipeline, finished } = require("node:stream");
+    var { Readable: Readable8, pipeline, finished } = require("node:stream");
     var { addAbortListener, isErrored, isReadable, bufferToLowerCasedHeaderName } = require_util();
     var { dataURLProcessor, serializeAMimeType, minimizeSupportedMimeType } = require_data_url();
     var { getGlobalDispatcher } = require_global2();
@@ -14300,7 +14300,7 @@ var require_fetch = __commonJS({
                 headersList.append(bufferToLowerCasedHeaderName(rawHeaders[i5]), rawHeaders[i5 + 1].toString("latin1"), true);
               }
               location = headersList.get("location", true);
-              this.body = new Readable7({ read: resume3 });
+              this.body = new Readable8({ read: resume3 });
               const decoders = [];
               const willFollow = location && request.redirect === "follow" && redirectStatusSet.has(status);
               if (request.method !== "HEAD" && request.method !== "CONNECT" && !nullBodyStatus.includes(status) && !willFollow) {
@@ -17024,8 +17024,8 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto4.createHash("sha1").update(keyValue + uid).digest("base64");
-          if (secWSAccept !== digest) {
+          const digest2 = crypto4.createHash("sha1").update(keyValue + uid).digest("base64");
+          if (secWSAccept !== digest2) {
             failWebsocketConnection(ws, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
           }
@@ -17222,7 +17222,7 @@ var require_permessage_deflate = __commonJS({
 var require_receiver = __commonJS({
   "node_modules/undici/lib/web/websocket/receiver.js"(exports2, module2) {
     "use strict";
-    var { Writable: Writable3 } = require("node:stream");
+    var { Writable: Writable4 } = require("node:stream");
     var assert4 = require("node:assert");
     var { parserStates, opcodes, states, emptyBuffer, sentCloseFrameState } = require_constants5();
     var { kReadyState, kSentClose, kResponse, kReceivedClose } = require_symbols5();
@@ -17245,7 +17245,7 @@ var require_receiver = __commonJS({
       closeWebSocketConnection(ws, code, reason, Buffer.byteLength(reason));
       failWebsocketConnection(ws, reason);
     }
-    var ByteParser = class extends Writable3 {
+    var ByteParser = class extends Writable4 {
       #buffers = [];
       #fragmentsBytes = 0;
       #byteOffset = 0;
@@ -17655,9 +17655,9 @@ var require_sender = __commonJS({
       }
     };
     function createFrame(data3, hint) {
-      return new WebsocketFrameSend(toBuffer2(data3, hint)).createFrame(hint === sendHints.string ? opcodes.TEXT : opcodes.BINARY);
+      return new WebsocketFrameSend(toBuffer3(data3, hint)).createFrame(hint === sendHints.string ? opcodes.TEXT : opcodes.BINARY);
     }
-    function toBuffer2(data3, hint) {
+    function toBuffer3(data3, hint) {
       switch (hint) {
         case sendHints.string:
           return Buffer.from(data3);
@@ -19697,7 +19697,7 @@ var init_client = __esm({
           }
         }
       }
-      send(command, optionsOrCb, cb) {
+      send(command5, optionsOrCb, cb) {
         const options = typeof optionsOrCb !== "function" ? optionsOrCb : void 0;
         const callback = typeof optionsOrCb === "function" ? optionsOrCb : cb;
         const useHandlerCache = options === void 0 && this.config.cacheMiddleware === true;
@@ -19707,21 +19707,21 @@ var init_client = __esm({
             this.handlers = /* @__PURE__ */ new WeakMap();
           }
           const handlers = this.handlers;
-          if (handlers.has(command.constructor)) {
-            handler = handlers.get(command.constructor);
+          if (handlers.has(command5.constructor)) {
+            handler = handlers.get(command5.constructor);
           } else {
-            handler = command.resolveMiddleware(this.middlewareStack, this.config, options);
-            handlers.set(command.constructor, handler);
+            handler = command5.resolveMiddleware(this.middlewareStack, this.config, options);
+            handlers.set(command5.constructor, handler);
           }
         } else {
           delete this.handlers;
-          handler = command.resolveMiddleware(this.middlewareStack, this.config, options);
+          handler = command5.resolveMiddleware(this.middlewareStack, this.config, options);
         }
         if (callback) {
-          handler(command).then((result) => callback(null, result.output), (err) => callback(err)).catch(() => {
+          handler(command5).then((result) => callback(null, result.output), (err) => callback(err)).catch(() => {
           });
         } else {
-          return handler(command).then((result) => result.output);
+          return handler(command5).then((result) => result.output);
         }
       }
       destroy() {
@@ -20739,20 +20739,20 @@ var createAggregatedClient;
 var init_create_aggregated_client = __esm({
   "node_modules/@smithy/core/dist-es/submodules/client/smithy-client/create-aggregated-client.js"() {
     createAggregatedClient = (commands5, Client3, options) => {
-      for (const [command, CommandCtor] of Object.entries(commands5)) {
+      for (const [command5, CommandCtor] of Object.entries(commands5)) {
         const methodImpl = async function(args, optionsOrCb, cb) {
-          const command2 = new CommandCtor(args);
+          const command6 = new CommandCtor(args);
           if (typeof optionsOrCb === "function") {
-            this.send(command2, optionsOrCb);
+            this.send(command6, optionsOrCb);
           } else if (typeof cb === "function") {
             if (typeof optionsOrCb !== "object")
               throw new Error(`Expected http options but got ${typeof optionsOrCb}`);
-            this.send(command2, optionsOrCb || {}, cb);
+            this.send(command6, optionsOrCb || {}, cb);
           } else {
-            return this.send(command2, optionsOrCb);
+            return this.send(command6, optionsOrCb);
           }
         };
-        const methodName = (command[0].toLowerCase() + command.slice(1)).replace(/Command$/, "");
+        const methodName = (command5[0].toLowerCase() + command5.slice(1)).replace(/Command$/, "");
         Client3.prototype[methodName] = methodImpl;
       }
       const { paginators = {}, waiters = {} } = options ?? {};
@@ -21200,6 +21200,23 @@ var init_serde_json = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client-command-builder.js
+function makeBuilder(common, service, name, ep) {
+  return function makeCommand(added, plugins, op2, $, smithyContext = {}) {
+    const epMerged = Object.assign({}, common, added);
+    return Command2.classBuilder().ep(epMerged).m(function(CommandCtor, clientStack, config, options) {
+      const list2 = plugins.call(this, CommandCtor, clientStack, config, options);
+      list2.unshift(ep(config, CommandCtor.getEndpointParameterInstructions()));
+      return list2;
+    }).s(service, op2, smithyContext).n(name, op2.charAt(0).toUpperCase() + op2.slice(1) + "Command").sc($).build();
+  };
+}
+var init_client_command_builder = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client-command-builder.js"() {
+    init_command();
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/client/index.js
 var client_exports = {};
 __export(client_exports, {
@@ -21229,6 +21246,7 @@ __export(client_exports, {
   invalidProvider: () => invalidProvider,
   isSerializableHeaderValue: () => isSerializableHeaderValue,
   loadConfigsForDefaultMode: () => loadConfigsForDefaultMode,
+  makeBuilder: () => makeBuilder,
   map: () => map2,
   normalizeProvider: () => normalizeProvider,
   resolveChecksumRuntimeConfig: () => resolveChecksumRuntimeConfig,
@@ -21270,6 +21288,7 @@ var init_client2 = __esm({
     init_schemaLogFilter();
     init_ser_utils();
     init_serde_json();
+    init_client_command_builder();
   }
 });
 
@@ -21957,8 +21976,8 @@ var init_schema_date_utils = __esm({
       const date2 = new Date(Date.UTC(Number(yearStr), Number(monthStr) - 1, Number(dayStr), Number(hours), Number(minutes), Number(seconds), Number(ms) ? Math.round(parseFloat(`0.${ms}`) * 1e3) : 0));
       date2.setUTCFullYear(Number(yearStr));
       if (offsetStr.toUpperCase() != "Z") {
-        const [, sign, offsetH, offsetM] = /([+-])(\d\d):(\d\d)/.exec(offsetStr) || [void 0, "+", 0, 0];
-        const scalar = sign === "-" ? 1 : -1;
+        const [, sign2, offsetH, offsetM] = /([+-])(\d\d):(\d\d)/.exec(offsetStr) || [void 0, "+", 0, 0];
+        const scalar = sign2 === "-" ? 1 : -1;
         date2.setTime(date2.getTime() + scalar * (Number(offsetH) * 60 * 60 * 1e3 + Number(offsetM) * 60 * 1e3));
       }
       return date2;
@@ -24771,58 +24790,63 @@ var init_ChecksumStream = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js"() {
     import_node_stream2 = require("node:stream");
     init_toBase64();
-    ChecksumStream = class extends import_node_stream2.Duplex {
+    ChecksumStream = class extends import_node_stream2.Readable {
       expectedChecksum;
       checksumSourceLocation;
       checksum;
       source;
       base64Encoder;
-      pendingCallback = null;
       constructor({ expectedChecksum, checksum, source, checksumSourceLocation, base64Encoder }) {
         super();
-        if (typeof source.pipe === "function") {
-          this.source = source;
-        } else {
+        if (typeof source.pipe !== "function") {
           throw new Error(`@smithy/util-stream: unsupported source type ${source?.constructor?.name ?? source} in ChecksumStream.`);
         }
+        this.source = source;
         this.base64Encoder = base64Encoder ?? toBase64;
         this.expectedChecksum = expectedChecksum;
         this.checksum = checksum;
         this.checksumSourceLocation = checksumSourceLocation;
-        this.source.pipe(this);
+        this.source.on("data", this.onSourceData);
+        this.source.on("end", this.onSourceEnd);
+        this.source.on("error", this.onSourceError);
+        this.source.pause();
       }
-      _read(size) {
-        if (this.pendingCallback) {
-          const callback = this.pendingCallback;
-          this.pendingCallback = null;
-          callback();
+      onSourceData = (chunk) => {
+        if (this.destroyed) {
+          return;
         }
-      }
-      _write(chunk, encoding, callback) {
         try {
           this.checksum.update(chunk);
-          const canPushMore = this.push(chunk);
-          if (!canPushMore) {
-            this.pendingCallback = callback;
+        } catch (e5) {
+          this.destroy(e5);
+          return;
+        }
+        if (!this.push(chunk)) {
+          this.source.pause();
+        }
+      };
+      onSourceEnd = async () => {
+        if (this.destroyed) {
+          return;
+        }
+        try {
+          const digest2 = await this.checksum.digest();
+          const received = this.base64Encoder(digest2);
+          if (this.expectedChecksum !== received) {
+            this.destroy(new Error(`Checksum mismatch: expected "${this.expectedChecksum}" but received "${received}" in response header "${this.checksumSourceLocation}".`));
             return;
           }
         } catch (e5) {
-          return callback(e5);
-        }
-        return callback();
-      }
-      async _final(callback) {
-        try {
-          const digest = await this.checksum.digest();
-          const received = this.base64Encoder(digest);
-          if (this.expectedChecksum !== received) {
-            return callback(new Error(`Checksum mismatch: expected "${this.expectedChecksum}" but received "${received}" in response header "${this.checksumSourceLocation}".`));
-          }
-        } catch (e5) {
-          return callback(e5);
+          this.destroy(e5);
+          return;
         }
         this.push(null);
-        return callback();
+      };
+      onSourceError = (error3) => {
+        this.destroy(error3);
+      };
+      _read(size) {
+        this.source.resume();
       }
       _destroy(error3, callback) {
         this.source?.destroy();
@@ -24939,8 +24963,8 @@ var init_createChecksumStream_browser = __esm({
           controller.enqueue(chunk);
         },
         async flush(controller) {
-          const digest = await checksum.digest();
-          const received = encoder(digest);
+          const digest2 = await checksum.digest();
+          const received = encoder(digest2);
           if (expectedChecksum !== received) {
             const error3 = new Error(`Checksum mismatch: expected "${expectedChecksum}" but received "${received}" in response header "${checksumSourceLocation}".`);
             controller.error(error3);
@@ -25179,7 +25203,7 @@ var init_getAwsChunkedEncodingStream_browser = __esm({
     getAwsChunkedEncodingStream = (readableStream, options) => {
       const { base64Encoder, bodyLengthChecker, checksumAlgorithmFn, checksumLocationName, streamHasher } = options;
       const checksumRequired = base64Encoder !== void 0 && bodyLengthChecker !== void 0 && checksumAlgorithmFn !== void 0 && checksumLocationName !== void 0 && streamHasher !== void 0;
-      const digest = checksumRequired ? streamHasher(checksumAlgorithmFn, readableStream) : void 0;
+      const digest2 = checksumRequired ? streamHasher(checksumAlgorithmFn, readableStream) : void 0;
       const reader = readableStream.getReader();
       return new ReadableStream({
         async pull(controller) {
@@ -25188,7 +25212,7 @@ var init_getAwsChunkedEncodingStream_browser = __esm({
             controller.enqueue(`0\r
 `);
             if (checksumRequired) {
-              const checksum = base64Encoder(await digest);
+              const checksum = base64Encoder(await digest2);
               controller.enqueue(`${checksumLocationName}:${checksum}\r
 `);
               controller.enqueue(`\r
@@ -25215,7 +25239,7 @@ function getAwsChunkedEncodingStream2(stream, options) {
   }
   const { base64Encoder, bodyLengthChecker, checksumAlgorithmFn, checksumLocationName, streamHasher } = options;
   const checksumRequired = base64Encoder !== void 0 && checksumAlgorithmFn !== void 0 && checksumLocationName !== void 0 && streamHasher !== void 0;
-  const digest = checksumRequired ? streamHasher(checksumAlgorithmFn, readable) : void 0;
+  const digest2 = checksumRequired ? streamHasher(checksumAlgorithmFn, readable) : void 0;
   const awsChunkedEncodingStream = new import_node_stream4.Readable({
     read: () => {
     }
@@ -25234,7 +25258,7 @@ function getAwsChunkedEncodingStream2(stream, options) {
     awsChunkedEncodingStream.push(`0\r
 `);
     if (checksumRequired) {
-      const checksum = base64Encoder(await digest);
+      const checksum = base64Encoder(await digest2);
       awsChunkedEncodingStream.push(`${checksumLocationName}:${checksum}\r
 `);
       awsChunkedEncodingStream.push(`\r
@@ -25741,6 +25765,248 @@ var init_SerdeContext = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/checksum/chunked-blob-reader/chunked-blob-reader.js
+async function blobReader(blob, onChunk, chunkSize = 1024 * 1024) {
+  const size = blob.size;
+  let totalBytesRead = 0;
+  while (totalBytesRead < size) {
+    const slice = blob.slice(totalBytesRead, Math.min(size, totalBytesRead + chunkSize));
+    onChunk(new Uint8Array(await slice.arrayBuffer()));
+    totalBytesRead += slice.size;
+  }
+}
+var init_chunked_blob_reader = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/chunked-blob-reader/chunked-blob-reader.js"() {
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/hash-blob-browser/blobHasher.js
+var blobHasher;
+var init_blobHasher = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/hash-blob-browser/blobHasher.js"() {
+    init_chunked_blob_reader();
+    blobHasher = async function blobHasher2(hashCtor, blob) {
+      const hash = new hashCtor();
+      await blobReader(blob, (chunk) => {
+        hash.update(chunk);
+      });
+      return hash.digest();
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js
+var import_node_stream9, HashCalculator;
+var init_HashCalculator = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js"() {
+    import_node_stream9 = require("node:stream");
+    init_serde();
+    HashCalculator = class extends import_node_stream9.Writable {
+      hash;
+      constructor(hash, options) {
+        super(options);
+        this.hash = hash;
+      }
+      _write(chunk, encoding, callback) {
+        try {
+          this.hash.update(toUint8Array(chunk));
+        } catch (err) {
+          return callback(err);
+        }
+        callback();
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js
+var import_node_fs2, fileStreamHasher, isReadStream;
+var init_fileStreamHasher = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js"() {
+    import_node_fs2 = require("node:fs");
+    init_HashCalculator();
+    fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve, reject) => {
+      if (!isReadStream(fileStream)) {
+        reject(new Error("Unable to calculate hash for non-file streams."));
+        return;
+      }
+      const fileStreamTee = (0, import_node_fs2.createReadStream)(fileStream.path, {
+        start: fileStream.start,
+        end: fileStream.end
+      });
+      const hash = new hashCtor();
+      const hashCalculator = new HashCalculator(hash);
+      fileStreamTee.pipe(hashCalculator);
+      fileStreamTee.on("error", (err) => {
+        hashCalculator.end();
+        reject(err);
+      });
+      hashCalculator.on("error", reject);
+      hashCalculator.on("finish", function() {
+        hash.digest().then(resolve).catch(reject);
+      });
+    });
+    isReadStream = (stream) => typeof stream.path === "string";
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/readableStreamHasher.js
+var readableStreamHasher;
+var init_readableStreamHasher = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/readableStreamHasher.js"() {
+    init_HashCalculator();
+    readableStreamHasher = (hashCtor, readableStream) => {
+      if (readableStream.readableFlowing !== null) {
+        throw new Error("Unable to calculate hash for flowing readable stream");
+      }
+      const hash = new hashCtor();
+      const hashCalculator = new HashCalculator(hash);
+      readableStream.pipe(hashCalculator);
+      return new Promise((resolve, reject) => {
+        readableStream.on("error", (err) => {
+          hashCalculator.end();
+          reject(err);
+        });
+        hashCalculator.on("error", reject);
+        hashCalculator.on("finish", () => {
+          hash.digest().then(resolve).catch(reject);
+        });
+      });
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Js.js
+function compress(state2, block) {
+  let a5 = state2[0], b6 = state2[1], c5 = state2[2], d5 = state2[3];
+  for (let i5 = 0; i5 < 64; ++i5) {
+    let f5, g5;
+    if (i5 < 16) {
+      f5 = b6 & c5 | ~b6 & d5;
+      g5 = i5;
+    } else if (i5 < 32) {
+      f5 = d5 & b6 | c5 & ~d5;
+      g5 = (5 * i5 + 1) % 16;
+    } else if (i5 < 48) {
+      f5 = b6 ^ c5 ^ d5;
+      g5 = (3 * i5 + 5) % 16;
+    } else {
+      f5 = c5 ^ (b6 | ~d5);
+      g5 = 7 * i5 % 16;
+    }
+    const x = block.getUint32(g5 * 4, true);
+    const tmp = d5;
+    d5 = c5;
+    c5 = b6;
+    const s = S[(i5 >> 4) * 4 + (i5 & 3)];
+    const sum = (a5 + f5 & M) + (x + T[i5] & M) & M;
+    b6 = b6 + ((sum << s | sum >>> 32 - s) >>> 0) & M;
+    a5 = tmp;
+  }
+  state2[0] = state2[0] + a5 & M;
+  state2[1] = state2[1] + b6 & M;
+  state2[2] = state2[2] + c5 & M;
+  state2[3] = state2[3] + d5 & M;
+}
+var Md5Js, INIT, M, S, T;
+var init_Md5Js = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Js.js"() {
+    init_serde();
+    Md5Js = class {
+      digestLength = 16;
+      state = Uint32Array.from(INIT);
+      writeBuffer = new DataView(new ArrayBuffer(64));
+      bufferLength = 0;
+      bytesHashed = 0;
+      update(sourceData) {
+        const data3 = toUint8Array(sourceData);
+        let pos = 0;
+        let len = data3.byteLength;
+        this.bytesHashed += len;
+        while (len > 0) {
+          this.writeBuffer.setUint8(this.bufferLength++, data3[pos++]);
+          --len;
+          if (this.bufferLength === 64) {
+            compress(this.state, this.writeBuffer);
+            this.bufferLength = 0;
+          }
+        }
+      }
+      async digest() {
+        const state2 = Uint32Array.from(this.state);
+        const buf = new DataView(this.writeBuffer.buffer.slice(0));
+        let bufLen = this.bufferLength;
+        const bits = this.bytesHashed * 8;
+        buf.setUint8(bufLen++, 128);
+        if (this.bufferLength % 64 >= 56) {
+          for (let i5 = bufLen; i5 < 64; ++i5) {
+            buf.setUint8(i5, 0);
+          }
+          compress(state2, buf);
+          bufLen = 0;
+        }
+        for (let i5 = bufLen; i5 < 56; ++i5) {
+          buf.setUint8(i5, 0);
+        }
+        buf.setUint32(56, bits >>> 0, true);
+        buf.setUint32(60, Math.floor(bits / 2 ** 32), true);
+        compress(state2, buf);
+        const out = new Uint8Array(16);
+        const view = new DataView(out.buffer);
+        for (let i5 = 0; i5 < 4; ++i5) {
+          view.setUint32(i5 * 4, state2[i5], true);
+        }
+        return out;
+      }
+      reset() {
+        this.state.set(INIT);
+        this.writeBuffer = new DataView(new ArrayBuffer(64));
+        this.bufferLength = 0;
+        this.bytesHashed = 0;
+      }
+    };
+    INIT = [1732584193, 4023233417, 2562383102, 271733878];
+    M = 4294967295;
+    S = Uint8Array.of(7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21);
+    T = Array.from({ length: 64 }, (_, i5) => Math.abs(Math.sin(i5 + 1)) * 2 ** 32 >>> 0);
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Node.js
+function buildNativeClass() {
+  return class Md5Node {
+    digestLength = 16;
+    hash = (0, import_node_crypto4.createHash)("md5");
+    update(data3) {
+      this.hash.update(toUint8Array(data3));
+    }
+    async digest() {
+      const buf = this.hash.copy().digest();
+      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+    }
+    reset() {
+      this.hash = (0, import_node_crypto4.createHash)("md5");
+    }
+  };
+}
+var import_node_crypto4, hasNativeCrypto, Md5Node;
+var init_Md5Node = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Node.js"() {
+    import_node_crypto4 = require("node:crypto");
+    init_serde();
+    init_Md5Js();
+    hasNativeCrypto = (() => {
+      try {
+        (0, import_node_crypto4.createHash)("md5");
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+    Md5Node = hasNativeCrypto ? buildNativeClass() : Md5Js;
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Js.js
 var CRC32_TABLE, ONES, Crc32Js;
 var init_Crc32Js = __esm({
@@ -25779,7 +26045,7 @@ var init_Crc32Js = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Node.js
-function buildNativeClass(nativeCrc32) {
+function buildNativeClass2(nativeCrc32) {
   return class Crc32Node {
     digestLength = 4;
     value = 0;
@@ -25805,14 +26071,419 @@ var init_Crc32Node = __esm({
     zlib = __toESM(require("node:zlib"));
     init_Crc32Js();
     zlibCrc32 = typeof zlib.crc32 === "function" ? zlib.crc32 : void 0;
-    Crc32Node = zlibCrc32 ? buildNativeClass(zlibCrc32) : Crc32Js;
+    Crc32Node = zlibCrc32 ? buildNativeClass2(zlibCrc32) : Crc32Js;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Js.js
+var BLOCK, DIGEST_LENGTH, MAX_HASHABLE_LENGTH, Sha256Js, INIT2, K;
+var init_Sha256Js = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Js.js"() {
+    init_serde();
+    BLOCK = 64;
+    DIGEST_LENGTH = 32;
+    MAX_HASHABLE_LENGTH = 2 ** 53 - 1;
+    Sha256Js = class _Sha256Js {
+      digestLength = DIGEST_LENGTH;
+      state = Int32Array.from(INIT2);
+      w;
+      buffer = new Uint8Array(64);
+      bufferLength = 0;
+      bytesHashed = 0;
+      finished = false;
+      inner;
+      outer;
+      constructor(secret) {
+        if (secret) {
+          const key = _Sha256Js.normalizeKey(secret);
+          this.inner = new _Sha256Js();
+          this.outer = new _Sha256Js();
+          const { inner, outer } = this;
+          const pad = new Uint8Array(BLOCK * 2);
+          for (let i5 = 0; i5 < BLOCK; ++i5) {
+            pad[i5] = 54 ^ key[i5];
+            pad[i5 + BLOCK] = 92 ^ key[i5];
+          }
+          inner.update(pad.subarray(0, BLOCK));
+          outer.update(pad.subarray(BLOCK));
+        }
+      }
+      update(data3) {
+        if (this.finished) {
+          throw new Error("Attempted to update an already finished HMAC.");
+        }
+        if (this.inner) {
+          this.inner.update(data3);
+          return;
+        }
+        const chunk = toUint8Array(data3);
+        let position = 0;
+        let { byteLength } = chunk;
+        this.bytesHashed += byteLength;
+        if (this.bytesHashed * 8 > MAX_HASHABLE_LENGTH) {
+          throw new Error("Cannot hash more than 2^53 - 1 bits");
+        }
+        while (byteLength > 0) {
+          this.buffer[this.bufferLength++] = chunk[position++];
+          byteLength--;
+          if (this.bufferLength === BLOCK) {
+            this.hashBuffer();
+            this.bufferLength = 0;
+          }
+        }
+      }
+      async digest() {
+        const { inner, outer } = this;
+        if (inner && outer) {
+          if (this.finished) {
+            throw new Error("Attempted to digest an already finished HMAC.");
+          }
+          this.finished = true;
+          const innerDigest = inner.digestSync();
+          outer.update(innerDigest);
+          return outer.digestSync();
+        }
+        return this.digestSync();
+      }
+      reset() {
+        this.state = Int32Array.from(INIT2);
+        this.buffer = new Uint8Array(64);
+        this.bufferLength = 0;
+        this.bytesHashed = 0;
+      }
+      digestSync() {
+        const state2 = this.state.slice();
+        const buffer = this.buffer.slice();
+        let bufferLength = this.bufferLength;
+        const bitsHashed = this.bytesHashed * 8;
+        const bufferView = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+        bufferView.setUint8(bufferLength++, 128);
+        if ((bufferLength - 1) % BLOCK >= BLOCK - 8) {
+          for (let i5 = bufferLength; i5 < BLOCK; ++i5) {
+            bufferView.setUint8(i5, 0);
+          }
+          this.hashBufferWith(state2, buffer);
+          bufferLength = 0;
+        }
+        for (let i5 = bufferLength; i5 < BLOCK - 8; ++i5) {
+          bufferView.setUint8(i5, 0);
+        }
+        bufferView.setUint32(BLOCK - 8, Math.floor(bitsHashed / 4294967296), false);
+        bufferView.setUint32(BLOCK - 4, bitsHashed, false);
+        this.hashBufferWith(state2, buffer);
+        const out = new Uint8Array(DIGEST_LENGTH);
+        for (let i5 = 0; i5 < 8; ++i5) {
+          out[i5 * 4] = state2[i5] >>> 24 & 255;
+          out[i5 * 4 + 1] = state2[i5] >>> 16 & 255;
+          out[i5 * 4 + 2] = state2[i5] >>> 8 & 255;
+          out[i5 * 4 + 3] = state2[i5] >>> 0 & 255;
+        }
+        return out;
+      }
+      static normalizeKey(secret) {
+        const key = toUint8Array(secret);
+        if (key.byteLength > BLOCK) {
+          const h5 = new _Sha256Js();
+          h5.update(key);
+          const out = h5.digestSync();
+          const padded = new Uint8Array(BLOCK);
+          padded.set(out);
+          return padded;
+        }
+        if (key.byteLength < BLOCK) {
+          const padded = new Uint8Array(BLOCK);
+          padded.set(key);
+          return padded;
+        }
+        return key;
+      }
+      hashBuffer() {
+        this.hashBufferWith(this.state, this.buffer);
+      }
+      hashBufferWith(state2, buffer) {
+        const w = this.w ??= new Int32Array(64);
+        let s0 = state2[0], s1 = state2[1], s2 = state2[2], s3 = state2[3], s4 = state2[4], s5 = state2[5], s6 = state2[6], s7 = state2[7];
+        for (let i5 = 0; i5 < BLOCK; ++i5) {
+          if (i5 < 16) {
+            w[i5] = (buffer[i5 * 4] & 255) << 24 | (buffer[i5 * 4 + 1] & 255) << 16 | (buffer[i5 * 4 + 2] & 255) << 8 | buffer[i5 * 4 + 3] & 255;
+          } else {
+            let u = w[i5 - 2];
+            const t12 = (u >>> 17 | u << 15) ^ (u >>> 19 | u << 13) ^ u >>> 10;
+            u = w[i5 - 15];
+            const t22 = (u >>> 7 | u << 25) ^ (u >>> 18 | u << 14) ^ u >>> 3;
+            w[i5] = (t12 + w[i5 - 7] | 0) + (t22 + w[i5 - 16] | 0);
+          }
+          const t1 = (((s4 >>> 6 | s4 << 26) ^ (s4 >>> 11 | s4 << 21) ^ (s4 >>> 25 | s4 << 7)) + (s4 & s5 ^ ~s4 & s6) | 0) + (s7 + (K[i5] + w[i5] | 0) | 0) | 0;
+          const t2 = ((s0 >>> 2 | s0 << 30) ^ (s0 >>> 13 | s0 << 19) ^ (s0 >>> 22 | s0 << 10)) + (s0 & s1 ^ s0 & s2 ^ s1 & s2) | 0;
+          s7 = s6;
+          s6 = s5;
+          s5 = s4;
+          s4 = s3 + t1 | 0;
+          s3 = s2;
+          s2 = s1;
+          s1 = s0;
+          s0 = t1 + t2 | 0;
+        }
+        state2[0] += s0;
+        state2[1] += s1;
+        state2[2] += s2;
+        state2[3] += s3;
+        state2[4] += s4;
+        state2[5] += s5;
+        state2[6] += s6;
+        state2[7] += s7;
+      }
+    };
+    INIT2 = new Int32Array([
+      1779033703,
+      3144134277,
+      1013904242,
+      2773480762,
+      1359893119,
+      2600822924,
+      528734635,
+      1541459225
+    ]);
+    K = new Int32Array([
+      1116352408,
+      1899447441,
+      3049323471,
+      3921009573,
+      961987163,
+      1508970993,
+      2453635748,
+      2870763221,
+      3624381080,
+      310598401,
+      607225278,
+      1426881987,
+      1925078388,
+      2162078206,
+      2614888103,
+      3248222580,
+      3835390401,
+      4022224774,
+      264347078,
+      604807628,
+      770255983,
+      1249150122,
+      1555081692,
+      1996064986,
+      2554220882,
+      2821834349,
+      2952996808,
+      3210313671,
+      3336571891,
+      3584528711,
+      113926993,
+      338241895,
+      666307205,
+      773529912,
+      1294757372,
+      1396182291,
+      1695183700,
+      1986661051,
+      2177026350,
+      2456956037,
+      2730485921,
+      2820302411,
+      3259730800,
+      3345764771,
+      3516065817,
+      3600352804,
+      4094571909,
+      275423344,
+      430227734,
+      506948616,
+      659060556,
+      883997877,
+      958139571,
+      1322822218,
+      1537002063,
+      1747873779,
+      1955562222,
+      2024104815,
+      2227730452,
+      2361852424,
+      2428436474,
+      2756734187,
+      3204031479,
+      3329325298
+    ]);
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Node.js
+function buildNativeClass3() {
+  return class Sha256Node {
+    digestLength = 32;
+    secret;
+    hash;
+    isHmac;
+    finished = false;
+    constructor(secret) {
+      this.secret = secret;
+      this.isHmac = !!secret;
+      this.hash = this.createHash();
+    }
+    update(data3) {
+      if (this.finished) {
+        throw new Error("Attempted to update an already finished hash.");
+      }
+      this.hash.update(data3);
+    }
+    async digest() {
+      let buf;
+      if (this.isHmac) {
+        this.finished = true;
+        buf = this.hash.digest();
+      } else {
+        buf = this.hash.copy().digest();
+      }
+      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+    }
+    reset() {
+      this.hash = this.createHash();
+      this.finished = false;
+    }
+    createHash() {
+      return this.secret ? (0, import_node_crypto5.createHmac)("sha256", toBuffer(this.secret)) : (0, import_node_crypto5.createHash)("sha256");
+    }
+  };
+}
+function toBuffer(data3) {
+  if (typeof data3 === "string") {
+    return data3;
+  }
+  if (ArrayBuffer.isView(data3)) {
+    return Buffer.from(data3.buffer, data3.byteOffset, data3.byteLength);
+  }
+  return Buffer.from(data3);
+}
+var import_node_crypto5, hasNativeCrypto2, Sha256Node;
+var init_Sha256Node = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Node.js"() {
+    import_node_crypto5 = require("node:crypto");
+    init_Sha256Js();
+    hasNativeCrypto2 = (() => {
+      try {
+        (0, import_node_crypto5.createHash)("sha256");
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+    Sha256Node = hasNativeCrypto2 ? buildNativeClass3() : Sha256Js;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256WebCrypto.js
+var digest, sign, importKey, subtle, MAX_PENDING_BYTES, Sha256WebCrypto;
+var init_Sha256WebCrypto = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256WebCrypto.js"() {
+    init_serde();
+    init_Sha256Js();
+    ({ digest, sign, importKey } = globalThis?.crypto?.subtle ?? {});
+    subtle = typeof digest === "function" && typeof sign === "function" && typeof importKey === "function" ? globalThis.crypto.subtle : void 0;
+    MAX_PENDING_BYTES = 8 * 1024 * 1024;
+    Sha256WebCrypto = class {
+      digestLength = 32;
+      secret;
+      pending = [];
+      pendingBytes = 0;
+      fallback;
+      finished = false;
+      constructor(secret) {
+        if (secret) {
+          this.secret = toUint8Array(secret);
+        }
+      }
+      update(data3) {
+        if (this.finished) {
+          throw new Error("Attempted to update an already finished HMAC.");
+        }
+        if (this.fallback) {
+          this.fallback.update(data3);
+          return;
+        }
+        this.pending.push(data3.slice());
+        this.pendingBytes += data3.byteLength;
+        if (this.pendingBytes >= MAX_PENDING_BYTES) {
+          this.switchToFallback();
+        }
+      }
+      async digest() {
+        if (this.fallback) {
+          return this.fallback.digest();
+        }
+        if (this.secret && this.finished) {
+          throw new Error("Attempted to digest an already finished HMAC.");
+        }
+        const data3 = concatBytes(this.pending);
+        if (subtle) {
+          if (this.secret) {
+            this.finished = true;
+            const key = await subtle.importKey("raw", this.secret, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+            const sig = await subtle.sign("HMAC", key, data3);
+            return new Uint8Array(sig);
+          }
+          const hash = await subtle.digest("SHA-256", data3);
+          return new Uint8Array(hash);
+        }
+        const sha256 = new Sha256Js(this.secret);
+        sha256.update(data3);
+        return sha256.digest();
+      }
+      reset() {
+        this.pending = [];
+        this.pendingBytes = 0;
+        this.fallback = void 0;
+        this.finished = false;
+      }
+      switchToFallback() {
+        const sha256Js = new Sha256Js(this.secret);
+        for (const chunk of this.pending) {
+          sha256Js.update(chunk);
+        }
+        this.fallback = sha256Js;
+        this.pending = [];
+        this.pendingBytes = 0;
+      }
+    };
   }
 });
 
 // node_modules/@smithy/core/dist-es/submodules/checksum/index.js
+var checksum_exports = {};
+__export(checksum_exports, {
+  Crc32: () => Crc32Node,
+  Crc32Js: () => Crc32Js,
+  Crc32Node: () => Crc32Node,
+  Md5: () => Md5Node,
+  Md5Js: () => Md5Js,
+  Md5Node: () => Md5Node,
+  Sha256: () => Sha256Node,
+  Sha256Js: () => Sha256Js,
+  Sha256Node: () => Sha256Node,
+  Sha256WebCrypto: () => Sha256WebCrypto,
+  blobHasher: () => blobHasher,
+  blobReader: () => blobReader,
+  fileStreamHasher: () => fileStreamHasher,
+  readableStreamHasher: () => readableStreamHasher
+});
 var init_checksum2 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/checksum/index.js"() {
+    init_blobHasher();
+    init_fileStreamHasher();
+    init_readableStreamHasher();
+    init_Md5Js();
+    init_Md5Node();
+    init_Crc32Js();
     init_Crc32Node();
+    init_Sha256Js();
+    init_Sha256Node();
+    init_Sha256WebCrypto();
+    init_chunked_blob_reader();
   }
 });
 
@@ -26446,10 +27117,10 @@ async function* readableToIterable(readStream) {
     generationEnded = streamEnded && records.length === 0;
   }
 }
-var import_node_stream9, EventStreamMarshaller2, eventStreamSerdeProvider2;
+var import_node_stream10, EventStreamMarshaller2, eventStreamSerdeProvider2;
 var init_EventStreamMarshaller2 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/EventStreamMarshaller.js"() {
-    import_node_stream9 = require("node:stream");
+    import_node_stream10 = require("node:stream");
     init_EventStreamMarshaller();
     EventStreamMarshaller2 = class {
       universalMarshaller;
@@ -26464,7 +27135,7 @@ var init_EventStreamMarshaller2 = __esm({
         return this.universalMarshaller.deserialize(bodyIterable, deserializer);
       }
       serialize(input, serializer) {
-        return import_node_stream9.Readable.from(this.universalMarshaller.serialize(input, serializer));
+        return import_node_stream10.Readable.from(this.universalMarshaller.serialize(input, serializer));
       }
     };
     eventStreamSerdeProvider2 = (options) => new EventStreamMarshaller2(options);
@@ -29079,7 +29750,10 @@ var init_invoke_store = __esm({
     PROTECTED_KEYS = {
       REQUEST_ID: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_REQUEST_ID"),
       X_RAY_TRACE_ID: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_X_RAY_TRACE_ID"),
-      TENANT_ID: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_TENANT_ID")
+      TENANT_ID: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_TENANT_ID"),
+      TRACEPARENT: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_TRACEPARENT"),
+      TRACESTATE: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_TRACESTATE"),
+      BAGGAGE: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_BAGGAGE")
     };
     NO_GLOBAL_AWS_LAMBDA = ["true", "1"].includes(process.env?.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA ?? "");
     if (!NO_GLOBAL_AWS_LAMBDA) {
@@ -29098,6 +29772,15 @@ var init_invoke_store = __esm({
       }
       getTenantId() {
         return this.get(PROTECTED_KEYS.TENANT_ID);
+      }
+      getTraceparent() {
+        return this.get(PROTECTED_KEYS.TRACEPARENT);
+      }
+      getTracestate() {
+        return this.get(PROTECTED_KEYS.TRACESTATE);
+      }
+      getBaggage() {
+        return this.get(PROTECTED_KEYS.BAGGAGE);
       }
     };
     InvokeStoreSingle = class extends InvokeStoreBase {
@@ -29472,9 +30155,9 @@ var makePagedClientRequest, get;
 var init_createPaginator = __esm({
   "node_modules/@smithy/core/dist-es/legacy-root-exports/pagination/createPaginator.js"() {
     makePagedClientRequest = async (CommandCtor, client, input, withCommand = (_) => _, ...args) => {
-      let command = new CommandCtor(input);
-      command = withCommand(command) ?? command;
-      return await client.send(command, ...args);
+      let command5 = new CommandCtor(input);
+      command5 = withCommand(command5) ?? command5;
+      return await client.send(command5, ...args);
     };
     get = (fromObject, path4) => {
       let cursor2 = fromObject;
@@ -33085,7 +33768,7 @@ var require_dist_cjs6 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
     var { buildQueryString: buildQueryString2, HttpResponse: HttpResponse2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var node_https = require("node:https");
-    var { Readable: Readable7 } = require("node:stream");
+    var { Readable: Readable8 } = require("node:stream");
     var http22 = require("node:http2");
     var { streamCollector: streamCollector7 } = (init_serde(), __toCommonJS(serde_exports));
     exports2.streamCollector = streamCollector7;
@@ -33244,7 +33927,7 @@ var require_dist_cjs6 = __commonJS({
       }
     }
     function writeBody(httpRequest, body) {
-      if (body instanceof Readable7) {
+      if (body instanceof Readable8) {
         body.pipe(httpRequest);
         return;
       }
@@ -34119,7 +34802,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.24",
+      version: "3.997.28",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -34147,15 +34830,13 @@ var init_package = __esm({
       },
       license: "Apache-2.0",
       dependencies: {
-        "@aws-crypto/sha256-browser": "5.2.0",
-        "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.24",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.36",
-        "@aws-sdk/types": "^3.973.14",
-        "@smithy/core": "^3.27.0",
-        "@smithy/fetch-http-handler": "^5.6.0",
-        "@smithy/node-http-handler": "^4.9.0",
-        "@smithy/types": "^4.15.0",
+        "@aws-sdk/core": "^3.974.28",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.38",
+        "@aws-sdk/types": "^3.973.15",
+        "@smithy/core": "^3.29.0",
+        "@smithy/fetch-http-handler": "^5.6.2",
+        "@smithy/node-http-handler": "^4.9.2",
+        "@smithy/types": "^4.15.1",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -34383,10 +35064,10 @@ function decodeIndefinite(at, to) {
   }
 }
 function bytesToFloat16(a5, b6) {
-  const sign = a5 >> 7;
+  const sign2 = a5 >> 7;
   const exponent = (a5 & 124) >> 2;
   const fraction = (a5 & 3) << 8 | b6;
-  const scalar = sign === 0 ? 1 : -1;
+  const scalar = sign2 === 0 ? 1 : -1;
   if (exponent === 0) {
     if (fraction === 0) {
       return 0;
@@ -34529,7 +35210,7 @@ function decodeTagValue(at, to, minor, unsignedInt, offset) {
     const normalizer = mantissa < 0 ? -1 : 1;
     const mantissaStr = "0".repeat(Math.abs(exponent) + 1) + String(BigInt(normalizer) * BigInt(mantissa));
     let numericString;
-    const sign = mantissa < 0 ? "-" : "";
+    const sign2 = mantissa < 0 ? "-" : "";
     numericString = exponent === 0 ? mantissaStr : mantissaStr.slice(0, mantissaStr.length + exponent) + "." + mantissaStr.slice(exponent);
     numericString = numericString.replace(/^0+/g, "");
     if (numericString === "") {
@@ -34538,7 +35219,7 @@ function decodeTagValue(at, to, minor, unsignedInt, offset) {
     if (numericString[0] === ".") {
       numericString = "0" + numericString;
     }
-    numericString = sign + numericString;
+    numericString = sign2 + numericString;
     _offset = offset + _offset;
     return nv(numericString);
   } else {
@@ -38388,6 +39069,7 @@ var init_runtimeConfig_shared = __esm({
     init_httpAuthSchemes2();
     init_protocols2();
     init_dist_es();
+    init_checksum2();
     init_client2();
     init_protocols();
     init_serde();
@@ -38424,6 +39106,7 @@ var init_runtimeConfig_shared = __esm({
           serviceTarget: "AWSSSOOIDCService"
         },
         serviceId: config?.serviceId ?? "SSO OIDC",
+        sha256: config?.sha256 ?? Sha256Node,
         urlParser: config?.urlParser ?? parseUrl,
         utf8Decoder: config?.utf8Decoder ?? fromUtf8,
         utf8Encoder: config?.utf8Encoder ?? toUtf8
@@ -38470,7 +39153,6 @@ var init_runtimeConfig = __esm({
           ...NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE
         }, config),
-        sha256: config?.sha256 ?? Hash.bind(null, "sha256"),
         streamCollector: config?.streamCollector ?? import_node_http_handler.streamCollector,
         useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
         useFipsEndpoint: config?.useFipsEndpoint ?? loadConfig(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
@@ -38593,17 +39275,26 @@ var init_SSOOIDCClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js
+var command, _ep0, _mw0;
+var init_commandBuilder = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters();
+    command = makeBuilder(commonParams, "AWSSSOOIDCService", "SSOOIDCClient", getEndpointPlugin);
+    _ep0 = {};
+    _mw0 = (Command3, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js
 var CreateTokenCommand;
 var init_CreateTokenCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters();
+    init_commandBuilder();
     init_schemas_0();
-    CreateTokenCommand = class extends Command2.classBuilder().ep(commonParams).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSSOOIDCService", "CreateToken", {}).n("SSOOIDCClient", "CreateTokenCommand").sc(CreateToken$).build() {
+    CreateTokenCommand = class extends command(_ep0, _mw0, "CreateToken", CreateToken$) {
     };
   }
 });
@@ -38697,6 +39388,7 @@ var init_sso_oidc = __esm({
     init_SSOOIDCClient();
     init_SSOOIDC();
     init_commands();
+    init_client2();
     init_schemas_0();
     init_enums();
     init_errors();
@@ -39238,6 +39930,7 @@ var init_runtimeConfig_shared2 = __esm({
     init_httpAuthSchemes2();
     init_protocols2();
     init_dist_es();
+    init_checksum2();
     init_client2();
     init_protocols();
     init_serde();
@@ -39274,6 +39967,7 @@ var init_runtimeConfig_shared2 = __esm({
           serviceTarget: "SWBPortalService"
         },
         serviceId: config?.serviceId ?? "SSO",
+        sha256: config?.sha256 ?? Sha256Node,
         urlParser: config?.urlParser ?? parseUrl,
         utf8Decoder: config?.utf8Decoder ?? fromUtf8,
         utf8Encoder: config?.utf8Encoder ?? toUtf8
@@ -39320,7 +40014,6 @@ var init_runtimeConfig2 = __esm({
           ...NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE
         }, config),
-        sha256: config?.sha256 ?? Hash.bind(null, "sha256"),
         streamCollector: config?.streamCollector ?? import_node_http_handler2.streamCollector,
         useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
         useFipsEndpoint: config?.useFipsEndpoint ?? loadConfig(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
@@ -39443,17 +40136,26 @@ var init_SSOClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js
+var command2, _ep02, _mw02;
+var init_commandBuilder2 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters2();
+    command2 = makeBuilder(commonParams2, "SWBPortalService", "SSOClient", getEndpointPlugin);
+    _ep02 = {};
+    _mw02 = (Command3, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js
 var GetRoleCredentialsCommand;
 var init_GetRoleCredentialsCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters2();
+    init_commandBuilder2();
     init_schemas_02();
-    GetRoleCredentialsCommand = class extends Command2.classBuilder().ep(commonParams2).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin(config, Command3.getEndpointParameterInstructions())];
-    }).s("SWBPortalService", "GetRoleCredentials", {}).n("SSOClient", "GetRoleCredentialsCommand").sc(GetRoleCredentials$).build() {
+    GetRoleCredentialsCommand = class extends command2(_ep02, _mw02, "GetRoleCredentials", GetRoleCredentials$) {
     };
   }
 });
@@ -39516,6 +40218,7 @@ var init_sso = __esm({
     init_SSOClient();
     init_SSO();
     init_commands2();
+    init_client2();
     init_schemas_02();
     init_errors2();
     init_models_02();
@@ -40217,6 +40920,7 @@ var init_runtimeConfig_shared3 = __esm({
     init_httpAuthSchemes2();
     init_protocols2();
     init_dist_es();
+    init_checksum2();
     init_client2();
     init_protocols();
     init_serde();
@@ -40253,6 +40957,7 @@ var init_runtimeConfig_shared3 = __esm({
           serviceTarget: "Signin"
         },
         serviceId: config?.serviceId ?? "Signin",
+        sha256: config?.sha256 ?? Sha256Node,
         urlParser: config?.urlParser ?? parseUrl,
         utf8Decoder: config?.utf8Decoder ?? fromUtf8,
         utf8Encoder: config?.utf8Encoder ?? toUtf8
@@ -40299,7 +41004,6 @@ var init_runtimeConfig3 = __esm({
           ...NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE
         }, config),
-        sha256: config?.sha256 ?? Hash.bind(null, "sha256"),
         streamCollector: config?.streamCollector ?? import_node_http_handler3.streamCollector,
         useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
         useFipsEndpoint: config?.useFipsEndpoint ?? loadConfig(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
@@ -40422,20 +41126,28 @@ var init_SigninClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js
+var command3, _ep03, _mw03;
+var init_commandBuilder3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters3();
+    command3 = makeBuilder(commonParams3, "Signin", "SigninClient", getEndpointPlugin);
+    _ep03 = {
+      IsControlPlane: { type: "staticContextParams", value: false }
+    };
+    _mw03 = (Command3, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js
 var CreateOAuth2TokenCommand;
 var init_CreateOAuth2TokenCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters3();
+    init_commandBuilder3();
     init_schemas_03();
-    CreateOAuth2TokenCommand = class extends Command2.classBuilder().ep({
-      ...commonParams3,
-      IsControlPlane: { type: "staticContextParams", value: false }
-    }).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin(config, Command3.getEndpointParameterInstructions())];
-    }).s("Signin", "CreateOAuth2Token", {}).n("SigninClient", "CreateOAuth2TokenCommand").sc(CreateOAuth2Token$).build() {
+    CreateOAuth2TokenCommand = class extends command3(_ep03, _mw03, "CreateOAuth2Token", CreateOAuth2Token$) {
     };
   }
 });
@@ -40519,6 +41231,7 @@ var init_signin = __esm({
     init_SigninClient();
     init_Signin();
     init_commands3();
+    init_client2();
     init_schemas_03();
     init_enums2();
     init_errors3();
@@ -40533,7 +41246,7 @@ var require_dist_cjs11 = __commonJS({
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile4, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
-    var { createHash: createHash5, createPrivateKey, createPublicKey, sign } = require("node:crypto");
+    var { createHash: createHash7, createPrivateKey, createPublicKey, sign: sign2 } = require("node:crypto");
     var { promises: promises3 } = require("node:fs");
     var { homedir: homedir3 } = require("node:os");
     var { dirname: dirname4, join: join7 } = require("node:path");
@@ -40694,7 +41407,7 @@ var require_dist_cjs11 = __commonJS({
       getTokenFilePath() {
         const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join7(homedir3(), ".aws", "login", "cache");
         const loginSessionBytes = Buffer.from(this.loginSession, "utf8");
-        const loginSessionSha256 = createHash5("sha256").update(loginSessionBytes).digest("hex");
+        const loginSessionSha256 = createHash7("sha256").update(loginSessionBytes).digest("hex");
         return join7(directory, `${loginSessionSha256}.json`);
       }
       derToRawSignature(derSignature) {
@@ -40774,7 +41487,7 @@ var require_dist_cjs11 = __commonJS({
           const headerB64 = Buffer.from(JSON.stringify(header)).toString("base64url");
           const payloadB64 = Buffer.from(JSON.stringify(payload2)).toString("base64url");
           const message = `${headerB64}.${payloadB64}`;
-          const asn1Signature = sign("sha256", Buffer.from(message), privateKey);
+          const asn1Signature = sign2("sha256", Buffer.from(message), privateKey);
           const rawSignature = this.derToRawSignature(asn1Signature);
           const signatureB64 = rawSignature.toString("base64url");
           return `${message}.${signatureB64}`;
@@ -41525,6 +42238,7 @@ var init_runtimeConfig_shared4 = __esm({
     init_protocols2();
     import_signature_v4_multi_region2 = __toESM(require_dist_cjs3());
     init_dist_es();
+    init_checksum2();
     init_client2();
     init_protocols();
     init_serde();
@@ -41567,6 +42281,7 @@ var init_runtimeConfig_shared4 = __esm({
           serviceTarget: "AWSSecurityTokenServiceV20110615"
         },
         serviceId: config?.serviceId ?? "STS",
+        sha256: config?.sha256 ?? Sha256Node,
         signerConstructor: config?.signerConstructor ?? import_signature_v4_multi_region2.SignatureV4MultiRegion,
         urlParser: config?.urlParser ?? parseUrl,
         utf8Decoder: config?.utf8Decoder ?? fromUtf8,
@@ -41632,7 +42347,6 @@ var init_runtimeConfig4 = __esm({
           ...NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE
         }, config),
-        sha256: config?.sha256 ?? Hash.bind(null, "sha256"),
         sigv4aSigningRegionSet: config?.sigv4aSigningRegionSet ?? loadConfig(NODE_SIGV4A_CONFIG_OPTIONS, loaderConfig),
         streamCollector: config?.streamCollector ?? import_node_http_handler4.streamCollector,
         useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
@@ -41757,17 +42471,26 @@ var init_STSClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js
+var command4, _ep04, _mw04;
+var init_commandBuilder4 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters4();
+    command4 = makeBuilder(commonParams4, "AWSSecurityTokenServiceV20110615", "STSClient", getEndpointPlugin);
+    _ep04 = {};
+    _mw04 = (Command3, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js
 var AssumeRoleCommand;
 var init_AssumeRoleCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters4();
+    init_commandBuilder4();
     init_schemas_04();
-    AssumeRoleCommand = class extends Command2.classBuilder().ep(commonParams4).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRole", {}).n("STSClient", "AssumeRoleCommand").sc(AssumeRole$).build() {
+    AssumeRoleCommand = class extends command4(_ep04, _mw04, "AssumeRole", AssumeRole$) {
     };
   }
 });
@@ -41776,13 +42499,9 @@ var init_AssumeRoleCommand = __esm({
 var AssumeRoleWithWebIdentityCommand;
 var init_AssumeRoleWithWebIdentityCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters4();
+    init_commandBuilder4();
     init_schemas_04();
-    AssumeRoleWithWebIdentityCommand = class extends Command2.classBuilder().ep(commonParams4).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {}).n("STSClient", "AssumeRoleWithWebIdentityCommand").sc(AssumeRoleWithWebIdentity$).build() {
+    AssumeRoleWithWebIdentityCommand = class extends command4(_ep04, _mw04, "AssumeRoleWithWebIdentity", AssumeRoleWithWebIdentity$) {
     };
   }
 });
@@ -42002,6 +42721,7 @@ var init_sts = __esm({
     init_STSClient();
     init_STS();
     init_commands4();
+    init_client2();
     init_schemas_04();
     init_errors4();
     init_models_04();
@@ -42501,8 +43221,9 @@ var require_dist_cjs16 = __commonJS({
   "node_modules/@aws-sdk/client-sts/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2, setCredentialFeature: setCredentialFeature2, stsRegionDefaultResolver: stsRegionDefaultResolver2 } = (init_client3(), __toCommonJS(client_exports2));
     var { NoAuthSigner: NoAuthSigner2, getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client3, Command: Command3, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command3;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client3, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client3;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveParams: resolveParams2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -42512,9 +43233,10 @@ var require_dist_cjs16 = __commonJS({
     var { resolveAwsSdkSigV4Config: resolveAwsSdkSigV4Config2, resolveAwsSdkSigV4AConfig: resolveAwsSdkSigV4AConfig2, AwsSdkSigV4Signer: AwsSdkSigV4Signer2, AwsSdkSigV4ASigner: AwsSdkSigV4ASigner2, NODE_SIGV4A_CONFIG_OPTIONS: NODE_SIGV4A_CONFIG_OPTIONS2, NODE_AUTH_SCHEME_PREFERENCE_OPTIONS: NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
     var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs3();
     var { defaultProvider } = require_dist_cjs15();
-    var { toUtf8: toUtf83, fromUtf8: fromUtf83, toBase64: toBase643, fromBase64: fromBase642, Hash: Hash2, calculateBodyLength: calculateBodyLength2 } = (init_serde(), __toCommonJS(serde_exports));
+    var { toUtf8: toUtf83, fromUtf8: fromUtf83, toBase64: toBase643, fromBase64: fromBase642, calculateBodyLength: calculateBodyLength2 } = (init_serde(), __toCommonJS(serde_exports));
     var { streamCollector: streamCollector7, NodeHttpHandler: NodeHttpHandler2 } = require_dist_cjs6();
     var { AwsQueryProtocol: AwsQueryProtocol2 } = (init_protocols2(), __toCommonJS(protocols_exports2));
+    var { Sha256 } = (init_checksum2(), __toCommonJS(checksum_exports));
     var q2 = "ref";
     var a5 = -1;
     var b6 = true;
@@ -42832,7 +43554,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1075.0";
+    var version = "3.1079.0";
     var packageInfo = {
       version
     };
@@ -43602,6 +44324,7 @@ var require_dist_cjs16 = __commonJS({
           serviceTarget: "AWSSecurityTokenServiceV20110615"
         },
         serviceId: config?.serviceId ?? "STS",
+        sha256: config?.sha256 ?? Sha256,
         signerConstructor: config?.signerConstructor ?? SignatureV4MultiRegion3,
         urlParser: config?.urlParser ?? parseUrl3,
         utf8Decoder: config?.utf8Decoder ?? fromUtf83,
@@ -43651,7 +44374,6 @@ var require_dist_cjs16 = __commonJS({
           ...NODE_RETRY_MODE_CONFIG_OPTIONS2,
           default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE2
         }, config),
-        sha256: config?.sha256 ?? Hash2.bind(null, "sha256"),
         sigv4aSigningRegionSet: config?.sigv4aSigningRegionSet ?? loadConfig2(NODE_SIGV4A_CONFIG_OPTIONS2, loaderConfig),
         streamCollector: config?.streamCollector ?? streamCollector7,
         useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig2(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, loaderConfig),
@@ -43736,49 +44458,30 @@ var require_dist_cjs16 = __commonJS({
         super.destroy();
       }
     };
-    var AssumeRoleCommand3 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRole", {}).n("STSClient", "AssumeRoleCommand").sc(AssumeRole$2).build() {
+    var command5 = makeBuilder2(commonParams5, "AWSSecurityTokenServiceV20110615", "STSClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command3, cs, config, o4) => [];
+    var AssumeRoleCommand3 = class extends command5(_ep05, _mw05, "AssumeRole", AssumeRole$2) {
     };
-    var AssumeRoleWithSAMLCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithSAML", {}).n("STSClient", "AssumeRoleWithSAMLCommand").sc(AssumeRoleWithSAML$).build() {
+    var AssumeRoleWithSAMLCommand = class extends command5(_ep05, _mw05, "AssumeRoleWithSAML", AssumeRoleWithSAML$) {
     };
-    var AssumeRoleWithWebIdentityCommand3 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {}).n("STSClient", "AssumeRoleWithWebIdentityCommand").sc(AssumeRoleWithWebIdentity$2).build() {
+    var AssumeRoleWithWebIdentityCommand3 = class extends command5(_ep05, _mw05, "AssumeRoleWithWebIdentity", AssumeRoleWithWebIdentity$2) {
     };
-    var AssumeRootCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoot", {}).n("STSClient", "AssumeRootCommand").sc(AssumeRoot$).build() {
+    var AssumeRootCommand = class extends command5(_ep05, _mw05, "AssumeRoot", AssumeRoot$) {
     };
-    var DecodeAuthorizationMessageCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "DecodeAuthorizationMessage", {}).n("STSClient", "DecodeAuthorizationMessageCommand").sc(DecodeAuthorizationMessage$).build() {
+    var DecodeAuthorizationMessageCommand = class extends command5(_ep05, _mw05, "DecodeAuthorizationMessage", DecodeAuthorizationMessage$) {
     };
-    var GetAccessKeyInfoCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetAccessKeyInfo", {}).n("STSClient", "GetAccessKeyInfoCommand").sc(GetAccessKeyInfo$).build() {
+    var GetAccessKeyInfoCommand = class extends command5(_ep05, _mw05, "GetAccessKeyInfo", GetAccessKeyInfo$) {
     };
-    var GetCallerIdentityCommand2 = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetCallerIdentity", {}).n("STSClient", "GetCallerIdentityCommand").sc(GetCallerIdentity$).build() {
+    var GetCallerIdentityCommand2 = class extends command5(_ep05, _mw05, "GetCallerIdentity", GetCallerIdentity$) {
     };
-    var GetDelegatedAccessTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetDelegatedAccessToken", {}).n("STSClient", "GetDelegatedAccessTokenCommand").sc(GetDelegatedAccessToken$).build() {
+    var GetDelegatedAccessTokenCommand = class extends command5(_ep05, _mw05, "GetDelegatedAccessToken", GetDelegatedAccessToken$) {
     };
-    var GetFederationTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetFederationToken", {}).n("STSClient", "GetFederationTokenCommand").sc(GetFederationToken$).build() {
+    var GetFederationTokenCommand = class extends command5(_ep05, _mw05, "GetFederationToken", GetFederationToken$) {
     };
-    var GetSessionTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetSessionToken", {}).n("STSClient", "GetSessionTokenCommand").sc(GetSessionToken$).build() {
+    var GetSessionTokenCommand = class extends command5(_ep05, _mw05, "GetSessionToken", GetSessionToken$) {
     };
-    var GetWebIdentityTokenCommand = class extends Command3.classBuilder().ep(commonParams5).m(function(Command4, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command4.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetWebIdentityToken", {}).n("STSClient", "GetWebIdentityTokenCommand").sc(GetWebIdentityToken$).build() {
+    var GetWebIdentityTokenCommand = class extends command5(_ep05, _mw05, "GetWebIdentityToken", GetWebIdentityToken$) {
     };
     var commands5 = {
       AssumeRoleCommand: AssumeRoleCommand3,
@@ -44663,7 +45366,7 @@ var require_supports_color = __commonJS({
         return 1;
       }
       if ("CI" in env2) {
-        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign) => sign in env2) || env2.CI_NAME === "codeship") {
+        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign2) => sign2 in env2) || env2.CI_NAME === "codeship") {
           return 1;
         }
         return min;
@@ -49626,7 +50329,7 @@ var init_dist5 = __esm({
 });
 
 // node_modules/pac-proxy-agent/node_modules/agent-base/dist/helpers.js
-async function toBuffer(stream) {
+async function toBuffer2(stream) {
   let length = 0;
   const chunks = [];
   for await (const chunk of stream) {
@@ -50138,21 +50841,21 @@ var require_FtpContext = __commonJS({
       /**
        * Send an FTP command without waiting for or handling the result.
        */
-      send(command) {
-        if (/[\r\n\0]/.test(command)) {
-          throw new Error(`Invalid command: Contains control characters. (${command})`);
+      send(command5) {
+        if (/[\r\n\0]/.test(command5)) {
+          throw new Error(`Invalid command: Contains control characters. (${command5})`);
         }
-        const containsPassword = command.startsWith("PASS");
-        const message = containsPassword ? "> PASS ###" : `> ${command}`;
+        const containsPassword = command5.startsWith("PASS");
+        const message = containsPassword ? "> PASS ###" : `> ${command5}`;
         this.log(message);
-        this._socket.write(command + "\r\n", this.encoding);
+        this._socket.write(command5 + "\r\n", this.encoding);
       }
       /**
        * Send an FTP command and handle the first response. Use this if you have a simple
        * request-response situation.
        */
-      request(command) {
-        return this.handle(command, (res, task) => {
+      request(command5) {
+        return this.handle(command5, (res, task) => {
           if (res instanceof Error) {
             task.reject(res);
           } else {
@@ -50164,7 +50867,7 @@ var require_FtpContext = __commonJS({
        * Send an FTP command and handle any response until you resolve/reject. Use this if you expect multiple responses
        * to a request. This returns a Promise that will hold whatever the response handler passed on when resolving/rejecting its task.
        */
-      handle(command, responseHandler) {
+      handle(command5, responseHandler) {
         if (this._task) {
           const err = new Error("User launched a task while another one is still running. Forgot to use 'await' or '.then()'?");
           err.stack += `
@@ -50195,8 +50898,8 @@ Closing reason: ${this._closingError.stack}`;
             return;
           }
           this.socket.setTimeout(this.timeout);
-          if (command) {
-            this.send(command);
+          if (command5) {
+            this.send(command5);
           }
         });
       }
@@ -51269,20 +51972,20 @@ var require_Client = __commonJS({
       /**
        * Send an FTP command and handle the first response.
        */
-      send(command, ignoreErrorCodesDEPRECATED = false) {
+      send(command5, ignoreErrorCodesDEPRECATED = false) {
         if (ignoreErrorCodesDEPRECATED) {
           this.ftp.log("Deprecated call using send(command, flag) with boolean flag to ignore errors. Use sendIgnoringError(command).");
-          return this.sendIgnoringError(command);
+          return this.sendIgnoringError(command5);
         }
-        return this.ftp.request(command);
+        return this.ftp.request(command5);
       }
       /**
        * Send an FTP command and ignore an FTP error response. Any other kind of error or timeout will still reject the Promise.
        *
        * @param command
        */
-      sendIgnoringError(command) {
-        return this.ftp.handle(command, (res, task) => {
+      sendIgnoringError(command5) {
+        return this.ftp.handle(command5, (res, task) => {
           if (res instanceof FtpContext_1.FTPError) {
             task.resolve({ code: res.code, message: res.message });
           } else if (res instanceof Error) {
@@ -51298,8 +52001,8 @@ var require_Client = __commonJS({
        * @param options  TLS options as in `tls.connect(options)`, optional.
        * @param command  Set the authentication command. Optional, default is "AUTH TLS".
        */
-      async useTLS(options = {}, command = "AUTH TLS") {
-        const ret = await this.send(command);
+      async useTLS(options = {}, command5 = "AUTH TLS") {
+        const ret = await this.send(command5);
         this.ftp.socket = await (0, netUtils_1.upgradeSocket)(this.ftp.socket, options);
         this.ftp.tlsOptions = options;
         this.ftp.log(`Control socket is using: ${(0, netUtils_1.describeTLS)(this.ftp.socket)}`);
@@ -51433,11 +52136,11 @@ var require_Client = __commonJS({
        */
       async size(path4) {
         const validPath = await this.protectWhitespace(path4);
-        const command = `SIZE ${validPath}`;
-        const res = await this.send(command);
+        const command5 = `SIZE ${validPath}`;
+        const res = await this.send(command5);
         const size = parseInt(res.message.slice(4), 10);
         if (Number.isNaN(size)) {
-          throw new Error(`Can't parse response to command '${command}' as a numerical value: ${res.message}`);
+          throw new Error(`Can't parse response to command '${command5}' as a numerical value: ${res.message}`);
         }
         return size;
       }
@@ -51500,16 +52203,16 @@ var require_Client = __commonJS({
       /**
        * @protected
        */
-      async _uploadWithCommand(source, remotePath, command, options) {
+      async _uploadWithCommand(source, remotePath, command5, options) {
         if (typeof source === "string") {
-          return this._uploadLocalFile(source, remotePath, command, options);
+          return this._uploadLocalFile(source, remotePath, command5, options);
         }
-        return this._uploadFromStream(source, remotePath, command);
+        return this._uploadFromStream(source, remotePath, command5);
       }
       /**
        * @protected
        */
-      async _uploadLocalFile(localPath, remotePath, command, options) {
+      async _uploadLocalFile(localPath, remotePath, command5, options) {
         const fd = await fsOpen(localPath, "r");
         const source = (0, fs_1.createReadStream)("", {
           fd,
@@ -51518,7 +52221,7 @@ var require_Client = __commonJS({
           autoClose: false
         });
         try {
-          return await this._uploadFromStream(source, remotePath, command);
+          return await this._uploadFromStream(source, remotePath, command5);
         } finally {
           await ignoreError(() => fsClose(fd));
         }
@@ -51526,7 +52229,7 @@ var require_Client = __commonJS({
       /**
        * @protected
        */
-      async _uploadFromStream(source, remotePath, command) {
+      async _uploadFromStream(source, remotePath, command5) {
         const onError = (err) => this.ftp.closeWithError(err);
         source.once("error", onError);
         try {
@@ -51535,7 +52238,7 @@ var require_Client = __commonJS({
           return await (0, transfer_1.uploadFrom)(source, {
             ftp: this.ftp,
             tracker: this._progressTracker,
-            command,
+            command: command5,
             remotePath: validPath,
             type: "upload"
           });
@@ -51618,10 +52321,10 @@ var require_Client = __commonJS({
         const validPath = await this.protectWhitespace(path4);
         let lastError;
         for (const candidate of this.availableListCommands) {
-          const command = validPath === "" ? candidate : `${candidate} ${validPath}`;
+          const command5 = validPath === "" ? candidate : `${candidate} ${validPath}`;
           await this.prepareTransfer(this.ftp);
           try {
-            const parsedList = await this._requestListWithCommand(command);
+            const parsedList = await this._requestListWithCommand(command5);
             this.availableListCommands = [candidate];
             return parsedList;
           } catch (err) {
@@ -51637,12 +52340,12 @@ var require_Client = __commonJS({
       /**
        * @protected
        */
-      async _requestListWithCommand(command) {
+      async _requestListWithCommand(command5) {
         const buffer = new StringWriter_1.StringWriter(this.options.maxListingBytes);
         await (0, transfer_1.downloadTo)(buffer, {
           ftp: this.ftp,
           tracker: this._progressTracker,
-          command,
+          command: command5,
           remotePath: "",
           type: "list"
         });
@@ -70843,7 +71546,7 @@ var init_dist14 = __esm({
         const rs = await getUri(this.uri, { ...this.opts, cache: this.cache });
         debug15("Got `Readable` instance for URI");
         this.cache = rs;
-        const buf = await toBuffer(rs);
+        const buf = await toBuffer2(rs);
         debug15("Read %o byte PAC file from URI", buf.length);
         return buf.toString("utf8");
       }
@@ -70961,17 +71664,17 @@ function toCommandProperties(annotationProperties) {
 }
 
 // node_modules/@actions/core/lib/command.js
-function issueCommand(command, properties, message) {
-  const cmd = new Command(command, properties, message);
+function issueCommand(command5, properties, message) {
+  const cmd = new Command(command5, properties, message);
   process.stdout.write(cmd.toString() + os.EOL);
 }
 var CMD_STRING = "::";
 var Command = class {
-  constructor(command, properties, message) {
-    if (!command) {
-      command = "missing.command";
+  constructor(command5, properties, message) {
+    if (!command5) {
+      command5 = "missing.command";
     }
-    this.command = command;
+    this.command = command5;
     this.properties = properties;
     this.message = message;
   }
@@ -71009,10 +71712,10 @@ function escapeProperty(s) {
 var crypto2 = __toESM(require("crypto"), 1);
 var fs = __toESM(require("fs"), 1);
 var os2 = __toESM(require("os"), 1);
-function issueFileCommand(command, message) {
-  const filePath = process.env[`GITHUB_${command}`];
+function issueFileCommand(command5, message) {
+  const filePath = process.env[`GITHUB_${command5}`];
   if (!filePath) {
-    throw new Error(`Unable to find environment variable for file command ${command}`);
+    throw new Error(`Unable to find environment variable for file command ${command5}`);
   }
   if (!fs.existsSync(filePath)) {
     throw new Error(`Missing file at path: ${filePath}`);
