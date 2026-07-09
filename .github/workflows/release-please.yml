@@ -55,6 +55,8 @@
           run: |
             git config user.name "GitHub Actions"
             git config user.email "github-aws-sdk-osds-automation@amazon.com"
+            echo "::add-mask::${{ env.OSDS_ACCESS_TOKEN }}"
+            git remote set-url origin https://${{ env.OSDS_ACCESS_TOKEN }}@github.com/aws-actions/configure-aws-credentials.git
             if git rev-parse "v${{ steps.release.outputs.major }}" >/dev/null 2>&1; then
               git tag -d "v${{ steps.release.outputs.major }}"
               git push origin ":v${{ steps.release.outputs.major }}"
