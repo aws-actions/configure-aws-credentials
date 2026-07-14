@@ -23866,52 +23866,10 @@ var init_EndpointError = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointFunctions.js
-var init_EndpointFunctions = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointFunctions.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointRuleObject.js
-var init_EndpointRuleObject = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointRuleObject.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/ErrorRuleObject.js
-var init_ErrorRuleObject = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/ErrorRuleObject.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/RuleSetObject.js
-var init_RuleSetObject = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/RuleSetObject.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/TreeRuleObject.js
-var init_TreeRuleObject = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/TreeRuleObject.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/shared.js
-var init_shared = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/shared.js"() {
-  }
-});
-
 // node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/index.js
 var init_types2 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/index.js"() {
     init_EndpointError();
-    init_EndpointFunctions();
-    init_EndpointRuleObject();
-    init_ErrorRuleObject();
-    init_RuleSetObject();
-    init_TreeRuleObject();
-    init_shared();
   }
 });
 
@@ -24595,7 +24553,6 @@ var init_evaluateRules = __esm({
 // node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js
 var init_utils = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js"() {
-    init_customEndpointFunctions();
     init_evaluateRules();
   }
 });
@@ -28376,15 +28333,15 @@ var init_HttpInterceptingShapeSerializer = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Field.js
-var import_types22, Field;
+var import_types23, Field;
 var init_Field = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Field.js"() {
-    import_types22 = __toESM(require_dist_cjs());
+    import_types23 = __toESM(require_dist_cjs());
     Field = class {
       name;
       kind;
       values;
-      constructor({ name, kind = import_types22.FieldPosition.HEADER, values = [] }) {
+      constructor({ name, kind = import_types23.FieldPosition.HEADER, values = [] }) {
         this.name = name;
         this.kind = kind;
         this.values = values;
@@ -30211,11 +30168,11 @@ var init_DefaultIdentityProviderConfig = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js
-var import_types23, HttpApiKeyAuthSigner;
+var import_types24, HttpApiKeyAuthSigner;
 var init_httpApiKeyAuth = __esm({
   "node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js"() {
     init_protocols();
-    import_types23 = __toESM(require_dist_cjs());
+    import_types24 = __toESM(require_dist_cjs());
     HttpApiKeyAuthSigner = class {
       async sign(httpRequest, identity, signingProperties) {
         if (!signingProperties) {
@@ -30231,9 +30188,9 @@ var init_httpApiKeyAuth = __esm({
           throw new Error("request could not be signed with `apiKey` since the `apiKey` is not defined");
         }
         const clonedRequest = HttpRequest.clone(httpRequest);
-        if (signingProperties.in === import_types23.HttpApiKeyAuthLocation.QUERY) {
+        if (signingProperties.in === import_types24.HttpApiKeyAuthLocation.QUERY) {
           clonedRequest.query[signingProperties.name] = identity.apiKey;
-        } else if (signingProperties.in === import_types23.HttpApiKeyAuthLocation.HEADER) {
+        } else if (signingProperties.in === import_types24.HttpApiKeyAuthLocation.HEADER) {
           clonedRequest.headers[signingProperties.name] = signingProperties.scheme ? `${signingProperties.scheme} ${identity.apiKey}` : identity.apiKey;
         } else {
           throw new Error("request can only be signed with `apiKey` locations `query` or `header`, but found: `" + signingProperties.in + "`");
@@ -36105,7 +36062,6 @@ var init_cbor2 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/cbor/index.js"() {
     init_parseCborBody();
     init_SmithyRpcV2CborProtocol();
-    init_CborCodec();
   }
 });
 
