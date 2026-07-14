@@ -222,7 +222,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/client-sts@3.1080.0
+ - @aws-sdk/client-sts@3.1086.0
 
 This package contains the following license:
 
@@ -432,7 +432,7 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/signature-v4-multi-region@3.996.38
+ - @aws-sdk/signature-v4-multi-region@3.996.39
  - @smithy/core@3.29.3
  - @smithy/types@4.16.1
 
@@ -1043,13 +1043,13 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/credential-provider-env@3.972.57
- - @aws-sdk/credential-provider-ini@3.972.61
- - @aws-sdk/credential-provider-node@3.972.63
- - @aws-sdk/token-providers@3.1080.0
+ - @aws-sdk/credential-provider-ini@3.973.1
+ - @aws-sdk/credential-provider-node@3.972.67
+ - @aws-sdk/token-providers@3.1083.0
  - @aws-sdk/types@3.974.0
  - @aws-sdk/xml-builder@3.972.34
- - @smithy/credential-provider-imds@4.4.6
- - @smithy/fetch-http-handler@5.6.3
+ - @smithy/credential-provider-imds@4.4.8
+ - @smithy/fetch-http-handler@5.6.5
  - @smithy/node-http-handler@4.9.5
  - @smithy/signature-v4@5.6.4
 
@@ -1261,9 +1261,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-process@3.972.54
- - @aws-sdk/credential-provider-sso@3.972.60
- - @aws-sdk/credential-provider-web-identity@3.972.60
+ - @aws-sdk/credential-provider-process@3.972.57
+ - @aws-sdk/credential-provider-sso@3.973.1
+ - @aws-sdk/credential-provider-web-identity@3.972.63
 
 These packages each contain the following license:
 
@@ -1473,9 +1473,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-http@3.972.56
- - @aws-sdk/credential-provider-login@3.972.60
- - @aws-sdk/nested-clients@3.997.28
+ - @aws-sdk/credential-provider-http@3.972.59
+ - @aws-sdk/credential-provider-login@3.972.63
+ - @aws-sdk/nested-clients@3.997.31
 
 These packages each contain the following license:
 

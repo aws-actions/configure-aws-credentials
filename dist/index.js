@@ -34521,16 +34521,16 @@ var require_dist_cjs7 = __commonJS({
       const warn2 = options.logger?.constructor?.name === "NoOpLogger" || !options.logger?.warn ? console.warn : options.logger.warn.bind(options.logger);
       if (relative && full) {
         warn2("@aws-sdk/credential-provider-http: you have set both awsContainerCredentialsRelativeUri and awsContainerCredentialsFullUri.");
-        warn2("awsContainerCredentialsFullUri will take precedence.");
+        warn2("awsContainerCredentialsRelativeUri will take precedence.");
       }
       if (token && tokenFile) {
         warn2("@aws-sdk/credential-provider-http: you have set both awsContainerAuthorizationToken and awsContainerAuthorizationTokenFile.");
-        warn2("awsContainerAuthorizationToken will take precedence.");
+        warn2("awsContainerAuthorizationTokenFile will take precedence.");
       }
-      if (full) {
-        host = full;
-      } else if (relative) {
+      if (relative) {
         host = `${DEFAULT_LINK_LOCAL_HOST}${relative}`;
+      } else if (full) {
+        host = full;
       } else {
         throw new CredentialsProviderError2(`No HTTP credential provider host provided.
 Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI.`, { logger: options.logger });
@@ -34541,10 +34541,10 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
       const requestTimeout = options.timeout ?? 1e3;
       const provider = retryWrapper(async () => {
         const request = createGetRequest(url);
-        if (token) {
-          request.headers.Authorization = token;
-        } else if (tokenFile) {
-          request.headers.Authorization = (await fs4.readFile(tokenFile)).toString();
+        if (tokenFile) {
+          request.headers.Authorization = validateToken((await fs4.readFile(tokenFile)).toString());
+        } else if (token) {
+          request.headers.Authorization = validateToken(token);
         }
         try {
           const result = await requestHandler.handle(request, { requestTimeout });
@@ -34560,6 +34560,12 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
           requestHandler.destroy?.();
         }
       };
+    };
+    var validateToken = (token) => {
+      if (token.includes("\r\n")) {
+        throw new CredentialsProviderError2("Authorization token contains invalid \\r\\n sequence.");
+      }
+      return token;
     };
     exports2.fromHttp = fromHttp;
   }
@@ -34647,7 +34653,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.28",
+      version: "3.997.31",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -34675,13 +34681,13 @@ var init_package = __esm({
       },
       license: "Apache-2.0",
       dependencies: {
-        "@aws-sdk/core": "^3.974.28",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.38",
-        "@aws-sdk/types": "^3.973.15",
-        "@smithy/core": "^3.29.0",
-        "@smithy/fetch-http-handler": "^5.6.2",
-        "@smithy/node-http-handler": "^4.9.2",
-        "@smithy/types": "^4.15.1",
+        "@aws-sdk/core": "^3.975.1",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.39",
+        "@aws-sdk/types": "^3.974.0",
+        "@smithy/core": "^3.29.2",
+        "@smithy/fetch-http-handler": "^5.6.4",
+        "@smithy/node-http-handler": "^4.9.4",
+        "@smithy/types": "^4.16.0",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -40251,12 +40257,217 @@ Reference: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.ht
   }
 });
 
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthSchemeProvider.js
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js
+var q, a3, b3, c3, d3, e3, f3, g3, h3, i3, j3, k3, l, m, n, o, p, _data3, root3, r3, nodes3, bdd3;
+var init_bdd3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js"() {
+    init_endpoints();
+    q = "ref";
+    a3 = -1;
+    b3 = true;
+    c3 = "isSet";
+    d3 = "PartitionResult";
+    e3 = "booleanEquals";
+    f3 = "stringEquals";
+    g3 = "getAttr";
+    h3 = "us-east-1";
+    i3 = "sigv4";
+    j3 = "sts";
+    k3 = "https://sts.{Region}.{PartitionResult#dnsSuffix}";
+    l = { [q]: "Endpoint" };
+    m = { [q]: "Region" };
+    n = { [q]: d3 };
+    o = {};
+    p = [m];
+    _data3 = {
+      conditions: [
+        [c3, [l]],
+        [c3, p],
+        ["aws.partition", p, d3],
+        [e3, [{ [q]: "UseFIPS" }, b3]],
+        [e3, [{ [q]: "UseDualStack" }, b3]],
+        [f3, [m, "aws-global"]],
+        [e3, [{ [q]: "UseGlobalEndpoint" }, b3]],
+        [f3, [m, "eu-central-1"]],
+        [e3, [{ fn: g3, argv: [n, "supportsDualStack"] }, b3]],
+        [e3, [{ fn: g3, argv: [n, "supportsFIPS"] }, b3]],
+        [f3, [m, "ap-south-1"]],
+        [f3, [m, "eu-north-1"]],
+        [f3, [m, "eu-west-1"]],
+        [f3, [m, "eu-west-2"]],
+        [f3, [m, "eu-west-3"]],
+        [f3, [m, "sa-east-1"]],
+        [f3, [m, h3]],
+        [f3, [m, "us-east-2"]],
+        [f3, [m, "us-west-2"]],
+        [f3, [m, "us-west-1"]],
+        [f3, [m, "ca-central-1"]],
+        [f3, [m, "ap-southeast-1"]],
+        [f3, [m, "ap-northeast-1"]],
+        [f3, [m, "ap-southeast-2"]],
+        [f3, [{ fn: g3, argv: [n, "name"] }, "aws-us-gov"]]
+      ],
+      results: [
+        [a3],
+        ["https://sts.amazonaws.com", { authSchemes: [{ name: i3, signingName: j3, signingRegion: h3 }] }],
+        [k3, { authSchemes: [{ name: i3, signingName: j3, signingRegion: "{Region}" }] }],
+        [a3, "Invalid Configuration: FIPS and custom endpoint are not supported"],
+        [a3, "Invalid Configuration: Dualstack and custom endpoint are not supported"],
+        [l, o],
+        ["https://sts-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", o],
+        [a3, "FIPS and DualStack are enabled, but this partition does not support one or both"],
+        ["https://sts.{Region}.amazonaws.com", o],
+        ["https://sts-fips.{Region}.{PartitionResult#dnsSuffix}", o],
+        [a3, "FIPS is enabled but this partition does not support FIPS"],
+        ["https://sts.{Region}.{PartitionResult#dualStackDnsSuffix}", o],
+        [a3, "DualStack is enabled but this partition does not support DualStack"],
+        [k3, o],
+        [a3, "Invalid Configuration: Missing Region"]
+      ]
+    };
+    root3 = 2;
+    r3 = 1e8;
+    nodes3 = new Int32Array([
+      -1,
+      1,
+      -1,
+      0,
+      30,
+      3,
+      1,
+      4,
+      r3 + 14,
+      2,
+      5,
+      r3 + 14,
+      3,
+      25,
+      6,
+      4,
+      24,
+      7,
+      5,
+      r3 + 1,
+      8,
+      6,
+      9,
+      r3 + 13,
+      7,
+      r3 + 1,
+      10,
+      10,
+      r3 + 1,
+      11,
+      11,
+      r3 + 1,
+      12,
+      12,
+      r3 + 1,
+      13,
+      13,
+      r3 + 1,
+      14,
+      14,
+      r3 + 1,
+      15,
+      15,
+      r3 + 1,
+      16,
+      16,
+      r3 + 1,
+      17,
+      17,
+      r3 + 1,
+      18,
+      18,
+      r3 + 1,
+      19,
+      19,
+      r3 + 1,
+      20,
+      20,
+      r3 + 1,
+      21,
+      21,
+      r3 + 1,
+      22,
+      22,
+      r3 + 1,
+      23,
+      23,
+      r3 + 1,
+      r3 + 2,
+      8,
+      r3 + 11,
+      r3 + 12,
+      4,
+      28,
+      26,
+      9,
+      27,
+      r3 + 10,
+      24,
+      r3 + 8,
+      r3 + 9,
+      8,
+      29,
+      r3 + 7,
+      9,
+      r3 + 6,
+      r3 + 7,
+      3,
+      r3 + 3,
+      31,
+      4,
+      r3 + 4,
+      r3 + 5
+    ]);
+    bdd3 = BinaryDecisionDiagram.from(nodes3, root3, _data3.conditions, _data3.results);
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js
+var cache3, defaultEndpointResolver3;
+var init_endpointResolver3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js"() {
+    init_client3();
+    init_endpoints();
+    init_bdd3();
+    cache3 = new EndpointCache({
+      size: 50,
+      params: ["Endpoint", "Region", "UseDualStack", "UseFIPS", "UseGlobalEndpoint"]
+    });
+    defaultEndpointResolver3 = (endpointParams, context = {}) => {
+      return cache3.get(endpointParams, () => decideEndpoint(bdd3, {
+        endpointParams,
+        logger: context.logger
+      }));
+    };
+    customEndpointFunctions.aws = awsEndpointFunctions;
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js
 function createAwsAuthSigv4HttpAuthOption3(authParameters) {
   return {
     schemeId: "aws.auth#sigv4",
     signingProperties: {
-      name: "signin",
+      name: "sts",
+      region: authParameters.region
+    },
+    propertiesExtractor: (config, context) => ({
+      signingProperties: {
+        config,
+        context
+      }
+    })
+  };
+}
+function createAwsAuthSigv4aHttpAuthOption(authParameters) {
+  return {
+    schemeId: "aws.auth#sigv4a",
+    signingProperties: {
+      name: "sts",
       region: authParameters.region
     },
     propertiesExtractor: (config, context) => ({
@@ -40272,8 +40483,1016 @@ function createSmithyApiNoAuthHttpAuthOption3(authParameters) {
     schemeId: "smithy.api#noAuth"
   };
 }
-var defaultSigninHttpAuthSchemeParametersProvider, defaultSigninHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig3;
+var import_signature_v4_multi_region, createEndpointRuleSetHttpAuthSchemeParametersProvider, _defaultSTSHttpAuthSchemeParametersProvider, defaultSTSHttpAuthSchemeParametersProvider, createEndpointRuleSetHttpAuthSchemeProvider, _defaultSTSHttpAuthSchemeProvider, defaultSTSHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig3;
 var init_httpAuthSchemeProvider3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js"() {
+    init_httpAuthSchemes2();
+    import_signature_v4_multi_region = __toESM(require_dist_cjs3());
+    init_client2();
+    init_endpoints();
+    init_endpointResolver3();
+    createEndpointRuleSetHttpAuthSchemeParametersProvider = (defaultHttpAuthSchemeParametersProvider) => async (config, context, input) => {
+      if (!input) {
+        throw new Error("Could not find `input` for `defaultEndpointRuleSetHttpAuthSchemeParametersProvider`");
+      }
+      const defaultParameters = await defaultHttpAuthSchemeParametersProvider(config, context, input);
+      const instructionsFn = getSmithyContext(context)?.commandInstance?.constructor?.getEndpointParameterInstructions;
+      if (!instructionsFn) {
+        throw new Error(`getEndpointParameterInstructions() is not defined on '${context.commandName}'`);
+      }
+      const endpointParameters = await resolveParams(input, { getEndpointParameterInstructions: instructionsFn }, config);
+      return Object.assign(defaultParameters, endpointParameters);
+    };
+    _defaultSTSHttpAuthSchemeParametersProvider = async (config, context, input) => {
+      return {
+        operation: getSmithyContext(context).operation,
+        region: await normalizeProvider(config.region)() || (() => {
+          throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
+        })()
+      };
+    };
+    defaultSTSHttpAuthSchemeParametersProvider = createEndpointRuleSetHttpAuthSchemeParametersProvider(_defaultSTSHttpAuthSchemeParametersProvider);
+    createEndpointRuleSetHttpAuthSchemeProvider = (defaultEndpointResolver5, defaultHttpAuthSchemeResolver, createHttpAuthOptionFunctions) => {
+      const endpointRuleSetHttpAuthSchemeProvider = (authParameters) => {
+        const endpoint = defaultEndpointResolver5(authParameters);
+        const authSchemes = endpoint.properties?.authSchemes;
+        if (!authSchemes) {
+          return defaultHttpAuthSchemeResolver(authParameters);
+        }
+        const options = [];
+        for (const scheme of authSchemes) {
+          const { name: resolvedName, properties = {}, ...rest } = scheme;
+          const name = resolvedName.toLowerCase();
+          if (resolvedName !== name) {
+            console.warn(`HttpAuthScheme has been normalized with lowercasing: '${resolvedName}' to '${name}'`);
+          }
+          let schemeId;
+          if (name === "sigv4a") {
+            schemeId = "aws.auth#sigv4a";
+            const sigv4Present = authSchemes.find((s) => {
+              const name2 = s.name.toLowerCase();
+              return name2 !== "sigv4a" && name2.startsWith("sigv4");
+            });
+            if (import_signature_v4_multi_region.SignatureV4MultiRegion.sigv4aDependency() === "none" && sigv4Present) {
+              continue;
+            }
+          } else if (name.startsWith("sigv4")) {
+            schemeId = "aws.auth#sigv4";
+          } else {
+            throw new Error(`Unknown HttpAuthScheme found in '@smithy.rules#endpointRuleSet': '${name}'`);
+          }
+          const createOption = createHttpAuthOptionFunctions[schemeId];
+          if (!createOption) {
+            throw new Error(`Could not find HttpAuthOption create function for '${schemeId}'`);
+          }
+          const option = createOption(authParameters);
+          option.schemeId = schemeId;
+          option.signingProperties = { ...option.signingProperties || {}, ...rest, ...properties };
+          options.push(option);
+        }
+        return options;
+      };
+      return endpointRuleSetHttpAuthSchemeProvider;
+    };
+    _defaultSTSHttpAuthSchemeProvider = (authParameters) => {
+      const options = [];
+      switch (authParameters.operation) {
+        case "AssumeRoleWithWebIdentity": {
+          options.push(createSmithyApiNoAuthHttpAuthOption3(authParameters));
+          options.push(createAwsAuthSigv4aHttpAuthOption(authParameters));
+          break;
+        }
+        default: {
+          options.push(createAwsAuthSigv4HttpAuthOption3(authParameters));
+          options.push(createAwsAuthSigv4aHttpAuthOption(authParameters));
+        }
+      }
+      return options;
+    };
+    defaultSTSHttpAuthSchemeProvider = createEndpointRuleSetHttpAuthSchemeProvider(defaultEndpointResolver3, _defaultSTSHttpAuthSchemeProvider, {
+      "aws.auth#sigv4": createAwsAuthSigv4HttpAuthOption3,
+      "aws.auth#sigv4a": createAwsAuthSigv4aHttpAuthOption,
+      "smithy.api#noAuth": createSmithyApiNoAuthHttpAuthOption3
+    });
+    resolveHttpAuthSchemeConfig3 = (config) => {
+      const config_0 = resolveAwsSdkSigV4Config(config);
+      const config_1 = resolveAwsSdkSigV4AConfig(config_0);
+      return Object.assign(config_1, {
+        authSchemePreference: normalizeProvider(config.authSchemePreference ?? [])
+      });
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js
+var resolveClientEndpointParameters3, commonParams3;
+var init_EndpointParameters3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js"() {
+    resolveClientEndpointParameters3 = (options) => {
+      return Object.assign(options, {
+        useDualstackEndpoint: options.useDualstackEndpoint ?? false,
+        useFipsEndpoint: options.useFipsEndpoint ?? false,
+        useGlobalEndpoint: options.useGlobalEndpoint ?? false,
+        defaultSigningName: "sts"
+      });
+    };
+    commonParams3 = {
+      UseGlobalEndpoint: { type: "builtInParams", name: "useGlobalEndpoint" },
+      UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
+      Endpoint: { type: "builtInParams", name: "endpoint" },
+      Region: { type: "builtInParams", name: "region" },
+      UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js
+var STSServiceException;
+var init_STSServiceException = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js"() {
+    init_client2();
+    STSServiceException = class _STSServiceException extends ServiceException {
+      constructor(options) {
+        super(options);
+        Object.setPrototypeOf(this, _STSServiceException.prototype);
+      }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js
+var ExpiredTokenException2, MalformedPolicyDocumentException, PackedPolicyTooLargeException, RegionDisabledException, IDPRejectedClaimException, InvalidIdentityTokenException, IDPCommunicationErrorException;
+var init_errors3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js"() {
+    init_STSServiceException();
+    ExpiredTokenException2 = class _ExpiredTokenException extends STSServiceException {
+      name = "ExpiredTokenException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ExpiredTokenException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ExpiredTokenException.prototype);
+      }
+    };
+    MalformedPolicyDocumentException = class _MalformedPolicyDocumentException extends STSServiceException {
+      name = "MalformedPolicyDocumentException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "MalformedPolicyDocumentException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _MalformedPolicyDocumentException.prototype);
+      }
+    };
+    PackedPolicyTooLargeException = class _PackedPolicyTooLargeException extends STSServiceException {
+      name = "PackedPolicyTooLargeException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "PackedPolicyTooLargeException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _PackedPolicyTooLargeException.prototype);
+      }
+    };
+    RegionDisabledException = class _RegionDisabledException extends STSServiceException {
+      name = "RegionDisabledException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "RegionDisabledException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _RegionDisabledException.prototype);
+      }
+    };
+    IDPRejectedClaimException = class _IDPRejectedClaimException extends STSServiceException {
+      name = "IDPRejectedClaimException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "IDPRejectedClaimException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _IDPRejectedClaimException.prototype);
+      }
+    };
+    InvalidIdentityTokenException = class _InvalidIdentityTokenException extends STSServiceException {
+      name = "InvalidIdentityTokenException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidIdentityTokenException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidIdentityTokenException.prototype);
+      }
+    };
+    IDPCommunicationErrorException = class _IDPCommunicationErrorException extends STSServiceException {
+      name = "IDPCommunicationErrorException";
+      $fault = "client";
+      $retryable = {};
+      constructor(opts) {
+        super({
+          name: "IDPCommunicationErrorException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _IDPCommunicationErrorException.prototype);
+      }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js
+var _A, _AKI, _AR, _ARI, _ARR, _ARRs, _ARU, _ARWWI, _ARWWIR, _ARWWIRs, _Au, _C, _CA, _DS, _E, _EI, _ETE2, _IDPCEE, _IDPRCE, _IITE, _K, _MPDE, _P, _PA, _PAr, _PC, _PCLT, _PCr, _PDT, _PI, _PPS, _PPTLE, _Pr, _RA, _RDE, _RSN, _SAK, _SFWIT, _SI, _SN, _ST, _T, _TC, _TTK, _Ta, _V, _WIT, _a, _aKST, _aQE, _c3, _cTT, _e3, _hE3, _m2, _pDLT, _s3, _tLT, n03, _s_registry3, STSServiceException$, n0_registry3, ExpiredTokenException$2, IDPCommunicationErrorException$, IDPRejectedClaimException$, InvalidIdentityTokenException$, MalformedPolicyDocumentException$, PackedPolicyTooLargeException$, RegionDisabledException$, errorTypeRegistries3, accessKeySecretType, clientTokenType, AssumedRoleUser$, AssumeRoleRequest$, AssumeRoleResponse$, AssumeRoleWithWebIdentityRequest$, AssumeRoleWithWebIdentityResponse$, Credentials$, PolicyDescriptorType$, ProvidedContext$, Tag$, policyDescriptorListType, ProvidedContextsListType, tagKeyListType, tagListType, AssumeRole$, AssumeRoleWithWebIdentity$;
+var init_schemas_03 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js"() {
+    init_schema();
+    init_errors3();
+    init_STSServiceException();
+    _A = "Arn";
+    _AKI = "AccessKeyId";
+    _AR = "AssumeRole";
+    _ARI = "AssumedRoleId";
+    _ARR = "AssumeRoleRequest";
+    _ARRs = "AssumeRoleResponse";
+    _ARU = "AssumedRoleUser";
+    _ARWWI = "AssumeRoleWithWebIdentity";
+    _ARWWIR = "AssumeRoleWithWebIdentityRequest";
+    _ARWWIRs = "AssumeRoleWithWebIdentityResponse";
+    _Au = "Audience";
+    _C = "Credentials";
+    _CA = "ContextAssertion";
+    _DS = "DurationSeconds";
+    _E = "Expiration";
+    _EI = "ExternalId";
+    _ETE2 = "ExpiredTokenException";
+    _IDPCEE = "IDPCommunicationErrorException";
+    _IDPRCE = "IDPRejectedClaimException";
+    _IITE = "InvalidIdentityTokenException";
+    _K = "Key";
+    _MPDE = "MalformedPolicyDocumentException";
+    _P = "Policy";
+    _PA = "PolicyArns";
+    _PAr = "ProviderArn";
+    _PC = "ProvidedContexts";
+    _PCLT = "ProvidedContextsListType";
+    _PCr = "ProvidedContext";
+    _PDT = "PolicyDescriptorType";
+    _PI = "ProviderId";
+    _PPS = "PackedPolicySize";
+    _PPTLE = "PackedPolicyTooLargeException";
+    _Pr = "Provider";
+    _RA = "RoleArn";
+    _RDE = "RegionDisabledException";
+    _RSN = "RoleSessionName";
+    _SAK = "SecretAccessKey";
+    _SFWIT = "SubjectFromWebIdentityToken";
+    _SI = "SourceIdentity";
+    _SN = "SerialNumber";
+    _ST = "SessionToken";
+    _T = "Tags";
+    _TC = "TokenCode";
+    _TTK = "TransitiveTagKeys";
+    _Ta = "Tag";
+    _V = "Value";
+    _WIT = "WebIdentityToken";
+    _a = "arn";
+    _aKST = "accessKeySecretType";
+    _aQE = "awsQueryError";
+    _c3 = "client";
+    _cTT = "clientTokenType";
+    _e3 = "error";
+    _hE3 = "httpError";
+    _m2 = "message";
+    _pDLT = "policyDescriptorListType";
+    _s3 = "smithy.ts.sdk.synthetic.com.amazonaws.sts";
+    _tLT = "tagListType";
+    n03 = "com.amazonaws.sts";
+    _s_registry3 = TypeRegistry.for(_s3);
+    STSServiceException$ = [-3, _s3, "STSServiceException", 0, [], []];
+    _s_registry3.registerError(STSServiceException$, STSServiceException);
+    n0_registry3 = TypeRegistry.for(n03);
+    ExpiredTokenException$2 = [
+      -3,
+      n03,
+      _ETE2,
+      { [_aQE]: [`ExpiredTokenException`, 400], [_e3]: _c3, [_hE3]: 400 },
+      [_m2],
+      [0]
+    ];
+    n0_registry3.registerError(ExpiredTokenException$2, ExpiredTokenException2);
+    IDPCommunicationErrorException$ = [
+      -3,
+      n03,
+      _IDPCEE,
+      { [_aQE]: [`IDPCommunicationError`, 400], [_e3]: _c3, [_hE3]: 400 },
+      [_m2],
+      [0]
+    ];
+    n0_registry3.registerError(IDPCommunicationErrorException$, IDPCommunicationErrorException);
+    IDPRejectedClaimException$ = [
+      -3,
+      n03,
+      _IDPRCE,
+      { [_aQE]: [`IDPRejectedClaim`, 403], [_e3]: _c3, [_hE3]: 403 },
+      [_m2],
+      [0]
+    ];
+    n0_registry3.registerError(IDPRejectedClaimException$, IDPRejectedClaimException);
+    InvalidIdentityTokenException$ = [
+      -3,
+      n03,
+      _IITE,
+      { [_aQE]: [`InvalidIdentityToken`, 400], [_e3]: _c3, [_hE3]: 400 },
+      [_m2],
+      [0]
+    ];
+    n0_registry3.registerError(InvalidIdentityTokenException$, InvalidIdentityTokenException);
+    MalformedPolicyDocumentException$ = [
+      -3,
+      n03,
+      _MPDE,
+      { [_aQE]: [`MalformedPolicyDocument`, 400], [_e3]: _c3, [_hE3]: 400 },
+      [_m2],
+      [0]
+    ];
+    n0_registry3.registerError(MalformedPolicyDocumentException$, MalformedPolicyDocumentException);
+    PackedPolicyTooLargeException$ = [
+      -3,
+      n03,
+      _PPTLE,
+      { [_aQE]: [`PackedPolicyTooLarge`, 400], [_e3]: _c3, [_hE3]: 400 },
+      [_m2],
+      [0]
+    ];
+    n0_registry3.registerError(PackedPolicyTooLargeException$, PackedPolicyTooLargeException);
+    RegionDisabledException$ = [
+      -3,
+      n03,
+      _RDE,
+      { [_aQE]: [`RegionDisabledException`, 403], [_e3]: _c3, [_hE3]: 403 },
+      [_m2],
+      [0]
+    ];
+    n0_registry3.registerError(RegionDisabledException$, RegionDisabledException);
+    errorTypeRegistries3 = [
+      _s_registry3,
+      n0_registry3
+    ];
+    accessKeySecretType = [0, n03, _aKST, 8, 0];
+    clientTokenType = [0, n03, _cTT, 8, 0];
+    AssumedRoleUser$ = [
+      3,
+      n03,
+      _ARU,
+      0,
+      [_ARI, _A],
+      [0, 0],
+      2
+    ];
+    AssumeRoleRequest$ = [
+      3,
+      n03,
+      _ARR,
+      0,
+      [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC],
+      [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType],
+      2
+    ];
+    AssumeRoleResponse$ = [
+      3,
+      n03,
+      _ARRs,
+      0,
+      [_C, _ARU, _PPS, _SI],
+      [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0]
+    ];
+    AssumeRoleWithWebIdentityRequest$ = [
+      3,
+      n03,
+      _ARWWIR,
+      0,
+      [_RA, _RSN, _WIT, _PI, _PA, _P, _DS],
+      [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1],
+      3
+    ];
+    AssumeRoleWithWebIdentityResponse$ = [
+      3,
+      n03,
+      _ARWWIRs,
+      0,
+      [_C, _SFWIT, _ARU, _PPS, _Pr, _Au, _SI],
+      [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0]
+    ];
+    Credentials$ = [
+      3,
+      n03,
+      _C,
+      0,
+      [_AKI, _SAK, _ST, _E],
+      [0, [() => accessKeySecretType, 0], 0, 4],
+      4
+    ];
+    PolicyDescriptorType$ = [
+      3,
+      n03,
+      _PDT,
+      0,
+      [_a],
+      [0]
+    ];
+    ProvidedContext$ = [
+      3,
+      n03,
+      _PCr,
+      0,
+      [_PAr, _CA],
+      [0, 0]
+    ];
+    Tag$ = [
+      3,
+      n03,
+      _Ta,
+      0,
+      [_K, _V],
+      [0, 0],
+      2
+    ];
+    policyDescriptorListType = [
+      1,
+      n03,
+      _pDLT,
+      0,
+      () => PolicyDescriptorType$
+    ];
+    ProvidedContextsListType = [
+      1,
+      n03,
+      _PCLT,
+      0,
+      () => ProvidedContext$
+    ];
+    tagKeyListType = 64 | 0;
+    tagListType = [
+      1,
+      n03,
+      _tLT,
+      0,
+      () => Tag$
+    ];
+    AssumeRole$ = [
+      9,
+      n03,
+      _AR,
+      0,
+      () => AssumeRoleRequest$,
+      () => AssumeRoleResponse$
+    ];
+    AssumeRoleWithWebIdentity$ = [
+      9,
+      n03,
+      _ARWWI,
+      0,
+      () => AssumeRoleWithWebIdentityRequest$,
+      () => AssumeRoleWithWebIdentityResponse$
+    ];
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js
+var import_signature_v4_multi_region2, getRuntimeConfig5;
+var init_runtimeConfig_shared3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js"() {
+    init_httpAuthSchemes2();
+    init_protocols2();
+    import_signature_v4_multi_region2 = __toESM(require_dist_cjs3());
+    init_dist_es();
+    init_checksum2();
+    init_client2();
+    init_protocols();
+    init_serde();
+    init_httpAuthSchemeProvider3();
+    init_endpointResolver3();
+    init_schemas_03();
+    getRuntimeConfig5 = (config) => {
+      return {
+        apiVersion: "2011-06-15",
+        base64Decoder: config?.base64Decoder ?? fromBase64,
+        base64Encoder: config?.base64Encoder ?? toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? defaultEndpointResolver3,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? defaultSTSHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
+          {
+            schemeId: "aws.auth#sigv4",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
+            signer: new AwsSdkSigV4Signer()
+          },
+          {
+            schemeId: "aws.auth#sigv4a",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4a"),
+            signer: new AwsSdkSigV4ASigner()
+          },
+          {
+            schemeId: "smithy.api#noAuth",
+            identityProvider: (ipc) => ipc.getIdentityProvider("smithy.api#noAuth") || (async () => ({})),
+            signer: new NoAuthSigner()
+          }
+        ],
+        logger: config?.logger ?? new NoOpLogger(),
+        protocol: config?.protocol ?? AwsQueryProtocol,
+        protocolSettings: config?.protocolSettings ?? {
+          defaultNamespace: "com.amazonaws.sts",
+          errorTypeRegistries: errorTypeRegistries3,
+          xmlNamespace: "https://sts.amazonaws.com/doc/2011-06-15/",
+          version: "2011-06-15",
+          serviceTarget: "AWSSecurityTokenServiceV20110615"
+        },
+        serviceId: config?.serviceId ?? "STS",
+        sha256: config?.sha256 ?? Sha256Node,
+        signerConstructor: config?.signerConstructor ?? import_signature_v4_multi_region2.SignatureV4MultiRegion,
+        urlParser: config?.urlParser ?? parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? toUtf8
+      };
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js
+var import_node_http_handler3, getRuntimeConfig6;
+var init_runtimeConfig3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js"() {
+    init_package();
+    init_client3();
+    init_httpAuthSchemes2();
+    init_dist_es();
+    init_client2();
+    init_config2();
+    init_retry2();
+    init_serde();
+    import_node_http_handler3 = __toESM(require_dist_cjs6());
+    init_runtimeConfig_shared3();
+    getRuntimeConfig6 = (config) => {
+      emitWarningIfUnsupportedVersion2(process.version);
+      const defaultsMode = resolveDefaultsModeConfig(config);
+      const defaultConfigProvider = () => defaultsMode().then(loadConfigsForDefaultMode);
+      const clientSharedValues = getRuntimeConfig5(config);
+      emitWarningIfUnsupportedVersion(process.version);
+      const loaderConfig = {
+        profile: config?.profile,
+        logger: clientSharedValues.logger
+      };
+      return {
+        ...clientSharedValues,
+        ...config,
+        runtime: "node",
+        defaultsMode,
+        authSchemePreference: config?.authSchemePreference ?? loadConfig(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? calculateBodyLength,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? createDefaultUserAgentProvider({ serviceId: clientSharedValues.serviceId, clientVersion: package_default.version }),
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
+          {
+            schemeId: "aws.auth#sigv4",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await config.credentialDefaultProvider(idProps?.__config || {})()),
+            signer: new AwsSdkSigV4Signer()
+          },
+          {
+            schemeId: "aws.auth#sigv4a",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4a"),
+            signer: new AwsSdkSigV4ASigner()
+          },
+          {
+            schemeId: "smithy.api#noAuth",
+            identityProvider: (ipc) => ipc.getIdentityProvider("smithy.api#noAuth") || (async () => ({})),
+            signer: new NoAuthSigner()
+          }
+        ],
+        maxAttempts: config?.maxAttempts ?? loadConfig(NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? loadConfig(NODE_REGION_CONFIG_OPTIONS, { ...NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: import_node_http_handler3.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? loadConfig({
+          ...NODE_RETRY_MODE_CONFIG_OPTIONS,
+          default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE
+        }, config),
+        sigv4aSigningRegionSet: config?.sigv4aSigningRegionSet ?? loadConfig(NODE_SIGV4A_CONFIG_OPTIONS, loaderConfig),
+        streamCollector: config?.streamCollector ?? import_node_http_handler3.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? loadConfig(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? loadConfig(NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+      };
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js
+var getHttpAuthExtensionConfiguration3, resolveHttpAuthRuntimeConfig3;
+var init_httpAuthExtensionConfiguration3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js"() {
+    getHttpAuthExtensionConfiguration3 = (runtimeConfig) => {
+      const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
+      let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
+      let _credentials = runtimeConfig.credentials;
+      return {
+        setHttpAuthScheme(httpAuthScheme) {
+          const index = _httpAuthSchemes.findIndex((scheme) => scheme.schemeId === httpAuthScheme.schemeId);
+          if (index === -1) {
+            _httpAuthSchemes.push(httpAuthScheme);
+          } else {
+            _httpAuthSchemes.splice(index, 1, httpAuthScheme);
+          }
+        },
+        httpAuthSchemes() {
+          return _httpAuthSchemes;
+        },
+        setHttpAuthSchemeProvider(httpAuthSchemeProvider) {
+          _httpAuthSchemeProvider = httpAuthSchemeProvider;
+        },
+        httpAuthSchemeProvider() {
+          return _httpAuthSchemeProvider;
+        },
+        setCredentials(credentials) {
+          _credentials = credentials;
+        },
+        credentials() {
+          return _credentials;
+        }
+      };
+    };
+    resolveHttpAuthRuntimeConfig3 = (config) => {
+      return {
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
+      };
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js
+var resolveRuntimeExtensions3;
+var init_runtimeExtensions3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js"() {
+    init_client3();
+    init_client2();
+    init_protocols();
+    init_httpAuthExtensionConfiguration3();
+    resolveRuntimeExtensions3 = (runtimeConfig, extensions) => {
+      const extensionConfiguration = Object.assign(getAwsRegionExtensionConfiguration(runtimeConfig), getDefaultExtensionConfiguration(runtimeConfig), getHttpHandlerExtensionConfiguration(runtimeConfig), getHttpAuthExtensionConfiguration3(runtimeConfig));
+      extensions.forEach((extension) => extension.configure(extensionConfiguration));
+      return Object.assign(runtimeConfig, resolveAwsRegionExtensionConfiguration(extensionConfiguration), resolveDefaultRuntimeConfig(extensionConfiguration), resolveHttpHandlerRuntimeConfig(extensionConfiguration), resolveHttpAuthRuntimeConfig3(extensionConfiguration));
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js
+var STSClient;
+var init_STSClient = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js"() {
+    init_client3();
+    init_dist_es();
+    init_client2();
+    init_config2();
+    init_endpoints();
+    init_protocols();
+    init_retry2();
+    init_schema();
+    init_httpAuthSchemeProvider3();
+    init_EndpointParameters3();
+    init_runtimeConfig3();
+    init_runtimeExtensions3();
+    STSClient = class extends Client {
+      config;
+      constructor(...[configuration]) {
+        const _config_0 = getRuntimeConfig6(configuration || {});
+        super(_config_0);
+        this.initConfig = _config_0;
+        const _config_1 = resolveClientEndpointParameters3(_config_0);
+        const _config_2 = resolveUserAgentConfig(_config_1);
+        const _config_3 = resolveRetryConfig(_config_2);
+        const _config_4 = resolveRegionConfig(_config_3);
+        const _config_5 = resolveHostHeaderConfig(_config_4);
+        const _config_6 = resolveEndpointConfig(_config_5);
+        const _config_7 = resolveHttpAuthSchemeConfig3(_config_6);
+        const _config_8 = resolveRuntimeExtensions3(_config_7, configuration?.extensions || []);
+        this.config = _config_8;
+        this.middlewareStack.use(getSchemaSerdePlugin(this.config));
+        this.middlewareStack.use(getUserAgentPlugin(this.config));
+        this.middlewareStack.use(getRetryPlugin(this.config));
+        this.middlewareStack.use(getContentLengthPlugin(this.config));
+        this.middlewareStack.use(getHostHeaderPlugin(this.config));
+        this.middlewareStack.use(getLoggerPlugin(this.config));
+        this.middlewareStack.use(getRecursionDetectionPlugin(this.config));
+        this.middlewareStack.use(getHttpAuthSchemeEndpointRuleSetPlugin(this.config, {
+          httpAuthSchemeParametersProvider: defaultSTSHttpAuthSchemeParametersProvider,
+          identityProviderConfigProvider: async (config) => new DefaultIdentityProviderConfig({
+            "aws.auth#sigv4": config.credentials,
+            "aws.auth#sigv4a": config.credentials
+          })
+        }));
+        this.middlewareStack.use(getHttpSigningPlugin(this.config));
+      }
+      destroy() {
+        super.destroy();
+      }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js
+var command3, _ep03, _mw03;
+var init_commandBuilder3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters3();
+    command3 = makeBuilder(commonParams3, "AWSSecurityTokenServiceV20110615", "STSClient", getEndpointPlugin);
+    _ep03 = {};
+    _mw03 = (Command3, cs, config, o3) => [];
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js
+var AssumeRoleCommand;
+var init_AssumeRoleCommand = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js"() {
+    init_commandBuilder3();
+    init_schemas_03();
+    AssumeRoleCommand = class extends command3(_ep03, _mw03, "AssumeRole", AssumeRole$) {
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js
+var AssumeRoleWithWebIdentityCommand;
+var init_AssumeRoleWithWebIdentityCommand = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js"() {
+    init_commandBuilder3();
+    init_schemas_03();
+    AssumeRoleWithWebIdentityCommand = class extends command3(_ep03, _mw03, "AssumeRoleWithWebIdentity", AssumeRoleWithWebIdentity$) {
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js
+var commands3, STS;
+var init_STS = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js"() {
+    init_client2();
+    init_AssumeRoleCommand();
+    init_AssumeRoleWithWebIdentityCommand();
+    init_STSClient();
+    commands3 = {
+      AssumeRoleCommand,
+      AssumeRoleWithWebIdentityCommand
+    };
+    STS = class extends STSClient {
+    };
+    createAggregatedClient(commands3, STS);
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js
+var init_commands3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js"() {
+    init_AssumeRoleCommand();
+    init_AssumeRoleWithWebIdentityCommand();
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js
+var init_models_03 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js"() {
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js
+var getAccountIdFromAssumedRoleUser, resolveRegion, getDefaultRoleAssumer, getDefaultRoleAssumerWithWebIdentity, isH2;
+var init_defaultStsRoleAssumers = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js"() {
+    init_client3();
+    init_AssumeRoleCommand();
+    init_AssumeRoleWithWebIdentityCommand();
+    getAccountIdFromAssumedRoleUser = (assumedRoleUser) => {
+      if (typeof assumedRoleUser?.Arn === "string") {
+        const arnComponents = assumedRoleUser.Arn.split(":");
+        if (arnComponents.length > 4 && arnComponents[4] !== "") {
+          return arnComponents[4];
+        }
+      }
+      return void 0;
+    };
+    resolveRegion = async (_region, _parentRegion, credentialProviderLogger, loaderConfig = {}) => {
+      const region = typeof _region === "function" ? await _region() : _region;
+      const parentRegion = typeof _parentRegion === "function" ? await _parentRegion() : _parentRegion;
+      let stsDefaultRegion = "";
+      const resolvedRegion = region ?? parentRegion ?? (stsDefaultRegion = await stsRegionDefaultResolver(loaderConfig)());
+      credentialProviderLogger?.debug?.("@aws-sdk/client-sts::resolveRegion", "accepting first of:", `${region} (credential provider clientConfig)`, `${parentRegion} (contextual client)`, `${stsDefaultRegion} (STS default: AWS_REGION, profile region, or us-east-1)`);
+      return resolvedRegion;
+    };
+    getDefaultRoleAssumer = (stsOptions, STSClient3) => {
+      let stsClient;
+      let closureSourceCreds;
+      return async (sourceCreds, params) => {
+        closureSourceCreds = sourceCreds;
+        if (!stsClient) {
+          const { logger: logger2 = stsOptions?.parentClientConfig?.logger, profile = stsOptions?.parentClientConfig?.profile, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger, userAgentAppId = stsOptions?.parentClientConfig?.userAgentAppId } = stsOptions;
+          const resolvedRegion = await resolveRegion(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger, {
+            logger: logger2,
+            profile
+          });
+          const isCompatibleRequestHandler = !isH2(requestHandler);
+          stsClient = new STSClient3({
+            ...stsOptions,
+            userAgentAppId,
+            profile,
+            credentialDefaultProvider: () => async () => closureSourceCreds,
+            region: resolvedRegion,
+            requestHandler: isCompatibleRequestHandler ? requestHandler : void 0,
+            logger: logger2
+          });
+        }
+        const { Credentials, AssumedRoleUser } = await stsClient.send(new AssumeRoleCommand(params));
+        if (!Credentials || !Credentials.AccessKeyId || !Credentials.SecretAccessKey) {
+          throw new Error(`Invalid response from STS.assumeRole call with role ${params.RoleArn}`);
+        }
+        const accountId = getAccountIdFromAssumedRoleUser(AssumedRoleUser);
+        const credentials = {
+          accessKeyId: Credentials.AccessKeyId,
+          secretAccessKey: Credentials.SecretAccessKey,
+          sessionToken: Credentials.SessionToken,
+          expiration: Credentials.Expiration,
+          ...Credentials.CredentialScope && { credentialScope: Credentials.CredentialScope },
+          ...accountId && { accountId }
+        };
+        setCredentialFeature(credentials, "CREDENTIALS_STS_ASSUME_ROLE", "i");
+        return credentials;
+      };
+    };
+    getDefaultRoleAssumerWithWebIdentity = (stsOptions, STSClient3) => {
+      let stsClient;
+      return async (params) => {
+        if (!stsClient) {
+          const { logger: logger2 = stsOptions?.parentClientConfig?.logger, profile = stsOptions?.parentClientConfig?.profile, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger, userAgentAppId = stsOptions?.parentClientConfig?.userAgentAppId } = stsOptions;
+          const resolvedRegion = await resolveRegion(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger, {
+            logger: logger2,
+            profile
+          });
+          const isCompatibleRequestHandler = !isH2(requestHandler);
+          stsClient = new STSClient3({
+            ...stsOptions,
+            userAgentAppId,
+            profile,
+            region: resolvedRegion,
+            requestHandler: isCompatibleRequestHandler ? requestHandler : void 0,
+            logger: logger2
+          });
+        }
+        const { Credentials, AssumedRoleUser } = await stsClient.send(new AssumeRoleWithWebIdentityCommand(params));
+        if (!Credentials || !Credentials.AccessKeyId || !Credentials.SecretAccessKey) {
+          throw new Error(`Invalid response from STS.assumeRoleWithWebIdentity call with role ${params.RoleArn}`);
+        }
+        const accountId = getAccountIdFromAssumedRoleUser(AssumedRoleUser);
+        const credentials = {
+          accessKeyId: Credentials.AccessKeyId,
+          secretAccessKey: Credentials.SecretAccessKey,
+          sessionToken: Credentials.SessionToken,
+          expiration: Credentials.Expiration,
+          ...Credentials.CredentialScope && { credentialScope: Credentials.CredentialScope },
+          ...accountId && { accountId }
+        };
+        if (accountId) {
+          setCredentialFeature(credentials, "RESOLVED_ACCOUNT_ID", "T");
+        }
+        setCredentialFeature(credentials, "CREDENTIALS_STS_ASSUME_ROLE_WEB_ID", "k");
+        return credentials;
+      };
+    };
+    isH2 = (requestHandler) => {
+      return requestHandler?.metadata?.handlerProtocol === "h2";
+    };
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js
+var getCustomizableStsClientCtor, getDefaultRoleAssumer2, getDefaultRoleAssumerWithWebIdentity2, decorateDefaultCredentialProvider;
+var init_defaultRoleAssumers = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js"() {
+    init_defaultStsRoleAssumers();
+    init_STSClient();
+    getCustomizableStsClientCtor = (baseCtor, customizations) => {
+      if (!customizations)
+        return baseCtor;
+      else
+        return class CustomizableSTSClient extends baseCtor {
+          constructor(config) {
+            super(config);
+            for (const customization of customizations) {
+              this.middlewareStack.use(customization);
+            }
+          }
+        };
+    };
+    getDefaultRoleAssumer2 = (stsOptions = {}, stsPlugins) => getDefaultRoleAssumer(stsOptions, getCustomizableStsClientCtor(STSClient, stsPlugins));
+    getDefaultRoleAssumerWithWebIdentity2 = (stsOptions = {}, stsPlugins) => getDefaultRoleAssumerWithWebIdentity(stsOptions, getCustomizableStsClientCtor(STSClient, stsPlugins));
+    decorateDefaultCredentialProvider = (provider) => (input) => provider({
+      roleAssumer: getDefaultRoleAssumer2(input),
+      roleAssumerWithWebIdentity: getDefaultRoleAssumerWithWebIdentity2(input),
+      ...input
+    });
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js
+var sts_exports = {};
+__export(sts_exports, {
+  $Command: () => Command2,
+  AssumeRole$: () => AssumeRole$,
+  AssumeRoleCommand: () => AssumeRoleCommand,
+  AssumeRoleRequest$: () => AssumeRoleRequest$,
+  AssumeRoleResponse$: () => AssumeRoleResponse$,
+  AssumeRoleWithWebIdentity$: () => AssumeRoleWithWebIdentity$,
+  AssumeRoleWithWebIdentityCommand: () => AssumeRoleWithWebIdentityCommand,
+  AssumeRoleWithWebIdentityRequest$: () => AssumeRoleWithWebIdentityRequest$,
+  AssumeRoleWithWebIdentityResponse$: () => AssumeRoleWithWebIdentityResponse$,
+  AssumedRoleUser$: () => AssumedRoleUser$,
+  Credentials$: () => Credentials$,
+  ExpiredTokenException: () => ExpiredTokenException2,
+  ExpiredTokenException$: () => ExpiredTokenException$2,
+  IDPCommunicationErrorException: () => IDPCommunicationErrorException,
+  IDPCommunicationErrorException$: () => IDPCommunicationErrorException$,
+  IDPRejectedClaimException: () => IDPRejectedClaimException,
+  IDPRejectedClaimException$: () => IDPRejectedClaimException$,
+  InvalidIdentityTokenException: () => InvalidIdentityTokenException,
+  InvalidIdentityTokenException$: () => InvalidIdentityTokenException$,
+  MalformedPolicyDocumentException: () => MalformedPolicyDocumentException,
+  MalformedPolicyDocumentException$: () => MalformedPolicyDocumentException$,
+  PackedPolicyTooLargeException: () => PackedPolicyTooLargeException,
+  PackedPolicyTooLargeException$: () => PackedPolicyTooLargeException$,
+  PolicyDescriptorType$: () => PolicyDescriptorType$,
+  ProvidedContext$: () => ProvidedContext$,
+  RegionDisabledException: () => RegionDisabledException,
+  RegionDisabledException$: () => RegionDisabledException$,
+  STS: () => STS,
+  STSClient: () => STSClient,
+  STSServiceException: () => STSServiceException,
+  STSServiceException$: () => STSServiceException$,
+  Tag$: () => Tag$,
+  __Client: () => Client,
+  decorateDefaultCredentialProvider: () => decorateDefaultCredentialProvider,
+  errorTypeRegistries: () => errorTypeRegistries3,
+  getDefaultRoleAssumer: () => getDefaultRoleAssumer2,
+  getDefaultRoleAssumerWithWebIdentity: () => getDefaultRoleAssumerWithWebIdentity2
+});
+var init_sts = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js"() {
+    init_STSClient();
+    init_STS();
+    init_commands3();
+    init_client2();
+    init_schemas_03();
+    init_errors3();
+    init_models_03();
+    init_defaultRoleAssumers();
+    init_STSServiceException();
+  }
+});
+
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthSchemeProvider.js
+function createAwsAuthSigv4HttpAuthOption4(authParameters) {
+  return {
+    schemeId: "aws.auth#sigv4",
+    signingProperties: {
+      name: "signin",
+      region: authParameters.region
+    },
+    propertiesExtractor: (config, context) => ({
+      signingProperties: {
+        config,
+        context
+      }
+    })
+  };
+}
+function createSmithyApiNoAuthHttpAuthOption4(authParameters) {
+  return {
+    schemeId: "smithy.api#noAuth"
+  };
+}
+var defaultSigninHttpAuthSchemeParametersProvider, defaultSigninHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig4;
+var init_httpAuthSchemeProvider4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthSchemeProvider.js"() {
     init_httpAuthSchemes2();
     init_client2();
@@ -40289,16 +41508,16 @@ var init_httpAuthSchemeProvider3 = __esm({
       const options = [];
       switch (authParameters.operation) {
         case "CreateOAuth2Token": {
-          options.push(createSmithyApiNoAuthHttpAuthOption3(authParameters));
+          options.push(createSmithyApiNoAuthHttpAuthOption4(authParameters));
           break;
         }
         default: {
-          options.push(createAwsAuthSigv4HttpAuthOption3(authParameters));
+          options.push(createAwsAuthSigv4HttpAuthOption4(authParameters));
         }
       }
       return options;
     };
-    resolveHttpAuthSchemeConfig3 = (config) => {
+    resolveHttpAuthSchemeConfig4 = (config) => {
       const config_0 = resolveAwsSdkSigV4Config(config);
       return Object.assign(config_0, {
         authSchemePreference: normalizeProvider(config.authSchemePreference ?? [])
@@ -40308,17 +41527,17 @@ var init_httpAuthSchemeProvider3 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/EndpointParameters.js
-var resolveClientEndpointParameters3, commonParams3;
-var init_EndpointParameters3 = __esm({
+var resolveClientEndpointParameters4, commonParams4;
+var init_EndpointParameters4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/EndpointParameters.js"() {
-    resolveClientEndpointParameters3 = (options) => {
+    resolveClientEndpointParameters4 = (options) => {
       return Object.assign(options, {
         useDualstackEndpoint: options.useDualstackEndpoint ?? false,
         useFipsEndpoint: options.useFipsEndpoint ?? false,
         defaultSigningName: "signin"
       });
     };
-    commonParams3 = {
+    commonParams4 = {
       UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
       Endpoint: { type: "builtInParams", name: "endpoint" },
       Region: { type: "builtInParams", name: "region" },
@@ -40328,78 +41547,78 @@ var init_EndpointParameters3 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/bdd.js
-var p, a3, b3, c3, d3, e3, f3, g3, h3, i3, j3, k3, l, m, n, o, _data3, root3, r3, nodes3, bdd3;
-var init_bdd3 = __esm({
+var p2, a4, b4, c4, d4, e4, f4, g4, h4, i4, j4, k4, l2, m2, n2, o2, _data4, root4, r4, nodes4, bdd4;
+var init_bdd4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/bdd.js"() {
     init_endpoints();
-    p = "ref";
-    a3 = -1;
-    b3 = true;
-    c3 = "isSet";
-    d3 = "booleanEquals";
-    e3 = "PartitionResult";
-    f3 = "stringEquals";
-    g3 = "getAttr";
-    h3 = "https://signin.{Region}.{PartitionResult#dualStackDnsSuffix}";
-    i3 = { [p]: "Endpoint" };
-    j3 = { "fn": g3, "argv": [{ [p]: e3 }, "name"] };
-    k3 = { [p]: e3 };
-    l = { [p]: "Region" };
-    m = { "authSchemes": [{ "name": "sigv4", "signingName": "signin", "signingRegion": "{Region}" }] };
-    n = {};
-    o = [l];
-    _data3 = {
+    p2 = "ref";
+    a4 = -1;
+    b4 = true;
+    c4 = "isSet";
+    d4 = "booleanEquals";
+    e4 = "PartitionResult";
+    f4 = "stringEquals";
+    g4 = "getAttr";
+    h4 = "https://signin.{Region}.{PartitionResult#dualStackDnsSuffix}";
+    i4 = { [p2]: "Endpoint" };
+    j4 = { "fn": g4, "argv": [{ [p2]: e4 }, "name"] };
+    k4 = { [p2]: e4 };
+    l2 = { [p2]: "Region" };
+    m2 = { "authSchemes": [{ "name": "sigv4", "signingName": "signin", "signingRegion": "{Region}" }] };
+    n2 = {};
+    o2 = [l2];
+    _data4 = {
       conditions: [
-        [c3, o],
-        [d3, [{ fn: "coalesce", argv: [{ [p]: "IsControlPlane" }, false] }, b3]],
-        [c3, [i3]],
-        ["aws.partition", o, e3],
-        [d3, [{ [p]: "UseFIPS" }, b3]],
-        [d3, [{ [p]: "UseDualStack" }, b3]],
-        [f3, [j3, "aws"]],
-        [f3, [j3, "aws-cn"]],
-        [d3, [{ fn: g3, argv: [k3, "supportsDualStack"] }, b3]],
-        [f3, [l, "us-gov-west-1"]],
-        [f3, [j3, "aws-us-gov"]],
-        [d3, [{ fn: g3, argv: [k3, "supportsFIPS"] }, b3]],
-        [f3, [j3, "aws-iso"]],
-        [f3, [j3, "aws-iso-b"]],
-        [f3, [j3, "aws-iso-f"]],
-        [f3, [j3, "aws-iso-e"]],
-        [f3, [j3, "aws-eusc"]]
+        [c4, o2],
+        [d4, [{ fn: "coalesce", argv: [{ [p2]: "IsControlPlane" }, false] }, b4]],
+        [c4, [i4]],
+        ["aws.partition", o2, e4],
+        [d4, [{ [p2]: "UseFIPS" }, b4]],
+        [d4, [{ [p2]: "UseDualStack" }, b4]],
+        [f4, [j4, "aws"]],
+        [f4, [j4, "aws-cn"]],
+        [d4, [{ fn: g4, argv: [k4, "supportsDualStack"] }, b4]],
+        [f4, [l2, "us-gov-west-1"]],
+        [f4, [j4, "aws-us-gov"]],
+        [d4, [{ fn: g4, argv: [k4, "supportsFIPS"] }, b4]],
+        [f4, [j4, "aws-iso"]],
+        [f4, [j4, "aws-iso-b"]],
+        [f4, [j4, "aws-iso-f"]],
+        [f4, [j4, "aws-iso-e"]],
+        [f4, [j4, "aws-eusc"]]
       ],
       results: [
-        [a3],
-        ["https://signin.{Region}.api.aws", m],
-        ["https://signin.{Region}.api.amazonwebservices.com.cn", m],
-        [h3, m],
-        ["https://{Region}.signin.aws.amazon.com", n],
-        ["https://{Region}.signin.amazonaws.cn", n],
-        ["https://{Region}.signin.amazonaws-us-gov.com", n],
-        ["https://{Region}.signin.c2shome.ic.gov", n],
-        ["https://{Region}.signin.sc2shome.sgov.gov", n],
-        ["https://{Region}.signin.csphome.hci.ic.gov", n],
-        ["https://{Region}.signin.csphome.adc-e.uk", n],
-        ["https://{Region}.signin.amazonaws-eusc.eu", n],
-        ["https://signin-fips.amazonaws-us-gov.com", n],
-        ["https://{Region}.signin-fips.amazonaws-us-gov.com", n],
-        ["https://{Region}.signin.{PartitionResult#dnsSuffix}", n],
-        [a3, "Invalid Configuration: FIPS and custom endpoint are not supported"],
-        [a3, "Invalid Configuration: Dualstack and custom endpoint are not supported"],
-        [i3, n],
-        ["https://signin-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", n],
-        [a3, "FIPS and DualStack are enabled, but this partition does not support one or both"],
-        ["https://signin-fips.{Region}.{PartitionResult#dnsSuffix}", n],
-        [a3, "FIPS is enabled but this partition does not support FIPS"],
-        [h3, n],
-        [a3, "DualStack is enabled but this partition does not support DualStack"],
-        ["https://signin.{Region}.{PartitionResult#dnsSuffix}", n],
-        [a3, "Invalid Configuration: Missing Region"]
+        [a4],
+        ["https://signin.{Region}.api.aws", m2],
+        ["https://signin.{Region}.api.amazonwebservices.com.cn", m2],
+        [h4, m2],
+        ["https://{Region}.signin.aws.amazon.com", n2],
+        ["https://{Region}.signin.amazonaws.cn", n2],
+        ["https://{Region}.signin.amazonaws-us-gov.com", n2],
+        ["https://{Region}.signin.c2shome.ic.gov", n2],
+        ["https://{Region}.signin.sc2shome.sgov.gov", n2],
+        ["https://{Region}.signin.csphome.hci.ic.gov", n2],
+        ["https://{Region}.signin.csphome.adc-e.uk", n2],
+        ["https://{Region}.signin.amazonaws-eusc.eu", n2],
+        ["https://signin-fips.amazonaws-us-gov.com", n2],
+        ["https://{Region}.signin-fips.amazonaws-us-gov.com", n2],
+        ["https://{Region}.signin.{PartitionResult#dnsSuffix}", n2],
+        [a4, "Invalid Configuration: FIPS and custom endpoint are not supported"],
+        [a4, "Invalid Configuration: Dualstack and custom endpoint are not supported"],
+        [i4, n2],
+        ["https://signin-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", n2],
+        [a4, "FIPS and DualStack are enabled, but this partition does not support one or both"],
+        ["https://signin-fips.{Region}.{PartitionResult#dnsSuffix}", n2],
+        [a4, "FIPS is enabled but this partition does not support FIPS"],
+        [h4, n2],
+        [a4, "DualStack is enabled but this partition does not support DualStack"],
+        ["https://signin.{Region}.{PartitionResult#dnsSuffix}", n2],
+        [a4, "Invalid Configuration: Missing Region"]
       ]
     };
-    root3 = 2;
-    r3 = 1e8;
-    nodes3 = new Int32Array([
+    root4 = 2;
+    r4 = 1e8;
+    nodes4 = new Int32Array([
       -1,
       1,
       -1,
@@ -40408,7 +41627,7 @@ var init_bdd3 = __esm({
       3,
       2,
       30,
-      r3 + 25,
+      r4 + 25,
       1,
       24,
       5,
@@ -40425,50 +41644,50 @@ var init_bdd3 = __esm({
       17,
       9,
       6,
-      r3 + 4,
+      r4 + 4,
       10,
       7,
-      r3 + 5,
+      r4 + 5,
       11,
       10,
-      r3 + 6,
+      r4 + 6,
       12,
       12,
-      r3 + 7,
+      r4 + 7,
       13,
       13,
-      r3 + 8,
+      r4 + 8,
       14,
       14,
-      r3 + 9,
+      r4 + 9,
       15,
       15,
-      r3 + 10,
+      r4 + 10,
       16,
       16,
-      r3 + 11,
-      r3 + 14,
+      r4 + 11,
+      r4 + 14,
       8,
-      r3 + 22,
-      r3 + 23,
+      r4 + 22,
+      r4 + 23,
       5,
       22,
       19,
       9,
-      r3 + 12,
+      r4 + 12,
       20,
       10,
-      r3 + 13,
+      r4 + 13,
       21,
       11,
-      r3 + 20,
-      r3 + 21,
+      r4 + 20,
+      r4 + 21,
       8,
       23,
-      r3 + 19,
+      r4 + 19,
       11,
-      r3 + 18,
-      r3 + 19,
+      r4 + 18,
+      r4 + 19,
       2,
       29,
       25,
@@ -40477,46 +41696,46 @@ var init_bdd3 = __esm({
       26,
       4,
       27,
-      r3 + 25,
+      r4 + 25,
       5,
-      r3 + 25,
+      r4 + 25,
       28,
       9,
-      r3 + 12,
-      r3 + 25,
+      r4 + 12,
+      r4 + 25,
       3,
       32,
       30,
       4,
-      r3 + 15,
+      r4 + 15,
       31,
       5,
-      r3 + 16,
-      r3 + 17,
+      r4 + 16,
+      r4 + 17,
       6,
-      r3 + 1,
+      r4 + 1,
       33,
       7,
-      r3 + 2,
-      r3 + 3
+      r4 + 2,
+      r4 + 3
     ]);
-    bdd3 = BinaryDecisionDiagram.from(nodes3, root3, _data3.conditions, _data3.results);
+    bdd4 = BinaryDecisionDiagram.from(nodes4, root4, _data4.conditions, _data4.results);
   }
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js
-var cache3, defaultEndpointResolver3;
-var init_endpointResolver3 = __esm({
+var cache4, defaultEndpointResolver4;
+var init_endpointResolver4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js"() {
     init_client3();
     init_endpoints();
-    init_bdd3();
-    cache3 = new EndpointCache({
+    init_bdd4();
+    cache4 = new EndpointCache({
       size: 50,
       params: ["Endpoint", "IsControlPlane", "Region", "UseDualStack", "UseFIPS"]
     });
-    defaultEndpointResolver3 = (endpointParams, context = {}) => {
-      return cache3.get(endpointParams, () => decideEndpoint(bdd3, {
+    defaultEndpointResolver4 = (endpointParams, context = {}) => {
+      return cache4.get(endpointParams, () => decideEndpoint(bdd4, {
         endpointParams,
         logger: context.logger
       }));
@@ -40541,7 +41760,7 @@ var init_SigninServiceException = __esm({
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js
 var AccessDeniedException2, InternalServerException2, TooManyRequestsError, ValidationException;
-var init_errors3 = __esm({
+var init_errors4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js"() {
     init_SigninServiceException();
     AccessDeniedException2 = class _AccessDeniedException extends SigninServiceException {
@@ -40604,11 +41823,11 @@ var init_errors3 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/schemas/schemas_0.js
-var _ADE2, _AT2, _COAT, _COATR, _COATRB, _COATRBr, _COATRr, _ISE2, _RT2, _TMRE2, _VE, _aKI2, _aT3, _c3, _cI2, _cV2, _co2, _e3, _eI2, _gT2, _h3, _hE3, _iT2, _jN, _m2, _rT2, _rU2, _s3, _sAK2, _sT2, _se2, _tI, _tO, _tT2, n03, _s_registry3, SigninServiceException$, n0_registry3, AccessDeniedException$2, InternalServerException$2, TooManyRequestsError$, ValidationException$, errorTypeRegistries3, RefreshToken2, AccessToken$, CreateOAuth2TokenRequest$, CreateOAuth2TokenRequestBody$, CreateOAuth2TokenResponse$, CreateOAuth2TokenResponseBody$, CreateOAuth2Token$;
-var init_schemas_03 = __esm({
+var _ADE2, _AT2, _COAT, _COATR, _COATRB, _COATRBr, _COATRr, _ISE2, _RT2, _TMRE2, _VE, _aKI2, _aT3, _c4, _cI2, _cV2, _co2, _e4, _eI2, _gT2, _h3, _hE4, _iT2, _jN, _m3, _rT2, _rU2, _s4, _sAK2, _sT2, _se2, _tI, _tO, _tT2, n04, _s_registry4, SigninServiceException$, n0_registry4, AccessDeniedException$2, InternalServerException$2, TooManyRequestsError$, ValidationException$, errorTypeRegistries4, RefreshToken2, AccessToken$, CreateOAuth2TokenRequest$, CreateOAuth2TokenRequestBody$, CreateOAuth2TokenResponse$, CreateOAuth2TokenResponseBody$, CreateOAuth2Token$;
+var init_schemas_04 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/schemas/schemas_0.js"() {
     init_schema();
-    init_errors3();
+    init_errors4();
     init_SigninServiceException();
     _ADE2 = "AccessDeniedException";
     _AT2 = "AccessToken";
@@ -40623,80 +41842,80 @@ var init_schemas_03 = __esm({
     _VE = "ValidationException";
     _aKI2 = "accessKeyId";
     _aT3 = "accessToken";
-    _c3 = "client";
+    _c4 = "client";
     _cI2 = "clientId";
     _cV2 = "codeVerifier";
     _co2 = "code";
-    _e3 = "error";
+    _e4 = "error";
     _eI2 = "expiresIn";
     _gT2 = "grantType";
     _h3 = "http";
-    _hE3 = "httpError";
+    _hE4 = "httpError";
     _iT2 = "idToken";
     _jN = "jsonName";
-    _m2 = "message";
+    _m3 = "message";
     _rT2 = "refreshToken";
     _rU2 = "redirectUri";
-    _s3 = "smithy.ts.sdk.synthetic.com.amazonaws.signin";
+    _s4 = "smithy.ts.sdk.synthetic.com.amazonaws.signin";
     _sAK2 = "secretAccessKey";
     _sT2 = "sessionToken";
     _se2 = "server";
     _tI = "tokenInput";
     _tO = "tokenOutput";
     _tT2 = "tokenType";
-    n03 = "com.amazonaws.signin";
-    _s_registry3 = TypeRegistry.for(_s3);
-    SigninServiceException$ = [-3, _s3, "SigninServiceException", 0, [], []];
-    _s_registry3.registerError(SigninServiceException$, SigninServiceException);
-    n0_registry3 = TypeRegistry.for(n03);
+    n04 = "com.amazonaws.signin";
+    _s_registry4 = TypeRegistry.for(_s4);
+    SigninServiceException$ = [-3, _s4, "SigninServiceException", 0, [], []];
+    _s_registry4.registerError(SigninServiceException$, SigninServiceException);
+    n0_registry4 = TypeRegistry.for(n04);
     AccessDeniedException$2 = [
       -3,
-      n03,
+      n04,
       _ADE2,
-      { [_e3]: _c3 },
-      [_e3, _m2],
+      { [_e4]: _c4 },
+      [_e4, _m3],
       [0, 0],
       2
     ];
-    n0_registry3.registerError(AccessDeniedException$2, AccessDeniedException2);
+    n0_registry4.registerError(AccessDeniedException$2, AccessDeniedException2);
     InternalServerException$2 = [
       -3,
-      n03,
+      n04,
       _ISE2,
-      { [_e3]: _se2, [_hE3]: 500 },
-      [_e3, _m2],
+      { [_e4]: _se2, [_hE4]: 500 },
+      [_e4, _m3],
       [0, 0],
       2
     ];
-    n0_registry3.registerError(InternalServerException$2, InternalServerException2);
+    n0_registry4.registerError(InternalServerException$2, InternalServerException2);
     TooManyRequestsError$ = [
       -3,
-      n03,
+      n04,
       _TMRE2,
-      { [_e3]: _c3, [_hE3]: 429 },
-      [_e3, _m2],
+      { [_e4]: _c4, [_hE4]: 429 },
+      [_e4, _m3],
       [0, 0],
       2
     ];
-    n0_registry3.registerError(TooManyRequestsError$, TooManyRequestsError);
+    n0_registry4.registerError(TooManyRequestsError$, TooManyRequestsError);
     ValidationException$ = [
       -3,
-      n03,
+      n04,
       _VE,
-      { [_e3]: _c3, [_hE3]: 400 },
-      [_e3, _m2],
+      { [_e4]: _c4, [_hE4]: 400 },
+      [_e4, _m3],
       [0, 0],
       2
     ];
-    n0_registry3.registerError(ValidationException$, ValidationException);
-    errorTypeRegistries3 = [
-      _s_registry3,
-      n0_registry3
+    n0_registry4.registerError(ValidationException$, ValidationException);
+    errorTypeRegistries4 = [
+      _s_registry4,
+      n0_registry4
     ];
-    RefreshToken2 = [0, n03, _RT2, 8, 0];
+    RefreshToken2 = [0, n04, _RT2, 8, 0];
     AccessToken$ = [
       3,
-      n03,
+      n04,
       _AT2,
       8,
       [_aKI2, _sAK2, _sT2],
@@ -40705,7 +41924,7 @@ var init_schemas_03 = __esm({
     ];
     CreateOAuth2TokenRequest$ = [
       3,
-      n03,
+      n04,
       _COATR,
       0,
       [_tI],
@@ -40714,7 +41933,7 @@ var init_schemas_03 = __esm({
     ];
     CreateOAuth2TokenRequestBody$ = [
       3,
-      n03,
+      n04,
       _COATRB,
       0,
       [_cI2, _gT2, _co2, _rU2, _cV2, _rT2],
@@ -40723,7 +41942,7 @@ var init_schemas_03 = __esm({
     ];
     CreateOAuth2TokenResponse$ = [
       3,
-      n03,
+      n04,
       _COATRr,
       0,
       [_tO],
@@ -40732,7 +41951,7 @@ var init_schemas_03 = __esm({
     ];
     CreateOAuth2TokenResponseBody$ = [
       3,
-      n03,
+      n04,
       _COATRBr,
       0,
       [_aT3, _tT2, _eI2, _rT2, _iT2],
@@ -40741,7 +41960,7 @@ var init_schemas_03 = __esm({
     ];
     CreateOAuth2Token$ = [
       9,
-      n03,
+      n04,
       _COAT,
       { [_h3]: ["POST", "/v1/token", 200] },
       () => CreateOAuth2TokenRequest$,
@@ -40751,8 +41970,8 @@ var init_schemas_03 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js
-var getRuntimeConfig5;
-var init_runtimeConfig_shared3 = __esm({
+var getRuntimeConfig7;
+var init_runtimeConfig_shared4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js"() {
     init_httpAuthSchemes2();
     init_protocols2();
@@ -40761,16 +41980,16 @@ var init_runtimeConfig_shared3 = __esm({
     init_client2();
     init_protocols();
     init_serde();
-    init_httpAuthSchemeProvider3();
-    init_endpointResolver3();
-    init_schemas_03();
-    getRuntimeConfig5 = (config) => {
+    init_httpAuthSchemeProvider4();
+    init_endpointResolver4();
+    init_schemas_04();
+    getRuntimeConfig7 = (config) => {
       return {
         apiVersion: "2023-01-01",
         base64Decoder: config?.base64Decoder ?? fromBase64,
         base64Encoder: config?.base64Encoder ?? toBase64,
         disableHostPrefix: config?.disableHostPrefix ?? false,
-        endpointProvider: config?.endpointProvider ?? defaultEndpointResolver3,
+        endpointProvider: config?.endpointProvider ?? defaultEndpointResolver4,
         extensions: config?.extensions ?? [],
         httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? defaultSigninHttpAuthSchemeProvider,
         httpAuthSchemes: config?.httpAuthSchemes ?? [
@@ -40789,7 +42008,7 @@ var init_runtimeConfig_shared3 = __esm({
         protocol: config?.protocol ?? AwsRestJsonProtocol,
         protocolSettings: config?.protocolSettings ?? {
           defaultNamespace: "com.amazonaws.signin",
-          errorTypeRegistries: errorTypeRegistries3,
+          errorTypeRegistries: errorTypeRegistries4,
           version: "2023-01-01",
           serviceTarget: "Signin"
         },
@@ -40804,8 +42023,8 @@ var init_runtimeConfig_shared3 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.js
-var import_node_http_handler3, getRuntimeConfig6;
-var init_runtimeConfig3 = __esm({
+var import_node_http_handler4, getRuntimeConfig8;
+var init_runtimeConfig4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.js"() {
     init_package();
     init_client3();
@@ -40814,13 +42033,13 @@ var init_runtimeConfig3 = __esm({
     init_config2();
     init_retry2();
     init_serde();
-    import_node_http_handler3 = __toESM(require_dist_cjs6());
-    init_runtimeConfig_shared3();
-    getRuntimeConfig6 = (config) => {
+    import_node_http_handler4 = __toESM(require_dist_cjs6());
+    init_runtimeConfig_shared4();
+    getRuntimeConfig8 = (config) => {
       emitWarningIfUnsupportedVersion2(process.version);
       const defaultsMode = resolveDefaultsModeConfig(config);
       const defaultConfigProvider = () => defaultsMode().then(loadConfigsForDefaultMode);
-      const clientSharedValues = getRuntimeConfig5(config);
+      const clientSharedValues = getRuntimeConfig7(config);
       emitWarningIfUnsupportedVersion(process.version);
       const loaderConfig = {
         profile: config?.profile,
@@ -40836,12 +42055,12 @@ var init_runtimeConfig3 = __esm({
         defaultUserAgentProvider: config?.defaultUserAgentProvider ?? createDefaultUserAgentProvider({ serviceId: clientSharedValues.serviceId, clientVersion: package_default.version }),
         maxAttempts: config?.maxAttempts ?? loadConfig(NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
         region: config?.region ?? loadConfig(NODE_REGION_CONFIG_OPTIONS, { ...NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
-        requestHandler: import_node_http_handler3.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        requestHandler: import_node_http_handler4.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
         retryMode: config?.retryMode ?? loadConfig({
           ...NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE
         }, config),
-        streamCollector: config?.streamCollector ?? import_node_http_handler3.streamCollector,
+        streamCollector: config?.streamCollector ?? import_node_http_handler4.streamCollector,
         useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
         useFipsEndpoint: config?.useFipsEndpoint ?? loadConfig(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
         userAgentAppId: config?.userAgentAppId ?? loadConfig(NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
@@ -40851,10 +42070,10 @@ var init_runtimeConfig3 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthExtensionConfiguration.js
-var getHttpAuthExtensionConfiguration3, resolveHttpAuthRuntimeConfig3;
-var init_httpAuthExtensionConfiguration3 = __esm({
+var getHttpAuthExtensionConfiguration4, resolveHttpAuthRuntimeConfig4;
+var init_httpAuthExtensionConfiguration4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthExtensionConfiguration.js"() {
-    getHttpAuthExtensionConfiguration3 = (runtimeConfig) => {
+    getHttpAuthExtensionConfiguration4 = (runtimeConfig) => {
       const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
       let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
       let _credentials = runtimeConfig.credentials;
@@ -40884,7 +42103,7 @@ var init_httpAuthExtensionConfiguration3 = __esm({
         }
       };
     };
-    resolveHttpAuthRuntimeConfig3 = (config) => {
+    resolveHttpAuthRuntimeConfig4 = (config) => {
       return {
         httpAuthSchemes: config.httpAuthSchemes(),
         httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
@@ -40895,17 +42114,17 @@ var init_httpAuthExtensionConfiguration3 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeExtensions.js
-var resolveRuntimeExtensions3;
-var init_runtimeExtensions3 = __esm({
+var resolveRuntimeExtensions4;
+var init_runtimeExtensions4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeExtensions.js"() {
     init_client3();
     init_client2();
     init_protocols();
-    init_httpAuthExtensionConfiguration3();
-    resolveRuntimeExtensions3 = (runtimeConfig, extensions) => {
-      const extensionConfiguration = Object.assign(getAwsRegionExtensionConfiguration(runtimeConfig), getDefaultExtensionConfiguration(runtimeConfig), getHttpHandlerExtensionConfiguration(runtimeConfig), getHttpAuthExtensionConfiguration3(runtimeConfig));
+    init_httpAuthExtensionConfiguration4();
+    resolveRuntimeExtensions4 = (runtimeConfig, extensions) => {
+      const extensionConfiguration = Object.assign(getAwsRegionExtensionConfiguration(runtimeConfig), getDefaultExtensionConfiguration(runtimeConfig), getHttpHandlerExtensionConfiguration(runtimeConfig), getHttpAuthExtensionConfiguration4(runtimeConfig));
       extensions.forEach((extension) => extension.configure(extensionConfiguration));
-      return Object.assign(runtimeConfig, resolveAwsRegionExtensionConfiguration(extensionConfiguration), resolveDefaultRuntimeConfig(extensionConfiguration), resolveHttpHandlerRuntimeConfig(extensionConfiguration), resolveHttpAuthRuntimeConfig3(extensionConfiguration));
+      return Object.assign(runtimeConfig, resolveAwsRegionExtensionConfiguration(extensionConfiguration), resolveDefaultRuntimeConfig(extensionConfiguration), resolveHttpHandlerRuntimeConfig(extensionConfiguration), resolveHttpAuthRuntimeConfig4(extensionConfiguration));
     };
   }
 });
@@ -40922,24 +42141,24 @@ var init_SigninClient = __esm({
     init_protocols();
     init_retry2();
     init_schema();
-    init_httpAuthSchemeProvider3();
-    init_EndpointParameters3();
-    init_runtimeConfig3();
-    init_runtimeExtensions3();
+    init_httpAuthSchemeProvider4();
+    init_EndpointParameters4();
+    init_runtimeConfig4();
+    init_runtimeExtensions4();
     SigninClient = class extends Client {
       config;
       constructor(...[configuration]) {
-        const _config_0 = getRuntimeConfig6(configuration || {});
+        const _config_0 = getRuntimeConfig8(configuration || {});
         super(_config_0);
         this.initConfig = _config_0;
-        const _config_1 = resolveClientEndpointParameters3(_config_0);
+        const _config_1 = resolveClientEndpointParameters4(_config_0);
         const _config_2 = resolveUserAgentConfig(_config_1);
         const _config_3 = resolveRetryConfig(_config_2);
         const _config_4 = resolveRegionConfig(_config_3);
         const _config_5 = resolveHostHeaderConfig(_config_4);
         const _config_6 = resolveEndpointConfig(_config_5);
-        const _config_7 = resolveHttpAuthSchemeConfig3(_config_6);
-        const _config_8 = resolveRuntimeExtensions3(_config_7, configuration?.extensions || []);
+        const _config_7 = resolveHttpAuthSchemeConfig4(_config_6);
+        const _config_8 = resolveRuntimeExtensions4(_config_7, configuration?.extensions || []);
         this.config = _config_8;
         this.middlewareStack.use(getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(getUserAgentPlugin(this.config));
@@ -40964,17 +42183,17 @@ var init_SigninClient = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js
-var command3, _ep03, _mw03;
-var init_commandBuilder3 = __esm({
+var command4, _ep04, _mw04;
+var init_commandBuilder4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js"() {
     init_client2();
     init_endpoints();
-    init_EndpointParameters3();
-    command3 = makeBuilder(commonParams3, "Signin", "SigninClient", getEndpointPlugin);
-    _ep03 = {
+    init_EndpointParameters4();
+    command4 = makeBuilder(commonParams4, "Signin", "SigninClient", getEndpointPlugin);
+    _ep04 = {
       IsControlPlane: { type: "staticContextParams", value: false }
     };
-    _mw03 = (Command3, cs, config, o3) => [];
+    _mw04 = (Command3, cs, config, o3) => [];
   }
 });
 
@@ -40982,31 +42201,31 @@ var init_commandBuilder3 = __esm({
 var CreateOAuth2TokenCommand;
 var init_CreateOAuth2TokenCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js"() {
-    init_commandBuilder3();
-    init_schemas_03();
-    CreateOAuth2TokenCommand = class extends command3(_ep03, _mw03, "CreateOAuth2Token", CreateOAuth2Token$) {
+    init_commandBuilder4();
+    init_schemas_04();
+    CreateOAuth2TokenCommand = class extends command4(_ep04, _mw04, "CreateOAuth2Token", CreateOAuth2Token$) {
     };
   }
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/Signin.js
-var commands3, Signin;
+var commands4, Signin;
 var init_Signin = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/Signin.js"() {
     init_client2();
     init_CreateOAuth2TokenCommand();
     init_SigninClient();
-    commands3 = {
+    commands4 = {
       CreateOAuth2TokenCommand
     };
     Signin = class extends SigninClient {
     };
-    createAggregatedClient(commands3, Signin);
+    createAggregatedClient(commands4, Signin);
   }
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/index.js
-var init_commands3 = __esm({
+var init_commands4 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/index.js"() {
     init_CreateOAuth2TokenCommand();
   }
@@ -41031,7 +42250,7 @@ var init_enums2 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/models_0.js
-var init_models_03 = __esm({
+var init_models_04 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/models_0.js"() {
   }
 });
@@ -41061,18 +42280,18 @@ __export(signin_exports, {
   ValidationException: () => ValidationException,
   ValidationException$: () => ValidationException$,
   __Client: () => Client,
-  errorTypeRegistries: () => errorTypeRegistries3
+  errorTypeRegistries: () => errorTypeRegistries4
 });
 var init_signin = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/index.js"() {
     init_SigninClient();
     init_Signin();
-    init_commands3();
+    init_commands4();
     init_client2();
-    init_schemas_03();
+    init_schemas_04();
     init_enums2();
-    init_errors3();
-    init_models_03();
+    init_errors4();
+    init_models_04();
     init_SigninServiceException();
   }
 });
@@ -41354,1219 +42573,6 @@ var require_dist_cjs11 = __commonJS({
   }
 });
 
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js
-var q, a4, b4, c4, d4, e4, f4, g4, h4, i4, j4, k4, l2, m2, n2, o2, p2, _data4, root4, r4, nodes4, bdd4;
-var init_bdd4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js"() {
-    init_endpoints();
-    q = "ref";
-    a4 = -1;
-    b4 = true;
-    c4 = "isSet";
-    d4 = "PartitionResult";
-    e4 = "booleanEquals";
-    f4 = "stringEquals";
-    g4 = "getAttr";
-    h4 = "us-east-1";
-    i4 = "sigv4";
-    j4 = "sts";
-    k4 = "https://sts.{Region}.{PartitionResult#dnsSuffix}";
-    l2 = { [q]: "Endpoint" };
-    m2 = { [q]: "Region" };
-    n2 = { [q]: d4 };
-    o2 = {};
-    p2 = [m2];
-    _data4 = {
-      conditions: [
-        [c4, [l2]],
-        [c4, p2],
-        ["aws.partition", p2, d4],
-        [e4, [{ [q]: "UseFIPS" }, b4]],
-        [e4, [{ [q]: "UseDualStack" }, b4]],
-        [f4, [m2, "aws-global"]],
-        [e4, [{ [q]: "UseGlobalEndpoint" }, b4]],
-        [f4, [m2, "eu-central-1"]],
-        [e4, [{ fn: g4, argv: [n2, "supportsDualStack"] }, b4]],
-        [e4, [{ fn: g4, argv: [n2, "supportsFIPS"] }, b4]],
-        [f4, [m2, "ap-south-1"]],
-        [f4, [m2, "eu-north-1"]],
-        [f4, [m2, "eu-west-1"]],
-        [f4, [m2, "eu-west-2"]],
-        [f4, [m2, "eu-west-3"]],
-        [f4, [m2, "sa-east-1"]],
-        [f4, [m2, h4]],
-        [f4, [m2, "us-east-2"]],
-        [f4, [m2, "us-west-2"]],
-        [f4, [m2, "us-west-1"]],
-        [f4, [m2, "ca-central-1"]],
-        [f4, [m2, "ap-southeast-1"]],
-        [f4, [m2, "ap-northeast-1"]],
-        [f4, [m2, "ap-southeast-2"]],
-        [f4, [{ fn: g4, argv: [n2, "name"] }, "aws-us-gov"]]
-      ],
-      results: [
-        [a4],
-        ["https://sts.amazonaws.com", { authSchemes: [{ name: i4, signingName: j4, signingRegion: h4 }] }],
-        [k4, { authSchemes: [{ name: i4, signingName: j4, signingRegion: "{Region}" }] }],
-        [a4, "Invalid Configuration: FIPS and custom endpoint are not supported"],
-        [a4, "Invalid Configuration: Dualstack and custom endpoint are not supported"],
-        [l2, o2],
-        ["https://sts-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", o2],
-        [a4, "FIPS and DualStack are enabled, but this partition does not support one or both"],
-        ["https://sts.{Region}.amazonaws.com", o2],
-        ["https://sts-fips.{Region}.{PartitionResult#dnsSuffix}", o2],
-        [a4, "FIPS is enabled but this partition does not support FIPS"],
-        ["https://sts.{Region}.{PartitionResult#dualStackDnsSuffix}", o2],
-        [a4, "DualStack is enabled but this partition does not support DualStack"],
-        [k4, o2],
-        [a4, "Invalid Configuration: Missing Region"]
-      ]
-    };
-    root4 = 2;
-    r4 = 1e8;
-    nodes4 = new Int32Array([
-      -1,
-      1,
-      -1,
-      0,
-      30,
-      3,
-      1,
-      4,
-      r4 + 14,
-      2,
-      5,
-      r4 + 14,
-      3,
-      25,
-      6,
-      4,
-      24,
-      7,
-      5,
-      r4 + 1,
-      8,
-      6,
-      9,
-      r4 + 13,
-      7,
-      r4 + 1,
-      10,
-      10,
-      r4 + 1,
-      11,
-      11,
-      r4 + 1,
-      12,
-      12,
-      r4 + 1,
-      13,
-      13,
-      r4 + 1,
-      14,
-      14,
-      r4 + 1,
-      15,
-      15,
-      r4 + 1,
-      16,
-      16,
-      r4 + 1,
-      17,
-      17,
-      r4 + 1,
-      18,
-      18,
-      r4 + 1,
-      19,
-      19,
-      r4 + 1,
-      20,
-      20,
-      r4 + 1,
-      21,
-      21,
-      r4 + 1,
-      22,
-      22,
-      r4 + 1,
-      23,
-      23,
-      r4 + 1,
-      r4 + 2,
-      8,
-      r4 + 11,
-      r4 + 12,
-      4,
-      28,
-      26,
-      9,
-      27,
-      r4 + 10,
-      24,
-      r4 + 8,
-      r4 + 9,
-      8,
-      29,
-      r4 + 7,
-      9,
-      r4 + 6,
-      r4 + 7,
-      3,
-      r4 + 3,
-      31,
-      4,
-      r4 + 4,
-      r4 + 5
-    ]);
-    bdd4 = BinaryDecisionDiagram.from(nodes4, root4, _data4.conditions, _data4.results);
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js
-var cache4, defaultEndpointResolver4;
-var init_endpointResolver4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js"() {
-    init_client3();
-    init_endpoints();
-    init_bdd4();
-    cache4 = new EndpointCache({
-      size: 50,
-      params: ["Endpoint", "Region", "UseDualStack", "UseFIPS", "UseGlobalEndpoint"]
-    });
-    defaultEndpointResolver4 = (endpointParams, context = {}) => {
-      return cache4.get(endpointParams, () => decideEndpoint(bdd4, {
-        endpointParams,
-        logger: context.logger
-      }));
-    };
-    customEndpointFunctions.aws = awsEndpointFunctions;
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js
-function createAwsAuthSigv4HttpAuthOption4(authParameters) {
-  return {
-    schemeId: "aws.auth#sigv4",
-    signingProperties: {
-      name: "sts",
-      region: authParameters.region
-    },
-    propertiesExtractor: (config, context) => ({
-      signingProperties: {
-        config,
-        context
-      }
-    })
-  };
-}
-function createAwsAuthSigv4aHttpAuthOption(authParameters) {
-  return {
-    schemeId: "aws.auth#sigv4a",
-    signingProperties: {
-      name: "sts",
-      region: authParameters.region
-    },
-    propertiesExtractor: (config, context) => ({
-      signingProperties: {
-        config,
-        context
-      }
-    })
-  };
-}
-function createSmithyApiNoAuthHttpAuthOption4(authParameters) {
-  return {
-    schemeId: "smithy.api#noAuth"
-  };
-}
-var import_signature_v4_multi_region, createEndpointRuleSetHttpAuthSchemeParametersProvider, _defaultSTSHttpAuthSchemeParametersProvider, defaultSTSHttpAuthSchemeParametersProvider, createEndpointRuleSetHttpAuthSchemeProvider, _defaultSTSHttpAuthSchemeProvider, defaultSTSHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig4;
-var init_httpAuthSchemeProvider4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js"() {
-    init_httpAuthSchemes2();
-    import_signature_v4_multi_region = __toESM(require_dist_cjs3());
-    init_client2();
-    init_endpoints();
-    init_endpointResolver4();
-    createEndpointRuleSetHttpAuthSchemeParametersProvider = (defaultHttpAuthSchemeParametersProvider) => async (config, context, input) => {
-      if (!input) {
-        throw new Error("Could not find `input` for `defaultEndpointRuleSetHttpAuthSchemeParametersProvider`");
-      }
-      const defaultParameters = await defaultHttpAuthSchemeParametersProvider(config, context, input);
-      const instructionsFn = getSmithyContext(context)?.commandInstance?.constructor?.getEndpointParameterInstructions;
-      if (!instructionsFn) {
-        throw new Error(`getEndpointParameterInstructions() is not defined on '${context.commandName}'`);
-      }
-      const endpointParameters = await resolveParams(input, { getEndpointParameterInstructions: instructionsFn }, config);
-      return Object.assign(defaultParameters, endpointParameters);
-    };
-    _defaultSTSHttpAuthSchemeParametersProvider = async (config, context, input) => {
-      return {
-        operation: getSmithyContext(context).operation,
-        region: await normalizeProvider(config.region)() || (() => {
-          throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
-        })()
-      };
-    };
-    defaultSTSHttpAuthSchemeParametersProvider = createEndpointRuleSetHttpAuthSchemeParametersProvider(_defaultSTSHttpAuthSchemeParametersProvider);
-    createEndpointRuleSetHttpAuthSchemeProvider = (defaultEndpointResolver5, defaultHttpAuthSchemeResolver, createHttpAuthOptionFunctions) => {
-      const endpointRuleSetHttpAuthSchemeProvider = (authParameters) => {
-        const endpoint = defaultEndpointResolver5(authParameters);
-        const authSchemes = endpoint.properties?.authSchemes;
-        if (!authSchemes) {
-          return defaultHttpAuthSchemeResolver(authParameters);
-        }
-        const options = [];
-        for (const scheme of authSchemes) {
-          const { name: resolvedName, properties = {}, ...rest } = scheme;
-          const name = resolvedName.toLowerCase();
-          if (resolvedName !== name) {
-            console.warn(`HttpAuthScheme has been normalized with lowercasing: '${resolvedName}' to '${name}'`);
-          }
-          let schemeId;
-          if (name === "sigv4a") {
-            schemeId = "aws.auth#sigv4a";
-            const sigv4Present = authSchemes.find((s) => {
-              const name2 = s.name.toLowerCase();
-              return name2 !== "sigv4a" && name2.startsWith("sigv4");
-            });
-            if (import_signature_v4_multi_region.SignatureV4MultiRegion.sigv4aDependency() === "none" && sigv4Present) {
-              continue;
-            }
-          } else if (name.startsWith("sigv4")) {
-            schemeId = "aws.auth#sigv4";
-          } else {
-            throw new Error(`Unknown HttpAuthScheme found in '@smithy.rules#endpointRuleSet': '${name}'`);
-          }
-          const createOption = createHttpAuthOptionFunctions[schemeId];
-          if (!createOption) {
-            throw new Error(`Could not find HttpAuthOption create function for '${schemeId}'`);
-          }
-          const option = createOption(authParameters);
-          option.schemeId = schemeId;
-          option.signingProperties = { ...option.signingProperties || {}, ...rest, ...properties };
-          options.push(option);
-        }
-        return options;
-      };
-      return endpointRuleSetHttpAuthSchemeProvider;
-    };
-    _defaultSTSHttpAuthSchemeProvider = (authParameters) => {
-      const options = [];
-      switch (authParameters.operation) {
-        case "AssumeRoleWithWebIdentity": {
-          options.push(createSmithyApiNoAuthHttpAuthOption4(authParameters));
-          options.push(createAwsAuthSigv4aHttpAuthOption(authParameters));
-          break;
-        }
-        default: {
-          options.push(createAwsAuthSigv4HttpAuthOption4(authParameters));
-          options.push(createAwsAuthSigv4aHttpAuthOption(authParameters));
-        }
-      }
-      return options;
-    };
-    defaultSTSHttpAuthSchemeProvider = createEndpointRuleSetHttpAuthSchemeProvider(defaultEndpointResolver4, _defaultSTSHttpAuthSchemeProvider, {
-      "aws.auth#sigv4": createAwsAuthSigv4HttpAuthOption4,
-      "aws.auth#sigv4a": createAwsAuthSigv4aHttpAuthOption,
-      "smithy.api#noAuth": createSmithyApiNoAuthHttpAuthOption4
-    });
-    resolveHttpAuthSchemeConfig4 = (config) => {
-      const config_0 = resolveAwsSdkSigV4Config(config);
-      const config_1 = resolveAwsSdkSigV4AConfig(config_0);
-      return Object.assign(config_1, {
-        authSchemePreference: normalizeProvider(config.authSchemePreference ?? [])
-      });
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js
-var resolveClientEndpointParameters4, commonParams4;
-var init_EndpointParameters4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js"() {
-    resolveClientEndpointParameters4 = (options) => {
-      return Object.assign(options, {
-        useDualstackEndpoint: options.useDualstackEndpoint ?? false,
-        useFipsEndpoint: options.useFipsEndpoint ?? false,
-        useGlobalEndpoint: options.useGlobalEndpoint ?? false,
-        defaultSigningName: "sts"
-      });
-    };
-    commonParams4 = {
-      UseGlobalEndpoint: { type: "builtInParams", name: "useGlobalEndpoint" },
-      UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
-      Endpoint: { type: "builtInParams", name: "endpoint" },
-      Region: { type: "builtInParams", name: "region" },
-      UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js
-var STSServiceException;
-var init_STSServiceException = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js"() {
-    init_client2();
-    STSServiceException = class _STSServiceException extends ServiceException {
-      constructor(options) {
-        super(options);
-        Object.setPrototypeOf(this, _STSServiceException.prototype);
-      }
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js
-var ExpiredTokenException2, MalformedPolicyDocumentException, PackedPolicyTooLargeException, RegionDisabledException, IDPRejectedClaimException, InvalidIdentityTokenException, IDPCommunicationErrorException;
-var init_errors4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js"() {
-    init_STSServiceException();
-    ExpiredTokenException2 = class _ExpiredTokenException extends STSServiceException {
-      name = "ExpiredTokenException";
-      $fault = "client";
-      constructor(opts) {
-        super({
-          name: "ExpiredTokenException",
-          $fault: "client",
-          ...opts
-        });
-        Object.setPrototypeOf(this, _ExpiredTokenException.prototype);
-      }
-    };
-    MalformedPolicyDocumentException = class _MalformedPolicyDocumentException extends STSServiceException {
-      name = "MalformedPolicyDocumentException";
-      $fault = "client";
-      constructor(opts) {
-        super({
-          name: "MalformedPolicyDocumentException",
-          $fault: "client",
-          ...opts
-        });
-        Object.setPrototypeOf(this, _MalformedPolicyDocumentException.prototype);
-      }
-    };
-    PackedPolicyTooLargeException = class _PackedPolicyTooLargeException extends STSServiceException {
-      name = "PackedPolicyTooLargeException";
-      $fault = "client";
-      constructor(opts) {
-        super({
-          name: "PackedPolicyTooLargeException",
-          $fault: "client",
-          ...opts
-        });
-        Object.setPrototypeOf(this, _PackedPolicyTooLargeException.prototype);
-      }
-    };
-    RegionDisabledException = class _RegionDisabledException extends STSServiceException {
-      name = "RegionDisabledException";
-      $fault = "client";
-      constructor(opts) {
-        super({
-          name: "RegionDisabledException",
-          $fault: "client",
-          ...opts
-        });
-        Object.setPrototypeOf(this, _RegionDisabledException.prototype);
-      }
-    };
-    IDPRejectedClaimException = class _IDPRejectedClaimException extends STSServiceException {
-      name = "IDPRejectedClaimException";
-      $fault = "client";
-      constructor(opts) {
-        super({
-          name: "IDPRejectedClaimException",
-          $fault: "client",
-          ...opts
-        });
-        Object.setPrototypeOf(this, _IDPRejectedClaimException.prototype);
-      }
-    };
-    InvalidIdentityTokenException = class _InvalidIdentityTokenException extends STSServiceException {
-      name = "InvalidIdentityTokenException";
-      $fault = "client";
-      constructor(opts) {
-        super({
-          name: "InvalidIdentityTokenException",
-          $fault: "client",
-          ...opts
-        });
-        Object.setPrototypeOf(this, _InvalidIdentityTokenException.prototype);
-      }
-    };
-    IDPCommunicationErrorException = class _IDPCommunicationErrorException extends STSServiceException {
-      name = "IDPCommunicationErrorException";
-      $fault = "client";
-      $retryable = {};
-      constructor(opts) {
-        super({
-          name: "IDPCommunicationErrorException",
-          $fault: "client",
-          ...opts
-        });
-        Object.setPrototypeOf(this, _IDPCommunicationErrorException.prototype);
-      }
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js
-var _A, _AKI, _AR, _ARI, _ARR, _ARRs, _ARU, _ARWWI, _ARWWIR, _ARWWIRs, _Au, _C, _CA, _DS, _E, _EI, _ETE2, _IDPCEE, _IDPRCE, _IITE, _K, _MPDE, _P, _PA, _PAr, _PC, _PCLT, _PCr, _PDT, _PI, _PPS, _PPTLE, _Pr, _RA, _RDE, _RSN, _SAK, _SFWIT, _SI, _SN, _ST, _T, _TC, _TTK, _Ta, _V, _WIT, _a, _aKST, _aQE, _c4, _cTT, _e4, _hE4, _m3, _pDLT, _s4, _tLT, n04, _s_registry4, STSServiceException$, n0_registry4, ExpiredTokenException$2, IDPCommunicationErrorException$, IDPRejectedClaimException$, InvalidIdentityTokenException$, MalformedPolicyDocumentException$, PackedPolicyTooLargeException$, RegionDisabledException$, errorTypeRegistries4, accessKeySecretType, clientTokenType, AssumedRoleUser$, AssumeRoleRequest$, AssumeRoleResponse$, AssumeRoleWithWebIdentityRequest$, AssumeRoleWithWebIdentityResponse$, Credentials$, PolicyDescriptorType$, ProvidedContext$, Tag$, policyDescriptorListType, ProvidedContextsListType, tagKeyListType, tagListType, AssumeRole$, AssumeRoleWithWebIdentity$;
-var init_schemas_04 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js"() {
-    init_schema();
-    init_errors4();
-    init_STSServiceException();
-    _A = "Arn";
-    _AKI = "AccessKeyId";
-    _AR = "AssumeRole";
-    _ARI = "AssumedRoleId";
-    _ARR = "AssumeRoleRequest";
-    _ARRs = "AssumeRoleResponse";
-    _ARU = "AssumedRoleUser";
-    _ARWWI = "AssumeRoleWithWebIdentity";
-    _ARWWIR = "AssumeRoleWithWebIdentityRequest";
-    _ARWWIRs = "AssumeRoleWithWebIdentityResponse";
-    _Au = "Audience";
-    _C = "Credentials";
-    _CA = "ContextAssertion";
-    _DS = "DurationSeconds";
-    _E = "Expiration";
-    _EI = "ExternalId";
-    _ETE2 = "ExpiredTokenException";
-    _IDPCEE = "IDPCommunicationErrorException";
-    _IDPRCE = "IDPRejectedClaimException";
-    _IITE = "InvalidIdentityTokenException";
-    _K = "Key";
-    _MPDE = "MalformedPolicyDocumentException";
-    _P = "Policy";
-    _PA = "PolicyArns";
-    _PAr = "ProviderArn";
-    _PC = "ProvidedContexts";
-    _PCLT = "ProvidedContextsListType";
-    _PCr = "ProvidedContext";
-    _PDT = "PolicyDescriptorType";
-    _PI = "ProviderId";
-    _PPS = "PackedPolicySize";
-    _PPTLE = "PackedPolicyTooLargeException";
-    _Pr = "Provider";
-    _RA = "RoleArn";
-    _RDE = "RegionDisabledException";
-    _RSN = "RoleSessionName";
-    _SAK = "SecretAccessKey";
-    _SFWIT = "SubjectFromWebIdentityToken";
-    _SI = "SourceIdentity";
-    _SN = "SerialNumber";
-    _ST = "SessionToken";
-    _T = "Tags";
-    _TC = "TokenCode";
-    _TTK = "TransitiveTagKeys";
-    _Ta = "Tag";
-    _V = "Value";
-    _WIT = "WebIdentityToken";
-    _a = "arn";
-    _aKST = "accessKeySecretType";
-    _aQE = "awsQueryError";
-    _c4 = "client";
-    _cTT = "clientTokenType";
-    _e4 = "error";
-    _hE4 = "httpError";
-    _m3 = "message";
-    _pDLT = "policyDescriptorListType";
-    _s4 = "smithy.ts.sdk.synthetic.com.amazonaws.sts";
-    _tLT = "tagListType";
-    n04 = "com.amazonaws.sts";
-    _s_registry4 = TypeRegistry.for(_s4);
-    STSServiceException$ = [-3, _s4, "STSServiceException", 0, [], []];
-    _s_registry4.registerError(STSServiceException$, STSServiceException);
-    n0_registry4 = TypeRegistry.for(n04);
-    ExpiredTokenException$2 = [
-      -3,
-      n04,
-      _ETE2,
-      { [_aQE]: [`ExpiredTokenException`, 400], [_e4]: _c4, [_hE4]: 400 },
-      [_m3],
-      [0]
-    ];
-    n0_registry4.registerError(ExpiredTokenException$2, ExpiredTokenException2);
-    IDPCommunicationErrorException$ = [
-      -3,
-      n04,
-      _IDPCEE,
-      { [_aQE]: [`IDPCommunicationError`, 400], [_e4]: _c4, [_hE4]: 400 },
-      [_m3],
-      [0]
-    ];
-    n0_registry4.registerError(IDPCommunicationErrorException$, IDPCommunicationErrorException);
-    IDPRejectedClaimException$ = [
-      -3,
-      n04,
-      _IDPRCE,
-      { [_aQE]: [`IDPRejectedClaim`, 403], [_e4]: _c4, [_hE4]: 403 },
-      [_m3],
-      [0]
-    ];
-    n0_registry4.registerError(IDPRejectedClaimException$, IDPRejectedClaimException);
-    InvalidIdentityTokenException$ = [
-      -3,
-      n04,
-      _IITE,
-      { [_aQE]: [`InvalidIdentityToken`, 400], [_e4]: _c4, [_hE4]: 400 },
-      [_m3],
-      [0]
-    ];
-    n0_registry4.registerError(InvalidIdentityTokenException$, InvalidIdentityTokenException);
-    MalformedPolicyDocumentException$ = [
-      -3,
-      n04,
-      _MPDE,
-      { [_aQE]: [`MalformedPolicyDocument`, 400], [_e4]: _c4, [_hE4]: 400 },
-      [_m3],
-      [0]
-    ];
-    n0_registry4.registerError(MalformedPolicyDocumentException$, MalformedPolicyDocumentException);
-    PackedPolicyTooLargeException$ = [
-      -3,
-      n04,
-      _PPTLE,
-      { [_aQE]: [`PackedPolicyTooLarge`, 400], [_e4]: _c4, [_hE4]: 400 },
-      [_m3],
-      [0]
-    ];
-    n0_registry4.registerError(PackedPolicyTooLargeException$, PackedPolicyTooLargeException);
-    RegionDisabledException$ = [
-      -3,
-      n04,
-      _RDE,
-      { [_aQE]: [`RegionDisabledException`, 403], [_e4]: _c4, [_hE4]: 403 },
-      [_m3],
-      [0]
-    ];
-    n0_registry4.registerError(RegionDisabledException$, RegionDisabledException);
-    errorTypeRegistries4 = [
-      _s_registry4,
-      n0_registry4
-    ];
-    accessKeySecretType = [0, n04, _aKST, 8, 0];
-    clientTokenType = [0, n04, _cTT, 8, 0];
-    AssumedRoleUser$ = [
-      3,
-      n04,
-      _ARU,
-      0,
-      [_ARI, _A],
-      [0, 0],
-      2
-    ];
-    AssumeRoleRequest$ = [
-      3,
-      n04,
-      _ARR,
-      0,
-      [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC],
-      [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType],
-      2
-    ];
-    AssumeRoleResponse$ = [
-      3,
-      n04,
-      _ARRs,
-      0,
-      [_C, _ARU, _PPS, _SI],
-      [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0]
-    ];
-    AssumeRoleWithWebIdentityRequest$ = [
-      3,
-      n04,
-      _ARWWIR,
-      0,
-      [_RA, _RSN, _WIT, _PI, _PA, _P, _DS],
-      [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1],
-      3
-    ];
-    AssumeRoleWithWebIdentityResponse$ = [
-      3,
-      n04,
-      _ARWWIRs,
-      0,
-      [_C, _SFWIT, _ARU, _PPS, _Pr, _Au, _SI],
-      [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0]
-    ];
-    Credentials$ = [
-      3,
-      n04,
-      _C,
-      0,
-      [_AKI, _SAK, _ST, _E],
-      [0, [() => accessKeySecretType, 0], 0, 4],
-      4
-    ];
-    PolicyDescriptorType$ = [
-      3,
-      n04,
-      _PDT,
-      0,
-      [_a],
-      [0]
-    ];
-    ProvidedContext$ = [
-      3,
-      n04,
-      _PCr,
-      0,
-      [_PAr, _CA],
-      [0, 0]
-    ];
-    Tag$ = [
-      3,
-      n04,
-      _Ta,
-      0,
-      [_K, _V],
-      [0, 0],
-      2
-    ];
-    policyDescriptorListType = [
-      1,
-      n04,
-      _pDLT,
-      0,
-      () => PolicyDescriptorType$
-    ];
-    ProvidedContextsListType = [
-      1,
-      n04,
-      _PCLT,
-      0,
-      () => ProvidedContext$
-    ];
-    tagKeyListType = 64 | 0;
-    tagListType = [
-      1,
-      n04,
-      _tLT,
-      0,
-      () => Tag$
-    ];
-    AssumeRole$ = [
-      9,
-      n04,
-      _AR,
-      0,
-      () => AssumeRoleRequest$,
-      () => AssumeRoleResponse$
-    ];
-    AssumeRoleWithWebIdentity$ = [
-      9,
-      n04,
-      _ARWWI,
-      0,
-      () => AssumeRoleWithWebIdentityRequest$,
-      () => AssumeRoleWithWebIdentityResponse$
-    ];
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js
-var import_signature_v4_multi_region2, getRuntimeConfig7;
-var init_runtimeConfig_shared4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js"() {
-    init_httpAuthSchemes2();
-    init_protocols2();
-    import_signature_v4_multi_region2 = __toESM(require_dist_cjs3());
-    init_dist_es();
-    init_checksum2();
-    init_client2();
-    init_protocols();
-    init_serde();
-    init_httpAuthSchemeProvider4();
-    init_endpointResolver4();
-    init_schemas_04();
-    getRuntimeConfig7 = (config) => {
-      return {
-        apiVersion: "2011-06-15",
-        base64Decoder: config?.base64Decoder ?? fromBase64,
-        base64Encoder: config?.base64Encoder ?? toBase64,
-        disableHostPrefix: config?.disableHostPrefix ?? false,
-        endpointProvider: config?.endpointProvider ?? defaultEndpointResolver4,
-        extensions: config?.extensions ?? [],
-        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? defaultSTSHttpAuthSchemeProvider,
-        httpAuthSchemes: config?.httpAuthSchemes ?? [
-          {
-            schemeId: "aws.auth#sigv4",
-            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
-            signer: new AwsSdkSigV4Signer()
-          },
-          {
-            schemeId: "aws.auth#sigv4a",
-            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4a"),
-            signer: new AwsSdkSigV4ASigner()
-          },
-          {
-            schemeId: "smithy.api#noAuth",
-            identityProvider: (ipc) => ipc.getIdentityProvider("smithy.api#noAuth") || (async () => ({})),
-            signer: new NoAuthSigner()
-          }
-        ],
-        logger: config?.logger ?? new NoOpLogger(),
-        protocol: config?.protocol ?? AwsQueryProtocol,
-        protocolSettings: config?.protocolSettings ?? {
-          defaultNamespace: "com.amazonaws.sts",
-          errorTypeRegistries: errorTypeRegistries4,
-          xmlNamespace: "https://sts.amazonaws.com/doc/2011-06-15/",
-          version: "2011-06-15",
-          serviceTarget: "AWSSecurityTokenServiceV20110615"
-        },
-        serviceId: config?.serviceId ?? "STS",
-        sha256: config?.sha256 ?? Sha256Node,
-        signerConstructor: config?.signerConstructor ?? import_signature_v4_multi_region2.SignatureV4MultiRegion,
-        urlParser: config?.urlParser ?? parseUrl,
-        utf8Decoder: config?.utf8Decoder ?? fromUtf8,
-        utf8Encoder: config?.utf8Encoder ?? toUtf8
-      };
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js
-var import_node_http_handler4, getRuntimeConfig8;
-var init_runtimeConfig4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js"() {
-    init_package();
-    init_client3();
-    init_httpAuthSchemes2();
-    init_dist_es();
-    init_client2();
-    init_config2();
-    init_retry2();
-    init_serde();
-    import_node_http_handler4 = __toESM(require_dist_cjs6());
-    init_runtimeConfig_shared4();
-    getRuntimeConfig8 = (config) => {
-      emitWarningIfUnsupportedVersion2(process.version);
-      const defaultsMode = resolveDefaultsModeConfig(config);
-      const defaultConfigProvider = () => defaultsMode().then(loadConfigsForDefaultMode);
-      const clientSharedValues = getRuntimeConfig7(config);
-      emitWarningIfUnsupportedVersion(process.version);
-      const loaderConfig = {
-        profile: config?.profile,
-        logger: clientSharedValues.logger
-      };
-      return {
-        ...clientSharedValues,
-        ...config,
-        runtime: "node",
-        defaultsMode,
-        authSchemePreference: config?.authSchemePreference ?? loadConfig(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
-        bodyLengthChecker: config?.bodyLengthChecker ?? calculateBodyLength,
-        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? createDefaultUserAgentProvider({ serviceId: clientSharedValues.serviceId, clientVersion: package_default.version }),
-        httpAuthSchemes: config?.httpAuthSchemes ?? [
-          {
-            schemeId: "aws.auth#sigv4",
-            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await config.credentialDefaultProvider(idProps?.__config || {})()),
-            signer: new AwsSdkSigV4Signer()
-          },
-          {
-            schemeId: "aws.auth#sigv4a",
-            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4a"),
-            signer: new AwsSdkSigV4ASigner()
-          },
-          {
-            schemeId: "smithy.api#noAuth",
-            identityProvider: (ipc) => ipc.getIdentityProvider("smithy.api#noAuth") || (async () => ({})),
-            signer: new NoAuthSigner()
-          }
-        ],
-        maxAttempts: config?.maxAttempts ?? loadConfig(NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
-        region: config?.region ?? loadConfig(NODE_REGION_CONFIG_OPTIONS, { ...NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
-        requestHandler: import_node_http_handler4.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
-        retryMode: config?.retryMode ?? loadConfig({
-          ...NODE_RETRY_MODE_CONFIG_OPTIONS,
-          default: async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE
-        }, config),
-        sigv4aSigningRegionSet: config?.sigv4aSigningRegionSet ?? loadConfig(NODE_SIGV4A_CONFIG_OPTIONS, loaderConfig),
-        streamCollector: config?.streamCollector ?? import_node_http_handler4.streamCollector,
-        useDualstackEndpoint: config?.useDualstackEndpoint ?? loadConfig(NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        useFipsEndpoint: config?.useFipsEndpoint ?? loadConfig(NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        userAgentAppId: config?.userAgentAppId ?? loadConfig(NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
-      };
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js
-var getHttpAuthExtensionConfiguration4, resolveHttpAuthRuntimeConfig4;
-var init_httpAuthExtensionConfiguration4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js"() {
-    getHttpAuthExtensionConfiguration4 = (runtimeConfig) => {
-      const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
-      let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
-      let _credentials = runtimeConfig.credentials;
-      return {
-        setHttpAuthScheme(httpAuthScheme) {
-          const index = _httpAuthSchemes.findIndex((scheme) => scheme.schemeId === httpAuthScheme.schemeId);
-          if (index === -1) {
-            _httpAuthSchemes.push(httpAuthScheme);
-          } else {
-            _httpAuthSchemes.splice(index, 1, httpAuthScheme);
-          }
-        },
-        httpAuthSchemes() {
-          return _httpAuthSchemes;
-        },
-        setHttpAuthSchemeProvider(httpAuthSchemeProvider) {
-          _httpAuthSchemeProvider = httpAuthSchemeProvider;
-        },
-        httpAuthSchemeProvider() {
-          return _httpAuthSchemeProvider;
-        },
-        setCredentials(credentials) {
-          _credentials = credentials;
-        },
-        credentials() {
-          return _credentials;
-        }
-      };
-    };
-    resolveHttpAuthRuntimeConfig4 = (config) => {
-      return {
-        httpAuthSchemes: config.httpAuthSchemes(),
-        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
-        credentials: config.credentials()
-      };
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js
-var resolveRuntimeExtensions4;
-var init_runtimeExtensions4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js"() {
-    init_client3();
-    init_client2();
-    init_protocols();
-    init_httpAuthExtensionConfiguration4();
-    resolveRuntimeExtensions4 = (runtimeConfig, extensions) => {
-      const extensionConfiguration = Object.assign(getAwsRegionExtensionConfiguration(runtimeConfig), getDefaultExtensionConfiguration(runtimeConfig), getHttpHandlerExtensionConfiguration(runtimeConfig), getHttpAuthExtensionConfiguration4(runtimeConfig));
-      extensions.forEach((extension) => extension.configure(extensionConfiguration));
-      return Object.assign(runtimeConfig, resolveAwsRegionExtensionConfiguration(extensionConfiguration), resolveDefaultRuntimeConfig(extensionConfiguration), resolveHttpHandlerRuntimeConfig(extensionConfiguration), resolveHttpAuthRuntimeConfig4(extensionConfiguration));
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js
-var STSClient;
-var init_STSClient = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js"() {
-    init_client3();
-    init_dist_es();
-    init_client2();
-    init_config2();
-    init_endpoints();
-    init_protocols();
-    init_retry2();
-    init_schema();
-    init_httpAuthSchemeProvider4();
-    init_EndpointParameters4();
-    init_runtimeConfig4();
-    init_runtimeExtensions4();
-    STSClient = class extends Client {
-      config;
-      constructor(...[configuration]) {
-        const _config_0 = getRuntimeConfig8(configuration || {});
-        super(_config_0);
-        this.initConfig = _config_0;
-        const _config_1 = resolveClientEndpointParameters4(_config_0);
-        const _config_2 = resolveUserAgentConfig(_config_1);
-        const _config_3 = resolveRetryConfig(_config_2);
-        const _config_4 = resolveRegionConfig(_config_3);
-        const _config_5 = resolveHostHeaderConfig(_config_4);
-        const _config_6 = resolveEndpointConfig(_config_5);
-        const _config_7 = resolveHttpAuthSchemeConfig4(_config_6);
-        const _config_8 = resolveRuntimeExtensions4(_config_7, configuration?.extensions || []);
-        this.config = _config_8;
-        this.middlewareStack.use(getSchemaSerdePlugin(this.config));
-        this.middlewareStack.use(getUserAgentPlugin(this.config));
-        this.middlewareStack.use(getRetryPlugin(this.config));
-        this.middlewareStack.use(getContentLengthPlugin(this.config));
-        this.middlewareStack.use(getHostHeaderPlugin(this.config));
-        this.middlewareStack.use(getLoggerPlugin(this.config));
-        this.middlewareStack.use(getRecursionDetectionPlugin(this.config));
-        this.middlewareStack.use(getHttpAuthSchemeEndpointRuleSetPlugin(this.config, {
-          httpAuthSchemeParametersProvider: defaultSTSHttpAuthSchemeParametersProvider,
-          identityProviderConfigProvider: async (config) => new DefaultIdentityProviderConfig({
-            "aws.auth#sigv4": config.credentials,
-            "aws.auth#sigv4a": config.credentials
-          })
-        }));
-        this.middlewareStack.use(getHttpSigningPlugin(this.config));
-      }
-      destroy() {
-        super.destroy();
-      }
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js
-var command4, _ep04, _mw04;
-var init_commandBuilder4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters4();
-    command4 = makeBuilder(commonParams4, "AWSSecurityTokenServiceV20110615", "STSClient", getEndpointPlugin);
-    _ep04 = {};
-    _mw04 = (Command3, cs, config, o3) => [];
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js
-var AssumeRoleCommand;
-var init_AssumeRoleCommand = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js"() {
-    init_commandBuilder4();
-    init_schemas_04();
-    AssumeRoleCommand = class extends command4(_ep04, _mw04, "AssumeRole", AssumeRole$) {
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js
-var AssumeRoleWithWebIdentityCommand;
-var init_AssumeRoleWithWebIdentityCommand = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js"() {
-    init_commandBuilder4();
-    init_schemas_04();
-    AssumeRoleWithWebIdentityCommand = class extends command4(_ep04, _mw04, "AssumeRoleWithWebIdentity", AssumeRoleWithWebIdentity$) {
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js
-var commands4, STS;
-var init_STS = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js"() {
-    init_client2();
-    init_AssumeRoleCommand();
-    init_AssumeRoleWithWebIdentityCommand();
-    init_STSClient();
-    commands4 = {
-      AssumeRoleCommand,
-      AssumeRoleWithWebIdentityCommand
-    };
-    STS = class extends STSClient {
-    };
-    createAggregatedClient(commands4, STS);
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js
-var init_commands4 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js"() {
-    init_AssumeRoleCommand();
-    init_AssumeRoleWithWebIdentityCommand();
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js
-var init_models_04 = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js"() {
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js
-var getAccountIdFromAssumedRoleUser, resolveRegion, getDefaultRoleAssumer, getDefaultRoleAssumerWithWebIdentity, isH2;
-var init_defaultStsRoleAssumers = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js"() {
-    init_client3();
-    init_AssumeRoleCommand();
-    init_AssumeRoleWithWebIdentityCommand();
-    getAccountIdFromAssumedRoleUser = (assumedRoleUser) => {
-      if (typeof assumedRoleUser?.Arn === "string") {
-        const arnComponents = assumedRoleUser.Arn.split(":");
-        if (arnComponents.length > 4 && arnComponents[4] !== "") {
-          return arnComponents[4];
-        }
-      }
-      return void 0;
-    };
-    resolveRegion = async (_region, _parentRegion, credentialProviderLogger, loaderConfig = {}) => {
-      const region = typeof _region === "function" ? await _region() : _region;
-      const parentRegion = typeof _parentRegion === "function" ? await _parentRegion() : _parentRegion;
-      let stsDefaultRegion = "";
-      const resolvedRegion = region ?? parentRegion ?? (stsDefaultRegion = await stsRegionDefaultResolver(loaderConfig)());
-      credentialProviderLogger?.debug?.("@aws-sdk/client-sts::resolveRegion", "accepting first of:", `${region} (credential provider clientConfig)`, `${parentRegion} (contextual client)`, `${stsDefaultRegion} (STS default: AWS_REGION, profile region, or us-east-1)`);
-      return resolvedRegion;
-    };
-    getDefaultRoleAssumer = (stsOptions, STSClient3) => {
-      let stsClient;
-      let closureSourceCreds;
-      return async (sourceCreds, params) => {
-        closureSourceCreds = sourceCreds;
-        if (!stsClient) {
-          const { logger: logger2 = stsOptions?.parentClientConfig?.logger, profile = stsOptions?.parentClientConfig?.profile, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger, userAgentAppId = stsOptions?.parentClientConfig?.userAgentAppId } = stsOptions;
-          const resolvedRegion = await resolveRegion(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger, {
-            logger: logger2,
-            profile
-          });
-          const isCompatibleRequestHandler = !isH2(requestHandler);
-          stsClient = new STSClient3({
-            ...stsOptions,
-            userAgentAppId,
-            profile,
-            credentialDefaultProvider: () => async () => closureSourceCreds,
-            region: resolvedRegion,
-            requestHandler: isCompatibleRequestHandler ? requestHandler : void 0,
-            logger: logger2
-          });
-        }
-        const { Credentials, AssumedRoleUser } = await stsClient.send(new AssumeRoleCommand(params));
-        if (!Credentials || !Credentials.AccessKeyId || !Credentials.SecretAccessKey) {
-          throw new Error(`Invalid response from STS.assumeRole call with role ${params.RoleArn}`);
-        }
-        const accountId = getAccountIdFromAssumedRoleUser(AssumedRoleUser);
-        const credentials = {
-          accessKeyId: Credentials.AccessKeyId,
-          secretAccessKey: Credentials.SecretAccessKey,
-          sessionToken: Credentials.SessionToken,
-          expiration: Credentials.Expiration,
-          ...Credentials.CredentialScope && { credentialScope: Credentials.CredentialScope },
-          ...accountId && { accountId }
-        };
-        setCredentialFeature(credentials, "CREDENTIALS_STS_ASSUME_ROLE", "i");
-        return credentials;
-      };
-    };
-    getDefaultRoleAssumerWithWebIdentity = (stsOptions, STSClient3) => {
-      let stsClient;
-      return async (params) => {
-        if (!stsClient) {
-          const { logger: logger2 = stsOptions?.parentClientConfig?.logger, profile = stsOptions?.parentClientConfig?.profile, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger, userAgentAppId = stsOptions?.parentClientConfig?.userAgentAppId } = stsOptions;
-          const resolvedRegion = await resolveRegion(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger, {
-            logger: logger2,
-            profile
-          });
-          const isCompatibleRequestHandler = !isH2(requestHandler);
-          stsClient = new STSClient3({
-            ...stsOptions,
-            userAgentAppId,
-            profile,
-            region: resolvedRegion,
-            requestHandler: isCompatibleRequestHandler ? requestHandler : void 0,
-            logger: logger2
-          });
-        }
-        const { Credentials, AssumedRoleUser } = await stsClient.send(new AssumeRoleWithWebIdentityCommand(params));
-        if (!Credentials || !Credentials.AccessKeyId || !Credentials.SecretAccessKey) {
-          throw new Error(`Invalid response from STS.assumeRoleWithWebIdentity call with role ${params.RoleArn}`);
-        }
-        const accountId = getAccountIdFromAssumedRoleUser(AssumedRoleUser);
-        const credentials = {
-          accessKeyId: Credentials.AccessKeyId,
-          secretAccessKey: Credentials.SecretAccessKey,
-          sessionToken: Credentials.SessionToken,
-          expiration: Credentials.Expiration,
-          ...Credentials.CredentialScope && { credentialScope: Credentials.CredentialScope },
-          ...accountId && { accountId }
-        };
-        if (accountId) {
-          setCredentialFeature(credentials, "RESOLVED_ACCOUNT_ID", "T");
-        }
-        setCredentialFeature(credentials, "CREDENTIALS_STS_ASSUME_ROLE_WEB_ID", "k");
-        return credentials;
-      };
-    };
-    isH2 = (requestHandler) => {
-      return requestHandler?.metadata?.handlerProtocol === "h2";
-    };
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js
-var getCustomizableStsClientCtor, getDefaultRoleAssumer2, getDefaultRoleAssumerWithWebIdentity2, decorateDefaultCredentialProvider;
-var init_defaultRoleAssumers = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js"() {
-    init_defaultStsRoleAssumers();
-    init_STSClient();
-    getCustomizableStsClientCtor = (baseCtor, customizations) => {
-      if (!customizations)
-        return baseCtor;
-      else
-        return class CustomizableSTSClient extends baseCtor {
-          constructor(config) {
-            super(config);
-            for (const customization of customizations) {
-              this.middlewareStack.use(customization);
-            }
-          }
-        };
-    };
-    getDefaultRoleAssumer2 = (stsOptions = {}, stsPlugins) => getDefaultRoleAssumer(stsOptions, getCustomizableStsClientCtor(STSClient, stsPlugins));
-    getDefaultRoleAssumerWithWebIdentity2 = (stsOptions = {}, stsPlugins) => getDefaultRoleAssumerWithWebIdentity(stsOptions, getCustomizableStsClientCtor(STSClient, stsPlugins));
-    decorateDefaultCredentialProvider = (provider) => (input) => provider({
-      roleAssumer: getDefaultRoleAssumer2(input),
-      roleAssumerWithWebIdentity: getDefaultRoleAssumerWithWebIdentity2(input),
-      ...input
-    });
-  }
-});
-
-// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js
-var sts_exports = {};
-__export(sts_exports, {
-  $Command: () => Command2,
-  AssumeRole$: () => AssumeRole$,
-  AssumeRoleCommand: () => AssumeRoleCommand,
-  AssumeRoleRequest$: () => AssumeRoleRequest$,
-  AssumeRoleResponse$: () => AssumeRoleResponse$,
-  AssumeRoleWithWebIdentity$: () => AssumeRoleWithWebIdentity$,
-  AssumeRoleWithWebIdentityCommand: () => AssumeRoleWithWebIdentityCommand,
-  AssumeRoleWithWebIdentityRequest$: () => AssumeRoleWithWebIdentityRequest$,
-  AssumeRoleWithWebIdentityResponse$: () => AssumeRoleWithWebIdentityResponse$,
-  AssumedRoleUser$: () => AssumedRoleUser$,
-  Credentials$: () => Credentials$,
-  ExpiredTokenException: () => ExpiredTokenException2,
-  ExpiredTokenException$: () => ExpiredTokenException$2,
-  IDPCommunicationErrorException: () => IDPCommunicationErrorException,
-  IDPCommunicationErrorException$: () => IDPCommunicationErrorException$,
-  IDPRejectedClaimException: () => IDPRejectedClaimException,
-  IDPRejectedClaimException$: () => IDPRejectedClaimException$,
-  InvalidIdentityTokenException: () => InvalidIdentityTokenException,
-  InvalidIdentityTokenException$: () => InvalidIdentityTokenException$,
-  MalformedPolicyDocumentException: () => MalformedPolicyDocumentException,
-  MalformedPolicyDocumentException$: () => MalformedPolicyDocumentException$,
-  PackedPolicyTooLargeException: () => PackedPolicyTooLargeException,
-  PackedPolicyTooLargeException$: () => PackedPolicyTooLargeException$,
-  PolicyDescriptorType$: () => PolicyDescriptorType$,
-  ProvidedContext$: () => ProvidedContext$,
-  RegionDisabledException: () => RegionDisabledException,
-  RegionDisabledException$: () => RegionDisabledException$,
-  STS: () => STS,
-  STSClient: () => STSClient,
-  STSServiceException: () => STSServiceException,
-  STSServiceException$: () => STSServiceException$,
-  Tag$: () => Tag$,
-  __Client: () => Client,
-  decorateDefaultCredentialProvider: () => decorateDefaultCredentialProvider,
-  errorTypeRegistries: () => errorTypeRegistries4,
-  getDefaultRoleAssumer: () => getDefaultRoleAssumer2,
-  getDefaultRoleAssumerWithWebIdentity: () => getDefaultRoleAssumerWithWebIdentity2
-});
-var init_sts = __esm({
-  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js"() {
-    init_STSClient();
-    init_STS();
-    init_commands4();
-    init_client2();
-    init_schemas_04();
-    init_errors4();
-    init_models_04();
-    init_defaultRoleAssumers();
-    init_STSServiceException();
-  }
-});
-
 // node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js
 var require_dist_cjs12 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports2) {
@@ -42706,7 +42712,6 @@ var require_dist_cjs14 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js"(exports2) {
     var { CredentialsProviderError: CredentialsProviderError2, chain: chain2, getProfileName: getProfileName2, parseKnownFiles: parseKnownFiles2 } = (init_config2(), __toCommonJS(config_exports));
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { fromLoginCredentials } = require_dist_cjs11();
     var resolveCredentialSource = (credentialSource, profileName, logger2) => {
       const sourceProvidersMap = {
         EcsContainer: async (options) => {
@@ -42802,6 +42807,7 @@ var require_dist_cjs14 = __commonJS({
       return Boolean(data3 && data3.login_session);
     };
     var resolveLoginCredentials = async (profileName, options, callerClientConfig) => {
+      const { fromLoginCredentials } = require_dist_cjs11();
       const credentials = await fromLoginCredentials({
         ...options,
         profile: profileName
@@ -43391,7 +43397,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1079.0";
+    var version = "3.1085.0";
     var packageInfo = {
       version
     };
