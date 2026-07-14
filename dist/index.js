@@ -29692,7 +29692,7 @@ var init_configuration = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/configuration.js"() {
     recursionDetectionMiddlewareOptions = {
       step: "build",
-      tags: ["RECURSION_DETECTION"],
+      tags: ["RECURSION_DETECTION", "TRACE_CONTEXT_PROPAGATION"],
       name: "recursionDetectionMiddleware",
       override: true,
       priority: "low"
@@ -29828,36 +29828,65 @@ var init_invoke_store = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/recursionDetectionMiddleware.js
-var TRACE_ID_HEADER_NAME, ENV_LAMBDA_FUNCTION_NAME, ENV_TRACE_ID, recursionDetectionMiddleware;
+function sanitizeTraceHeaders(headers) {
+  for (const header of Object.keys(headers)) {
+    const lower = header.toLowerCase();
+    if (header !== lower && (lower === TRACEPARENT || lower === TRACESTATE || lower === BAGGAGE)) {
+      headers[lower] = headers[header];
+      delete headers[header];
+    }
+  }
+}
+var AWS_LAMBDA_FUNCTION_NAME, _X_AMZN_TRACE_ID, X_AMZN_TRACE_ID, TRACEPARENT, TRACESTATE, BAGGAGE, recursionDetectionMiddleware;
 var init_recursionDetectionMiddleware = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/recursionDetectionMiddleware.js"() {
     init_invoke_store();
     init_protocols();
-    TRACE_ID_HEADER_NAME = "X-Amzn-Trace-Id";
-    ENV_LAMBDA_FUNCTION_NAME = "AWS_LAMBDA_FUNCTION_NAME";
-    ENV_TRACE_ID = "_X_AMZN_TRACE_ID";
+    AWS_LAMBDA_FUNCTION_NAME = "AWS_LAMBDA_FUNCTION_NAME";
+    _X_AMZN_TRACE_ID = "_X_AMZN_TRACE_ID";
+    X_AMZN_TRACE_ID = "X-Amzn-Trace-Id";
+    TRACEPARENT = "traceparent";
+    TRACESTATE = "tracestate";
+    BAGGAGE = "baggage";
     recursionDetectionMiddleware = () => (next) => async (args) => {
       const { request } = args;
       if (!HttpRequest.isInstance(request)) {
         return next(args);
       }
-      const traceIdHeader = Object.keys(request.headers ?? {}).find((h5) => h5.toLowerCase() === TRACE_ID_HEADER_NAME.toLowerCase()) ?? TRACE_ID_HEADER_NAME;
-      if (request.headers.hasOwnProperty(traceIdHeader)) {
-        return next(args);
+      let invokeStore;
+      {
+        const traceIdHeader = Object.keys(request.headers ?? {}).find((h5) => h5.toLowerCase() === X_AMZN_TRACE_ID.toLowerCase()) ?? X_AMZN_TRACE_ID;
+        if (!request.headers.hasOwnProperty(traceIdHeader)) {
+          const functionName = process.env[AWS_LAMBDA_FUNCTION_NAME];
+          const traceIdFromEnv = process.env[_X_AMZN_TRACE_ID];
+          invokeStore ??= await InvokeStore.getInstanceAsync();
+          const traceIdFromInvokeStore = invokeStore?.getXRayTraceId();
+          const traceId = traceIdFromInvokeStore ?? traceIdFromEnv;
+          const nonEmptyString = (str) => typeof str === "string" && str.length > 0;
+          if (nonEmptyString(functionName) && nonEmptyString(traceId)) {
+            request.headers[X_AMZN_TRACE_ID] = traceId;
+          }
+        }
       }
-      const functionName = process.env[ENV_LAMBDA_FUNCTION_NAME];
-      const traceIdFromEnv = process.env[ENV_TRACE_ID];
-      const invokeStore = await InvokeStore.getInstanceAsync();
-      const traceIdFromInvokeStore = invokeStore?.getXRayTraceId();
-      const traceId = traceIdFromInvokeStore ?? traceIdFromEnv;
-      const nonEmptyString = (str) => typeof str === "string" && str.length > 0;
-      if (nonEmptyString(functionName) && nonEmptyString(traceId)) {
-        request.headers[TRACE_ID_HEADER_NAME] = traceId;
+      {
+        sanitizeTraceHeaders(request.headers);
+        const existingTraceparent = request.headers[TRACEPARENT];
+        if (!existingTraceparent) {
+          const traceparent = (invokeStore ??= await InvokeStore.getInstanceAsync())?.getTraceparent?.();
+          if (traceparent) {
+            request.headers[TRACEPARENT] = traceparent;
+            const tracestate = invokeStore?.getTracestate?.();
+            if (tracestate) {
+              request.headers[TRACESTATE] = tracestate;
+            }
+            const baggage = invokeStore?.getBaggage?.();
+            if (baggage) {
+              request.headers[BAGGAGE] = baggage;
+            }
+          }
+        }
       }
-      return next({
-        ...args,
-        request
-      });
+      return next(args);
     };
   }
 });
@@ -30903,142 +30932,6 @@ var init_getRuntimeUserAgentPair = __esm({
   }
 });
 
-// node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getNodeModulesParentDirs.js
-var import_node_path6, getNodeModulesParentDirs;
-var init_getNodeModulesParentDirs = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getNodeModulesParentDirs.js"() {
-    import_node_path6 = require("node:path");
-    getNodeModulesParentDirs = (dirname4) => {
-      const cwd = process.cwd();
-      if (!dirname4) {
-        return [cwd];
-      }
-      const normalizedPath = (0, import_node_path6.normalize)(dirname4);
-      const parts = normalizedPath.split(import_node_path6.sep);
-      const nodeModulesIndex = parts.indexOf("node_modules");
-      const parentDir = nodeModulesIndex !== -1 ? parts.slice(0, nodeModulesIndex).join(import_node_path6.sep) : normalizedPath;
-      if (cwd === parentDir) {
-        return [cwd];
-      }
-      return [parentDir, cwd];
-    };
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getSanitizedTypeScriptVersion.js
-var SEMVER_REGEX, getSanitizedTypeScriptVersion;
-var init_getSanitizedTypeScriptVersion = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getSanitizedTypeScriptVersion.js"() {
-    SEMVER_REGEX = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?$/;
-    getSanitizedTypeScriptVersion = (version = "") => {
-      const match = version.match(SEMVER_REGEX);
-      if (!match) {
-        return void 0;
-      }
-      const [major, minor, patch, prerelease] = [match[1], match[2], match[3], match[4]];
-      return prerelease ? `${major}.${minor}.${patch}-${prerelease}` : `${major}.${minor}.${patch}`;
-    };
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getSanitizedDevTypeScriptVersion.js
-var ALLOWED_PREFIXES, ALLOWED_DIST_TAGS, getSanitizedDevTypeScriptVersion;
-var init_getSanitizedDevTypeScriptVersion = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getSanitizedDevTypeScriptVersion.js"() {
-    init_getSanitizedTypeScriptVersion();
-    ALLOWED_PREFIXES = ["^", "~", ">=", "<=", ">", "<"];
-    ALLOWED_DIST_TAGS = ["latest", "beta", "dev", "rc", "insiders", "next"];
-    getSanitizedDevTypeScriptVersion = (version = "") => {
-      if (ALLOWED_DIST_TAGS.includes(version)) {
-        return version;
-      }
-      const prefix = ALLOWED_PREFIXES.find((p3) => version.startsWith(p3)) ?? "";
-      const sanitizedTypeScriptVersion = getSanitizedTypeScriptVersion(version.slice(prefix.length));
-      if (!sanitizedTypeScriptVersion) {
-        return void 0;
-      }
-      return `${prefix}${sanitizedTypeScriptVersion}`;
-    };
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getTypeScriptUserAgentPair.js
-var import_promises3, import_node_path7, tscVersion, TS_PACKAGE_JSON, getTypeScriptUserAgentPair;
-var init_getTypeScriptUserAgentPair = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getTypeScriptUserAgentPair.js"() {
-    init_config2();
-    import_promises3 = require("node:fs/promises");
-    import_node_path7 = require("node:path");
-    init_getNodeModulesParentDirs();
-    init_getSanitizedDevTypeScriptVersion();
-    init_getSanitizedTypeScriptVersion();
-    TS_PACKAGE_JSON = (0, import_node_path7.join)("node_modules", "typescript", "package.json");
-    getTypeScriptUserAgentPair = async () => {
-      if (tscVersion === null) {
-        return void 0;
-      } else if (typeof tscVersion === "string") {
-        return ["md/tsc", tscVersion];
-      }
-      let isTypeScriptDetectionDisabled = false;
-      try {
-        isTypeScriptDetectionDisabled = booleanSelector(process.env, "AWS_SDK_JS_TYPESCRIPT_DETECTION_DISABLED", SelectorType.ENV) || false;
-      } catch {
-      }
-      if (isTypeScriptDetectionDisabled) {
-        tscVersion = null;
-        return void 0;
-      }
-      const dirname4 = typeof __dirname !== "undefined" ? __dirname : void 0;
-      const nodeModulesParentDirs = getNodeModulesParentDirs(dirname4);
-      let versionFromApp;
-      for (const nodeModulesParentDir of nodeModulesParentDirs) {
-        try {
-          const appPackageJsonPath = (0, import_node_path7.join)(nodeModulesParentDir, "package.json");
-          const packageJson = await (0, import_promises3.readFile)(appPackageJsonPath, "utf-8");
-          const { dependencies, devDependencies } = JSON.parse(packageJson);
-          const version = devDependencies?.typescript ?? dependencies?.typescript;
-          if (typeof version !== "string") {
-            continue;
-          }
-          versionFromApp = version;
-          break;
-        } catch {
-        }
-      }
-      if (!versionFromApp) {
-        tscVersion = null;
-        return void 0;
-      }
-      let versionFromNodeModules;
-      for (const nodeModulesParentDir of nodeModulesParentDirs) {
-        try {
-          const tsPackageJsonPath = (0, import_node_path7.join)(nodeModulesParentDir, TS_PACKAGE_JSON);
-          const packageJson = await (0, import_promises3.readFile)(tsPackageJsonPath, "utf-8");
-          const { version } = JSON.parse(packageJson);
-          const sanitizedVersion2 = getSanitizedTypeScriptVersion(version);
-          if (typeof sanitizedVersion2 !== "string") {
-            continue;
-          }
-          versionFromNodeModules = sanitizedVersion2;
-          break;
-        } catch {
-        }
-      }
-      if (versionFromNodeModules) {
-        tscVersion = versionFromNodeModules;
-        return ["md/tsc", tscVersion];
-      }
-      const sanitizedVersion = getSanitizedDevTypeScriptVersion(versionFromApp);
-      if (typeof sanitizedVersion !== "string") {
-        tscVersion = null;
-        return void 0;
-      }
-      tscVersion = `dev_${sanitizedVersion}`;
-      return ["md/tsc", tscVersion];
-    };
-  }
-});
-
 // node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/crt-availability.js
 var crtAvailability;
 var init_crt_availability = __esm({
@@ -31070,7 +30963,6 @@ var init_defaultUserAgent = __esm({
     import_node_os2 = require("node:os");
     import_node_process2 = require("node:process");
     init_getRuntimeUserAgentPair();
-    init_getTypeScriptUserAgentPair();
     init_is_crt_available();
     init_crt_availability();
     createDefaultUserAgentProvider = ({ serviceId, clientVersion }) => {
@@ -31083,10 +30975,6 @@ var init_defaultUserAgent = __esm({
           ["lang/js"],
           runtimeUserAgentPair
         ];
-        const typescriptUserAgentPair = await getTypeScriptUserAgentPair();
-        if (typescriptUserAgentPair) {
-          sections.push(typescriptUserAgentPair);
-        }
         const crtAvailable = isCrtAvailable();
         if (crtAvailable) {
           sections.push(crtAvailable);
@@ -37996,12 +37884,6 @@ var init_AwsEc2QueryProtocol = __esm({
   }
 });
 
-// node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/QuerySerializerSettings.js
-var init_QuerySerializerSettings = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/QuerySerializerSettings.js"() {
-  }
-});
-
 // node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/parseXmlBody.js
 var import_xml_builder2, parseXmlBody, parseXmlErrorBody, loadRestXmlErrorCode;
 var init_parseXmlBody = __esm({
@@ -38503,7 +38385,6 @@ var init_protocols2 = __esm({
     init_parseJsonBody();
     init_AwsEc2QueryProtocol();
     init_AwsQueryProtocol();
-    init_QuerySerializerSettings();
     init_QueryShapeSerializer();
     init_AwsRestXmlProtocol();
     init_XmlCodec();
@@ -41200,12 +41081,12 @@ var init_signin = __esm({
 var require_dist_cjs11 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports2) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile4, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
+    var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile3, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var { createHash: createHash7, createPrivateKey, createPublicKey, sign: sign2 } = require("node:crypto");
     var { promises: promises3 } = require("node:fs");
     var { homedir: homedir3 } = require("node:os");
-    var { dirname: dirname4, join: join7 } = require("node:path");
+    var { dirname: dirname4, join: join6 } = require("node:path");
     var LoginCredentialsFetcher = class _LoginCredentialsFetcher {
       profileData;
       init;
@@ -41328,7 +41209,7 @@ var require_dist_cjs11 = __commonJS({
         try {
           let tokenData;
           try {
-            tokenData = await readFile4(tokenFilePath, { ignoreCache: this.init?.ignoreCache });
+            tokenData = await readFile3(tokenFilePath, { ignoreCache: this.init?.ignoreCache });
           } catch {
             tokenData = await promises3.readFile(tokenFilePath, "utf8");
           }
@@ -41361,10 +41242,10 @@ var require_dist_cjs11 = __commonJS({
         await promises3.writeFile(tokenFilePath, JSON.stringify(token, null, 2), "utf8");
       }
       getTokenFilePath() {
-        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join7(homedir3(), ".aws", "login", "cache");
+        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join6(homedir3(), ".aws", "login", "cache");
         const loginSessionBytes = Buffer.from(this.loginSession, "utf8");
         const loginSessionSha256 = createHash7("sha256").update(loginSessionBytes).digest("hex");
-        return join7(directory, `${loginSessionSha256}.json`);
+        return join6(directory, `${loginSessionSha256}.json`);
       }
       derToRawSignature(derSignature) {
         let offset = 2;
@@ -54009,7 +53890,7 @@ var require_util10 = __commonJS({
       return url;
     }
     exports2.urlGenerate = urlGenerate;
-    function normalize2(aPath) {
+    function normalize(aPath) {
       var path4 = aPath;
       var url = urlParse(aPath);
       if (url) {
@@ -54046,8 +53927,8 @@ var require_util10 = __commonJS({
       }
       return path4;
     }
-    exports2.normalize = normalize2;
-    function join7(aRoot, aPath) {
+    exports2.normalize = normalize;
+    function join6(aRoot, aPath) {
       if (aRoot === "") {
         aRoot = ".";
       }
@@ -54072,14 +53953,14 @@ var require_util10 = __commonJS({
         aRootUrl.host = aPath;
         return urlGenerate(aRootUrl);
       }
-      var joined = aPath.charAt(0) === "/" ? aPath : normalize2(aRoot.replace(/\/+$/, "") + "/" + aPath);
+      var joined = aPath.charAt(0) === "/" ? aPath : normalize(aRoot.replace(/\/+$/, "") + "/" + aPath);
       if (aRootUrl) {
         aRootUrl.path = joined;
         return urlGenerate(aRootUrl);
       }
       return joined;
     }
-    exports2.join = join7;
+    exports2.join = join6;
     exports2.isAbsolute = function(aPath) {
       return aPath.charAt(0) === "/" || urlRegexp.test(aPath);
     };
@@ -54252,9 +54133,9 @@ var require_util10 = __commonJS({
             parsed.path = parsed.path.substring(0, index + 1);
           }
         }
-        sourceURL = join7(urlGenerate(parsed), sourceURL);
+        sourceURL = join6(urlGenerate(parsed), sourceURL);
       }
-      return normalize2(sourceURL);
+      return normalize(sourceURL);
     }
     exports2.computeSourceURL = computeSourceURL;
   }
@@ -56054,7 +55935,7 @@ var require_escodegen = __commonJS({
       function noEmptySpace() {
         return space ? space : " ";
       }
-      function join7(left, right) {
+      function join6(left, right) {
         var leftSource, rightSource, leftCharCode, rightCharCode;
         leftSource = toSourceNodeWhenNeeded(left).toString();
         if (leftSource.length === 0) {
@@ -56385,8 +56266,8 @@ var require_escodegen = __commonJS({
           } else {
             result.push(that.generateExpression(stmt.left, Precedence.Call, E_TTT));
           }
-          result = join7(result, operator);
-          result = [join7(
+          result = join6(result, operator);
+          result = [join6(
             result,
             that.generateExpression(stmt.right, Precedence.Assignment, E_TTT)
           ), ")"];
@@ -56529,11 +56410,11 @@ var require_escodegen = __commonJS({
           var result, fragment;
           result = ["class"];
           if (stmt.id) {
-            result = join7(result, this.generateExpression(stmt.id, Precedence.Sequence, E_TTT));
+            result = join6(result, this.generateExpression(stmt.id, Precedence.Sequence, E_TTT));
           }
           if (stmt.superClass) {
-            fragment = join7("extends", this.generateExpression(stmt.superClass, Precedence.Unary, E_TTT));
-            result = join7(result, fragment);
+            fragment = join6("extends", this.generateExpression(stmt.superClass, Precedence.Unary, E_TTT));
+            result = join6(result, fragment);
           }
           result.push(space);
           result.push(this.generateStatement(stmt.body, S_TFFT));
@@ -56546,9 +56427,9 @@ var require_escodegen = __commonJS({
           return escapeDirective(stmt.directive) + this.semicolon(flags);
         },
         DoWhileStatement: function(stmt, flags) {
-          var result = join7("do", this.maybeBlock(stmt.body, S_TFFF));
+          var result = join6("do", this.maybeBlock(stmt.body, S_TFFF));
           result = this.maybeBlockSuffix(stmt.body, result);
-          return join7(result, [
+          return join6(result, [
             "while" + space + "(",
             this.generateExpression(stmt.test, Precedence.Sequence, E_TTT),
             ")" + this.semicolon(flags)
@@ -56584,11 +56465,11 @@ var require_escodegen = __commonJS({
         ExportDefaultDeclaration: function(stmt, flags) {
           var result = ["export"], bodyFlags;
           bodyFlags = flags & F_SEMICOLON_OPT ? S_TFFT : S_TFFF;
-          result = join7(result, "default");
+          result = join6(result, "default");
           if (isStatement(stmt.declaration)) {
-            result = join7(result, this.generateStatement(stmt.declaration, bodyFlags));
+            result = join6(result, this.generateStatement(stmt.declaration, bodyFlags));
           } else {
-            result = join7(result, this.generateExpression(stmt.declaration, Precedence.Assignment, E_TTT) + this.semicolon(flags));
+            result = join6(result, this.generateExpression(stmt.declaration, Precedence.Assignment, E_TTT) + this.semicolon(flags));
           }
           return result;
         },
@@ -56596,15 +56477,15 @@ var require_escodegen = __commonJS({
           var result = ["export"], bodyFlags, that = this;
           bodyFlags = flags & F_SEMICOLON_OPT ? S_TFFT : S_TFFF;
           if (stmt.declaration) {
-            return join7(result, this.generateStatement(stmt.declaration, bodyFlags));
+            return join6(result, this.generateStatement(stmt.declaration, bodyFlags));
           }
           if (stmt.specifiers) {
             if (stmt.specifiers.length === 0) {
-              result = join7(result, "{" + space + "}");
+              result = join6(result, "{" + space + "}");
             } else if (stmt.specifiers[0].type === Syntax.ExportBatchSpecifier) {
-              result = join7(result, this.generateExpression(stmt.specifiers[0], Precedence.Sequence, E_TTT));
+              result = join6(result, this.generateExpression(stmt.specifiers[0], Precedence.Sequence, E_TTT));
             } else {
-              result = join7(result, "{");
+              result = join6(result, "{");
               withIndent(function(indent2) {
                 var i5, iz;
                 result.push(newline);
@@ -56622,7 +56503,7 @@ var require_escodegen = __commonJS({
               result.push(base + "}");
             }
             if (stmt.source) {
-              result = join7(result, [
+              result = join6(result, [
                 "from" + space,
                 // ModuleSpecifier
                 this.generateExpression(stmt.source, Precedence.Sequence, E_TTT),
@@ -56710,7 +56591,7 @@ var require_escodegen = __commonJS({
           ];
           cursor2 = 0;
           if (stmt.specifiers[cursor2].type === Syntax.ImportDefaultSpecifier) {
-            result = join7(result, [
+            result = join6(result, [
               this.generateExpression(stmt.specifiers[cursor2], Precedence.Sequence, E_TTT)
             ]);
             ++cursor2;
@@ -56720,7 +56601,7 @@ var require_escodegen = __commonJS({
               result.push(",");
             }
             if (stmt.specifiers[cursor2].type === Syntax.ImportNamespaceSpecifier) {
-              result = join7(result, [
+              result = join6(result, [
                 space,
                 this.generateExpression(stmt.specifiers[cursor2], Precedence.Sequence, E_TTT)
               ]);
@@ -56749,7 +56630,7 @@ var require_escodegen = __commonJS({
               }
             }
           }
-          result = join7(result, [
+          result = join6(result, [
             "from" + space,
             // ModuleSpecifier
             this.generateExpression(stmt.source, Precedence.Sequence, E_TTT),
@@ -56803,7 +56684,7 @@ var require_escodegen = __commonJS({
           return result;
         },
         ThrowStatement: function(stmt, flags) {
-          return [join7(
+          return [join6(
             "throw",
             this.generateExpression(stmt.argument, Precedence.Sequence, E_TTT)
           ), this.semicolon(flags)];
@@ -56814,7 +56695,7 @@ var require_escodegen = __commonJS({
           result = this.maybeBlockSuffix(stmt.block, result);
           if (stmt.handlers) {
             for (i5 = 0, iz = stmt.handlers.length; i5 < iz; ++i5) {
-              result = join7(result, this.generateStatement(stmt.handlers[i5], S_TFFF));
+              result = join6(result, this.generateStatement(stmt.handlers[i5], S_TFFF));
               if (stmt.finalizer || i5 + 1 !== iz) {
                 result = this.maybeBlockSuffix(stmt.handlers[i5].body, result);
               }
@@ -56822,7 +56703,7 @@ var require_escodegen = __commonJS({
           } else {
             guardedHandlers = stmt.guardedHandlers || [];
             for (i5 = 0, iz = guardedHandlers.length; i5 < iz; ++i5) {
-              result = join7(result, this.generateStatement(guardedHandlers[i5], S_TFFF));
+              result = join6(result, this.generateStatement(guardedHandlers[i5], S_TFFF));
               if (stmt.finalizer || i5 + 1 !== iz) {
                 result = this.maybeBlockSuffix(guardedHandlers[i5].body, result);
               }
@@ -56830,13 +56711,13 @@ var require_escodegen = __commonJS({
             if (stmt.handler) {
               if (Array.isArray(stmt.handler)) {
                 for (i5 = 0, iz = stmt.handler.length; i5 < iz; ++i5) {
-                  result = join7(result, this.generateStatement(stmt.handler[i5], S_TFFF));
+                  result = join6(result, this.generateStatement(stmt.handler[i5], S_TFFF));
                   if (stmt.finalizer || i5 + 1 !== iz) {
                     result = this.maybeBlockSuffix(stmt.handler[i5].body, result);
                   }
                 }
               } else {
-                result = join7(result, this.generateStatement(stmt.handler, S_TFFF));
+                result = join6(result, this.generateStatement(stmt.handler, S_TFFF));
                 if (stmt.finalizer) {
                   result = this.maybeBlockSuffix(stmt.handler.body, result);
                 }
@@ -56844,7 +56725,7 @@ var require_escodegen = __commonJS({
             }
           }
           if (stmt.finalizer) {
-            result = join7(result, ["finally", this.maybeBlock(stmt.finalizer, S_TFFF)]);
+            result = join6(result, ["finally", this.maybeBlock(stmt.finalizer, S_TFFF)]);
           }
           return result;
         },
@@ -56878,7 +56759,7 @@ var require_escodegen = __commonJS({
           withIndent(function() {
             if (stmt.test) {
               result = [
-                join7("case", that.generateExpression(stmt.test, Precedence.Sequence, E_TTT)),
+                join6("case", that.generateExpression(stmt.test, Precedence.Sequence, E_TTT)),
                 ":"
               ];
             } else {
@@ -56926,9 +56807,9 @@ var require_escodegen = __commonJS({
             result.push(this.maybeBlock(stmt.consequent, S_TFFF));
             result = this.maybeBlockSuffix(stmt.consequent, result);
             if (stmt.alternate.type === Syntax.IfStatement) {
-              result = join7(result, ["else ", this.generateStatement(stmt.alternate, bodyFlags)]);
+              result = join6(result, ["else ", this.generateStatement(stmt.alternate, bodyFlags)]);
             } else {
-              result = join7(result, join7("else", this.maybeBlock(stmt.alternate, bodyFlags)));
+              result = join6(result, join6("else", this.maybeBlock(stmt.alternate, bodyFlags)));
             }
           } else {
             result.push(this.maybeBlock(stmt.consequent, bodyFlags));
@@ -57029,7 +56910,7 @@ var require_escodegen = __commonJS({
         },
         ReturnStatement: function(stmt, flags) {
           if (stmt.argument) {
-            return [join7(
+            return [join6(
               "return",
               this.generateExpression(stmt.argument, Precedence.Sequence, E_TTT)
             ), this.semicolon(flags)];
@@ -57118,14 +56999,14 @@ var require_escodegen = __commonJS({
           if (leftSource.charCodeAt(leftSource.length - 1) === 47 && esutils.code.isIdentifierPartES5(expr.operator.charCodeAt(0))) {
             result = [fragment, noEmptySpace(), expr.operator];
           } else {
-            result = join7(fragment, expr.operator);
+            result = join6(fragment, expr.operator);
           }
           fragment = this.generateExpression(expr.right, rightPrecedence, flags);
           if (expr.operator === "/" && fragment.toString().charAt(0) === "/" || expr.operator.slice(-1) === "<" && fragment.toString().slice(0, 3) === "!--") {
             result.push(noEmptySpace());
             result.push(fragment);
           } else {
-            result = join7(result, fragment);
+            result = join6(result, fragment);
           }
           if (expr.operator === "in" && !(flags & F_ALLOW_IN)) {
             return ["(", result, ")"];
@@ -57165,7 +57046,7 @@ var require_escodegen = __commonJS({
           var result, length, i5, iz, itemFlags;
           length = expr["arguments"].length;
           itemFlags = flags & F_ALLOW_UNPARATH_NEW && !parentheses && length === 0 ? E_TFT : E_TFF;
-          result = join7(
+          result = join6(
             "new",
             this.generateExpression(expr.callee, Precedence.New, itemFlags)
           );
@@ -57215,11 +57096,11 @@ var require_escodegen = __commonJS({
           var result, fragment, rightCharCode, leftSource, leftCharCode;
           fragment = this.generateExpression(expr.argument, Precedence.Unary, E_TTT);
           if (space === "") {
-            result = join7(expr.operator, fragment);
+            result = join6(expr.operator, fragment);
           } else {
             result = [expr.operator];
             if (expr.operator.length > 2) {
-              result = join7(result, fragment);
+              result = join6(result, fragment);
             } else {
               leftSource = toSourceNodeWhenNeeded(result).toString();
               leftCharCode = leftSource.charCodeAt(leftSource.length - 1);
@@ -57242,7 +57123,7 @@ var require_escodegen = __commonJS({
             result = "yield";
           }
           if (expr.argument) {
-            result = join7(
+            result = join6(
               result,
               this.generateExpression(expr.argument, Precedence.Yield, E_TTT)
             );
@@ -57250,7 +57131,7 @@ var require_escodegen = __commonJS({
           return parenthesize(result, Precedence.Yield, precedence);
         },
         AwaitExpression: function(expr, precedence, flags) {
-          var result = join7(
+          var result = join6(
             expr.all ? "await*" : "await",
             this.generateExpression(expr.argument, Precedence.Await, E_TTT)
           );
@@ -57333,11 +57214,11 @@ var require_escodegen = __commonJS({
           var result, fragment;
           result = ["class"];
           if (expr.id) {
-            result = join7(result, this.generateExpression(expr.id, Precedence.Sequence, E_TTT));
+            result = join6(result, this.generateExpression(expr.id, Precedence.Sequence, E_TTT));
           }
           if (expr.superClass) {
-            fragment = join7("extends", this.generateExpression(expr.superClass, Precedence.Unary, E_TTT));
-            result = join7(result, fragment);
+            fragment = join6("extends", this.generateExpression(expr.superClass, Precedence.Unary, E_TTT));
+            result = join6(result, fragment);
           }
           result.push(space);
           result.push(this.generateStatement(expr.body, S_TFFT));
@@ -57352,7 +57233,7 @@ var require_escodegen = __commonJS({
           }
           if (expr.kind === "get" || expr.kind === "set") {
             fragment = [
-              join7(expr.kind, this.generatePropertyKey(expr.key, expr.computed)),
+              join6(expr.kind, this.generatePropertyKey(expr.key, expr.computed)),
               this.generateFunctionBody(expr.value)
             ];
           } else {
@@ -57362,7 +57243,7 @@ var require_escodegen = __commonJS({
               this.generateFunctionBody(expr.value)
             ];
           }
-          return join7(result, fragment);
+          return join6(result, fragment);
         },
         Property: function(expr, precedence, flags) {
           if (expr.kind === "get" || expr.kind === "set") {
@@ -57557,7 +57438,7 @@ var require_escodegen = __commonJS({
               for (i5 = 0, iz = expr.blocks.length; i5 < iz; ++i5) {
                 fragment = that.generateExpression(expr.blocks[i5], Precedence.Sequence, E_TTT);
                 if (i5 > 0 || extra.moz.comprehensionExpressionStartsWithAssignment) {
-                  result = join7(result, fragment);
+                  result = join6(result, fragment);
                 } else {
                   result.push(fragment);
                 }
@@ -57565,13 +57446,13 @@ var require_escodegen = __commonJS({
             });
           }
           if (expr.filter) {
-            result = join7(result, "if" + space);
+            result = join6(result, "if" + space);
             fragment = this.generateExpression(expr.filter, Precedence.Sequence, E_TTT);
-            result = join7(result, ["(", fragment, ")"]);
+            result = join6(result, ["(", fragment, ")"]);
           }
           if (!extra.moz.comprehensionExpressionStartsWithAssignment) {
             fragment = this.generateExpression(expr.body, Precedence.Assignment, E_TTT);
-            result = join7(result, fragment);
+            result = join6(result, fragment);
           }
           result.push(expr.type === Syntax.GeneratorExpression ? ")" : "]");
           return result;
@@ -57587,8 +57468,8 @@ var require_escodegen = __commonJS({
           } else {
             fragment = this.generateExpression(expr.left, Precedence.Call, E_TTT);
           }
-          fragment = join7(fragment, expr.of ? "of" : "in");
-          fragment = join7(fragment, this.generateExpression(expr.right, Precedence.Sequence, E_TTT));
+          fragment = join6(fragment, expr.of ? "of" : "in");
+          fragment = join6(fragment, this.generateExpression(expr.right, Precedence.Sequence, E_TTT));
           return ["for" + space + "(", fragment, ")"];
         },
         SpreadElement: function(expr, precedence, flags) {
@@ -69461,8 +69342,8 @@ var init_dist10 = __esm({
         } else if (wasmInput) {
           return WebAssembly.compile(wasmInput);
         } else {
-          const { readFile: readFile4 } = await import("node:fs/promises");
-          const buf = await readFile4(new URL("../quickjs.wasm", import_meta.url));
+          const { readFile: readFile3 } = await import("node:fs/promises");
+          const buf = await readFile3(new URL("../quickjs.wasm", import_meta.url));
           return WebAssembly.compile(buf);
         }
       }
@@ -72938,7 +72819,7 @@ function getIDToken(aud) {
 
 // src/assumeRole.ts
 var import_node_assert = __toESM(require("node:assert"));
-var import_node_path8 = __toESM(require("node:path"));
+var import_node_path6 = __toESM(require("node:path"));
 var import_client_sts2 = __toESM(require_dist_cjs16());
 
 // src/helpers.ts
@@ -73283,7 +73164,7 @@ async function assumeRoleWithWebIdentityTokenFile(params, client, webIdentityTok
   debug(
     "webIdentityTokenFile provided. Will call sts:AssumeRoleWithWebIdentity and take session tags from token contents."
   );
-  const webIdentityTokenFilePath = import_node_path8.default.isAbsolute(webIdentityTokenFile) ? webIdentityTokenFile : import_node_path8.default.join(workspace, webIdentityTokenFile);
+  const webIdentityTokenFilePath = import_node_path6.default.isAbsolute(webIdentityTokenFile) ? webIdentityTokenFile : import_node_path6.default.join(workspace, webIdentityTokenFile);
   const webIdentityToken = readFileUtf8(webIdentityTokenFilePath);
   if (webIdentityToken === null) {
     throw new Error(`Web identity token file does not exist: ${webIdentityTokenFilePath}`);
