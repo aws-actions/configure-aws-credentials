@@ -26,7 +26,7 @@ Authenticate to AWS in GitHub Actions (and others)! Works especially well with
          "Condition": {
            "StringEquals": {
              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-             "token.actions.githubusercontent.com:sub": "repo:<GITHUB_ORG>/<GITHUB_REPOSITORY>:ref:refs/heads/<GITHUB_BRANCH>"
+             "token.actions.githubusercontent.com:sub": "repo:<GITHUB_ORG>@<ORG_ID>/<GITHUB_REPOSITORY>@<REPO_ID>:ref:refs/heads/<GITHUB_BRANCH>"
            }
          }
        }
@@ -36,11 +36,16 @@ Authenticate to AWS in GitHub Actions (and others)! Works especially well with
 
    </details>
 
-   Note: if you are running in a GitHub environment based workflow, the value
-   for the Sub claim will be different, in the form of
-   `repo:<GITHUB_ORG>/<GITHUB_REPOSITORY>:environment:<ENVIRONMENT_NAME>`.
-   Adjust the trust policy accordingly if you are using environment-based
-   workflows.
+   Note: The value of the `sub` claim may be different depending on the workflow
+   and the environment in which it's running. Workflows in repositories created
+   prior to [15 July 2026][immutable-sub] will omit the `@<ORG_ID>` and
+   `@<REPO_ID>` suffixes unless opted in. Workflows running in GitHub
+   environments will include an`environment:<ENVIRONMENT_NAME>` stanza.  See
+   [Claims and scoping permissions](#claims-and-scoping-permissions) for more
+   information.
+
+   [immutable-sub]:
+   https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/
 
 3. Attach permissions to the IAM Role that allow it to access the AWS resources
    you need.
@@ -593,6 +598,29 @@ claims ([1][gh-blog-oidc], [2][sub-claim-custom]).
 > unintended access. Instead, use `StringEquals` or `StringLike` operators to
 > check for specific claim values.
 
+#### Immutable subject claims
+
+Repositories created on github.com on or after 15 July 2026, and older
+repositories that have opted in, emit an [immutable `sub` claim][immutable-sub].
+This claim appends the permanent numeric ID of the organization and of the
+repository after each name, separated by `@`, so that a recycled org or
+repository name cannot be used to mint tokens matching a stale trust policy.
+For example:
+
+```text
+# Legacy (mutable) sub claim
+repo:octo-org/octo-repo:ref:refs/heads/main
+
+# Immutable sub claim
+repo:octo-org@123456/octo-repo@789012:ref:refs/heads/main
+```
+
+If your trust policy matches the legacy name-only form and your repository emits
+the immutable claim, `AssumeRoleWithWebIdentity` fails with `Not authorized to
+perform sts:AssumeRoleWithWebIdentity`. To fix this, update the `sub` condition
+to the immutable form. You can find your repository's prefix in the Settings,
+or by following the token inspection steps below.
+
 [least-privilege]:
   https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege
 [gh-blog-oidc]:
@@ -605,7 +633,7 @@ claims ([1][gh-blog-oidc], [2][sub-claim-custom]).
 If you aren't sure what claim values your workflow is producing, the
 [`actions-oidc-debugger`](https://github.com/github/actions-oidc-debugger)
 action will print the decoded JWT payload. Run it in a private repository
-only — the token itself is short-lived but the claim values may be sensitive.
+only; the token itself is short-lived but the claim values may be sensitive.
 
 See the GitHub [security-hardening guide][gh-oidc-hardening] for further
 discussion of trust conditions and threat modeling.
