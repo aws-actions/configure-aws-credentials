@@ -19314,7 +19314,7 @@ var init_isValidHostLabel = __esm({
 
 // node_modules/@smithy/core/dist-es/submodules/transport/isValidHostname.js
 function isValidHostname(hostname) {
-  const hostPattern = /^[a-z0-9][a-z0-9\.\-]*[a-z0-9]$/;
+  const hostPattern = /^[a-z0-9][a-z0-9.-]*[a-z0-9]$/;
   return hostPattern.test(hostname);
 }
 var init_isValidHostname = __esm({
@@ -19789,7 +19789,7 @@ var init_schemaDeserializationMiddleware = __esm({
           const hint = `Deserialization error: to see the raw response, inspect the hidden field {error}.$response on this object.`;
           try {
             error3.message += "\n  " + hint;
-          } catch (e5) {
+          } catch (ignored) {
             if (!context.logger || context.logger?.constructor?.name === "NoOpLogger") {
               console.warn(hint);
             } else {
@@ -19812,7 +19812,7 @@ var init_schemaDeserializationMiddleware = __esm({
                 cfId: findHeader(/^x-[\w-]+-cf-id$/, headerEntries)
               };
             }
-          } catch (e5) {
+          } catch (ignored) {
           }
         }
         throw error3;
@@ -20007,7 +20007,7 @@ var init_ErrorSchema = __esm({
       ctor;
       symbol = _ErrorSchema.symbol;
     };
-    error2 = (namespace, name, traits, memberNames, memberList, ctor) => Schema.assign(new ErrorSchema(), {
+    error2 = (namespace, name, traits, memberNames, memberList, _ctor) => Schema.assign(new ErrorSchema(), {
       name,
       namespace,
       traits,
@@ -21442,7 +21442,7 @@ var init_v4 = __esm({
 var copyDocumentWithTransform;
 var init_copyDocumentWithTransform = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js"() {
-    copyDocumentWithTransform = (source, schemaRef, transform = (_) => _) => source;
+    copyDocumentWithTransform = (source, _schemaRef, _transform = (_) => _) => source;
   }
 });
 
@@ -21721,7 +21721,7 @@ var init_date_utils = __esm({
       const day = parseDateValue(dayStr, "day", 1, 31);
       return buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
     };
-    RFC3339_WITH_OFFSET = new RegExp(/^(\d{4})-(\d{2})-(\d{2})[tT](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(([-+]\d{2}\:\d{2})|[zZ])$/);
+    RFC3339_WITH_OFFSET = new RegExp(/^(\d{4})-(\d{2})-(\d{2})[tT](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(([-+]\d{2}:\d{2})|[zZ])$/);
     parseRfc3339DateTimeWithOffset = (value) => {
       if (value === null || value === void 0) {
         return void 0;
@@ -22261,7 +22261,7 @@ var init_deserializerMiddleware = __esm({
           const hint = `Deserialization error: to see the raw response, inspect the hidden field {error}.$response on this object.`;
           try {
             error3.message += "\n  " + hint;
-          } catch (e5) {
+          } catch (ignored) {
             if (!context.logger || context.logger?.constructor?.name === "NoOpLogger") {
               console.warn(hint);
             } else {
@@ -22284,7 +22284,7 @@ var init_deserializerMiddleware = __esm({
                 cfId: findHeader2(/^x-[\w-]+-cf-id$/, headerEntries)
               };
             }
-          } catch (e5) {
+          } catch (ignored) {
           }
         }
         throw error3;
@@ -22617,7 +22617,7 @@ var init_parseIni = __esm({
   "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js"() {
     import_types5 = __toESM(require_dist_cjs());
     init_constants2();
-    prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@\+\.%:/]+)\2$/;
+    prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@+.%:/]+)\2$/;
     profileNameBlockList = ["__proto__", "profile __proto__"];
     parseIni = (iniData) => {
       const map3 = {};
@@ -22814,7 +22814,7 @@ function getSelectorName(functionString) {
     constants4.delete("CONFIG_PREFIX_SEPARATOR");
     constants4.delete("ENV");
     return [...constants4].join(", ");
-  } catch (e5) {
+  } catch (ignored) {
     return functionString;
   }
 }
@@ -23450,14 +23450,16 @@ var init_getEndpointUrlConfig = __esm({
         return void 0;
       },
       configFileSelector: (profile, config) => {
-        if (config && profile.services) {
-          const servicesSection = config[["services", profile.services].join(CONFIG_PREFIX_SEPARATOR)];
-          if (servicesSection) {
-            const servicePrefixParts = serviceId.split(" ").map((w) => w.toLowerCase());
-            const endpointUrl2 = servicesSection[[servicePrefixParts.join("_"), CONFIG_ENDPOINT_URL].join(CONFIG_PREFIX_SEPARATOR)];
-            if (endpointUrl2)
-              return endpointUrl2;
+        if (profile.services) {
+          const servicesSectionKey = ["services", profile.services].join(CONFIG_PREFIX_SEPARATOR);
+          if (!config || !config[servicesSectionKey]) {
+            throw new Error(`The services section "${profile.services}" specified in the profile is not present in the shared configuration file.`);
           }
+          const servicesSection = config[servicesSectionKey];
+          const servicePrefixParts = serviceId.split(" ").map((w) => w.toLowerCase());
+          const endpointUrl2 = servicesSection[[servicePrefixParts.join("_"), CONFIG_ENDPOINT_URL].join(CONFIG_PREFIX_SEPARATOR)];
+          if (endpointUrl2)
+            return endpointUrl2;
         }
         const endpointUrl = profile[CONFIG_ENDPOINT_URL];
         if (endpointUrl)
@@ -23469,13 +23471,35 @@ var init_getEndpointUrlConfig = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getIgnoreConfiguredEndpointUrls.js
+var ENV_IGNORE_CONFIGURED_ENDPOINT_URLS, CONFIG_IGNORE_CONFIGURED_ENDPOINT_URLS, ignoreConfiguredEndpointUrlsConfigSelectors;
+var init_getIgnoreConfiguredEndpointUrls = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getIgnoreConfiguredEndpointUrls.js"() {
+    init_config2();
+    ENV_IGNORE_CONFIGURED_ENDPOINT_URLS = "AWS_IGNORE_CONFIGURED_ENDPOINT_URLS";
+    CONFIG_IGNORE_CONFIGURED_ENDPOINT_URLS = "ignore_configured_endpoint_urls";
+    ignoreConfiguredEndpointUrlsConfigSelectors = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_IGNORE_CONFIGURED_ENDPOINT_URLS, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, CONFIG_IGNORE_CONFIGURED_ENDPOINT_URLS, SelectorType.CONFIG),
+      default: false
+    };
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromConfig.js
 var getEndpointFromConfig;
 var init_getEndpointFromConfig = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromConfig.js"() {
     init_config2();
     init_getEndpointUrlConfig();
-    getEndpointFromConfig = async (serviceId) => loadConfig(getEndpointUrlConfig(serviceId ?? ""))();
+    init_getIgnoreConfiguredEndpointUrls();
+    getEndpointFromConfig = async (serviceId) => {
+      const ignore = await loadConfig(ignoreConfiguredEndpointUrlsConfigSelectors)();
+      if (ignore) {
+        return void 0;
+      }
+      return loadConfig(getEndpointUrlConfig(serviceId ?? ""))();
+    };
   }
 });
 
@@ -23501,7 +23525,7 @@ var init_s3 = __esm({
       }
       return endpointParams;
     };
-    DOMAIN_PATTERN = /^[a-z0-9][a-z0-9\.\-]{1,61}[a-z0-9]$/;
+    DOMAIN_PATTERN = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
     IP_ADDRESS_PATTERN = /(\d+\.){3}\d+/;
     DOTS_PATTERN = /\.\./;
     isDnsCompatibleBucketName = (bucketName) => DOMAIN_PATTERN.test(bucketName) && !IP_ADDRESS_PATTERN.test(bucketName) && !DOTS_PATTERN.test(bucketName);
@@ -23590,7 +23614,7 @@ var init_toEndpointV12 = __esm({
 // node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromInstructions.js
 function bindGetEndpointFromInstructions(getEndpointFromConfig2) {
   return async (commandInput, instructionsSupplier, clientConfig, context) => {
-    if (!clientConfig.isCustomEndpoint) {
+    if (!clientConfig.isCustomEndpoint && !clientConfig.ignoreConfiguredEndpointUrls) {
       let endpointFromConfig;
       if (clientConfig.serviceConfiguredEndpoint) {
         endpointFromConfig = await clientConfig.serviceConfiguredEndpoint();
@@ -23600,6 +23624,7 @@ function bindGetEndpointFromInstructions(getEndpointFromConfig2) {
       if (endpointFromConfig) {
         clientConfig.endpoint = () => Promise.resolve(toEndpointV1(endpointFromConfig));
         clientConfig.isCustomEndpoint = true;
+        context?.logger?.debug?.(`@smithy/core/endpoints - resolved endpoint from config: ${endpointFromConfig}`);
       }
     }
     const endpointParams = await resolveParams(commandInput, instructionsSupplier, clientConfig);
@@ -23755,7 +23780,8 @@ function bindResolveEndpointConfig(getEndpointFromConfig2) {
       tls: tls8,
       isCustomEndpoint,
       useDualstackEndpoint: normalizeProvider(useDualstackEndpoint ?? false),
-      useFipsEndpoint: normalizeProvider(useFipsEndpoint ?? false)
+      useFipsEndpoint: normalizeProvider(useFipsEndpoint ?? false),
+      ignoreConfiguredEndpointUrls: !!input.ignoreConfiguredEndpointUrls
     });
     let configuredEndpointPromise = void 0;
     resolvedConfig.serviceConfiguredEndpoint = async () => {
@@ -24043,7 +24069,7 @@ var init_parseURL = __esm({
             return url;
           }
           return new URL(value);
-        } catch (error3) {
+        } catch (ignored) {
           return null;
         }
       })();
@@ -24766,6 +24792,7 @@ var init_ChecksumStream = __esm({
         this.source.on("data", this.onSourceData);
         this.source.on("end", this.onSourceEnd);
         this.source.on("error", this.onSourceError);
+        this.source.on("close", this.onSourceClose);
         this.source.pause();
       }
       onSourceData = (chunk) => {
@@ -24802,10 +24829,19 @@ var init_ChecksumStream = __esm({
       onSourceError = (error3) => {
         this.destroy(error3);
       };
-      _read(size) {
+      onSourceClose = () => {
+        if (!this.destroyed && !this.source.readableEnded) {
+          this.destroy(new Error("Connection lost or stream closed before all data was received."));
+        }
+      };
+      _read(_size) {
         this.source.resume();
       }
       _destroy(error3, callback) {
+        this.source?.removeListener("data", this.onSourceData);
+        this.source?.removeListener("end", this.onSourceEnd);
+        this.source?.removeListener("error", this.onSourceError);
+        this.source?.removeListener("close", this.onSourceClose);
         this.source?.destroy();
         callback(error3);
       }
@@ -25483,7 +25519,7 @@ var init_sdk_stream_mixin = __esm({
       if (!(stream instanceof import_node_stream7.Readable)) {
         try {
           return sdkStreamMixin(stream);
-        } catch (e5) {
+        } catch (ignored) {
           const name = stream?.__proto__?.constructor?.name || stream;
           throw new Error(`Unexpected stream implementation, expect Stream.Readable instance, got ${name}`);
         }
@@ -26525,27 +26561,27 @@ var init_HeaderMarshaller = __esm({
       formatHeaderValue(header) {
         switch (header.type) {
           case "boolean":
-            return Uint8Array.from([header.value ? 0 : 1]);
+            return Uint8Array.from([header.value ? HEADER_VALUE_TYPE.boolTrue : HEADER_VALUE_TYPE.boolFalse]);
           case "byte":
-            return Uint8Array.from([2, header.value]);
+            return Uint8Array.from([HEADER_VALUE_TYPE.byte, header.value]);
           case "short":
             const shortView = new DataView(new ArrayBuffer(3));
-            shortView.setUint8(0, 3);
+            shortView.setUint8(0, HEADER_VALUE_TYPE.short);
             shortView.setInt16(1, header.value, false);
             return new Uint8Array(shortView.buffer);
           case "integer":
             const intView = new DataView(new ArrayBuffer(5));
-            intView.setUint8(0, 4);
+            intView.setUint8(0, HEADER_VALUE_TYPE.integer);
             intView.setInt32(1, header.value, false);
             return new Uint8Array(intView.buffer);
           case "long":
             const longBytes = new Uint8Array(9);
-            longBytes[0] = 5;
+            longBytes[0] = HEADER_VALUE_TYPE.long;
             longBytes.set(header.value.bytes, 1);
             return longBytes;
           case "binary":
             const binView = new DataView(new ArrayBuffer(3 + header.value.byteLength));
-            binView.setUint8(0, 6);
+            binView.setUint8(0, HEADER_VALUE_TYPE.byteArray);
             binView.setUint16(1, header.value.byteLength, false);
             const binBytes = new Uint8Array(binView.buffer);
             binBytes.set(header.value, 3);
@@ -26553,14 +26589,14 @@ var init_HeaderMarshaller = __esm({
           case "string":
             const utf8Bytes = this.fromUtf8(header.value);
             const strView = new DataView(new ArrayBuffer(3 + utf8Bytes.byteLength));
-            strView.setUint8(0, 7);
+            strView.setUint8(0, HEADER_VALUE_TYPE.string);
             strView.setUint16(1, utf8Bytes.byteLength, false);
             const strBytes = new Uint8Array(strView.buffer);
             strBytes.set(utf8Bytes, 3);
             return strBytes;
           case "timestamp":
             const tsBytes = new Uint8Array(9);
-            tsBytes[0] = 8;
+            tsBytes[0] = HEADER_VALUE_TYPE.timestamp;
             tsBytes.set(Int64.fromNumber(header.value.valueOf()).bytes, 1);
             return tsBytes;
           case "uuid":
@@ -26568,8 +26604,8 @@ var init_HeaderMarshaller = __esm({
               throw new Error(`Invalid UUID received: ${header.value}`);
             }
             const uuidBytes = new Uint8Array(17);
-            uuidBytes[0] = 9;
-            uuidBytes.set(fromHex(header.value.replace(/\-/g, "")), 1);
+            uuidBytes[0] = HEADER_VALUE_TYPE.uuid;
+            uuidBytes.set(fromHex(header.value.replace(/-/g, "")), 1);
             return uuidBytes;
         }
       }
@@ -26581,46 +26617,46 @@ var init_HeaderMarshaller = __esm({
           const name = this.toUtf8(new Uint8Array(headers.buffer, headers.byteOffset + position, nameLength));
           position += nameLength;
           switch (headers.getUint8(position++)) {
-            case 0:
+            case HEADER_VALUE_TYPE.boolTrue:
               out[name] = {
                 type: BOOLEAN_TAG,
                 value: true
               };
               break;
-            case 1:
+            case HEADER_VALUE_TYPE.boolFalse:
               out[name] = {
                 type: BOOLEAN_TAG,
                 value: false
               };
               break;
-            case 2:
+            case HEADER_VALUE_TYPE.byte:
               out[name] = {
                 type: BYTE_TAG,
                 value: headers.getInt8(position++)
               };
               break;
-            case 3:
+            case HEADER_VALUE_TYPE.short:
               out[name] = {
                 type: SHORT_TAG,
                 value: headers.getInt16(position, false)
               };
               position += 2;
               break;
-            case 4:
+            case HEADER_VALUE_TYPE.integer:
               out[name] = {
                 type: INT_TAG,
                 value: headers.getInt32(position, false)
               };
               position += 4;
               break;
-            case 5:
+            case HEADER_VALUE_TYPE.long:
               out[name] = {
                 type: LONG_TAG,
                 value: new Int64(new Uint8Array(headers.buffer, headers.byteOffset + position, 8))
               };
               position += 8;
               break;
-            case 6:
+            case HEADER_VALUE_TYPE.byteArray:
               const binaryLength = headers.getUint16(position, false);
               position += 2;
               out[name] = {
@@ -26629,7 +26665,7 @@ var init_HeaderMarshaller = __esm({
               };
               position += binaryLength;
               break;
-            case 7:
+            case HEADER_VALUE_TYPE.string:
               const stringLength = headers.getUint16(position, false);
               position += 2;
               out[name] = {
@@ -26638,14 +26674,14 @@ var init_HeaderMarshaller = __esm({
               };
               position += stringLength;
               break;
-            case 8:
+            case HEADER_VALUE_TYPE.timestamp:
               out[name] = {
                 type: TIMESTAMP_TAG,
                 value: new Date(new Int64(new Uint8Array(headers.buffer, headers.byteOffset + position, 8)).valueOf())
               };
               position += 8;
               break;
-            case 9:
+            case HEADER_VALUE_TYPE.uuid:
               const uuidBytes = new Uint8Array(headers.buffer, headers.byteOffset + position, 16);
               position += 16;
               out[name] = {
@@ -28433,7 +28469,7 @@ function contentLengthMiddleware(bodyLengthChecker) {
             ...request.headers,
             [CONTENT_LENGTH_HEADER]: String(length)
           };
-        } catch (error3) {
+        } catch (ignored) {
         }
       }
     }
@@ -28761,7 +28797,7 @@ function bindRetryMiddleware(isStreamingPayload2) {
           }
           try {
             retryToken = await retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo);
-          } catch (refreshError) {
+          } catch (ignoredRefreshError) {
             if (!lastError.$metadata) {
               lastError.$metadata = {};
             }
@@ -29125,7 +29161,7 @@ var init_StandardRetryStrategy = __esm({
       async getMaxAttempts() {
         try {
           return await this.maxAttemptsProvider();
-        } catch (error3) {
+        } catch (ignored) {
           console.warn(`Max attempts provider could not resolve. Using default of ${DEFAULT_MAX_ATTEMPTS}`);
           return DEFAULT_MAX_ATTEMPTS;
         }
@@ -29301,7 +29337,7 @@ var init_StandardRetryStrategy2 = __esm({
         let maxAttempts;
         try {
           maxAttempts = await this.maxAttemptsProvider();
-        } catch (error3) {
+        } catch (ignored) {
           maxAttempts = DEFAULT_MAX_ATTEMPTS;
         }
         return maxAttempts;
@@ -35887,7 +35923,7 @@ var init_SmithyRpcV2CborProtocol = __esm({
           }
           try {
             request.headers["content-length"] = String(request.body.byteLength);
-          } catch (e5) {
+          } catch (ignored) {
           }
         }
         const { service, operation: operation2 } = getSmithyContext(context);
@@ -35918,7 +35954,7 @@ var init_SmithyRpcV2CborProtocol = __esm({
         let errorSchema;
         try {
           errorSchema = registry.getSchema(errorName);
-        } catch (e5) {
+        } catch (ignored) {
           if (dataObject.Message) {
             dataObject.message = dataObject.Message;
           }
