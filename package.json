@@ -26,7 +26,7 @@
     "esbuild": "^0.28.1",
     "generate-license-file": "^4.2.1",
     "json-schema": "^0.4.0",
-    "markdownlint-cli": "^0.49.0",
+    "markdownlint-cli": "^0.49.1",
     "memfs": "^4.64.0",
     "standard-version": "^9.5.0",
     "typescript": "^7.0.2",
