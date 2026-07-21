@@ -1050,7 +1050,7 @@ The following npm packages may be included in this product:
  - @aws-sdk/xml-builder@3.972.34
  - @smithy/credential-provider-imds@4.4.8
  - @smithy/fetch-http-handler@5.6.5
- - @smithy/node-http-handler@4.9.5
+ - @smithy/node-http-handler@4.9.8
  - @smithy/signature-v4@5.6.4
 
 These packages each contain the following license:
