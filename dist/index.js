@@ -43559,7 +43559,7 @@ var require_dist_cjs16 = __commonJS({
         Object.setPrototypeOf(this, _MalformedPolicyDocumentException.prototype);
       }
     };
-    var PackedPolicyTooLargeException3 = class _PackedPolicyTooLargeException extends STSServiceException2 {
+    var PackedPolicyTooLargeException2 = class _PackedPolicyTooLargeException extends STSServiceException2 {
       name = "PackedPolicyTooLargeException";
       $fault = "client";
       constructor(opts) {
@@ -43885,7 +43885,7 @@ var require_dist_cjs16 = __commonJS({
       [_m4],
       [0]
     ];
-    n0_registry5.registerError(PackedPolicyTooLargeException$2, PackedPolicyTooLargeException3);
+    n0_registry5.registerError(PackedPolicyTooLargeException$2, PackedPolicyTooLargeException2);
     var RegionDisabledException$2 = [
       -3,
       n05,
@@ -44653,7 +44653,7 @@ var require_dist_cjs16 = __commonJS({
     exports2.MalformedPolicyDocumentException$ = MalformedPolicyDocumentException$2;
     exports2.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException;
     exports2.OutboundWebIdentityFederationDisabledException$ = OutboundWebIdentityFederationDisabledException$;
-    exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException3;
+    exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException2;
     exports2.PackedPolicyTooLargeException$ = PackedPolicyTooLargeException$2;
     exports2.PolicyDescriptorType$ = PolicyDescriptorType$2;
     exports2.ProvidedContext$ = ProvidedContext$2;
@@ -73324,7 +73324,7 @@ async function assumeRoleWithCredentials(params, client) {
     const creds = await client.send(new import_client_sts2.AssumeRoleCommand({ ...params }));
     return creds;
   } catch (error3) {
-    if (error3 instanceof import_client_sts2.PackedPolicyTooLargeException) {
+    if (error3?.name === "PackedPolicyTooLargeException") {
       info("Session tag size is too large; dropping droppable tags and retrying.");
       const droppableKeys = new Set(DROPPABLE_TAG_SOURCES.map((s2) => s2.key));
       params.Tags = params.Tags?.filter((tag2) => !droppableKeys.has(tag2.Key ?? ""));
