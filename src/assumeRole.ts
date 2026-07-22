@@ -2,11 +2,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import * as core from '@actions/core';
 import type { AssumeRoleCommandInput, STSClient, Tag } from '@aws-sdk/client-sts';
-import {
-  AssumeRoleCommand,
-  AssumeRoleWithWebIdentityCommand,
-  PackedPolicyTooLargeException,
-} from '@aws-sdk/client-sts';
+import { AssumeRoleCommand, AssumeRoleWithWebIdentityCommand } from '@aws-sdk/client-sts';
 import type { CredentialsClient } from './CredentialsClient';
 import { errorMessage, isDefined, readFileUtf8, sanitizeGitHubVariables } from './helpers';
 
@@ -65,7 +61,7 @@ async function assumeRoleWithCredentials(params: AssumeRoleCommandInput, client:
     const creds = await client.send(new AssumeRoleCommand({ ...params }));
     return creds;
   } catch (error) {
-    if (error instanceof PackedPolicyTooLargeException) {
+    if ((error as { name?: string })?.name === 'PackedPolicyTooLargeException') {
       core.info('Session tag size is too large; dropping droppable tags and retrying.');
       const droppableKeys = new Set(DROPPABLE_TAG_SOURCES.map((s) => s.key));
       params.Tags = params.Tags?.filter((tag) => !droppableKeys.has(tag.Key ?? ''));
