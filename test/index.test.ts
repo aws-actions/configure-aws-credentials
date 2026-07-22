@@ -3,7 +3,6 @@ import {
   AssumeRoleCommand,
   AssumeRoleWithWebIdentityCommand,
   GetCallerIdentityCommand,
-  PackedPolicyTooLargeException,
   STSClient,
 } from '@aws-sdk/client-sts';
 import { mockClient } from 'aws-sdk-client-mock';
@@ -331,10 +330,11 @@ describe('Configure AWS Credentials', {}, () => {
     });
     it('drops droppable tags and retries on PackedPolicyTooLargeException', {}, async () => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));
-      mockedSTSClient
-        .on(AssumeRoleCommand)
-        .rejectsOnce(new PackedPolicyTooLargeException({ message: 'too large', $metadata: {} }))
-        .resolvesOnce(mocks.outputs.STS_CREDENTIALS);
+      // Reject with a plain error carrying only the `name`, NOT an instance of the SDK class. This
+      // mirrors the bundled action, where the error can be deserialized by a second, non-identical
+      // copy of PackedPolicyTooLargeException so `instanceof` fails; the recovery must key off `name`.
+      const packedPolicyError = Object.assign(new Error('too large'), { name: 'PackedPolicyTooLargeException' });
+      mockedSTSClient.on(AssumeRoleCommand).rejectsOnce(packedPolicyError).resolvesOnce(mocks.outputs.STS_CREDENTIALS);
       await run();
       expect(core.info).toHaveBeenCalledWith('Session tag size is too large; dropping droppable tags and retrying.');
       const retryInput = mockedSTSClient.commandCalls(AssumeRoleCommand)[1].args[0].input;
