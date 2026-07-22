@@ -61,7 +61,7 @@ Authenticate to AWS in GitHub Actions (and others)! Works especially well with
        runs-on: ubuntu-latest
        steps:
          - name: Configure AWS Credentials
-           uses: aws-actions/configure-aws-credentials@v6.1.0
+           uses: aws-actions/configure-aws-credentials@v6.2.3
            with:
              role-to-assume: <Role ARN you created in step 2>
              aws-region: <AWS Region you want to use>
@@ -250,7 +250,7 @@ specify the profile name as an environment variable in the job step:
 
 ```yaml
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-1
     role-to-assume: arn:aws:iam::123456789100:role/my-role
@@ -268,14 +268,14 @@ step environment variables:
 
 ```yaml
 - name: Configure AWS credentials
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-1
     role-to-assume: arn:aws:iam::123456789100:role/my-first-role
     aws-profile: firstRoleInChain
 
 - name: assume second role
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::987654321000:role/my-second-role
@@ -311,7 +311,7 @@ this action will always consider the `HTTP_PROXY` environment variable.
 Manually configured proxy:
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.1.0
+uses: aws-actions/configure-aws-credentials@v6.2.3
 with:
   aws-region: us-east-2
   role-to-assume: my-github-actions-role
@@ -458,7 +458,7 @@ line.
 <summary>Inline session policy examples</summary>
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.1.0
+uses: aws-actions/configure-aws-credentials@v6.2.3
 with:
   inline-session-policy: '{"Version":"2012-10-17","Statement":[{"Sid":"Stmt1","Effect":"Allow","Action":"s3:List*","Resource":"*"}]}'
 ```
@@ -466,7 +466,7 @@ with:
 Or we can have a nicely formatted JSON as well:
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.1.0
+uses: aws-actions/configure-aws-credentials@v6.2.3
 with:
   inline-session-policy: >-
     {
@@ -494,7 +494,7 @@ the role.
 <summary>Managed session policy examples</summary>
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.1.0
+uses: aws-actions/configure-aws-credentials@v6.2.3
 with:
   managed-session-policies: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
 ```
@@ -502,7 +502,7 @@ with:
 And we can pass multiple managed policies likes this:
 
 ```yaml
-uses: aws-actions/configure-aws-credentials@v6.1.0
+uses: aws-actions/configure-aws-credentials@v6.2.3
 with:
   managed-session-policies: |
     arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
@@ -548,7 +548,7 @@ specify the audience through the `audience` input:
 
 ```yaml
 - name: Configure AWS Credentials for China region audience
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     audience: sts.amazonaws.com.cn
     aws-region: cn-northwest-1
@@ -708,7 +708,7 @@ Provider. The audience would still be `sts.amazonaws.com` by default.
 
 ```yaml
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -724,13 +724,13 @@ environment variable and use it to assume the role
 
 ```yaml
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
     role-session-name: MySessionName
 - name: Configure other AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::987654321000:role/my-second-role
@@ -752,7 +752,7 @@ alternatively, the `TagSession` permission can be omitted if you are using the
 
 ```yaml
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -773,7 +773,7 @@ like `role-to-assume: my-github-actions-role`.
 ```yaml
 - name: Configure AWS Credentials 1
   id: creds
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-2
     role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
@@ -782,7 +782,7 @@ like `role-to-assume: my-github-actions-role`.
   run: |
     aws sts get-caller-identity
 - name: Configure AWS Credentials 2
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-2
     aws-access-key-id: ${{ steps.creds.outputs.aws-access-key-id }}
@@ -813,14 +813,14 @@ provided.
 
 ```yaml
 - name: Configure AWS Credentials for Dev
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-east-1
     role-to-assume: arn:aws:iam::111111111111:role/dev-role
     aws-profile: dev
 
 - name: Configure AWS Credentials for Prod
-  uses: aws-actions/configure-aws-credentials@v6.1.0
+  uses: aws-actions/configure-aws-credentials@v6.2.3
   with:
     aws-region: us-west-2
     role-to-assume: arn:aws:iam::222222222222:role/prod-role
