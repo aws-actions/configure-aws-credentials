@@ -20334,6 +20334,9 @@ var init_NormalizedSchema = __esm({
         }
         struct2[anno.it] = it;
       }
+      structIteratorCbor() {
+        throw new Error("@smithy/core/schema - structIteratorCbor not loaded.");
+      }
     };
     isMemberSchema = (sc) => Array.isArray(sc) && sc.length === 2;
     isStaticSchema = (sc) => Array.isArray(sc) && sc.length >= 5;
@@ -22103,7 +22106,7 @@ function nv(input) {
 var format, NumericValue;
 var init_NumericValue = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js"() {
-    format = /^-?\d*(\.\d+)?$/;
+    format = /^-?((0|[1-9]\d*)(\.\d+)?|\.\d+)([eE][+-]?\d+)?$/;
     NumericValue = class _NumericValue {
       string;
       type;
@@ -22111,7 +22114,7 @@ var init_NumericValue = __esm({
         this.string = string;
         this.type = type;
         if (!format.test(string)) {
-          throw new Error(`@smithy/core/serde - NumericValue must only contain [0-9], at most one decimal point ".", and an optional negation prefix "-".`);
+          throw new Error(`@smithy/core/serde - NumericValue string must conform to the Smithy bigDecimal format. Received: "${string}"`);
         }
       }
       toString() {
@@ -27183,6 +27186,7 @@ var init_EventStreamSerdeConfig = __esm({
 var EventStreamSerde;
 var init_EventStreamSerde = __esm({
   "node_modules/@smithy/core/dist-es/submodules/event-streams/EventStreamSerde.js"() {
+    init_schema();
     init_serde();
     EventStreamSerde = class {
       marshaller;
@@ -27190,12 +27194,14 @@ var init_EventStreamSerde = __esm({
       deserializer;
       serdeContext;
       defaultContentType;
-      constructor({ marshaller, serializer, deserializer, serdeContext, defaultContentType }) {
+      compositeErrorRegistry;
+      constructor({ marshaller, serializer, deserializer, serdeContext, defaultContentType, compositeErrorRegistry }) {
         this.marshaller = marshaller;
         this.serializer = serializer;
         this.deserializer = deserializer;
         this.serdeContext = serdeContext;
         this.defaultContentType = defaultContentType;
+        this.compositeErrorRegistry = compositeErrorRegistry;
       }
       async serializeEventStream({ eventStream, requestSchema, initialRequest }) {
         const marshaller = this.marshaller;
@@ -27305,16 +27311,9 @@ var init_EventStreamSerde = __esm({
                   }
                 }
               }
-              if (hasBindings) {
-                return {
-                  [unionMember]: out
-                };
-              }
-              if (body.byteLength === 0) {
-                return {
-                  [unionMember]: {}
-                };
-              }
+              return {
+                [unionMember]: await this.readEventMember(eventStreamSchema, body, hasBindings, out)
+              };
             }
             return {
               [unionMember]: await this.deserializer.read(eventStreamSchema, body)
@@ -27352,6 +27351,29 @@ var init_EventStreamSerde = __esm({
             }
           }
         };
+      }
+      async readEventMember(eventStreamSchema, body, hasBindings, out) {
+        let ErrCtor;
+        const staticStructuralSchema = eventStreamSchema.getSchema();
+        if (Array.isArray(staticStructuralSchema) && staticStructuralSchema[0] === -3) {
+          const namespace = staticStructuralSchema[1];
+          const nsRegistry = TypeRegistry.for(namespace);
+          this.compositeErrorRegistry?.copyFrom(nsRegistry);
+          ErrCtor = (this.compositeErrorRegistry ?? nsRegistry)?.getErrorCtor(staticStructuralSchema);
+        }
+        const dataObject = hasBindings ? out : body.byteLength === 0 ? {} : await this.deserializer.read(eventStreamSchema, body);
+        if (ErrCtor) {
+          const message = dataObject.message ?? dataObject.Message ?? "Unknown";
+          const metadata = {};
+          const $fault = eventStreamSchema.getMergedTraits().error;
+          if ($fault) {
+            metadata.$fault = $fault;
+          }
+          return Object.assign(new ErrCtor({}), metadata, {
+            message
+          }, dataObject);
+        }
+        return dataObject;
       }
       writeEventBody(unionMember, unionSchema, event) {
         const serializer = this.serializer;
@@ -27597,7 +27619,8 @@ var init_HttpProtocol = __esm({
           serializer: this.serializer,
           deserializer: this.deserializer,
           serdeContext: this.serdeContext,
-          defaultContentType: this.getDefaultContentType()
+          defaultContentType: this.getDefaultContentType(),
+          compositeErrorRegistry: this.compositeErrorRegistry
         });
       }
       resolveEventStreamMarshaller(importedProvider) {
@@ -28610,6 +28633,7 @@ var CLOCK_SKEW_ERROR_CODES, THROTTLING_ERROR_CODES, TRANSIENT_ERROR_CODES, TRANS
 var init_constants4 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js"() {
     CLOCK_SKEW_ERROR_CODES = [
+      "AccessDeniedException",
       "AuthFailure",
       "InvalidSignatureException",
       "RequestExpired",
@@ -34975,7 +34999,7 @@ function bytesToFloat16(a5, b6) {
 }
 function decodeMap(at, to) {
   const mapDataLength = decodeCount(at, to);
-  if (mapDataLength < 15) {
+  if (mapDataLength < 25) {
     return decodeMapSmall(at, to, mapDataLength);
   }
   return decodeMapLarge(at, to, mapDataLength);
@@ -35680,27 +35704,15 @@ var init_parseCborBody = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js
-var CborCodec, CborShapeSerializer, CborShapeDeserializer;
-var init_CborCodec = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js"() {
+// node_modules/@smithy/core/dist-es/submodules/cbor/codec-v1/CborShapeSerializer.js
+var CborShapeSerializer;
+var init_CborShapeSerializer = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/cbor/codec-v1/CborShapeSerializer.js"() {
     init_protocols();
     init_schema();
     init_serde();
     init_cbor();
     init_parseCborBody();
-    CborCodec = class extends SerdeContext {
-      createSerializer() {
-        const serializer = new CborShapeSerializer();
-        serializer.setSerdeContext(this.serdeContext);
-        return serializer;
-      }
-      createDeserializer() {
-        const deserializer = new CborShapeDeserializer();
-        deserializer.setSerdeContext(this.serdeContext);
-        return deserializer;
-      }
-    };
     CborShapeSerializer = class extends SerdeContext {
       value;
       write(schema, value) {
@@ -35787,6 +35799,17 @@ var init_CborCodec = __esm({
         return buffer;
       }
     };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/cbor/codec-v1/CborShapeDeserializer.js
+var CborShapeDeserializer;
+var init_CborShapeDeserializer = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/cbor/codec-v1/CborShapeDeserializer.js"() {
+    init_protocols();
+    init_schema();
+    init_serde();
+    init_cbor();
     CborShapeDeserializer = class extends SerdeContext {
       read(schema, bytes) {
         const data3 = cbor.deserialize(bytes);
@@ -35884,6 +35907,28 @@ var init_CborCodec = __esm({
         } else {
           return value;
         }
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js
+var CborCodec;
+var init_CborCodec = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js"() {
+    init_protocols();
+    init_CborShapeSerializer();
+    init_CborShapeDeserializer();
+    CborCodec = class extends SerdeContext {
+      createSerializer() {
+        const serializer = new CborShapeSerializer();
+        serializer.setSerdeContext(this.serdeContext);
+        return serializer;
+      }
+      createDeserializer() {
+        const deserializer = new CborShapeDeserializer();
+        deserializer.setSerdeContext(this.serdeContext);
+        return deserializer;
       }
     };
   }

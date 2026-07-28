@@ -433,7 +433,7 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/signature-v4-multi-region@3.996.41
- - @smithy/core@3.29.6
+ - @smithy/core@3.31.0
  - @smithy/types@4.16.1
 
 These packages each contain the following license:
