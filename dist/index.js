@@ -34757,7 +34757,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.36",
+      version: "3.997.40",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -34857,12 +34857,12 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.977.1",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.42",
+        "@aws-sdk/core": "^3.977.5",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.43",
         "@aws-sdk/types": "^3.974.2",
-        "@smithy/core": "^3.29.8",
-        "@smithy/fetch-http-handler": "^5.6.10",
-        "@smithy/node-http-handler": "^4.9.10",
+        "@smithy/core": "^3.31.1",
+        "@smithy/fetch-http-handler": "^5.6.13",
+        "@smithy/node-http-handler": "^4.9.13",
         "@smithy/types": "^4.16.1",
         tslib: "^2.6.2"
       },
@@ -43699,7 +43699,7 @@ var init_signin = __esm({
 var require_dist_cjs11 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports2) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile3, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
+    var { CredentialsProviderError: CredentialsProviderError2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var { createHash: createHash7, createPrivateKey, createPublicKey, sign: sign2 } = require("node:crypto");
     var { promises: promises3 } = require("node:fs");
@@ -43727,13 +43727,7 @@ var require_dist_cjs11 = __commonJS({
         if (timeUntilExpiry <= _LoginCredentialsFetcher.REFRESH_THRESHOLD) {
           return this.refresh(token);
         }
-        return {
-          accessKeyId: accessToken.accessKeyId,
-          secretAccessKey: accessToken.secretAccessKey,
-          sessionToken: accessToken.sessionToken,
-          accountId: accessToken.accountId,
-          expiration: new Date(accessToken.expiresAt)
-        };
+        return this.toCredentials(token.accessToken);
       }
       get logger() {
         return this.init?.logger;
@@ -43741,7 +43735,25 @@ var require_dist_cjs11 = __commonJS({
       get loginSession() {
         return this.profileData.login_session;
       }
+      toCredentials(token) {
+        return {
+          accessKeyId: token.accessKeyId,
+          secretAccessKey: token.secretAccessKey,
+          sessionToken: token.sessionToken,
+          accountId: token.accountId,
+          expiration: new Date(token.expiresAt)
+        };
+      }
       async refresh(token) {
+        const diskToken = await this.loadToken().catch(() => token);
+        const now = Date.now();
+        const diskExpiry = new Date(diskToken.accessToken.expiresAt).getTime();
+        const tokenExpiry = new Date(token.accessToken.expiresAt).getTime();
+        const freshToken = diskExpiry <= now && tokenExpiry > now ? token : diskToken;
+        const freshExpiry = new Date(freshToken.accessToken.expiresAt).getTime();
+        if (freshExpiry - Date.now() > _LoginCredentialsFetcher.REFRESH_THRESHOLD) {
+          return this.toCredentials(freshToken.accessToken);
+        }
         const { SigninClient: SigninClient2, CreateOAuth2TokenCommand: CreateOAuth2TokenCommand2 } = (init_signin(), __toCommonJS(signin_exports));
         const { logger: logger2, userAgentAppId } = this.callerClientConfig ?? {};
         const isH22 = (requestHandler2) => {
@@ -43763,8 +43775,8 @@ var require_dist_cjs11 = __commonJS({
         this.createDPoPInterceptor(client.middlewareStack);
         const commandInput = {
           tokenInput: {
-            clientId: token.clientId,
-            refreshToken: token.refreshToken,
+            clientId: freshToken.clientId,
+            refreshToken: freshToken.refreshToken,
             grantType: "refresh_token"
           }
         };
@@ -43781,9 +43793,9 @@ var require_dist_cjs11 = __commonJS({
           const expiresInMs = (expiresIn ?? 900) * 1e3;
           const expiration = new Date(Date.now() + expiresInMs);
           const updatedToken = {
-            ...token,
+            ...freshToken,
             accessToken: {
-              ...token.accessToken,
+              ...freshToken.accessToken,
               accessKeyId,
               secretAccessKey,
               sessionToken,
@@ -43792,14 +43804,7 @@ var require_dist_cjs11 = __commonJS({
             refreshToken
           };
           await this.saveToken(updatedToken);
-          const newAccessToken = updatedToken.accessToken;
-          return {
-            accessKeyId: newAccessToken.accessKeyId,
-            secretAccessKey: newAccessToken.secretAccessKey,
-            sessionToken: newAccessToken.sessionToken,
-            accountId: newAccessToken.accountId,
-            expiration
-          };
+          return this.toCredentials(updatedToken.accessToken);
         } catch (error3) {
           if (error3.name === "AccessDeniedException") {
             const errorType = error3.error;
@@ -43817,7 +43822,15 @@ var require_dist_cjs11 = __commonJS({
               default:
                 message = `Failed to refresh token: ${String(error3)}. Please re-authenticate using \`aws login\``;
             }
-            throw new CredentialsProviderError2(message, { logger: this.logger, tryNextLink: false });
+            throw new CredentialsProviderError2(message, {
+              logger: this.logger,
+              tryNextLink: false
+            });
+          }
+          const tokenExpiry2 = new Date(freshToken.accessToken.expiresAt).getTime();
+          if (tokenExpiry2 > Date.now()) {
+            this.logger?.warn?.(`Failed to refresh token: ${String(error3)}. Using existing token until expiry.`);
+            return this.toCredentials(freshToken.accessToken);
           }
           throw new CredentialsProviderError2(`Failed to refresh token: ${String(error3)}. Please re-authenticate using aws login`, { logger: this.logger });
         }
@@ -43825,12 +43838,7 @@ var require_dist_cjs11 = __commonJS({
       async loadToken() {
         const tokenFilePath = this.getTokenFilePath();
         try {
-          let tokenData;
-          try {
-            tokenData = await readFile3(tokenFilePath, { ignoreCache: this.init?.ignoreCache });
-          } catch {
-            tokenData = await promises3.readFile(tokenFilePath, "utf8");
-          }
+          const tokenData = await promises3.readFile(tokenFilePath, "utf8");
           const token = JSON.parse(tokenData);
           const missingFields = ["accessToken", "clientId", "refreshToken", "dpopKey"].filter((k5) => !token[k5]);
           if (!token.accessToken?.accountId) {
@@ -44796,7 +44804,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1095.0";
+    var version = "3.1100.0";
     var packageInfo = {
       version
     };
