@@ -20,7 +20,7 @@
     "@aws-sdk/credential-provider-env": "^3.972.65",
     "@biomejs/biome": "2.5.6",
     "@smithy/property-provider": "^4.4.16",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@vitest/coverage-v8": "4.1.10",
     "aws-sdk-client-mock": "^4.1.0",
     "esbuild": "^0.28.1",
