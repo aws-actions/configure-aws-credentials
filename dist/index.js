@@ -19995,8 +19995,6 @@ var init_ListSchema = __esm({
     init_Schema();
     ListSchema = class _ListSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/lis");
-      name;
-      traits;
       valueSchema;
       symbol = _ListSchema.symbol;
     };
@@ -20016,8 +20014,6 @@ var init_MapSchema = __esm({
     init_Schema();
     MapSchema = class _MapSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/map");
-      name;
-      traits;
       keySchema;
       valueSchema;
       symbol = _MapSchema.symbol;
@@ -20039,8 +20035,6 @@ var init_OperationSchema = __esm({
     init_Schema();
     OperationSchema = class _OperationSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/ope");
-      name;
-      traits;
       input;
       output;
       symbol = _OperationSchema.symbol;
@@ -20062,8 +20056,6 @@ var init_StructureSchema = __esm({
     init_Schema();
     StructureSchema = class _StructureSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/str");
-      name;
-      traits;
       memberNames;
       memberList;
       symbol = _StructureSchema.symbol;
@@ -20429,9 +20421,7 @@ var init_SimpleSchema = __esm({
     init_Schema();
     SimpleSchema = class _SimpleSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/sim");
-      name;
       schemaRef;
-      traits;
       symbol = _SimpleSchema.symbol;
     };
     sim = (namespace, name, schemaRef, traits) => Schema.assign(new SimpleSchema(), {
@@ -34839,7 +34829,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.40",
+      version: "3.997.42",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -34939,9 +34929,9 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.977.5",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.43",
-        "@aws-sdk/types": "^3.974.2",
+        "@aws-sdk/core": "^3.977.7",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.44",
+        "@aws-sdk/types": "^3.974.3",
         "@smithy/core": "^3.31.1",
         "@smithy/fetch-http-handler": "^5.6.13",
         "@smithy/node-http-handler": "^4.9.13",
@@ -34952,7 +34942,7 @@ var init_package = __esm({
         concurrently: "7.0.0",
         "downlevel-dts": "0.10.1",
         premove: "4.0.0",
-        typescript: "~5.8.3"
+        typescript: "~6.0.3"
       },
       engines: {
         node: ">=20.0.0"
@@ -44964,7 +44954,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1100.0";
+    var version = "3.1105.0";
     var packageInfo = {
       version
     };
