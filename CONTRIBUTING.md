@@ -28,6 +28,12 @@ these are incredibly useful:
 - Any modifications you've made relevant to the bug
 - Anything unusual about your environment or deployment
 
+We also ask that you refrain from opening issues via the `gh` CLI or GitHub
+API. These methods bypass our issue templates and therefore don't apply the
+proper labels or workflows that we use. Note that AI agents typically do not
+properly use issue templates. Issues that don't have the proper labels
+applied may be closed without comment.
+
 ## Contributing via Pull Requests
 
 Contributions via pull requests are much appreciated. Before sending us a pull
