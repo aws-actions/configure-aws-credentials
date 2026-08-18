@@ -8,9 +8,25 @@ Parameters:
     Type: String
     Description: This is the root organization or personal account where repos are stored (Case Sensitive)
 
+  GitHubOrganizationId:
+    Type: String
+    Description: >-
+      Numeric GitHub organization (or user) ID, embedded in the OIDC sub claim
+      of repos created after GitHub's immutable-ID rollout. Find it with:
+      gh api /orgs/<org> --jq .id (use * to match any, at the cost of rename protection)
+    Default: "*"
+
   RepositoryName:
     Type: String
     Description: The repo(s) these roles will have access to. (Use * for all org or personal repos)
+    Default: "*"
+
+  RepositoryId:
+    Type: String
+    Description: >-
+      Numeric GitHub repository ID, embedded in the OIDC sub claim of repos
+      created after GitHub's immutable-ID rollout. Find it with:
+      gh api /repos/<org>/<repo> --jq .id (use * to match by repo name only)
     Default: "*"
 
   BranchName:
@@ -64,8 +80,16 @@ Resources:
                 - !Ref IdpGitHubOidc
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
             Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: "sts.amazonaws.com"
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrganization}/${RepositoryName}:ref:refs/heads/${BranchName}
+                token.actions.githubusercontent.com:sub:
+                  # Classic sub format (repos created before GitHub's
+                  # immutable-ID rollout on July 15, 2026)
+                  - !Sub repo:${GitHubOrganization}/${RepositoryName}:ref:refs/heads/${BranchName}
+                  # Immutable-ID sub format (repos created after the rollout):
+                  # repo:<org>@<org-id>/<repo>@<repo-id>:ref:refs/heads/<branch>
+                  - !Sub repo:${GitHubOrganization}@${GitHubOrganizationId}/${RepositoryName}@${RepositoryId}:ref:refs/heads/${BranchName}
       ManagedPolicyArns:
         ## edit the managed policy to give least privileges
         - !Sub arn:${AWS::Partition}:iam::aws:policy/AdministratorAccess
