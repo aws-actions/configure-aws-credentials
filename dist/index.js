@@ -34839,7 +34839,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.42",
+      version: "3.997.43",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -34939,9 +34939,9 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.977.7",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.44",
-        "@aws-sdk/types": "^3.974.3",
+        "@aws-sdk/core": "^3.977.8",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.45",
+        "@aws-sdk/types": "^3.974.4",
         "@smithy/core": "^3.31.1",
         "@smithy/fetch-http-handler": "^5.6.13",
         "@smithy/node-http-handler": "^4.9.13",
@@ -34952,7 +34952,7 @@ var init_package = __esm({
         concurrently: "7.0.0",
         "downlevel-dts": "0.10.1",
         premove: "4.0.0",
-        typescript: "~6.0.3"
+        typescript: "~7.0.2"
       },
       engines: {
         node: ">=20.0.0"
@@ -44964,7 +44964,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1105.0";
+    var version = "3.1110.0";
     var packageInfo = {
       version
     };
