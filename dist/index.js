@@ -33857,12 +33857,13 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
 // node_modules/@smithy/node-http-handler/dist-cjs/index.js
 var require_dist_cjs6 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
+    var { hasOwn: hasOwn2 } = (init_serde(), __toCommonJS(serde_exports));
+    var { streamCollector: streamCollector7 } = (init_serde(), __toCommonJS(serde_exports));
+    exports2.streamCollector = streamCollector7;
     var { buildQueryString: buildQueryString2, HttpResponse: HttpResponse2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var node_https = require("node:https");
     var { Readable: Readable8 } = require("node:stream");
     var http22 = require("node:http2");
-    var { streamCollector: streamCollector7 } = (init_serde(), __toCommonJS(serde_exports));
-    exports2.streamCollector = streamCollector7;
     function buildAbortError(abortSignal) {
       const reason = abortSignal && typeof abortSignal === "object" && "reason" in abortSignal ? abortSignal.reason : void 0;
       if (reason) {
@@ -33884,6 +33885,8 @@ var require_dist_cjs6 = __commonJS({
     var getTransformedHeaders = (headers) => {
       const transformedHeaders = {};
       for (const name in headers) {
+        if (!hasOwn2(headers, name))
+          continue;
         const headerValues = headers[name];
         transformedHeaders[name] = Array.isArray(headerValues) ? headerValues.join(",") : headerValues;
       }
@@ -34069,6 +34072,8 @@ var require_dist_cjs6 = __commonJS({
         }
         if (sockets && requests) {
           for (const origin in sockets) {
+            if (!hasOwn2(sockets, origin))
+              continue;
             const socketsInUse = sockets[origin]?.length ?? 0;
             const requestsEnqueued = requests[origin]?.length ?? 0;
             if (socketsInUse >= maxSockets && requestsEnqueued >= 2 * maxSockets) {
