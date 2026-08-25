@@ -34913,7 +34913,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.43",
+      version: "3.997.44",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -35013,13 +35013,13 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.977.8",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.45",
-        "@aws-sdk/types": "^3.974.4",
-        "@smithy/core": "^3.31.1",
-        "@smithy/fetch-http-handler": "^5.6.13",
-        "@smithy/node-http-handler": "^4.9.13",
-        "@smithy/types": "^4.16.1",
+        "@aws-sdk/core": "^3.977.9",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.46",
+        "@aws-sdk/types": "^3.974.5",
+        "@smithy/core": "^3.33.3",
+        "@smithy/fetch-http-handler": "^5.7.2",
+        "@smithy/node-http-handler": "^4.11.3",
+        "@smithy/types": "^4.17.2",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -40890,7 +40890,7 @@ var require_dist_cjs9 = __commonJS({
       const tokenString = JSON.stringify(ssoToken, null, 2);
       return writeFile2(tokenFilepath, tokenString);
     };
-    var lastRefreshAttemptTime = /* @__PURE__ */ new Date(0);
+    var lastRefreshAttemptTimes = /* @__PURE__ */ new Map();
     var fromSso = (init = {}) => async ({ callerClientConfig } = {}) => {
       init.logger?.debug("@aws-sdk/token-providers - fromSso");
       const profiles = await parseKnownFiles2(init);
@@ -40925,11 +40925,15 @@ var require_dist_cjs9 = __commonJS({
       validateTokenKey("accessToken", ssoToken.accessToken);
       validateTokenKey("expiresAt", ssoToken.expiresAt);
       const { accessToken, expiresAt } = ssoToken;
-      const existingToken = { token: accessToken, expiration: new Date(expiresAt) };
+      const existingToken = {
+        token: accessToken,
+        expiration: new Date(expiresAt)
+      };
       if (existingToken.expiration.getTime() - Date.now() > EXPIRE_WINDOW_MS) {
         return existingToken;
       }
-      if (Date.now() - lastRefreshAttemptTime.getTime() < 30 * 1e3) {
+      const lastRefreshAttemptTime = lastRefreshAttemptTimes.get(ssoSessionName) ?? 0;
+      if (Date.now() - lastRefreshAttemptTime < 30 * 1e3) {
         validateTokenExpiry(existingToken);
         return existingToken;
       }
@@ -40937,7 +40941,7 @@ var require_dist_cjs9 = __commonJS({
       validateTokenKey("clientSecret", ssoToken.clientSecret, true);
       validateTokenKey("refreshToken", ssoToken.refreshToken, true);
       try {
-        lastRefreshAttemptTime.setTime(Date.now());
+        lastRefreshAttemptTimes.set(ssoSessionName, Date.now());
         const newSsoOidcToken = await getNewSsoOidcToken(ssoToken, ssoRegion, init, callerClientConfig);
         validateTokenKey("accessToken", newSsoOidcToken.accessToken);
         validateTokenKey("expiresIn", newSsoOidcToken.expiresIn);
@@ -45084,7 +45088,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1110.0";
+    var version = "3.1115.0";
     var packageInfo = {
       version
     };
