@@ -260,12 +260,12 @@ export async function retryAndBackoff<T>(
         `Retrying after ${Math.floor(delay)}ms.`,
     );
 
-    await sleep(delay);
-
     if (nextRetry >= maxRetries) {
       core.info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
       throw err;
     }
+
+    await sleep(delay);
 
     return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base, label);
   }
