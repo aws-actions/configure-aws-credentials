@@ -44,6 +44,18 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry TestOp: reached max retries (2)'));
     helpers.reset();
   });
+  it('does not sleep or log a retry message on the final failed attempt', {}, async () => {
+    const sleepSpy = vi.fn().mockResolvedValue(undefined);
+    helpers.withsleep(sleepSpy);
+    const fn = vi.fn().mockRejectedValue(new Error('persistent'));
+    await expect(helpers.retryAndBackoff(fn, true, 3, 0, 50, 'TestOp')).rejects.toThrow('persistent');
+    expect(fn).toHaveBeenCalledTimes(3);
+    // Only slept between attempts, never after the last one.
+    expect(sleepSpy).toHaveBeenCalledTimes(2);
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry TestOp: attempt 3 of 3 failed'));
+    expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('attempt 3 of 3 failed: Error: persistent. Retrying after'));
+    helpers.reset();
+  });
   it('retries without a label (backward compat)', {}, async () => {
     helpers.withsleep(() => Promise.resolve());
     const fn = vi.fn().mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce('ok');

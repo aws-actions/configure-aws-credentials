@@ -250,10 +250,17 @@ export async function retryAndBackoff<T>(
       core.debug(`retryAndBackoff: error is not retryable: ${errorMessage(err)}`);
       throw err;
     }
-    // It's retryable, so sleep and retry.
-    const delay = Math.random() * (2 ** retries * base);
+    // It's retryable, so sleep and retry, unless we've exhausted our retries.
     const nextRetry = retries + 1;
     const opName = label ? ` ${label}` : '';
+
+    if (nextRetry >= maxRetries) {
+      core.info(`Retry${opName}: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}.`);
+      core.info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
+      throw err;
+    }
+
+    const delay = Math.random() * (2 ** retries * base);
 
     core.info(
       `Retry${opName}: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. ` +
@@ -261,11 +268,6 @@ export async function retryAndBackoff<T>(
     );
 
     await sleep(delay);
-
-    if (nextRetry >= maxRetries) {
-      core.info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
-      throw err;
-    }
 
     return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base, label);
   }
