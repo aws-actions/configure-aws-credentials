@@ -53,7 +53,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
     // Only slept between attempts, never after the last one.
     expect(sleepSpy).toHaveBeenCalledTimes(2);
     expect(core.info).toHaveBeenCalledWith(expect.stringContaining('Retry TestOp: attempt 3 of 3 failed'));
-    expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('attempt 3 of 3 failed: Error: persistent. Retrying after'));
+    expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('attempt 3 of 3 failed: persistent. Retrying after'));
     helpers.reset();
   });
   it('retries without a label (backward compat)', {}, async () => {
