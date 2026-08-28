@@ -74845,11 +74845,11 @@ async function retryAndBackoff(fn, isRetryable, maxRetries = 12, retries = 0, ba
     info(
       `Retry${opName}: attempt ${nextRetry} of ${maxRetries} failed: ${errorMessage(err)}. Retrying after ${Math.floor(delay)}ms.`
     );
-    await sleep2(delay);
     if (nextRetry >= maxRetries) {
       info(`Retry${opName}: reached max retries (${maxRetries}); giving up.`);
       throw err;
     }
+    await sleep2(delay);
     return await retryAndBackoff(fn, isRetryable, maxRetries, nextRetry, base, label);
   }
 }
