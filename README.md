@@ -28,6 +28,10 @@ Authenticate to AWS in GitHub Actions (and others)! Works especially well with
              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
              "token.actions.githubusercontent.com:sub": "repo:<GITHUB_ORG>@<ORG_ID>/<GITHUB_REPOSITORY>@<REPO_ID>:ref:refs/heads/<GITHUB_BRANCH>"
            }
+           // For personal repo, use:
+           // "StringLike": {
+           //   "token.actions.githubusercontent.com:sub": "repo:<GITHUB_USERNAME>*/<GITHUB_REPOSITORY>*:ref:refs/heads/<GITHUB_BRANCH>" 
+           // } 
          }
        }
      ]
