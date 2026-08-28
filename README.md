@@ -600,8 +600,9 @@ claims ([1][gh-blog-oidc], [2][sub-claim-custom]).
 
 #### Immutable subject claims
 
-Repositories created on github.com on or after 15 July 2026, and older
-repositories that have opted in, emit an [immutable `sub` claim][immutable-sub].
+Repositories created on github.com on or after 15 July 2026, older
+repositories that have opted in, and older repositories that have been renamed
+since 15 July 2026, emit an [immutable `sub` claim][immutable-sub].
 This claim appends the permanent numeric ID of the organization and of the
 repository after each name, separated by `@`, so that a recycled org or
 repository name cannot be used to mint tokens matching a stale trust policy.
