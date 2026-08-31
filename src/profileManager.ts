@@ -53,8 +53,15 @@ export function parseIni(iniData: string): Record<string, Record<string, string>
 export function stringifyIni(data: Record<string, Record<string, string>>): string {
   const sections: string[] = [];
   for (const [sectionName, sectionData] of Object.entries(data)) {
+    if (/[\r\n]/.test(sectionName)) {
+      throw new Error('INI section names must not contain newline characters');
+    }
     const lines: string[] = [`[${sectionName}]`];
     for (const [key, value] of Object.entries(sectionData)) {
+      // A newline in a key or value would inject arbitrary INI lines (e.g. credential_process).
+      if (/[\r\n]/.test(key) || /[\r\n]/.test(value)) {
+        throw new Error('INI keys and values must not contain newline characters');
+      }
       lines.push(`${key} = ${value}`);
     }
     sections.push(lines.join('\n'));

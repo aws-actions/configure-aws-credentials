@@ -5,7 +5,6 @@ import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import type { UserAgent } from '@smithy/types';
-import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
@@ -167,15 +166,13 @@ export function exportAccountId(identity: { Account: string; Arn: string }, mask
 // Validates that the account of the already-resolved caller identity is in the allow-list provided via the
 // `allowed-account-ids` input.
 export function validateAccountId(expectedAccountIds: string[] | undefined, account: string | undefined): void {
-  if (!expectedAccountIds || expectedAccountIds.length === 0 || expectedAccountIds[0] === '') {
+  const allowedAccountIds = expectedAccountIds?.filter((id) => id !== '') ?? [];
+  if (allowedAccountIds.length === 0) {
     return;
   }
-  if (!account || !expectedAccountIds.includes(account)) {
-    throw new Error(
-      `The account ID of the provided credentials (${
-        account ?? 'unknown'
-      }) does not match any of the expected account IDs: ${expectedAccountIds.join(', ')}`,
-    );
+  if (!account || !allowedAccountIds.includes(account)) {
+    // Account IDs are deliberately omitted: this error reaches the job log before any mask exists.
+    throw new Error('The account ID of the provided credentials does not match any of the allowed account IDs');
   }
 }
 
@@ -191,6 +188,29 @@ export function toCredentialIdentity(creds?: Partial<Credentials>): AwsCredentia
     secretAccessKey: creds.SecretAccessKey,
     ...(creds.SessionToken && { sessionToken: creds.SessionToken }),
   };
+}
+
+// Registers any userinfo embedded in a proxy URL as secrets so it is masked in job logs.
+// First the literal proxy string, then any username/password components if parseable.
+// If the username/password is percent-encoded, the decoded form is also masked.
+export function maskProxyCredentials(proxyServer: string): void {
+  core.setSecret(proxyServer);
+  let url: URL;
+  try {
+    url = new URL(proxyServer);
+  } catch (_) {
+    return;
+  }
+  for (const part of [url.username, url.password]) {
+    if (!part) continue;
+    core.setSecret(part);
+    try {
+      const decoded = decodeURIComponent(part);
+      if (decoded !== part) core.setSecret(decoded);
+    } catch (_) {
+      // malformed percent-encoding; the raw form is already masked
+    }
+  }
 }
 
 // Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
@@ -280,19 +300,6 @@ export function isDefined<T>(i: T | undefined | null): i is T {
   return i !== undefined && i !== null;
 }
 /* c8 ignore stop */
-
-export async function areCredentialsValid(credentialsClient: CredentialsClient) {
-  const client = credentialsClient.stsClient;
-  try {
-    const identity = await client.send(new GetCallerIdentityCommand({}));
-    if (identity.Account) {
-      return true;
-    }
-    return false;
-  } catch (_) {
-    return false;
-  }
-}
 
 /**
  * Like core.getBooleanInput, but respects the required option.

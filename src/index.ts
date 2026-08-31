@@ -3,12 +3,12 @@ import type { AssumeRoleCommandOutput } from '@aws-sdk/client-sts';
 import { assumeRole } from './assumeRole';
 import { CredentialsClient } from './CredentialsClient';
 import {
-  areCredentialsValid,
   errorMessage,
   exportAccountId,
   exportCredentials,
   exportRegion,
   getBooleanInput,
+  getCallerIdentity,
   retryAndBackoff,
   toCredentialIdentity,
   translateEnvVariables,
@@ -53,8 +53,8 @@ export async function run() {
     });
     const roleChaining = getBooleanInput('role-chaining', { required: false });
     const outputCredentials = getBooleanInput('output-credentials', { required: false });
-    // Default to always outputting environment credentials unless profile is specified. If profile is specified, default
-    // to no environment credentials (but still output them if the user specifically requests it).
+    // Default to always outputting environment credentials unless profile is specified. If profile is specified,
+    // default to no environment credentials (but still output them if the user specifically requests it).
     const outputEnvCredentials = getBooleanInput('output-env-credentials', { required: false, default: !awsProfile });
     const unsetCurrentCredentials = getBooleanInput('unset-current-credentials', { required: false });
     let disableRetry = getBooleanInput('disable-retry', { required: false });
@@ -165,8 +165,16 @@ export async function run() {
 
     //if the user wants to attempt to use existing credentials, check if we have some already
     if (useExistingCredentials) {
-      const validCredentials = await areCredentialsValid(credentialsClient);
-      if (validCredentials) {
+      const identity = await (async () => {
+        try {
+          return await getCallerIdentity(credentialsClient.stsClient);
+        } catch {
+          return null;
+        }
+      })();
+      if (identity) {
+        // The allowed-account-ids guardrail applies to reused credentials too.
+        validateAccountId(expectedAccountIds, identity.Account);
         core.notice('Pre-existing credentials are valid. No need to generate new ones.');
         if (timeoutId) clearTimeout(timeoutId);
         return;
