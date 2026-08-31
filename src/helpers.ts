@@ -167,14 +167,15 @@ export function exportAccountId(identity: { Account: string; Arn: string }, mask
 // Validates that the account of the already-resolved caller identity is in the allow-list provided via the
 // `allowed-account-ids` input.
 export function validateAccountId(expectedAccountIds: string[] | undefined, account: string | undefined): void {
-  if (!expectedAccountIds || expectedAccountIds.length === 0 || expectedAccountIds[0] === '') {
+  const allowedAccountIds = expectedAccountIds?.filter((id) => id !== '') ?? [];
+  if (allowedAccountIds.length === 0) {
     return;
   }
-  if (!account || !expectedAccountIds.includes(account)) {
+  if (!account || !allowedAccountIds.includes(account)) {
     throw new Error(
       `The account ID of the provided credentials (${
         account ?? 'unknown'
-      }) does not match any of the expected account IDs: ${expectedAccountIds.join(', ')}`,
+      }) does not match any of the expected account IDs: ${allowedAccountIds.join(', ')}`,
     );
   }
 }

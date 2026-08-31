@@ -126,6 +126,22 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(core.exportVariable).toHaveBeenCalledWith('AWS_SESSION_TOKEN', '');
   });
 
+  describe('validateAccountId', {}, () => {
+    it('enforces the allow-list even when the first element is empty', {}, () => {
+      expect(() => helpers.validateAccountId(['', '999999999999'], '111111111111')).toThrow(/does not match/);
+    });
+
+    it('passes an allowed account despite empty entries in the list', {}, () => {
+      expect(() => helpers.validateAccountId(['', '111111111111'], '111111111111')).not.toThrow();
+    });
+
+    it('skips validation only when no non-empty entries exist', {}, () => {
+      expect(() => helpers.validateAccountId(undefined, '111111111111')).not.toThrow();
+      expect(() => helpers.validateAccountId([], '111111111111')).not.toThrow();
+      expect(() => helpers.validateAccountId([''], '111111111111')).not.toThrow();
+    });
+  });
+
   describe('filesystem helpers', {}, () => {
     describe('isSymlink', {}, () => {
       it('returns true for a symlink', {}, () => {
