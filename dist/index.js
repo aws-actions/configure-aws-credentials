@@ -44679,7 +44679,7 @@ var require_dist_cjs15 = __commonJS({
       throw lastProviderError;
     };
     var multipleCredentialSourceWarningEmitted = false;
-    var defaultProvider = (init = {}) => memoizeChain([
+    var defaultProvider2 = (init = {}) => memoizeChain([
       async () => {
         const profile = init.profile ?? process.env[ENV_PROFILE2];
         if (profile) {
@@ -44746,7 +44746,7 @@ var require_dist_cjs15 = __commonJS({
     var credentialsTreatedAsExpired = (credentials) => credentials?.expiration !== void 0 && credentials.expiration.getTime() - Date.now() < 3e5;
     exports2.credentialsTreatedAsExpired = credentialsTreatedAsExpired;
     exports2.credentialsWillNeedRefresh = credentialsWillNeedRefresh;
-    exports2.defaultProvider = defaultProvider;
+    exports2.defaultProvider = defaultProvider2;
   }
 });
 
@@ -44766,7 +44766,7 @@ var require_dist_cjs16 = __commonJS({
     var { TypeRegistry: TypeRegistry2, getSchemaSerdePlugin: getSchemaSerdePlugin2 } = (init_schema(), __toCommonJS(schema_exports));
     var { resolveAwsSdkSigV4Config: resolveAwsSdkSigV4Config2, resolveAwsSdkSigV4AConfig: resolveAwsSdkSigV4AConfig2, AwsSdkSigV4Signer: AwsSdkSigV4Signer2, AwsSdkSigV4ASigner: AwsSdkSigV4ASigner2, NODE_SIGV4A_CONFIG_OPTIONS: NODE_SIGV4A_CONFIG_OPTIONS2, NODE_AUTH_SCHEME_PREFERENCE_OPTIONS: NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
     var { SignatureV4MultiRegion: SignatureV4MultiRegion3 } = require_dist_cjs3();
-    var { defaultProvider } = require_dist_cjs15();
+    var { defaultProvider: defaultProvider2 } = require_dist_cjs15();
     var { toUtf8: toUtf83, fromUtf8: fromUtf83, toBase64: toBase643, fromBase64: fromBase642, calculateBodyLength: calculateBodyLength2 } = (init_serde(), __toCommonJS(serde_exports));
     var { streamCollector: streamCollector7, NodeHttpHandler: NodeHttpHandler2 } = require_dist_cjs6();
     var { AwsQueryProtocol: AwsQueryProtocol2 } = (init_protocols2(), __toCommonJS(protocols_exports2));
@@ -45882,12 +45882,12 @@ var require_dist_cjs16 = __commonJS({
         defaultsMode,
         authSchemePreference: config?.authSchemePreference ?? loadConfig2(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS2, loaderConfig),
         bodyLengthChecker: config?.bodyLengthChecker ?? calculateBodyLength2,
-        credentialDefaultProvider: config?.credentialDefaultProvider ?? defaultProvider,
+        credentialDefaultProvider: config?.credentialDefaultProvider ?? defaultProvider2,
         defaultUserAgentProvider: config?.defaultUserAgentProvider ?? createDefaultUserAgentProvider2({ serviceId: clientSharedValues.serviceId, clientVersion: packageInfo.version }),
         httpAuthSchemes: config?.httpAuthSchemes ?? [
           {
             schemeId: "aws.auth#sigv4",
-            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await defaultProvider(idProps?.__config || {})()),
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await defaultProvider2(idProps?.__config || {})()),
             signer: new AwsSdkSigV4Signer2()
           },
           {
@@ -74785,13 +74785,12 @@ function exportAccountId(identity, maskAccountId) {
   return accountId;
 }
 function validateAccountId(expectedAccountIds, account) {
-  if (!expectedAccountIds || expectedAccountIds.length === 0 || expectedAccountIds[0] === "") {
+  const allowedAccountIds = expectedAccountIds?.filter((id) => id !== "") ?? [];
+  if (allowedAccountIds.length === 0) {
     return;
   }
-  if (!account || !expectedAccountIds.includes(account)) {
-    throw new Error(
-      `The account ID of the provided credentials (${account ?? "unknown"}) does not match any of the expected account IDs: ${expectedAccountIds.join(", ")}`
-    );
+  if (!account || !allowedAccountIds.includes(account)) {
+    throw new Error("The account ID of the provided credentials does not match any of the allowed account IDs");
   }
 }
 function toCredentialIdentity(creds) {
@@ -74803,6 +74802,24 @@ function toCredentialIdentity(creds) {
     secretAccessKey: creds.SecretAccessKey,
     ...creds.SessionToken && { sessionToken: creds.SessionToken }
   };
+}
+function maskProxyCredentials(proxyServer) {
+  setSecret(proxyServer);
+  let url;
+  try {
+    url = new URL(proxyServer);
+  } catch (_) {
+    return;
+  }
+  for (const part of [url.username, url.password]) {
+    if (!part) continue;
+    setSecret(part);
+    try {
+      const decoded = decodeURIComponent(part);
+      if (decoded !== part) setSecret(decoded);
+    } catch (_) {
+    }
+  }
 }
 function sanitizeGitHubVariables(name) {
   const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+\-@]/gu, SANITIZATION_CHARACTER);
@@ -74858,18 +74875,6 @@ function errorMessage(error3) {
 }
 function isDefined(i5) {
   return i5 !== void 0 && i5 !== null;
-}
-async function areCredentialsValid(credentialsClient) {
-  const client = credentialsClient.stsClient;
-  try {
-    const identity = await client.send(new import_client_sts.GetCallerIdentityCommand({}));
-    if (identity.Account) {
-      return true;
-    }
-    return false;
-  } catch (_) {
-    return false;
-  }
 }
 function getBooleanInput(name, options) {
   const trueValue = ["true", "True", "TRUE"];
@@ -75185,6 +75190,7 @@ async function assumeRole(params) {
 
 // src/CredentialsClient.ts
 var import_client_sts3 = __toESM(require_dist_cjs16());
+var import_credential_provider_node = __toESM(require_dist_cjs15());
 var import_node_http_handler5 = __toESM(require_dist_cjs6());
 
 // node_modules/proxy-agent/dist/index.js
@@ -76395,6 +76401,7 @@ var CredentialsClient = class {
     }
     if (props.proxyServer) {
       info("Configuring proxy handler for STS client");
+      maskProxyCredentials(props.proxyServer);
       const proxyOptions = {
         httpProxy: props.proxyServer,
         httpsProxy: props.proxyServer
@@ -76460,10 +76467,13 @@ var CredentialsClient = class {
     }
   }
   async loadCredentials() {
-    const config = {};
-    if (this.requestHandler !== void 0) config.requestHandler = this.requestHandler;
-    const client = new import_client_sts3.STSClient(config);
-    return client.config.credentials();
+    return (0, import_credential_provider_node.defaultProvider)({
+      clientConfig: {
+        ...this.region !== void 0 && { region: this.region },
+        ...this.stsEndpoint !== void 0 && { endpoint: this.stsEndpoint },
+        ...this.requestHandler !== void 0 && { requestHandler: this.requestHandler }
+      }
+    })();
   }
 };
 
@@ -76507,8 +76517,14 @@ function parseIni2(iniData) {
 function stringifyIni(data2) {
   const sections = [];
   for (const [sectionName, sectionData] of Object.entries(data2)) {
+    if (/[\r\n]/.test(sectionName)) {
+      throw new Error("INI section names must not contain newline characters");
+    }
     const lines = [`[${sectionName}]`];
     for (const [key, value] of Object.entries(sectionData)) {
+      if (/[\r\n]/.test(key) || /[\r\n]/.test(value)) {
+        throw new Error("INI keys and values must not contain newline characters");
+      }
       lines.push(`${key} = ${value}`);
     }
     sections.push(lines.join("\n"));
@@ -76689,8 +76705,15 @@ async function run() {
     let sourceAccountId;
     let webIdentityToken;
     if (useExistingCredentials) {
-      const validCredentials = await areCredentialsValid(credentialsClient);
-      if (validCredentials) {
+      const identity = await (async () => {
+        try {
+          return await getCallerIdentity(credentialsClient.stsClient);
+        } catch {
+          return null;
+        }
+      })();
+      if (identity) {
+        validateAccountId(expectedAccountIds, identity.Account);
         notice("Pre-existing credentials are valid. No need to generate new ones.");
         if (timeoutId) clearTimeout(timeoutId);
         return;
