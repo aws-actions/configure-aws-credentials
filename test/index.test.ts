@@ -841,7 +841,7 @@ describe('Configure AWS Credentials', {}, () => {
 
       await run();
       expect(core.setFailed).toHaveBeenCalledWith(
-        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+        'The account ID of the provided credentials does not match any of the allowed account IDs',
       );
     });
 
@@ -861,7 +861,7 @@ describe('Configure AWS Credentials', {}, () => {
 
       await run();
       expect(core.setFailed).toHaveBeenCalledWith(
-        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999, 888888888888',
+        'The account ID of the provided credentials does not match any of the allowed account IDs',
       );
     });
 
@@ -917,7 +917,7 @@ describe('Configure AWS Credentials', {}, () => {
 
       await run();
       expect(core.setFailed).toHaveBeenCalledWith(
-        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+        'The account ID of the provided credentials does not match any of the allowed account IDs',
       );
     });
 
@@ -936,7 +936,7 @@ describe('Configure AWS Credentials', {}, () => {
 
       await run();
       expect(core.setFailed).toHaveBeenCalledWith(
-        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+        'The account ID of the provided credentials does not match any of the allowed account IDs',
       );
     });
 
@@ -956,7 +956,7 @@ describe('Configure AWS Credentials', {}, () => {
 
       await run();
       expect(core.setFailed).toHaveBeenCalledWith(
-        'The account ID of the provided credentials (111111111111) does not match any of the expected account IDs: 999999999999',
+        'The account ID of the provided credentials does not match any of the allowed account IDs',
       );
     });
 

@@ -171,11 +171,8 @@ export function validateAccountId(expectedAccountIds: string[] | undefined, acco
     return;
   }
   if (!account || !allowedAccountIds.includes(account)) {
-    throw new Error(
-      `The account ID of the provided credentials (${
-        account ?? 'unknown'
-      }) does not match any of the expected account IDs: ${allowedAccountIds.join(', ')}`,
-    );
+    // Account IDs are deliberately omitted: this error reaches the job log before any mask exists.
+    throw new Error('The account ID of the provided credentials does not match any of the allowed account IDs');
   }
 }
 
