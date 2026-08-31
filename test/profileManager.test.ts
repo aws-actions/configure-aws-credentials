@@ -114,6 +114,22 @@ describe('Profile Manager', {}, () => {
       const result = stringifyIni({ dev: {} });
       expect(result).toBe('[dev]\n');
     });
+
+    it('rejects values containing newlines', {}, () => {
+      expect(() =>
+        stringifyIni({ dev: { aws_session_token: 'token\n[injected]\ncredential_process = evil' } }),
+      ).toThrow('must not contain newline characters');
+    });
+
+    it('rejects keys containing newlines', {}, () => {
+      expect(() => stringifyIni({ dev: { 'key\ninjected': 'val' } })).toThrow('must not contain newline characters');
+    });
+
+    it('rejects section names containing newlines', {}, () => {
+      expect(() => stringifyIni({ 'dev\r\n[injected]': { key: 'val' } })).toThrow(
+        'must not contain newline characters',
+      );
+    });
   });
 
   describe('validateProfileName', {}, () => {
@@ -421,6 +437,24 @@ describe('Profile Manager', {}, () => {
 
       expect(configParsed['profile dev']).toBeDefined();
       expect(configParsed['profile dev'].region).toBe('us-east-1');
+    });
+
+    it('refuses to write credentials containing newlines instead of injecting profiles', {}, () => {
+      expect(() =>
+        writeProfileFiles(
+          'dev',
+          {
+            AccessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+            SecretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+            SessionToken: 'token\n[injected]\ncredential_process = evil-command',
+          },
+          'us-east-1',
+          false,
+        ),
+      ).toThrow('must not contain newline characters');
+
+      const credsPath = getProfileFilePaths().credentials;
+      expect(fs.existsSync(credsPath)).toBe(false);
     });
 
     it('uses correct section naming for default profile', {}, () => {
