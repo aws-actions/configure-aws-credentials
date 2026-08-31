@@ -1,5 +1,6 @@
 import { info } from '@actions/core';
 import { STSClient } from '@aws-sdk/client-sts';
+import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { ProxyAgent } from 'proxy-agent';
@@ -105,9 +106,15 @@ export class CredentialsClient {
   }
 
   private async loadCredentials() {
-    const config = {} as { requestHandler?: NodeHttpHandler };
-    if (this.requestHandler !== undefined) config.requestHandler = this.requestHandler;
-    const client = new STSClient(config);
-    return client.config.credentials();
+    // Previously we constructed a new client, but that picks up the default provider chain including the endpoint.
+    // Explicitly calling the default provider chain allows us to pass in the endpoint and region as well as the
+    // proxy config.
+    return defaultProvider({
+      clientConfig: {
+        ...(this.region !== undefined && { region: this.region }),
+        ...(this.stsEndpoint !== undefined && { endpoint: this.stsEndpoint }),
+        ...(this.requestHandler !== undefined && { requestHandler: this.requestHandler }),
+      },
+    })();
   }
 }
