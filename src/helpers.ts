@@ -5,7 +5,6 @@ import type { Credentials, STSClient } from '@aws-sdk/client-sts';
 import { GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import type { UserAgent } from '@smithy/types';
-import type { CredentialsClient } from './CredentialsClient';
 
 const MAX_TAG_VALUE_LENGTH = 256;
 const SANITIZATION_CHARACTER = '_';
@@ -281,19 +280,6 @@ export function isDefined<T>(i: T | undefined | null): i is T {
   return i !== undefined && i !== null;
 }
 /* c8 ignore stop */
-
-export async function areCredentialsValid(credentialsClient: CredentialsClient) {
-  const client = credentialsClient.stsClient;
-  try {
-    const identity = await client.send(new GetCallerIdentityCommand({}));
-    if (identity.Account) {
-      return true;
-    }
-    return false;
-  } catch (_) {
-    return false;
-  }
-}
 
 /**
  * Like core.getBooleanInput, but respects the required option.
