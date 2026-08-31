@@ -1267,6 +1267,21 @@ describe('Configure AWS Credentials', {}, () => {
 
       expect(core.setFailed).not.toHaveBeenCalled();
     });
+
+    it('masks credentials embedded in the proxy URL', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({
+          ...mocks.GH_OIDC_INPUTS,
+          'http-proxy': 'http://user:secretpass@proxy.example.com:8080',
+        }),
+      );
+
+      await run();
+
+      expect(core.setSecret).toHaveBeenCalledWith('user');
+      expect(core.setSecret).toHaveBeenCalledWith('secretpass');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
   });
 
   describe('AWS Profile Support', {}, () => {

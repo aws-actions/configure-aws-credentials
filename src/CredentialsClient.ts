@@ -4,7 +4,7 @@ import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { ProxyAgent } from 'proxy-agent';
-import { buildCustomUserAgent, errorMessage, getCallerIdentity } from './helpers';
+import { buildCustomUserAgent, errorMessage, getCallerIdentity, maskProxyCredentials } from './helpers';
 import { ProxyResolver } from './ProxyResolver';
 
 if (!process.env.AWS_EXECUTION_ENV) {
@@ -32,6 +32,7 @@ export class CredentialsClient {
     }
     if (props.proxyServer) {
       info('Configuring proxy handler for STS client');
+      maskProxyCredentials(props.proxyServer);
       const proxyOptions: { httpProxy: string; httpsProxy: string; noProxy?: string } = {
         httpProxy: props.proxyServer,
         httpsProxy: props.proxyServer,

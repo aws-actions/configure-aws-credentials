@@ -193,6 +193,29 @@ export function toCredentialIdentity(creds?: Partial<Credentials>): AwsCredentia
   };
 }
 
+// Registers any userinfo embedded in a proxy URL as secrets so it is masked in job logs.
+// First the literal proxy string, then any username/password components if parseable.
+// If the username/password is percent-encoded, the decoded form is also masked.
+export function maskProxyCredentials(proxyServer: string): void {
+  core.setSecret(proxyServer);
+  let url: URL;
+  try {
+    url = new URL(proxyServer);
+  } catch (_) {
+    return;
+  }
+  for (const part of [url.username, url.password]) {
+    if (!part) continue;
+    core.setSecret(part);
+    try {
+      const decoded = decodeURIComponent(part);
+      if (decoded !== part) core.setSecret(decoded);
+    } catch (_) {
+      // malformed percent-encoding; the raw form is already masked
+    }
+  }
+}
+
 // Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
 // This replaces anything not conforming to the tag restrictions by inverting the regular expression.
 // See the AWS documentation for constraint specifics https://docs.aws.amazon.com/STS/latest/APIReference/API_Tag.html.
