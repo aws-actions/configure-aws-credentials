@@ -30,7 +30,7 @@
     "memfs": "^4.68.1",
     "standard-version": "^9.5.0",
     "typescript": "^7.0.2",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "dependencies": {
     "@actions/core": "^3.0.1",
