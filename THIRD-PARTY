@@ -222,7 +222,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/client-sts@3.1116.0
+ - @aws-sdk/client-sts@3.1121.0
 
 This package contains the following license:
 
