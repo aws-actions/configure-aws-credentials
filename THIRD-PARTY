@@ -434,7 +434,7 @@ The following npm packages may be included in this product:
 
  - @aws-sdk/signature-v4-multi-region@3.996.46
  - @smithy/core@3.33.3
- - @smithy/types@4.17.2
+ - @smithy/types@4.18.0
 
 These packages each contain the following license:
 
@@ -1050,7 +1050,7 @@ The following npm packages may be included in this product:
  - @aws-sdk/xml-builder@3.972.40
  - @smithy/credential-provider-imds@4.5.2
  - @smithy/fetch-http-handler@5.7.2
- - @smithy/node-http-handler@4.11.3
+ - @smithy/node-http-handler@4.12.1
  - @smithy/signature-v4@5.6.12
 
 These packages each contain the following license:
