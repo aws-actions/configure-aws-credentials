@@ -1044,7 +1044,7 @@ The following npm packages may be included in this product:
 
  - @aws-sdk/credential-provider-env@3.972.70
  - @aws-sdk/credential-provider-ini@3.973.15
- - @aws-sdk/credential-provider-node@3.972.81
+ - @aws-sdk/credential-provider-node@3.972.82
  - @aws-sdk/token-providers@3.1116.0
  - @aws-sdk/types@3.974.5
  - @aws-sdk/xml-builder@3.972.40

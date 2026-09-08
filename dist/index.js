@@ -44646,6 +44646,7 @@ var require_dist_cjs15 = __commonJS({
             if (!passiveLock) {
               passiveLock = chain3(options).then((c5) => {
                 credentials = c5;
+              }).catch(() => {
               }).finally(() => {
                 passiveLock = void 0;
               });
