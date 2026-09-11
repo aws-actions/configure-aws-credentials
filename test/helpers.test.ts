@@ -119,6 +119,7 @@ describe('Configure AWS Credentials helpers', {}, () => {
     process.env.ROLE_TO_ASSUME = 'arn:aws:iam::111111111111:role/ENV-ROLE';
     helpers.translateEnvVariables();
     expect(process.env['INPUT_ROLE-TO-ASSUME']).toBe('arn:aws:iam::111111111111:role/EXPLICIT-ROLE');
+    expect(core.info).not.toHaveBeenCalledWith('Translating ROLE_TO_ASSUME to input role-to-assume');
     delete process.env.ROLE_TO_ASSUME;
     delete process.env['INPUT_ROLE-TO-ASSUME'];
   });
