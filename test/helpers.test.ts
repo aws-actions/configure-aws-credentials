@@ -104,6 +104,25 @@ describe('Configure AWS Credentials helpers', {}, () => {
     expect(process.env.HTTP_PROXY).toBe('https://proxy:8080');
   });
 
+  it('logs which environment variables it translates', {}, () => {
+    delete process.env['INPUT_ROLE-TO-ASSUME'];
+    process.env.ROLE_TO_ASSUME = 'arn:aws:iam::111111111111:role/ENV-ROLE';
+    helpers.translateEnvVariables();
+    expect(core.info).toHaveBeenCalledWith('Translating ROLE_TO_ASSUME to input role-to-assume');
+    expect(process.env['INPUT_ROLE-TO-ASSUME']).toBe('arn:aws:iam::111111111111:role/ENV-ROLE');
+    delete process.env.ROLE_TO_ASSUME;
+    delete process.env['INPUT_ROLE-TO-ASSUME'];
+  });
+
+  it('does not overwrite explicitly set inputs with environment variables', {}, () => {
+    process.env['INPUT_ROLE-TO-ASSUME'] = 'arn:aws:iam::111111111111:role/EXPLICIT-ROLE';
+    process.env.ROLE_TO_ASSUME = 'arn:aws:iam::111111111111:role/ENV-ROLE';
+    helpers.translateEnvVariables();
+    expect(process.env['INPUT_ROLE-TO-ASSUME']).toBe('arn:aws:iam::111111111111:role/EXPLICIT-ROLE');
+    delete process.env.ROLE_TO_ASSUME;
+    delete process.env['INPUT_ROLE-TO-ASSUME'];
+  });
+
   it('handles getBooleanInput correctly', {}, () => {
     vi.spyOn(core, 'getInput').mockReturnValue('true');
     expect(helpers.getBooleanInput('test')).toBe(true);

@@ -102,9 +102,14 @@ below).
 - Be especially careful about running Actions in non-ephemeral environments, or
   [triggering workflows on `pull_request_target`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)
   events.
+- Set `translate-env-variables` to false if the [AWS environment variables][env]
+  or the [action input variables](./README.md#inputs-as-environment-variables)
+  in your runner are set by other processes to prevent unexpected behavior.
 
 [gh-secrets]:
   https://docs.github.com/en/actions/security-guides/encrypted-secrets
+[env]:
+  https://docs.aws.amazon.com/sdkref/latest/guide/settings-reference.html#EVarSettings
 
 ## Non-OIDC Authentication Options
 
@@ -194,6 +199,7 @@ detail.
 | action-timeout-s              | Global timeout for the action in seconds. If set to a value greater than 0, the action will fail if it takes longer than this time to complete.                                                                                                                                                                                                                                                                                         | No       |
 | no-proxy                      |  Hosts to skip for the proxy configuration.                                                                                                                                                                                                                                                                                                                                                                                             | No       |
 | sts-endpoint                  | Custom STS endpoint URL. Use this to point to an STS-compatible API (e.g. MinIO, LocalStack) instead of the default AWS STS endpoint for the region.                                                                                                                                                                                                                                                                                    | No       |
+| translate-env-variables       | Whether to translate AWS environment variables to action inputs. Defaults to true. Translating environment variables automatically may cause unexpected behavior if you have other actions that set AWS environment variables.                                                                                                                                                                                                          | No       |
 
 </details>
 
@@ -215,6 +221,15 @@ if desired.
 Sometimes, existing credentials in your runner can get in the way of the
 intended outcome. You can set the `unset-current-credentials` input to `true` to
 work around this issue.
+
+#### Inputs as environment variables
+
+In addition to using action inputs, this action will read environment variables
+to determine its behavior, just like the AWS SDKs do. For example, if you set
+`ROLE_TO_ASSUME` in the environment, the action will use that value as if you
+had set the `role-to-assume` input. This behavior can be disabled with the
+`translate-env-variables` option. The supported list can be found in
+[src/helpers.ts](./src/helpers.ts).
 
 #### Configure named AWS profiles
 
