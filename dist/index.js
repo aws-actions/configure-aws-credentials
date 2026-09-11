@@ -74025,7 +74025,10 @@ function translateEnvVariables() {
   for (const envVar of envVars) {
     if (process.env[envVar]) {
       const inputKey = `INPUT_${envVar.replace(/_/g, "-")}`;
-      process.env[inputKey] = process.env[inputKey] || process.env[envVar];
+      if (!process.env[inputKey]) {
+        info(`Translating ${envVar} to input ${envVar.replace(/_/g, "-").toLowerCase()}`);
+        process.env[inputKey] = process.env[envVar];
+      }
     }
   }
 }
@@ -75935,7 +75938,9 @@ var REGION_REGEX = /^[a-z0-9-]+$/g;
 var ROLE_SESSION_NAME_REGEX = /^[\w+=,.@-]*$/;
 async function run() {
   try {
-    translateEnvVariables();
+    if (getBooleanInput("translate-env-variables", { required: false, default: true })) {
+      translateEnvVariables();
+    }
     const AccessKeyId = getInput("aws-access-key-id", { required: false });
     const SecretAccessKey = getInput("aws-secret-access-key", { required: false });
     const sessionTokenInput = getInput("aws-session-token", { required: false });
