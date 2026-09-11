@@ -5,7 +5,11 @@ Authenticate to AWS in GitHub Actions (and others)! Works especially well with
 
 [secretsmanager]: https://github.com/aws-actions/aws-secretsmanager-get-secrets
 
-_Note: We recommend against pinning this action to `main`; `main` is used as a staging branch and therefore may be unstable._
+_Note: We recommend that you follow
+[GitHub's Security Best Practices][ghsecuritybestpractice]
+when implementing this action._
+
+[ghsecuritybestpractice]: https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions
 
 ## Quick Start (OIDC, recommended)
 
