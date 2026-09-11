@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v6.2.4...v6.3.0) (2026-09-11)
+
+
+### Features
+
+* add translate-env-variables option ([#1961](https://github.com/aws-actions/configure-aws-credentials/issues/1961)) ([57b8365](https://github.com/aws-actions/configure-aws-credentials/commit/57b83659c2db2eb3b9c655186bef9a6a8f6620cb))
+
 ## [6.2.4](https://github.com/aws-actions/configure-aws-credentials/compare/v6.2.3...v6.2.4) (2026-08-31)
 
 
