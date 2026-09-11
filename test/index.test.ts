@@ -117,6 +117,38 @@ describe('Configure AWS Credentials', {}, () => {
     });
   });
 
+  describe('Environment variable translation', {}, () => {
+    beforeEach(() => {
+      mockedSTSClient.on(GetCallerIdentityCommand).resolvesOnce({ ...mocks.outputs.GET_CALLER_IDENTITY });
+      // biome-ignore lint/suspicious/noExplicitAny: any required to mock private method
+      vi.spyOn(CredentialsClient.prototype as any, 'loadCredentials').mockResolvedValueOnce({
+        accessKeyId: 'MYAWSACCESSKEYID',
+      });
+      delete process.env['INPUT_ROLE-TO-ASSUME'];
+      process.env.ROLE_TO_ASSUME = 'arn:aws:iam::111111111111:role/ENV-ROLE';
+    });
+    afterEach(() => {
+      delete process.env.ROLE_TO_ASSUME;
+      delete process.env['INPUT_ROLE-TO-ASSUME'];
+    });
+    it('translates environment variables to inputs by default', async () => {
+      vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_USER_INPUTS));
+      await run();
+      expect(core.info).toHaveBeenCalledWith('Translating ROLE_TO_ASSUME to input role-to-assume');
+      expect(process.env['INPUT_ROLE-TO-ASSUME']).toBe('arn:aws:iam::111111111111:role/ENV-ROLE');
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+    it('skips translation when translate-env-variables is false', async () => {
+      vi.mocked(core.getInput).mockImplementation(
+        mocks.getInput({ ...mocks.IAM_USER_INPUTS, 'translate-env-variables': 'false' }),
+      );
+      await run();
+      expect(core.info).not.toHaveBeenCalledWith('Translating ROLE_TO_ASSUME to input role-to-assume');
+      expect(process.env['INPUT_ROLE-TO-ASSUME']).toBeUndefined();
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('AssumeRole with IAM LTC', {}, () => {
     beforeEach(() => {
       vi.mocked(core.getInput).mockImplementation(mocks.getInput(mocks.IAM_ASSUMEROLE_INPUTS));

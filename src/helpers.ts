@@ -61,7 +61,10 @@ export function translateEnvVariables() {
   for (const envVar of envVars) {
     if (process.env[envVar]) {
       const inputKey = `INPUT_${envVar.replace(/_/g, '-')}`;
-      process.env[inputKey] = process.env[inputKey] || process.env[envVar];
+      if (!process.env[inputKey]) {
+        core.info(`Translating ${envVar} to input ${envVar.replace(/_/g, '-').toLowerCase()}`);
+        process.env[inputKey] = process.env[envVar];
+      }
     }
   }
 }
