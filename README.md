@@ -5,6 +5,12 @@ Authenticate to AWS in GitHub Actions (and others)! Works especially well with
 
 [secretsmanager]: https://github.com/aws-actions/aws-secretsmanager-get-secrets
 
+_Note: We recommend that you follow
+[GitHub's Security Best Practices][ghsecuritybestpractice]
+when implementing this action._
+
+[ghsecuritybestpractice]: https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions
+
 ## Quick Start (OIDC, recommended)
 
 1. Create an IAM Identity Provider in your AWS account for GitHub OIDC. (See
