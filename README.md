@@ -102,6 +102,8 @@ below).
 - Be especially careful about running Actions in non-ephemeral environments, or
   [triggering workflows on `pull_request_target`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)
   events.
+- Follow [GitHub's security best practices][gh-security] for using third-party
+  actions.
 - Set `translate-env-variables` to false if the [AWS environment variables][env]
   or the [action input variables](./README.md#inputs-as-environment-variables)
   in your runner are set by other processes to prevent unexpected behavior.
@@ -110,6 +112,8 @@ below).
   https://docs.github.com/en/actions/security-guides/encrypted-secrets
 [env]:
   https://docs.aws.amazon.com/sdkref/latest/guide/settings-reference.html#EVarSettings
+[gh-security]:
+  https://docs.github.com/en/actions/security-guides/security-best-practices-for-github-actions
 
 ## Non-OIDC Authentication Options
 
