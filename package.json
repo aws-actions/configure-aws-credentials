@@ -21,7 +21,7 @@
     "@biomejs/biome": "2.5.13",
     "@smithy/property-provider": "^4.5.2",
     "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "5.0.0",
     "aws-sdk-client-mock": "^4.1.0",
     "esbuild": "^0.28.2",
     "generate-license-file": "^4.2.5",
@@ -30,7 +30,7 @@
     "memfs": "^4.75.0",
     "standard-version": "^9.5.0",
     "typescript": "^7.0.2",
-    "vitest": "4.1.11"
+    "vitest": "5.0.0"
   },
   "dependencies": {
     "@actions/core": "^3.0.1",
