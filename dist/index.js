@@ -45096,7 +45096,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1130.0";
+    var version = "3.1135.0";
     var packageInfo = {
       version
     };
@@ -45310,6 +45310,7 @@ var require_dist_cjs16 = __commonJS({
     var _JWTPSEE = "JWTPayloadSizeExceededException";
     var _K2 = "Key";
     var _MPDE2 = "MalformedPolicyDocumentException";
+    var _MSTS = "MinimumSessionTokenSize";
     var _N = "Name";
     var _NQ = "NameQualifier";
     var _OWIFDE = "OutboundWebIdentityFederationDisabledException";
@@ -45338,6 +45339,8 @@ var require_dist_cjs16 = __commonJS({
     var _SI2 = "SourceIdentity";
     var _SN2 = "SerialNumber";
     var _ST2 = "SubjectType";
+    var _STS = "SessionTokenSize";
+    var _STU = "SessionTokenUtilization";
     var _STe = "SessionToken";
     var _T2 = "Tags";
     var _TC2 = "TokenCode";
@@ -45498,8 +45501,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARR2,
       0,
-      [_RA2, _RSN2, _PA2, _P2, _DS2, _T2, _TTK2, _EI2, _SN2, _TC2, _SI2, _PC2],
-      [0, 0, () => policyDescriptorListType2, 0, 1, () => tagListType2, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType2],
+      [_RA2, _RSN2, _PA2, _P2, _DS2, _T2, _TTK2, _EI2, _SN2, _TC2, _SI2, _PC2, _MSTS],
+      [0, 0, () => policyDescriptorListType2, 0, 1, () => tagListType2, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType2, 1],
       2
     ];
     var AssumeRoleResponse$2 = [
@@ -45507,16 +45510,16 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARRs2,
       0,
-      [_C2, _ARU2, _PPS2, _SI2],
-      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0]
+      [_C2, _ARU2, _PPS2, _SI2, _STU, _STS],
+      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 1, 1]
     ];
     var AssumeRoleWithSAMLRequest$ = [
       3,
       n05,
       _ARWSAMLR,
       0,
-      [_RA2, _PAr2, _SAMLA, _PA2, _P2, _DS2],
-      [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType2, 0, 1],
+      [_RA2, _PAr2, _SAMLA, _PA2, _P2, _DS2, _MSTS],
+      [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType2, 0, 1, 1],
       3
     ];
     var AssumeRoleWithSAMLResponse$ = [
@@ -45524,16 +45527,16 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWSAMLRs,
       0,
-      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2],
-      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0]
+      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2, _STU, _STS],
+      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0, 1, 1]
     ];
     var AssumeRoleWithWebIdentityRequest$2 = [
       3,
       n05,
       _ARWWIR2,
       0,
-      [_RA2, _RSN2, _WIT2, _PI2, _PA2, _P2, _DS2],
-      [0, 0, [() => clientTokenType2, 0], 0, () => policyDescriptorListType2, 0, 1],
+      [_RA2, _RSN2, _WIT2, _PI2, _PA2, _P2, _DS2, _MSTS],
+      [0, 0, [() => clientTokenType2, 0], 0, () => policyDescriptorListType2, 0, 1, 1],
       3
     ];
     var AssumeRoleWithWebIdentityResponse$2 = [
@@ -45541,16 +45544,16 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWWIRs2,
       0,
-      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2],
-      [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0]
+      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2, _STU, _STS],
+      [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0, 1, 1]
     ];
     var AssumeRootRequest$ = [
       3,
       n05,
       _ARRss,
       0,
-      [_TP, _TPA, _DS2],
-      [0, () => PolicyDescriptorType$2, 1],
+      [_TP, _TPA, _DS2, _MSTS],
+      [0, () => PolicyDescriptorType$2, 1, 1],
       2
     ];
     var AssumeRootResponse$ = [
@@ -45558,8 +45561,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARRssu,
       0,
-      [_C2, _SI2],
-      [[() => Credentials$2, 0], 0]
+      [_C2, _SI2, _STU, _STS],
+      [[() => Credentials$2, 0], 0, 1, 1]
     ];
     var Credentials$2 = [
       3,
@@ -45651,8 +45654,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GFTR,
       0,
-      [_N, _P2, _PA2, _DS2, _T2],
-      [0, 0, () => policyDescriptorListType2, 1, () => tagListType2],
+      [_N, _P2, _PA2, _DS2, _T2, _MSTS],
+      [0, 0, () => policyDescriptorListType2, 1, () => tagListType2, 1],
       1
     ];
     var GetFederationTokenResponse$ = [
@@ -45660,24 +45663,24 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GFTRe,
       0,
-      [_C2, _FU, _PPS2],
-      [[() => Credentials$2, 0], () => FederatedUser$, 1]
+      [_C2, _FU, _PPS2, _STU, _STS],
+      [[() => Credentials$2, 0], () => FederatedUser$, 1, 1, 1]
     ];
     var GetSessionTokenRequest$ = [
       3,
       n05,
       _GSTR,
       0,
-      [_DS2, _SN2, _TC2],
-      [1, 0, 0]
+      [_DS2, _SN2, _TC2, _MSTS],
+      [1, 0, 0, 1]
     ];
     var GetSessionTokenResponse$ = [
       3,
       n05,
       _GSTRe,
       0,
-      [_C2],
-      [[() => Credentials$2, 0]]
+      [_C2, _STU, _STS],
+      [[() => Credentials$2, 0], 1, 1]
     ];
     var GetWebIdentityTokenRequest$ = [
       3,
