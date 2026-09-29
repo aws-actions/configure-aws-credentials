@@ -35243,7 +35243,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.45",
+      version: "3.997.46",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -35343,13 +35343,13 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.978.0",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.46",
-        "@aws-sdk/types": "^3.974.5",
-        "@smithy/core": "^3.33.3",
-        "@smithy/fetch-http-handler": "^5.7.2",
-        "@smithy/node-http-handler": "^4.11.3",
-        "@smithy/types": "^4.17.2",
+        "@aws-sdk/core": "^3.978.1",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.47",
+        "@aws-sdk/types": "^3.974.6",
+        "@smithy/core": "^3.35.0",
+        "@smithy/fetch-http-handler": "^5.8.0",
+        "@smithy/node-http-handler": "^4.12.1",
+        "@smithy/types": "^4.19.0",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -40671,10 +40671,10 @@ var init_schemas_0 = __esm({
     _se = "server";
     _tT = "tokenType";
     n0 = "com.amazonaws.ssooidc";
-    _s_registry = TypeRegistry.for(_s);
+    _s_registry = new TypeRegistry(_s);
     SSOOIDCServiceException$ = [-3, _s, "SSOOIDCServiceException", 0, [], []];
     _s_registry.registerError(SSOOIDCServiceException$, SSOOIDCServiceException);
-    n0_registry = TypeRegistry.for(n0);
+    n0_registry = new TypeRegistry(n0);
     AccessDeniedException$ = [
       -3,
       n0,
@@ -41596,10 +41596,10 @@ var init_schemas_02 = __esm({
     _sT = "sessionToken";
     _xasbt = "x-amz-sso_bearer_token";
     n02 = "com.amazonaws.sso";
-    _s_registry2 = TypeRegistry.for(_s2);
+    _s_registry2 = new TypeRegistry(_s2);
     SSOServiceException$ = [-3, _s2, "SSOServiceException", 0, [], []];
     _s_registry2.registerError(SSOServiceException$, SSOServiceException);
-    n0_registry2 = TypeRegistry.for(n02);
+    n0_registry2 = new TypeRegistry(n02);
     InvalidRequestException$2 = [
       -3,
       n02,
@@ -42627,7 +42627,7 @@ var init_errors3 = __esm({
 });
 
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js
-var _A, _AKI, _AR, _ARI, _ARR, _ARRs, _ARU, _ARWWI, _ARWWIR, _ARWWIRs, _Au, _C, _CA, _DS, _E, _EI, _ETE2, _IDPCEE, _IDPRCE, _IITE, _K, _MPDE, _P, _PA, _PAr, _PC, _PCLT, _PCr, _PDT, _PI, _PPS, _PPTLE, _Pr, _RA, _RDE, _RSN, _SAK, _SFWIT, _SI, _SN, _ST, _T, _TC, _TTK, _Ta, _V, _WIT, _a, _aKST, _aQE, _c3, _cTT, _e3, _hE3, _m2, _pDLT, _s3, _tLT, n03, _s_registry3, STSServiceException$, n0_registry3, ExpiredTokenException$2, IDPCommunicationErrorException$, IDPRejectedClaimException$, InvalidIdentityTokenException$, MalformedPolicyDocumentException$, PackedPolicyTooLargeException$, RegionDisabledException$, errorTypeRegistries3, accessKeySecretType, clientTokenType, AssumedRoleUser$, AssumeRoleRequest$, AssumeRoleResponse$, AssumeRoleWithWebIdentityRequest$, AssumeRoleWithWebIdentityResponse$, Credentials$, PolicyDescriptorType$, ProvidedContext$, Tag$, policyDescriptorListType, ProvidedContextsListType, tagKeyListType, tagListType, AssumeRole$, AssumeRoleWithWebIdentity$;
+var _A, _AKI, _AR, _ARI, _ARR, _ARRs, _ARU, _ARWWI, _ARWWIR, _ARWWIRs, _Au, _C, _CA, _DS, _E, _EI, _ETE2, _IDPCEE, _IDPRCE, _IITE, _K, _MPDE, _MSTS, _P, _PA, _PAr, _PC, _PCLT, _PCr, _PDT, _PI, _PPS, _PPTLE, _Pr, _RA, _RDE, _RSN, _SAK, _SFWIT, _SI, _SN, _ST, _STS, _STU, _T, _TC, _TTK, _Ta, _V, _WIT, _a, _aKST, _aQE, _c3, _cTT, _e3, _hE3, _m2, _pDLT, _s3, _tLT, n03, _s_registry3, STSServiceException$, n0_registry3, ExpiredTokenException$2, IDPCommunicationErrorException$, IDPRejectedClaimException$, InvalidIdentityTokenException$, MalformedPolicyDocumentException$, PackedPolicyTooLargeException$, RegionDisabledException$, errorTypeRegistries3, accessKeySecretType, clientTokenType, AssumedRoleUser$, AssumeRoleRequest$, AssumeRoleResponse$, AssumeRoleWithWebIdentityRequest$, AssumeRoleWithWebIdentityResponse$, Credentials$, PolicyDescriptorType$, ProvidedContext$, Tag$, policyDescriptorListType, ProvidedContextsListType, tagKeyListType, tagListType, AssumeRole$, AssumeRoleWithWebIdentity$;
 var init_schemas_03 = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js"() {
     init_schema();
@@ -42655,6 +42655,7 @@ var init_schemas_03 = __esm({
     _IITE = "InvalidIdentityTokenException";
     _K = "Key";
     _MPDE = "MalformedPolicyDocumentException";
+    _MSTS = "MinimumSessionTokenSize";
     _P = "Policy";
     _PA = "PolicyArns";
     _PAr = "ProviderArn";
@@ -42674,6 +42675,8 @@ var init_schemas_03 = __esm({
     _SI = "SourceIdentity";
     _SN = "SerialNumber";
     _ST = "SessionToken";
+    _STS = "SessionTokenSize";
+    _STU = "SessionTokenUtilization";
     _T = "Tags";
     _TC = "TokenCode";
     _TTK = "TransitiveTagKeys";
@@ -42692,10 +42695,10 @@ var init_schemas_03 = __esm({
     _s3 = "smithy.ts.sdk.synthetic.com.amazonaws.sts";
     _tLT = "tagListType";
     n03 = "com.amazonaws.sts";
-    _s_registry3 = TypeRegistry.for(_s3);
+    _s_registry3 = new TypeRegistry(_s3);
     STSServiceException$ = [-3, _s3, "STSServiceException", 0, [], []];
     _s_registry3.registerError(STSServiceException$, STSServiceException);
-    n0_registry3 = TypeRegistry.for(n03);
+    n0_registry3 = new TypeRegistry(n03);
     ExpiredTokenException$2 = [
       -3,
       n03,
@@ -42779,8 +42782,8 @@ var init_schemas_03 = __esm({
       n03,
       _ARR,
       0,
-      [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC],
-      [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType],
+      [_RA, _RSN, _PA, _P, _DS, _T, _TTK, _EI, _SN, _TC, _SI, _PC, _MSTS],
+      [0, 0, () => policyDescriptorListType, 0, 1, () => tagListType, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType, 1],
       2
     ];
     AssumeRoleResponse$ = [
@@ -42788,16 +42791,16 @@ var init_schemas_03 = __esm({
       n03,
       _ARRs,
       0,
-      [_C, _ARU, _PPS, _SI],
-      [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0]
+      [_C, _ARU, _PPS, _SI, _STU, _STS],
+      [[() => Credentials$, 0], () => AssumedRoleUser$, 1, 0, 1, 1]
     ];
     AssumeRoleWithWebIdentityRequest$ = [
       3,
       n03,
       _ARWWIR,
       0,
-      [_RA, _RSN, _WIT, _PI, _PA, _P, _DS],
-      [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1],
+      [_RA, _RSN, _WIT, _PI, _PA, _P, _DS, _MSTS],
+      [0, 0, [() => clientTokenType, 0], 0, () => policyDescriptorListType, 0, 1, 1],
       3
     ];
     AssumeRoleWithWebIdentityResponse$ = [
@@ -42805,8 +42808,8 @@ var init_schemas_03 = __esm({
       n03,
       _ARWWIRs,
       0,
-      [_C, _SFWIT, _ARU, _PPS, _Pr, _Au, _SI],
-      [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0]
+      [_C, _SFWIT, _ARU, _PPS, _Pr, _Au, _SI, _STU, _STS],
+      [[() => Credentials$, 0], 0, () => AssumedRoleUser$, 1, 0, 0, 0, 1, 1]
     ];
     Credentials$ = [
       3,
@@ -43814,10 +43817,10 @@ var init_schemas_04 = __esm({
     _tT2 = "tokenType";
     _tt = "token_type";
     n04 = "com.amazonaws.signin";
-    _s_registry4 = TypeRegistry.for(_s4);
+    _s_registry4 = new TypeRegistry(_s4);
     SigninServiceException$ = [-3, _s4, "SigninServiceException", 0, [], []];
     _s_registry4.registerError(SigninServiceException$, SigninServiceException);
-    n0_registry4 = TypeRegistry.for(n04);
+    n0_registry4 = new TypeRegistry(n04);
     AccessDeniedException$2 = [
       -3,
       n04,
@@ -45404,7 +45407,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1135.0";
+    var version = "3.1140.0";
     var packageInfo = {
       version
     };
@@ -45618,7 +45621,7 @@ var require_dist_cjs16 = __commonJS({
     var _JWTPSEE = "JWTPayloadSizeExceededException";
     var _K2 = "Key";
     var _MPDE2 = "MalformedPolicyDocumentException";
-    var _MSTS = "MinimumSessionTokenSize";
+    var _MSTS2 = "MinimumSessionTokenSize";
     var _N = "Name";
     var _NQ = "NameQualifier";
     var _OWIFDE = "OutboundWebIdentityFederationDisabledException";
@@ -45647,8 +45650,8 @@ var require_dist_cjs16 = __commonJS({
     var _SI2 = "SourceIdentity";
     var _SN2 = "SerialNumber";
     var _ST2 = "SubjectType";
-    var _STS = "SessionTokenSize";
-    var _STU = "SessionTokenUtilization";
+    var _STS2 = "SessionTokenSize";
+    var _STU2 = "SessionTokenUtilization";
     var _STe = "SessionToken";
     var _T2 = "Tags";
     var _TC2 = "TokenCode";
@@ -45674,10 +45677,10 @@ var require_dist_cjs16 = __commonJS({
     var _tLT2 = "tagListType";
     var _wITT = "webIdentityTokenType";
     var n05 = "com.amazonaws.sts";
-    var _s_registry5 = TypeRegistry2.for(_s5);
+    var _s_registry5 = new TypeRegistry2(_s5);
     var STSServiceException$2 = [-3, _s5, "STSServiceException", 0, [], []];
     _s_registry5.registerError(STSServiceException$2, STSServiceException2);
-    var n0_registry5 = TypeRegistry2.for(n05);
+    var n0_registry5 = new TypeRegistry2(n05);
     var ExpiredTokenException$3 = [
       -3,
       n05,
@@ -45809,7 +45812,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARR2,
       0,
-      [_RA2, _RSN2, _PA2, _P2, _DS2, _T2, _TTK2, _EI2, _SN2, _TC2, _SI2, _PC2, _MSTS],
+      [_RA2, _RSN2, _PA2, _P2, _DS2, _T2, _TTK2, _EI2, _SN2, _TC2, _SI2, _PC2, _MSTS2],
       [0, 0, () => policyDescriptorListType2, 0, 1, () => tagListType2, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType2, 1],
       2
     ];
@@ -45818,7 +45821,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARRs2,
       0,
-      [_C2, _ARU2, _PPS2, _SI2, _STU, _STS],
+      [_C2, _ARU2, _PPS2, _SI2, _STU2, _STS2],
       [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 1, 1]
     ];
     var AssumeRoleWithSAMLRequest$ = [
@@ -45826,7 +45829,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWSAMLR,
       0,
-      [_RA2, _PAr2, _SAMLA, _PA2, _P2, _DS2, _MSTS],
+      [_RA2, _PAr2, _SAMLA, _PA2, _P2, _DS2, _MSTS2],
       [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType2, 0, 1, 1],
       3
     ];
@@ -45835,7 +45838,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWSAMLRs,
       0,
-      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2, _STU, _STS],
+      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2, _STU2, _STS2],
       [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0, 1, 1]
     ];
     var AssumeRoleWithWebIdentityRequest$2 = [
@@ -45843,7 +45846,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWWIR2,
       0,
-      [_RA2, _RSN2, _WIT2, _PI2, _PA2, _P2, _DS2, _MSTS],
+      [_RA2, _RSN2, _WIT2, _PI2, _PA2, _P2, _DS2, _MSTS2],
       [0, 0, [() => clientTokenType2, 0], 0, () => policyDescriptorListType2, 0, 1, 1],
       3
     ];
@@ -45852,7 +45855,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWWIRs2,
       0,
-      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2, _STU, _STS],
+      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2, _STU2, _STS2],
       [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0, 1, 1]
     ];
     var AssumeRootRequest$ = [
@@ -45860,7 +45863,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARRss,
       0,
-      [_TP, _TPA, _DS2, _MSTS],
+      [_TP, _TPA, _DS2, _MSTS2],
       [0, () => PolicyDescriptorType$2, 1, 1],
       2
     ];
@@ -45869,7 +45872,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARRssu,
       0,
-      [_C2, _SI2, _STU, _STS],
+      [_C2, _SI2, _STU2, _STS2],
       [[() => Credentials$2, 0], 0, 1, 1]
     ];
     var Credentials$2 = [
@@ -45962,7 +45965,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GFTR,
       0,
-      [_N, _P2, _PA2, _DS2, _T2, _MSTS],
+      [_N, _P2, _PA2, _DS2, _T2, _MSTS2],
       [0, 0, () => policyDescriptorListType2, 1, () => tagListType2, 1],
       1
     ];
@@ -45971,7 +45974,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GFTRe,
       0,
-      [_C2, _FU, _PPS2, _STU, _STS],
+      [_C2, _FU, _PPS2, _STU2, _STS2],
       [[() => Credentials$2, 0], () => FederatedUser$, 1, 1, 1]
     ];
     var GetSessionTokenRequest$ = [
@@ -45979,7 +45982,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GSTR,
       0,
-      [_DS2, _SN2, _TC2, _MSTS],
+      [_DS2, _SN2, _TC2, _MSTS2],
       [1, 0, 0, 1]
     ];
     var GetSessionTokenResponse$ = [
@@ -45987,7 +45990,7 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GSTRe,
       0,
-      [_C2, _STU, _STS],
+      [_C2, _STU2, _STS2],
       [[() => Credentials$2, 0], 1, 1]
     ];
     var GetWebIdentityTokenRequest$ = [
