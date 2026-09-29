@@ -433,8 +433,8 @@ Apache License
 The following npm packages may be included in this product:
 
  - @aws-sdk/signature-v4-multi-region@3.996.46
- - @smithy/core@3.33.3
- - @smithy/types@4.18.0
+ - @smithy/core@3.35.0
+ - @smithy/types@4.19.0
 
 These packages each contain the following license:
 
@@ -832,7 +832,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.978.0
+ - @aws-sdk/core@3.978.1
 
 This package contains the following license:
 
@@ -1042,16 +1042,16 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.71
+ - @aws-sdk/credential-provider-env@3.972.72
  - @aws-sdk/credential-provider-ini@3.973.16
  - @aws-sdk/credential-provider-node@3.972.83
  - @aws-sdk/token-providers@3.1129.0
- - @aws-sdk/types@3.974.5
- - @aws-sdk/xml-builder@3.972.40
+ - @aws-sdk/types@3.974.6
+ - @aws-sdk/xml-builder@3.972.41
  - @smithy/credential-provider-imds@4.5.2
  - @smithy/fetch-http-handler@5.7.2
  - @smithy/node-http-handler@4.12.1
- - @smithy/signature-v4@5.6.12
+ - @smithy/signature-v4@5.7.4
 
 These packages each contain the following license:
 
