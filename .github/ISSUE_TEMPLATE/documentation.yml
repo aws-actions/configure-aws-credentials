@@ -1,8 +1,8 @@
 ---
 name: "📕 Documentation Issue"
-description: Report an issue in the README or a suggestion to improve documentation
+description: Report an issue in documentation
 title: "short issue description"
-labels: [documentation, needs-triage]
+labels: [documentation, needs-triage, bug]
 assignees: []
 body:
   - type: textarea
