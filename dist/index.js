@@ -19483,7 +19483,7 @@ var require_dist_cjs = __commonJS({
       FieldPosition3[FieldPosition3["HEADER"] = 0] = "HEADER";
       FieldPosition3[FieldPosition3["TRAILER"] = 1] = "TRAILER";
     })(FieldPosition2 || (FieldPosition2 = {}));
-    var SMITHY_CONTEXT_KEY3 = "__smithy_context";
+    var SMITHY_CONTEXT_KEY4 = "__smithy_context";
     var IniSectionType4;
     (function(IniSectionType5) {
       IniSectionType5["PROFILE"] = "profile";
@@ -19503,7 +19503,7 @@ var require_dist_cjs = __commonJS({
     exports2.HttpAuthLocation = HttpAuthLocation;
     exports2.IniSectionType = IniSectionType4;
     exports2.RequestHandlerProtocol = RequestHandlerProtocol;
-    exports2.SMITHY_CONTEXT_KEY = SMITHY_CONTEXT_KEY3;
+    exports2.SMITHY_CONTEXT_KEY = SMITHY_CONTEXT_KEY4;
     exports2.getDefaultClientConfiguration = getDefaultClientConfiguration2;
     exports2.resolveDefaultRuntimeConfig = resolveDefaultRuntimeConfig2;
   }
@@ -32726,16 +32726,22 @@ var init_utils3 = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js
-var throwSigningPropertyError, validateSigningProperties, AwsSdkSigV4Signer, AWSSDKSigV4Signer;
+var import_types25, throwSigningPropertyError, hasEventStreamOutput, validateSigningProperties, AwsSdkSigV4Signer, AWSSDKSigV4Signer;
 var init_AwsSdkSigV4Signer = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js"() {
     init_protocols();
+    import_types25 = __toESM(require_dist_cjs());
     init_utils3();
     throwSigningPropertyError = (name, property) => {
       if (!property) {
         throw new Error(`Property \`${name}\` is not resolved for AWS SDK SigV4Auth`);
       }
       return property;
+    };
+    hasEventStreamOutput = (signingProperties) => {
+      const context = signingProperties.context;
+      const eventStream = context?.[import_types25.SMITHY_CONTEXT_KEY]?.eventStream;
+      return eventStream?.output === true;
     };
     validateSigningProperties = async (signingProperties) => {
       const context = throwSigningPropertyError("context", signingProperties.context);
@@ -32772,7 +32778,9 @@ var init_AwsSdkSigV4Signer = __esm({
         }
         const noSkewCorrection = await config.disableClockSkewCorrection?.() === true;
         signingProperties._disableClockSkewCorrection = noSkewCorrection;
-        if (!noSkewCorrection) {
+        const skipSkewSampling = noSkewCorrection || hasEventStreamOutput(signingProperties);
+        signingProperties._skipClockSkewSampling = skipSkewSampling;
+        if (!skipSkewSampling) {
           signingProperties._preRequestSystemClockOffset = config.systemClockOffset;
           signingProperties._requestSentAt = Date.now();
         }
@@ -32786,7 +32794,7 @@ var init_AwsSdkSigV4Signer = __esm({
       errorHandler(signingProperties) {
         return (error3) => {
           const errorException = error3;
-          if (!signingProperties._disableClockSkewCorrection) {
+          if (!signingProperties._skipClockSkewSampling && !signingProperties._disableClockSkewCorrection) {
             const serverTime = errorException.ServerTime ?? getDateHeader(errorException.$response);
             if (serverTime) {
               const config = throwSigningPropertyError("config", signingProperties.config);
@@ -32807,7 +32815,7 @@ var init_AwsSdkSigV4Signer = __esm({
         };
       }
       successHandler(httpResponse, signingProperties) {
-        if (signingProperties._disableClockSkewCorrection) {
+        if (signingProperties._skipClockSkewSampling || signingProperties._disableClockSkewCorrection) {
           return;
         }
         const dateHeader = getDateHeader(httpResponse);
@@ -35265,7 +35273,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.47",
+      version: "3.997.48",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -35365,7 +35373,7 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.978.2",
+        "@aws-sdk/core": "^3.978.3",
         "@aws-sdk/signature-v4-multi-region": "^3.996.48",
         "@aws-sdk/types": "^3.974.6",
         "@smithy/core": "^3.35.2",
@@ -45459,7 +45467,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1148.0";
+    var version = "3.1151.0";
     var packageInfo = {
       version
     };
