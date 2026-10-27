@@ -49769,10 +49769,10 @@ var require_common2 = __commonJS({
     }
     function testBit(binaryValue, position) {
       const { length } = binaryValue;
-      if (position > length) {
+      if (position >= length) {
         return false;
       }
-      const positionInString = length - position;
+      const positionInString = length - position - 1;
       return binaryValue.substring(positionInString, positionInString + 1) === "1";
     }
   }
@@ -50030,6 +50030,10 @@ var require_ipv4 = __commonJS({
        * address.correctForm(); // '192.0.2.42'
        */
       static fromArpa(arpaFormAddress) {
+        const longest = constants4.GROUPS * 4 - 1 + "/32".length + ".in-addr.arpa.".length;
+        if (arpaFormAddress.length > longest) {
+          throw new address_error_1.AddressError(`in-addr.arpa names are at most ${longest} characters.`);
+        }
         const leader = arpaFormAddress.replace(/(\.in-addr\.arpa)?\.?$/i, "");
         const address = leader.split(".").reverse().join(".");
         return new _Address4(address);
@@ -50713,10 +50717,10 @@ var require_ipv6 = __commonJS({
         if (/\//.test(address)) {
           throw new address_error_1.AddressError("Invalid subnet mask.");
         }
-        const zone = constants6.RE_ZONE_STRING.exec(address);
-        if (zone) {
-          this.zone = zone[0];
-          address = address.replace(constants6.RE_ZONE_STRING, "");
+        const zoneStart = address.indexOf("%");
+        if (zoneStart !== -1 && /^.*$/.test(address.slice(zoneStart))) {
+          this.zone = address.slice(zoneStart);
+          address = address.slice(0, zoneStart);
         }
         const longest = this.groups * 5 + 5;
         if (address.length > longest) {
