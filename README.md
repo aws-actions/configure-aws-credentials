@@ -107,7 +107,7 @@ below).
 [env]:
   https://docs.aws.amazon.com/sdkref/latest/guide/settings-reference.html#EVarSettings
 [gh-security]:
-  https://docs.github.com/en/actions/security-guides/security-best-practices-for-github-actions
+  https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions
 
 ## Non-OIDC Authentication Options
 
