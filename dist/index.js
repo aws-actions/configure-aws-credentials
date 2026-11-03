@@ -32158,8 +32158,9 @@ var init_hostHeaderMiddleware = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-host-header/hostHeaderMiddleware.js"() {
     init_protocols();
     hostHeaderMiddleware = (options) => (next) => async (args) => {
-      if (!HttpRequest.isInstance(args.request))
+      if (!HttpRequest.isInstance(args.request)) {
         return next(args);
+      }
       const { request } = args;
       const { handlerProtocol = "" } = options.requestHandler.metadata || {};
       if (handlerProtocol.indexOf("h2") >= 0 && !request.headers[":authority"]) {
@@ -32167,8 +32168,9 @@ var init_hostHeaderMiddleware = __esm({
         request.headers[":authority"] = request.hostname + (request.port ? ":" + request.port : "");
       } else if (!request.headers["host"]) {
         let host = request.hostname;
-        if (request.port != null)
+        if (request.port != null) {
           host += `:${request.port}`;
+        }
         request.headers["host"] = host;
       }
       return next(args);
@@ -34414,27 +34416,36 @@ var init_defaultUserAgent2 = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/defaultUserAgent.js"() {
     fallback = {
       os(ua) {
-        if (/iPhone|iPad|iPod/.test(ua))
+        if (/iPhone|iPad|iPod/.test(ua)) {
           return "iOS";
-        if (/Macintosh|Mac OS X/.test(ua))
+        }
+        if (/Macintosh|Mac OS X/.test(ua)) {
           return "macOS";
-        if (/Windows NT/.test(ua))
+        }
+        if (/Windows NT/.test(ua)) {
           return "Windows";
-        if (/Android/.test(ua))
+        }
+        if (/Android/.test(ua)) {
           return "Android";
-        if (/Linux/.test(ua))
+        }
+        if (/Linux/.test(ua)) {
           return "Linux";
+        }
         return void 0;
       },
       browser(ua) {
-        if (/EdgiOS|EdgA|Edg\//.test(ua))
+        if (/EdgiOS|EdgA|Edg\//.test(ua)) {
           return "Microsoft Edge";
-        if (/Firefox\//.test(ua))
+        }
+        if (/Firefox\//.test(ua)) {
           return "Firefox";
-        if (/Chrome\//.test(ua))
+        }
+        if (/Chrome\//.test(ua)) {
           return "Chrome";
-        if (/Safari\//.test(ua))
+        }
+        if (/Safari\//.test(ua)) {
           return "Safari";
+        }
         return void 0;
       }
     };
@@ -34488,11 +34499,13 @@ var init_parseArn = __esm({
     RESOURCE_DELIMITER = "/";
     parseArn = (value) => {
       const segments = value.split(ARN_DELIMITER);
-      if (segments.length < 6)
+      if (segments.length < 6) {
         return null;
+      }
       const [arn, partition2, service, region, accountId, ...resourcePath] = segments;
-      if (arn !== "arn" || partition2 === "" || service === "" || resourcePath.join(ARN_DELIMITER) === "")
+      if (arn !== "arn" || partition2 === "" || service === "" || resourcePath.join(ARN_DELIMITER) === "") {
         return null;
+      }
       const resourceId = resourcePath.map((resource) => resource.split(RESOURCE_DELIMITER)).flat();
       return {
         partition: partition2,
@@ -34731,8 +34744,7 @@ var init_getUpdatedSystemClockOffset = __esm({
       if (timeRequestSent !== void 0 && timeResponseReceived - timeRequestSent > 9e5) {
         return currentSystemClockOffset;
       }
-      const candidateSkew = timeRequestSent !== void 0 ? serverTime - (timeRequestSent + timeResponseReceived) / 2 : serverTime - timeResponseReceived;
-      return candidateSkew;
+      return serverTime - timeResponseReceived;
     };
   }
 });
@@ -34912,16 +34924,19 @@ var init_NODE_AUTH_SCHEME_PREFERENCE_OPTIONS = __esm({
       environmentVariableSelector: (env2, options) => {
         if (options?.signingName) {
           const bearerTokenKey = getBearerTokenEnvKey(options.signingName);
-          if (bearerTokenKey in env2)
+          if (bearerTokenKey in env2) {
             return ["httpBearerAuth"];
+          }
         }
-        if (!(NODE_AUTH_SCHEME_PREFERENCE_ENV_KEY in env2))
+        if (!(NODE_AUTH_SCHEME_PREFERENCE_ENV_KEY in env2)) {
           return void 0;
+        }
         return getArrayForCommaSeparatedString(env2[NODE_AUTH_SCHEME_PREFERENCE_ENV_KEY]);
       },
       configFileSelector: (profile) => {
-        if (!(NODE_AUTH_SCHEME_PREFERENCE_CONFIG_KEY in profile))
+        if (!(NODE_AUTH_SCHEME_PREFERENCE_CONFIG_KEY in profile)) {
           return void 0;
+        }
         return getArrayForCommaSeparatedString(profile[NODE_AUTH_SCHEME_PREFERENCE_CONFIG_KEY]);
       },
       default: []
@@ -34964,15 +34979,16 @@ var init_resolveAwsSdkSigV4AConfig = __esm({
 // node_modules/@smithy/signature-v4/dist-cjs/index.js
 var require_dist_cjs2 = __commonJS({
   "node_modules/@smithy/signature-v4/dist-cjs/index.js"(exports2) {
-    var { hasOwn: hasOwn2, fromUtf8: fromUtf83, fromHex: fromHex2, toHex: toHex2, toUint8Array: toUint8Array2, isArrayBuffer: isArrayBuffer2 } = (init_serde(), __toCommonJS(serde_exports));
+    var { hasOwn: hasOwn2, fromUtf8: fromUtf83, fromHex: fromHex2, toHex: toHex2, toUint8Array: toUint8Array2, writeKey: writeKey3, isArrayBuffer: isArrayBuffer2 } = (init_serde(), __toCommonJS(serde_exports));
     var { normalizeProvider: normalizeProvider3 } = (init_client2(), __toCommonJS(client_exports));
     var { escapeUri: escapeUri2, HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var HeaderFormatter = class {
       format(headers) {
         const chunks = [];
         for (const headerName in headers) {
-          if (!hasOwn2(headers, headerName))
+          if (!hasOwn2(headers, headerName)) {
             continue;
+          }
           const bytes = fromUtf83(headerName);
           chunks.push(Uint8Array.from([bytes.byteLength]), bytes, this.formatHeaderValue(headers[headerName]));
         }
@@ -35089,8 +35105,9 @@ var require_dist_cjs2 = __commonJS({
       }
       for (let i5 = 7; i5 > -1; i5--) {
         bytes[i5]++;
-        if (bytes[i5] !== 0)
+        if (bytes[i5] !== 0) {
           break;
+        }
       }
     }
     var ALGORITHM_QUERY_PARAM = "X-Amz-Algorithm";
@@ -35140,8 +35157,9 @@ var require_dist_cjs2 = __commonJS({
       const keys = [];
       const serialized = {};
       for (const key in query) {
-        if (!hasOwn2(query, key))
+        if (!hasOwn2(query, key)) {
           continue;
+        }
         if (key.toLowerCase() === SIGNATURE_HEADER) {
           continue;
         }
@@ -35207,10 +35225,12 @@ ${toHex2(hashedRequest)}`;
         if (this.uriEscapePath) {
           const normalizedPathSegments = [];
           for (const pathSegment of path4.split("/")) {
-            if (pathSegment?.length === 0)
+            if (pathSegment?.length === 0) {
               continue;
-            if (pathSegment === ".")
+            }
+            if (pathSegment === ".") {
               continue;
+            }
             if (pathSegment === "..") {
               normalizedPathSegments.pop();
             } else {
@@ -35276,10 +35296,13 @@ ${toHex2(hashedRequest)}`;
           continue;
         }
         const canonicalHeaderName = headerName.toLowerCase();
-        if (canonicalHeaderName in ALWAYS_UNSIGNABLE_HEADERS || unsignableHeaders?.has(canonicalHeaderName) || PROXY_HEADER_PATTERN.test(canonicalHeaderName) || SEC_HEADER_PATTERN.test(canonicalHeaderName)) {
+        if (hasOwn2(ALWAYS_UNSIGNABLE_HEADERS, canonicalHeaderName) || unsignableHeaders?.has(canonicalHeaderName) || PROXY_HEADER_PATTERN.test(canonicalHeaderName) || SEC_HEADER_PATTERN.test(canonicalHeaderName)) {
           if (!signableHeaders || signableHeaders && !signableHeaders.has(canonicalHeaderName)) {
             continue;
           }
+        }
+        if (canonicalHeaderName === "__proto__") {
+          writeKey3(canonical);
         }
         canonical[canonicalHeaderName] = headers[headerName].replace(/[\r\n]/g, " ").replace(/[ \t]+/g, " ").replace(/^ | $/g, "");
       }
@@ -35287,8 +35310,9 @@ ${toHex2(hashedRequest)}`;
     };
     var getPayloadHash = async ({ headers, body }, hashConstructor) => {
       for (const headerName in headers) {
-        if (!hasOwn2(headers, headerName))
+        if (!hasOwn2(headers, headerName)) {
           continue;
+        }
         if (headerName.toLowerCase() === SHA256_HEADER) {
           return headers[headerName];
         }
@@ -35305,8 +35329,9 @@ ${toHex2(hashedRequest)}`;
     var hasHeader = (soughtHeader, headers) => {
       soughtHeader = soughtHeader.toLowerCase();
       for (const headerName in headers) {
-        if (!hasOwn2(headers, headerName))
+        if (!hasOwn2(headers, headerName)) {
           continue;
+        }
         if (soughtHeader === headerName.toLowerCase()) {
           return true;
         }
@@ -35316,8 +35341,9 @@ ${toHex2(hashedRequest)}`;
     var moveHeadersToQuery = (request, options = {}) => {
       const { headers, query = {} } = HttpRequest2.clone(request);
       for (const name in headers) {
-        if (!hasOwn2(headers, name))
+        if (!hasOwn2(headers, name)) {
           continue;
+        }
         const lname = name.toLowerCase();
         if (lname.slice(0, 6) === "x-amz-" && !options.unhoistableHeaders?.has(lname) || options.hoistableHeaders?.has(lname)) {
           query[name] = headers[name];
@@ -35333,8 +35359,9 @@ ${toHex2(hashedRequest)}`;
     var prepareRequest = (request) => {
       request = HttpRequest2.clone(request);
       for (const headerName in request.headers) {
-        if (!hasOwn2(request.headers, headerName))
+        if (!hasOwn2(request.headers, headerName)) {
           continue;
+        }
         if (GENERATED_HEADERS.indexOf(headerName.toLowerCase()) > -1) {
           delete request.headers[headerName];
         }
@@ -39292,6 +39319,64 @@ var init_AwsRestJsonProtocol = __esm({
   }
 });
 
+// node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsSmithyRpcV2JsonProtocol.js
+var AwsSmithyRpcV2JsonProtocol;
+var init_AwsSmithyRpcV2JsonProtocol = __esm({
+  "node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsSmithyRpcV2JsonProtocol.js"() {
+    init_protocols();
+    init_schema();
+    init_ProtocolLib();
+    AwsSmithyRpcV2JsonProtocol = class extends SmithyRpcV2JsonProtocol {
+      awsQueryCompatible;
+      mixin;
+      constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5, awsQueryCompatible }) {
+        super({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5 });
+        this.awsQueryCompatible = !!awsQueryCompatible;
+        this.mixin = new ProtocolLib(this.awsQueryCompatible);
+      }
+      async serializeRequest(operationSchema, input, context) {
+        const request = await super.serializeRequest(operationSchema, input, context);
+        if (this.awsQueryCompatible) {
+          request.headers["x-amzn-query-mode"] = "true";
+        }
+        return request;
+      }
+      async handleError(operationSchema, context, response, dataObject, metadata) {
+        if (this.awsQueryCompatible) {
+          this.mixin.setQueryCompatError(dataObject, response);
+        }
+        const errorName = (() => {
+          const compatHeader = response.headers["x-amzn-query-error"];
+          if (compatHeader && this.awsQueryCompatible) {
+            return compatHeader.split(";")[0];
+          }
+          return loadSmithyRpcV2JsonErrorCode(response, dataObject) ?? "Unknown";
+        })();
+        this.mixin.compose(this.compositeErrorRegistry, errorName, this.options.defaultNamespace);
+        const { errorSchema, errorMetadata } = await this.mixin.getErrorSchemaOrThrowBaseException(errorName, this.options.defaultNamespace, response, dataObject, metadata, this.awsQueryCompatible ? this.mixin.findQueryCompatibleError : void 0);
+        const ns = NormalizedSchema.of(errorSchema);
+        const message = dataObject.message ?? dataObject.Message ?? "UnknownError";
+        const ErrorCtor = this.compositeErrorRegistry.getErrorCtor(errorSchema) ?? Error;
+        const exception = new ErrorCtor({});
+        const output = {};
+        const errorDeserializer = this.getPayloadCodec().createDeserializer();
+        for (const [name, member2] of ns.structIterator()) {
+          if (dataObject[name] != null) {
+            output[name] = errorDeserializer.readObject(member2, dataObject[name]);
+          }
+        }
+        if (this.awsQueryCompatible) {
+          this.mixin.queryCompatOutput(dataObject, output);
+        }
+        throw this.mixin.decorateServiceException(Object.assign(exception, errorMetadata, {
+          $fault: ns.getMergedTraits().error,
+          message
+        }, output), dataObject);
+      }
+    };
+  }
+});
+
 // node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
 var require_dist_cjs8 = __commonJS({
   "node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports2) {
@@ -40767,6 +40852,7 @@ __export(protocols_exports2, {
   AwsRestJsonProtocol: () => AwsRestJsonProtocol,
   AwsRestXmlProtocol: () => AwsRestXmlProtocol,
   AwsSmithyRpcV2CborProtocol: () => AwsSmithyRpcV2CborProtocol,
+  AwsSmithyRpcV2JsonProtocol: () => AwsSmithyRpcV2JsonProtocol,
   JsonCodec: () => JsonCodec,
   JsonCodec2: () => JsonCodec2,
   JsonShapeDeserializer: () => JsonShapeDeserializer,
@@ -40796,6 +40882,7 @@ var init_protocols2 = __esm({
     init_AwsJson1_1Protocol();
     init_AwsJsonRpcProtocol();
     init_AwsRestJsonProtocol();
+    init_AwsSmithyRpcV2JsonProtocol();
     init_protocols();
     init_AwsEc2QueryProtocol();
     init_AwsQueryProtocol();
