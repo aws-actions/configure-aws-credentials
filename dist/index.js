@@ -37371,7 +37371,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.50",
+      version: "3.997.54",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -37471,12 +37471,12 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.978.5",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.49",
+        "@aws-sdk/core": "^3.979.1",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.51",
         "@aws-sdk/types": "^3.975.0",
-        "@smithy/core": "^3.36.1",
+        "@smithy/core": "^3.38.0",
         "@smithy/fetch-http-handler": "^5.8.0",
-        "@smithy/node-http-handler": "^4.12.1",
+        "@smithy/node-http-handler": "^4.14.0",
         "@smithy/types": "^4.19.0",
         tslib: "^2.6.2"
       },
@@ -44874,6 +44874,13 @@ var init_enums2 = __esm({
       CONFLICT: "CONFLICT",
       INSUFFICIENT_PERMISSIONS: "INSUFFICIENT_PERMISSIONS",
       INVALID_REQUEST: "INVALID_REQUEST",
+      OAUTH_INVALID_GRANT: "invalid_grant",
+      OAUTH_INVALID_REQUEST: "invalid_request",
+      OAUTH_INVALID_SCOPE: "invalid_scope",
+      OAUTH_INVALID_TARGET: "invalid_target",
+      OAUTH_RATE_EXCEEDED: "rate_exceeded",
+      OAUTH_SERVICE_UNAVAILABLE: "service_unavailable",
+      OAUTH_UNSUPPORTED_GRANT_TYPE: "unsupported_grant_type",
       RESOURCE_NOT_FOUND: "RESOURCE_NOT_FOUND",
       SERVER_ERROR: "server_error",
       SERVICE_QUOTA_EXCEEDED: "SERVICE_QUOTA_EXCEEDED",
