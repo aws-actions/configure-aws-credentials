@@ -7,3 +7,8 @@ updates:
     day: tuesday
   open-pull-requests-limit: 10
   target-branch: 'main'
+  groups:
+    vitest:
+      patterns:
+      - vitest
+      - "@vitest/*"
