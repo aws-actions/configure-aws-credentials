@@ -19572,7 +19572,7 @@ var require_dist_cjs = __commonJS({
       FieldPosition3[FieldPosition3["HEADER"] = 0] = "HEADER";
       FieldPosition3[FieldPosition3["TRAILER"] = 1] = "TRAILER";
     })(FieldPosition2 || (FieldPosition2 = {}));
-    var SMITHY_CONTEXT_KEY4 = "__smithy_context";
+    var SMITHY_CONTEXT_KEY5 = "__smithy_context";
     var IniSectionType4;
     (function(IniSectionType5) {
       IniSectionType5["PROFILE"] = "profile";
@@ -19592,7 +19592,7 @@ var require_dist_cjs = __commonJS({
     exports2.HttpAuthLocation = HttpAuthLocation;
     exports2.IniSectionType = IniSectionType4;
     exports2.RequestHandlerProtocol = RequestHandlerProtocol;
-    exports2.SMITHY_CONTEXT_KEY = SMITHY_CONTEXT_KEY4;
+    exports2.SMITHY_CONTEXT_KEY = SMITHY_CONTEXT_KEY5;
     exports2.getDefaultClientConfiguration = getDefaultClientConfiguration2;
     exports2.resolveDefaultRuntimeConfig = resolveDefaultRuntimeConfig2;
   }
@@ -21042,7 +21042,8 @@ var init_command = __esm({
             ...additionalSmithyContext,
             commandInstance: this,
             ...smithyContext,
-            ...options?.metricsRecorder === void 0 ? {} : { metricsRecorder: options.metricsRecorder }
+            ...options?.metricsRecorder === void 0 ? {} : { metricsRecorder: options.metricsRecorder },
+            ...options?.abortSignal === void 0 ? {} : { abortSignal: options.abortSignal }
           }
         };
         const { requestHandler } = configuration;
@@ -31179,6 +31180,34 @@ var init_service_error_classification = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/race.js
+var race, createAbortError, isAbortError;
+var init_race = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/race.js"() {
+    race = (promise, signal) => {
+      if (!signal) {
+        return promise;
+      }
+      let cleanup = () => {
+      };
+      const aborted = new Promise((_, reject) => {
+        const handler = () => reject(createAbortError());
+        if (signal.aborted) {
+          handler();
+        } else if (typeof signal.addEventListener === "function") {
+          signal.addEventListener("abort", handler, { once: true });
+          cleanup = () => signal.removeEventListener("abort", handler);
+        } else {
+          signal.onabort = handler;
+        }
+      });
+      return Promise.race([promise, aborted]).finally(cleanup);
+    };
+    createAbortError = () => Object.assign(new Error("Request aborted"), { name: "AbortError" });
+    isAbortError = (error3) => typeof error3 === "object" && error3 !== null && "name" in error3 && error3.name === "AbortError";
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js
 var DEFAULT_RETRY_DELAY_BASE, MAXIMUM_RETRY_DELAY, THROTTLING_RETRY_DELAY_BASE, INITIAL_RETRY_TOKENS, RETRY_COST, TIMEOUT_RETRY_COST, NO_RETRY_INCREMENT, INVOCATION_ID_HEADER, REQUEST_HEADER;
 var init_constants5 = __esm({
@@ -31273,9 +31302,11 @@ function bindRetryMiddleware(isStreamingPayload2) {
   return (options) => (next, context) => async (args) => {
     let retryStrategy = await options.retryStrategy();
     const maxAttempts = await options.maxAttempts();
+    const abortSignal = context[import_types24.SMITHY_CONTEXT_KEY]?.abortSignal;
     if (isRetryStrategyV2(retryStrategy)) {
       retryStrategy = retryStrategy;
-      let retryToken = await retryStrategy.acquireInitialRetryToken((context["partition_id"] ?? "") + (context.__retryLongPoll ? ":longpoll" : ""));
+      const retryTokenScope = (context["partition_id"] ?? "") + (context.__retryLongPoll ? ":longpoll" : "");
+      let retryToken = await race(retryStrategy.acquireInitialRetryToken(retryTokenScope), abortSignal);
       let lastError = new Error();
       let attempts = 0;
       let totalRetryDelay = 0;
@@ -31302,8 +31333,11 @@ function bindRetryMiddleware(isStreamingPayload2) {
             throw lastError;
           }
           try {
-            retryToken = await retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo);
-          } catch (ignoredRefreshError) {
+            retryToken = await race(retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo), abortSignal);
+          } catch (refreshError) {
+            if (abortSignal?.aborted && isAbortError(refreshError)) {
+              throw refreshError;
+            }
             if (!lastError.$metadata) {
               lastError.$metadata = {};
             }
@@ -31315,7 +31349,7 @@ function bindRetryMiddleware(isStreamingPayload2) {
           const delay = retryToken.getRetryDelay();
           totalRetryDelay += (retryToken?.$retryLog?.acquisitionDelay ?? 0) + delay;
           if (delay > 0) {
-            await cooldown(delay);
+            await race(new Promise((resolve) => setTimeout(resolve, delay)), abortSignal);
           }
         }
       }
@@ -31336,17 +31370,18 @@ function bindGetRetryPlugin(isStreamingPayload2) {
     }
   });
 }
-var cooldown, isRetryStrategyV2, getRetryErrorInfo, getRetryErrorType, retryMiddlewareOptions;
+var import_types24, isRetryStrategyV2, getRetryErrorInfo, getRetryErrorType, retryMiddlewareOptions;
 var init_retryMiddleware = __esm({
   "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js"() {
     init_client2();
     init_protocols();
     init_serde();
+    import_types24 = __toESM(require_dist_cjs());
     init_service_error_classification();
+    init_race();
     init_constants5();
     init_parseRetryAfterHeader();
     init_util();
-    cooldown = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined";
     getRetryErrorInfo = (error3, logger2) => {
       const errorInfo = {
@@ -32771,11 +32806,11 @@ var init_DefaultIdentityProviderConfig = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js
-var import_types24, HttpApiKeyAuthSigner;
+var import_types25, HttpApiKeyAuthSigner;
 var init_httpApiKeyAuth = __esm({
   "node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js"() {
     init_protocols();
-    import_types24 = __toESM(require_dist_cjs());
+    import_types25 = __toESM(require_dist_cjs());
     HttpApiKeyAuthSigner = class {
       async sign(httpRequest, identity, signingProperties) {
         if (!signingProperties) {
@@ -32791,9 +32826,9 @@ var init_httpApiKeyAuth = __esm({
           throw new Error("request could not be signed with `apiKey` since the `apiKey` is not defined");
         }
         const clonedRequest = HttpRequest.clone(httpRequest);
-        if (signingProperties.in === import_types24.HttpApiKeyAuthLocation.QUERY) {
+        if (signingProperties.in === import_types25.HttpApiKeyAuthLocation.QUERY) {
           clonedRequest.query[signingProperties.name] = identity.apiKey;
-        } else if (signingProperties.in === import_types24.HttpApiKeyAuthLocation.HEADER) {
+        } else if (signingProperties.in === import_types25.HttpApiKeyAuthLocation.HEADER) {
           clonedRequest.headers[signingProperties.name] = signingProperties.scheme ? `${signingProperties.scheme} ${identity.apiKey}` : identity.apiKey;
         } else {
           throw new Error("request can only be signed with `apiKey` locations `query` or `header`, but found: `" + signingProperties.in + "`");
@@ -34778,11 +34813,11 @@ var init_utils3 = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js
-var import_types25, throwSigningPropertyError, hasEventStreamOutput, validateSigningProperties, AwsSdkSigV4Signer, AWSSDKSigV4Signer;
+var import_types26, throwSigningPropertyError, hasEventStreamOutput, validateSigningProperties, AwsSdkSigV4Signer, AWSSDKSigV4Signer;
 var init_AwsSdkSigV4Signer = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js"() {
     init_protocols();
-    import_types25 = __toESM(require_dist_cjs());
+    import_types26 = __toESM(require_dist_cjs());
     init_utils3();
     throwSigningPropertyError = (name, property) => {
       if (!property) {
@@ -34792,7 +34827,7 @@ var init_AwsSdkSigV4Signer = __esm({
     };
     hasEventStreamOutput = (signingProperties) => {
       const context = signingProperties.context;
-      const eventStream = context?.[import_types25.SMITHY_CONTEXT_KEY]?.eventStream;
+      const eventStream = context?.[import_types26.SMITHY_CONTEXT_KEY]?.eventStream;
       return eventStream?.output === true;
     };
     validateSigningProperties = async (signingProperties) => {
@@ -36394,38 +36429,39 @@ var require_dist_cjs6 = __commonJS({
       return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : void 0;
     };
     var DEFER_EVENT_LISTENER_TIME = 3e3;
-    var setSocketTimeout = (request, reject, timeoutInMs = 0, destroyResponseBodyOnTimeout = false) => {
-      let response;
-      if (destroyResponseBodyOnTimeout) {
-        request.once("response", (res) => response = res);
+    var setSocketTimeout = (request, reject, timeoutInMs = 0, isServiceDefault = false) => {
+      if (!Number.isFinite(timeoutInMs) || timeoutInMs <= 0) {
+        return;
       }
-      const registerTimeout = (offset) => {
-        const timeout = timeoutInMs - offset;
-        const onTimeout = () => {
-          const error3 = Object.assign(new Error(`@smithy/node-http-handler - the request socket timed out after ${timeoutInMs} ms of inactivity (${destroyResponseBodyOnTimeout ? "service default socket timeout" : "configured by client requestHandler"}).`), { name: "TimeoutError" });
-          if (destroyResponseBodyOnTimeout) {
-            response?.destroy(error3);
-          }
-          request.destroy();
-          reject(error3);
-        };
-        if (request.socket) {
-          request.socket.setTimeout(timeout, onTimeout);
-          request.on("close", () => request.socket?.removeListener("timeout", onTimeout));
+      let response;
+      request.once("response", (res) => response = res);
+      const onTimeout = () => {
+        if (response?.complete) {
+          request.socket?.destroy();
+          return;
+        }
+        const error3 = Object.assign(new Error(`@smithy/node-http-handler - the request socket timed out after ${timeoutInMs} ms of inactivity (${isServiceDefault ? "service default socket timeout" : "configured by client requestHandler"}).`), { name: "TimeoutError" });
+        response?.destroy(error3);
+        request.destroy();
+        reject(error3);
+      };
+      const registerTimeout = () => {
+        const { socket } = request;
+        if (!socket) {
+          request.once("socket", registerTimeout);
+        } else if (socket.connecting) {
+          socket.once("connect", registerTimeout);
         } else {
-          request.setTimeout(timeout, onTimeout);
+          socket.setTimeout(timeoutInMs, onTimeout);
+          request.on("close", () => socket.removeListener("timeout", onTimeout));
         }
       };
-      if (0 < timeoutInMs && timeoutInMs < 6e3) {
-        registerTimeout(0);
-        return 0;
+      if (timeoutInMs < 6e3) {
+        registerTimeout();
+        return;
       }
-      const deferralId = timing.setTimeout(registerTimeout.bind(null, timeoutInMs === 0 ? 0 : DEFER_EVENT_LISTENER_TIME), DEFER_EVENT_LISTENER_TIME);
-      if (destroyResponseBodyOnTimeout) {
-        request.once("close", () => timing.clearTimeout(deferralId));
-        return 0;
-      }
-      return deferralId;
+      const deferralId = timing.setTimeout(registerTimeout, DEFER_EVENT_LISTENER_TIME);
+      request.once("close", () => timing.clearTimeout(deferralId));
     };
     var MIN_WAIT_TIME = 6e3;
     async function writeRequestBody(httpRequest, request, maxContinueTimeoutMs = MIN_WAIT_TIME, externalAgent = false) {
@@ -36555,13 +36591,11 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           let socketWarningTimeoutId = -1;
           let connectionTimeoutId = -1;
           let requestTimeoutId = -1;
-          let socketTimeoutId = -1;
           let keepAliveTimeoutId = -1;
           const clearTimeouts = () => {
             timing.clearTimeout(socketWarningTimeoutId);
             timing.clearTimeout(connectionTimeoutId);
             timing.clearTimeout(requestTimeoutId);
-            timing.clearTimeout(socketTimeoutId);
             timing.clearTimeout(keepAliveTimeoutId);
           };
           const resolve = async (arg) => {
@@ -36656,9 +36690,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           requestTimeoutId = setRequestTimeout(req, reject, effectiveRequestTimeout, config.throwOnRequestTimeout, logger2 ?? console);
           const defaultSocketTimeout = config.socketTimeout === void 0 ? resolveDefaultSocketTimeout(config) : void 0;
           if (defaultSocketTimeout) {
-            socketTimeoutId = setSocketTimeout(req, reject, defaultSocketTimeout, true);
+            setSocketTimeout(req, reject, defaultSocketTimeout, true);
           } else {
-            socketTimeoutId = setSocketTimeout(req, reject, config.socketTimeout);
+            setSocketTimeout(req, reject, config.socketTimeout);
           }
           const httpAgent = nodeHttpsOptions.agent;
           if (typeof httpAgent === "object" && "keepAlive" in httpAgent) {
