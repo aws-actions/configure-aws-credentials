@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import type * as http from 'node:http';
 import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { Credentials, STSClient } from '@aws-sdk/client-sts';
@@ -214,6 +215,23 @@ export function maskProxyCredentials(proxyServer: string): void {
       // malformed percent-encoding; the raw form is already masked
     }
   }
+}
+
+// https-proxy-agent tunnels HTTPS requests through an HTTP proxy by issuing a
+// CONNECT request. These requests should always return 200. A non-200 success
+// reponse indicates proxy tampering or misconfiguration (or auth failure, but
+// we abort anyway).
+export function verifyProxyConnect(req: http.ClientRequest): void {
+  req.once('proxyConnect', (response: { statusCode: number; statusText: string }) => {
+    if (response.statusCode !== 200) {
+      const statusText = response.statusText ? ` ${response.statusText}` : '';
+      req.destroy(
+        new Error(
+          `Proxy CONNECT returned HTTP ${response.statusCode}${statusText}; aborting`,
+        ),
+      );
+    }
+  });
 }
 
 // Tags have a more restrictive set of acceptable characters than GitHub environment variables can.
