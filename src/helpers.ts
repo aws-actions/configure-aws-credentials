@@ -225,11 +225,7 @@ export function verifyProxyConnect(req: http.ClientRequest): void {
   req.once('proxyConnect', (response: { statusCode: number; statusText: string }) => {
     if (response.statusCode !== 200) {
       const statusText = response.statusText ? ` ${response.statusText}` : '';
-      req.destroy(
-        new Error(
-          `Proxy CONNECT returned HTTP ${response.statusCode}${statusText}; aborting`,
-        ),
-      );
+      req.destroy(new Error(`Proxy CONNECT returned HTTP ${response.statusCode}${statusText}; aborting`));
     }
   });
 }

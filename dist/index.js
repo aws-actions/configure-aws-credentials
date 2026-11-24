@@ -75468,11 +75468,7 @@ function verifyProxyConnect(req) {
   req.once("proxyConnect", (response) => {
     if (response.statusCode !== 200) {
       const statusText = response.statusText ? ` ${response.statusText}` : "";
-      req.destroy(
-        new Error(
-          `Proxy CONNECT returned HTTP ${response.statusCode}${statusText}; aborting`
-        )
-      );
+      req.destroy(new Error(`Proxy CONNECT returned HTTP ${response.statusCode}${statusText}; aborting`));
     }
   });
 }
