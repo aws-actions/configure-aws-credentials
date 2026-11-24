@@ -75464,6 +75464,14 @@ function maskProxyCredentials(proxyServer) {
     }
   }
 }
+function verifyProxyConnect(req) {
+  req.once("proxyConnect", (response) => {
+    if (response.statusCode !== 200) {
+      const statusText = response.statusText ? ` ${response.statusText}` : "";
+      req.destroy(new Error(`Proxy CONNECT returned HTTP ${response.statusCode}${statusText}; aborting`));
+    }
+  });
+}
 function sanitizeGitHubVariables(name) {
   const nameWithoutSpecialCharacters = name.replace(/[^\p{L}\p{Z}\p{N}_.:/=+\-@]/gu, SANITIZATION_CHARACTER);
   const nameTruncated = nameWithoutSpecialCharacters.slice(0, MAX_TAG_VALUE_LENGTH);
@@ -76991,8 +76999,12 @@ var DEFAULT_PORTS3 = {
 var ProxyResolver = class {
   constructor(options) {
     // This method matches the interface expected by 'proxy-agent'. It is an arrow function to bind 'this'.
-    this.getProxyForUrl = (url, _req) => {
-      return this.getProxyForUrlOptions(url, this.options);
+    // It is the only per-request hook proxy-agent exposes, so it is also where CONNECT enforcement is
+    // attached: proxy-agent calls it with the live request before the proxy connection is made.
+    this.getProxyForUrl = (url, req) => {
+      const proxy = this.getProxyForUrlOptions(url, this.options);
+      if (proxy) verifyProxyConnect(req);
+      return proxy;
     };
     this.options = options;
   }

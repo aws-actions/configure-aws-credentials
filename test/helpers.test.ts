@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+import type * as http from 'node:http';
 import * as core from '@actions/core';
 import { fs, vol } from 'memfs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -166,6 +168,39 @@ describe('Configure AWS Credentials helpers', {}, () => {
       expect(core.setSecret).toHaveBeenCalledWith('not a url');
       // no username/password parts, so exactly one mask per call
       expect(core.setSecret).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('verifyProxyConnect', {}, () => {
+    const makeReq = () => {
+      const req = new EventEmitter() as unknown as http.ClientRequest;
+      const destroy = vi.fn();
+      Object.assign(req, { destroy });
+      return { req, destroy };
+    };
+
+    it('destroys the request when the proxy CONNECT status is not 200', {}, () => {
+      const { req, destroy } = makeReq();
+      helpers.verifyProxyConnect(req);
+      req.emit('proxyConnect', { statusCode: 202, statusText: 'Accepted' });
+      expect(destroy).toHaveBeenCalledTimes(1);
+      const error = destroy.mock.calls[0][0] as Error;
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toMatch(/CONNECT returned HTTP 202 Accepted/);
+    });
+
+    it('leaves the request alone when the proxy CONNECT status is 200', {}, () => {
+      const { req, destroy } = makeReq();
+      helpers.verifyProxyConnect(req);
+      req.emit('proxyConnect', { statusCode: 200, statusText: 'Connection established' });
+      expect(destroy).not.toHaveBeenCalled();
+    });
+
+    it('omits the status text from the error when the proxy does not send one', {}, () => {
+      const { req, destroy } = makeReq();
+      helpers.verifyProxyConnect(req);
+      req.emit('proxyConnect', { statusCode: 407, statusText: '' });
+      expect((destroy.mock.calls[0][0] as Error).message).toMatch(/CONNECT returned HTTP 407;/);
     });
   });
 

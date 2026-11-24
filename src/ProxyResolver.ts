@@ -1,6 +1,7 @@
 // Based on https://github.com/Rob--W/proxy-from-env/tree/caf8c32301afdac8b5feaf346028bd8240690144
 // See https://github.com/Rob--W/proxy-from-env/blob/caf8c32301afdac8b5feaf346028bd8240690144/LICENSE
 import type * as http from 'node:http';
+import { verifyProxyConnect } from './helpers';
 
 const DEFAULT_PORTS: Record<string, number> = {
   http: 80,
@@ -19,8 +20,12 @@ export class ProxyResolver {
   }
 
   // This method matches the interface expected by 'proxy-agent'. It is an arrow function to bind 'this'.
-  public readonly getProxyForUrl = (url: string, _req: http.ClientRequest): string => {
-    return this.getProxyForUrlOptions(url, this.options);
+  // It is the only per-request hook proxy-agent exposes, so it is also where CONNECT enforcement is
+  // attached: proxy-agent calls it with the live request before the proxy connection is made.
+  public readonly getProxyForUrl = (url: string, req: http.ClientRequest): string => {
+    const proxy = this.getProxyForUrlOptions(url, this.options);
+    if (proxy) verifyProxyConnect(req);
+    return proxy;
   };
 
   private getProxyForUrlOptions(url: string | URL, options?: ProxyOptions): string {
