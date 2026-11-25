@@ -222,7 +222,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/client-sts@3.1164.0
+ - @aws-sdk/client-sts@3.1175.0
 
 This package contains the following license:
 
@@ -432,8 +432,8 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/signature-v4-multi-region@3.996.51
- - @smithy/core@3.39.0
+ - @aws-sdk/signature-v4-multi-region@3.996.52
+ - @smithy/core@3.41.0
  - @smithy/types@4.20.0
 
 These packages each contain the following license:
@@ -645,10 +645,10 @@ Apache License
 The following npm packages may be included in this product:
 
  - agent-base@9.0.0
- - degenerator@7.0.1
+ - degenerator@7.0.2
  - https-proxy-agent@9.1.0
- - pac-resolver@9.0.1
- - proxy-agent@8.0.2
+ - pac-resolver@9.0.2
+ - proxy-agent@8.0.3
  - socks-proxy-agent@10.1.0
 
 These packages each contain the following license:
@@ -712,7 +712,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 The following npm packages may be included in this product:
 
  - data-uri-to-buffer@8.0.0
- - get-uri@8.0.1
+ - get-uri@8.0.2
 
 These packages each contain the following license:
 
@@ -743,7 +743,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - pac-proxy-agent@9.1.0
+ - pac-proxy-agent@9.1.1
 
 This package contains the following license:
 
@@ -832,7 +832,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - @aws-sdk/core@3.980.1
+ - @aws-sdk/core@3.981.1
 
 This package contains the following license:
 
@@ -1042,14 +1042,14 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-env@3.972.82
- - @aws-sdk/credential-provider-ini@3.973.27
- - @aws-sdk/credential-provider-node@3.972.94
- - @aws-sdk/token-providers@3.1164.0
- - @aws-sdk/types@3.975.0
- - @aws-sdk/xml-builder@3.972.42
+ - @aws-sdk/credential-provider-env@3.972.85
+ - @aws-sdk/credential-provider-ini@3.973.31
+ - @aws-sdk/credential-provider-node@3.972.98
+ - @aws-sdk/token-providers@3.1175.0
+ - @aws-sdk/types@3.975.1
+ - @aws-sdk/xml-builder@3.972.43
  - @smithy/credential-provider-imds@4.5.2
- - @smithy/fetch-http-handler@5.8.0
+ - @smithy/fetch-http-handler@5.8.1
  - @smithy/node-http-handler@4.14.2
  - @smithy/signature-v4@5.7.5
 
@@ -1261,9 +1261,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-process@3.972.82
- - @aws-sdk/credential-provider-sso@3.973.26
- - @aws-sdk/credential-provider-web-identity@3.972.88
+ - @aws-sdk/credential-provider-process@3.972.85
+ - @aws-sdk/credential-provider-sso@3.973.29
+ - @aws-sdk/credential-provider-web-identity@3.972.91
 
 These packages each contain the following license:
 
@@ -1473,9 +1473,9 @@ Apache License
 
 The following npm packages may be included in this product:
 
- - @aws-sdk/credential-provider-http@3.972.84
- - @aws-sdk/credential-provider-login@3.972.89
- - @aws-sdk/nested-clients@3.998.1
+ - @aws-sdk/credential-provider-http@3.972.87
+ - @aws-sdk/credential-provider-login@3.972.93
+ - @aws-sdk/nested-clients@3.998.4
 
 These packages each contain the following license:
 
@@ -1572,7 +1572,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - basic-ftp@5.3.1
+ - basic-ftp@6.2.6
 
 This package contains the following license:
 
@@ -1697,12 +1697,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -----------
 
-The following npm packages may be included in this product:
+The following npm package may be included in this product:
 
  - proxy-agent-negotiate@1.1.0
- - quickjs-wasi@2.2.0
 
-These packages each contain the following license:
+This package contains the following license:
 
 MIT
 
@@ -1710,7 +1709,7 @@ MIT
 
 The following npm package may be included in this product:
 
- - netmask@2.1.1
+ - netmask@2.1.2
 
 This package contains the following license:
 
@@ -1735,6 +1734,36 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-----------
+
+The following npm package may be included in this product:
+
+ - quickjs-wasi@3.7.0
+
+This package contains the following license:
+
+MIT License
+
+Copyright (c) 2026 Vercel, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 -----------
 

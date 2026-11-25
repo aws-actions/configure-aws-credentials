@@ -17,27 +17,27 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/credential-provider-env": "^3.972.80",
-    "@biomejs/biome": "2.6.6",
+    "@aws-sdk/credential-provider-env": "^3.972.85",
+    "@biomejs/biome": "2.6.8",
     "@smithy/property-provider": "^4.5.2",
     "@types/node": "^26.6.6",
-    "@vitest/coverage-v8": "5.1.0",
+    "@vitest/coverage-v8": "5.1.1",
     "aws-sdk-client-mock": "^4.1.0",
     "esbuild": "^0.28.2",
     "generate-license-file": "^4.2.5",
     "json-schema": "^0.4.0",
     "markdownlint-cli": "^0.50.0",
-    "memfs": "^4.80.0",
+    "memfs": "^4.80.1",
     "standard-version": "^9.5.0",
     "typescript": "^7.0.2",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   },
   "dependencies": {
     "@actions/core": "^3.0.1",
-    "@aws-sdk/client-sts": "^3.1164.0",
+    "@aws-sdk/client-sts": "^3.1175.0",
     "@aws-sdk/credential-provider-node": "^3.972.92",
     "@smithy/node-http-handler": "^4.14.2",
-    "proxy-agent": "^8.0.2"
+    "proxy-agent": "^8.0.3"
   },
   "keywords": [
     "aws",

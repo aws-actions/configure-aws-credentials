@@ -19222,286 +19222,203 @@ var init_setCredentialFeature = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js
-var import_node_stream, isStreamingPayload;
-var init_isStreamingPayload = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js"() {
-    import_node_stream = require("node:stream");
-    isStreamingPayload = (request) => request?.body instanceof import_node_stream.Readable || typeof ReadableStream !== "undefined" && request?.body instanceof ReadableStream;
+// node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js
+function setFeature(context, feature, value) {
+  if (!context.__aws_sdk_context) {
+    context.__aws_sdk_context = {
+      features: {}
+    };
+  } else if (!context.__aws_sdk_context.features) {
+    context.__aws_sdk_context.features = {};
+  }
+  context.__aws_sdk_context.features[feature] = value;
+}
+var init_setFeature = __esm({
+  "node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js"() {
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js
-var getAllAliases, getMiddlewareNameWithAliases, constructStack, stepWeights, priorityWeights;
-var init_MiddlewareStack = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js"() {
-    getAllAliases = (name, aliases) => {
-      const _aliases = [];
-      if (name) {
-        _aliases.push(name);
+// node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js
+function setTokenFeature(token, feature, value) {
+  if (!token.$source) {
+    token.$source = {};
+  }
+  token.$source[feature] = value;
+  return token;
+}
+var init_setTokenFeature = __esm({
+  "node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js"() {
+  }
+});
+
+// node_modules/@aws-sdk/core/dist-es/submodules/client/getDefaultSocketTimeout.js
+var isDefaultSocketTimeoutEnabled, getDefaultSocketTimeout;
+var init_getDefaultSocketTimeout = __esm({
+  "node_modules/@aws-sdk/core/dist-es/submodules/client/getDefaultSocketTimeout.js"() {
+    isDefaultSocketTimeoutEnabled = () => typeof process === "object" && process?.env?.AWS_ENABLE_DEFAULT_SOCKET_TIMEOUT_2026 === "true";
+    getDefaultSocketTimeout = (requestHandler, timeoutMs) => {
+      if (!isDefaultSocketTimeoutEnabled()) {
+        return void 0;
       }
-      if (aliases) {
-        for (const alias of aliases) {
-          _aliases.push(alias);
-        }
+      if (typeof requestHandler?.handle === "function") {
+        return void 0;
       }
-      return _aliases;
+      return timeoutMs;
     };
-    getMiddlewareNameWithAliases = (name, aliases) => {
-      return `${name || "anonymous"}${aliases && aliases.length > 0 ? ` (a.k.a. ${aliases.join(",")})` : ""}`;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js
+var isArrayBuffer;
+var init_is_array_buffer = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js"() {
+    isArrayBuffer = (arg) => typeof ArrayBuffer === "function" && arg instanceof ArrayBuffer || Object.prototype.toString.call(arg) === "[object ArrayBuffer]";
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js
+var fromArrayBuffer, fromString;
+var init_buffer_from = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js"() {
+    init_is_array_buffer();
+    fromArrayBuffer = (input, offset = 0, length = input.byteLength - offset) => {
+      if (!isArrayBuffer(input)) {
+        throw new TypeError(`The "input" argument must be ArrayBuffer. Received type ${typeof input} (${input})`);
+      }
+      return Buffer.from(input, offset, length);
     };
-    constructStack = () => {
-      let absoluteEntries = [];
-      let relativeEntries = [];
-      let identifyOnResolve = false;
-      const entriesNameSet = /* @__PURE__ */ new Set();
-      const sort = (entries) => entries.sort((a5, b6) => stepWeights[b6.step] - stepWeights[a5.step] || priorityWeights[b6.priority || "normal"] - priorityWeights[a5.priority || "normal"]);
-      const removeByName = (toRemove) => {
-        let isRemoved = false;
-        const filterCb = (entry) => {
-          const aliases = getAllAliases(entry.name, entry.aliases);
-          if (aliases.includes(toRemove)) {
-            isRemoved = true;
-            for (const alias of aliases) {
-              entriesNameSet.delete(alias);
-            }
-            return false;
-          }
-          return true;
-        };
-        absoluteEntries = absoluteEntries.filter(filterCb);
-        relativeEntries = relativeEntries.filter(filterCb);
-        return isRemoved;
-      };
-      const removeByReference = (toRemove) => {
-        let isRemoved = false;
-        const filterCb = (entry) => {
-          if (entry.middleware === toRemove) {
-            isRemoved = true;
-            for (const alias of getAllAliases(entry.name, entry.aliases)) {
-              entriesNameSet.delete(alias);
-            }
-            return false;
-          }
-          return true;
-        };
-        absoluteEntries = absoluteEntries.filter(filterCb);
-        relativeEntries = relativeEntries.filter(filterCb);
-        return isRemoved;
-      };
-      const cloneTo = (toStack) => {
-        absoluteEntries.forEach((entry) => {
-          toStack.add(entry.middleware, { ...entry });
-        });
-        relativeEntries.forEach((entry) => {
-          toStack.addRelativeTo(entry.middleware, { ...entry });
-        });
-        toStack.identifyOnResolve?.(stack.identifyOnResolve());
-        return toStack;
-      };
-      const expandRelativeMiddlewareList = (from) => {
-        const expandedMiddlewareList = [];
-        from.before.forEach((entry) => {
-          if (entry.before.length === 0 && entry.after.length === 0) {
-            expandedMiddlewareList.push(entry);
-          } else {
-            expandedMiddlewareList.push(...expandRelativeMiddlewareList(entry));
-          }
-        });
-        expandedMiddlewareList.push(from);
-        from.after.reverse().forEach((entry) => {
-          if (entry.before.length === 0 && entry.after.length === 0) {
-            expandedMiddlewareList.push(entry);
-          } else {
-            expandedMiddlewareList.push(...expandRelativeMiddlewareList(entry));
-          }
-        });
-        return expandedMiddlewareList;
-      };
-      const getMiddlewareList = (debug13 = false) => {
-        const normalizedAbsoluteEntries = [];
-        const normalizedRelativeEntries = [];
-        const normalizedEntriesNameMap = {};
-        absoluteEntries.forEach((entry) => {
-          const normalizedEntry = {
-            ...entry,
-            before: [],
-            after: []
-          };
-          for (const alias of getAllAliases(normalizedEntry.name, normalizedEntry.aliases)) {
-            normalizedEntriesNameMap[alias] = normalizedEntry;
-          }
-          normalizedAbsoluteEntries.push(normalizedEntry);
-        });
-        relativeEntries.forEach((entry) => {
-          const normalizedEntry = {
-            ...entry,
-            before: [],
-            after: []
-          };
-          for (const alias of getAllAliases(normalizedEntry.name, normalizedEntry.aliases)) {
-            normalizedEntriesNameMap[alias] = normalizedEntry;
-          }
-          normalizedRelativeEntries.push(normalizedEntry);
-        });
-        normalizedRelativeEntries.forEach((entry) => {
-          if (entry.toMiddleware) {
-            const toMiddleware = normalizedEntriesNameMap[entry.toMiddleware];
-            if (toMiddleware === void 0) {
-              if (debug13) {
-                return;
-              }
-              throw new Error(`${entry.toMiddleware} is not found when adding ${getMiddlewareNameWithAliases(entry.name, entry.aliases)} middleware ${entry.relation} ${entry.toMiddleware}`);
-            }
-            if (entry.relation === "after") {
-              toMiddleware.after.push(entry);
-            }
-            if (entry.relation === "before") {
-              toMiddleware.before.push(entry);
-            }
-          }
-        });
-        const mainChain = sort(normalizedAbsoluteEntries).map(expandRelativeMiddlewareList).reduce((wholeList, expandedMiddlewareList) => {
-          wholeList.push(...expandedMiddlewareList);
-          return wholeList;
-        }, []);
-        return mainChain;
-      };
-      const stack = {
-        add: (middleware, options = {}) => {
-          const { name, override, aliases: _aliases } = options;
-          const entry = {
-            step: "initialize",
-            priority: "normal",
-            middleware,
-            ...options
-          };
-          const aliases = getAllAliases(name, _aliases);
-          if (aliases.length > 0) {
-            if (aliases.some((alias) => entriesNameSet.has(alias))) {
-              if (!override) {
-                throw new Error(`Duplicate middleware name '${getMiddlewareNameWithAliases(name, _aliases)}'`);
-              }
-              for (const alias of aliases) {
-                const toOverrideIndex = absoluteEntries.findIndex((entry2) => entry2.name === alias || entry2.aliases?.some((a5) => a5 === alias));
-                if (toOverrideIndex === -1) {
-                  continue;
-                }
-                const toOverride = absoluteEntries[toOverrideIndex];
-                if (toOverride.step !== entry.step || entry.priority !== toOverride.priority) {
-                  throw new Error(`"${getMiddlewareNameWithAliases(toOverride.name, toOverride.aliases)}" middleware with ${toOverride.priority} priority in ${toOverride.step} step cannot be overridden by "${getMiddlewareNameWithAliases(name, _aliases)}" middleware with ${entry.priority} priority in ${entry.step} step.`);
-                }
-                absoluteEntries.splice(toOverrideIndex, 1);
-              }
-            }
-            for (const alias of aliases) {
-              entriesNameSet.add(alias);
-            }
-          }
-          absoluteEntries.push(entry);
-        },
-        addRelativeTo: (middleware, options) => {
-          const { name, override, aliases: _aliases } = options;
-          const entry = {
-            middleware,
-            ...options
-          };
-          const aliases = getAllAliases(name, _aliases);
-          if (aliases.length > 0) {
-            if (aliases.some((alias) => entriesNameSet.has(alias))) {
-              if (!override) {
-                throw new Error(`Duplicate middleware name '${getMiddlewareNameWithAliases(name, _aliases)}'`);
-              }
-              for (const alias of aliases) {
-                const toOverrideIndex = relativeEntries.findIndex((entry2) => entry2.name === alias || entry2.aliases?.some((a5) => a5 === alias));
-                if (toOverrideIndex === -1) {
-                  continue;
-                }
-                const toOverride = relativeEntries[toOverrideIndex];
-                if (toOverride.toMiddleware !== entry.toMiddleware || toOverride.relation !== entry.relation) {
-                  throw new Error(`"${getMiddlewareNameWithAliases(toOverride.name, toOverride.aliases)}" middleware ${toOverride.relation} "${toOverride.toMiddleware}" middleware cannot be overridden by "${getMiddlewareNameWithAliases(name, _aliases)}" middleware ${entry.relation} "${entry.toMiddleware}" middleware.`);
-                }
-                relativeEntries.splice(toOverrideIndex, 1);
-              }
-            }
-            for (const alias of aliases) {
-              entriesNameSet.add(alias);
-            }
-          }
-          relativeEntries.push(entry);
-        },
-        clone: () => cloneTo(constructStack()),
-        use: (plugin) => {
-          plugin.applyToStack(stack);
-        },
-        remove: (toRemove) => {
-          if (typeof toRemove === "string") {
-            return removeByName(toRemove);
-          } else {
-            return removeByReference(toRemove);
-          }
-        },
-        removeByTag: (toRemove) => {
-          let isRemoved = false;
-          const filterCb = (entry) => {
-            const { tags, name, aliases: _aliases } = entry;
-            if (tags && tags.includes(toRemove)) {
-              const aliases = getAllAliases(name, _aliases);
-              for (const alias of aliases) {
-                entriesNameSet.delete(alias);
-              }
-              isRemoved = true;
-              return false;
-            }
-            return true;
-          };
-          absoluteEntries = absoluteEntries.filter(filterCb);
-          relativeEntries = relativeEntries.filter(filterCb);
-          return isRemoved;
-        },
-        concat: (from) => {
-          const cloned = cloneTo(constructStack());
-          cloned.use(from);
-          cloned.identifyOnResolve(identifyOnResolve || cloned.identifyOnResolve() || (from.identifyOnResolve?.() ?? false));
-          return cloned;
-        },
-        applyToStack: cloneTo,
-        identify: () => {
-          return getMiddlewareList(true).map((mw) => {
-            const step = mw.step ?? mw.relation + " " + mw.toMiddleware;
-            return getMiddlewareNameWithAliases(mw.name, mw.aliases) + " - " + step;
-          });
-        },
-        identifyOnResolve(toggle) {
-          if (typeof toggle === "boolean") {
-            identifyOnResolve = toggle;
-          }
-          return identifyOnResolve;
-        },
-        resolve: (handler, context) => {
-          for (const middleware of getMiddlewareList().map((entry) => entry.middleware).reverse()) {
-            handler = middleware(handler, context);
-          }
-          if (identifyOnResolve) {
-            console.log(stack.identify());
-          }
-          return handler;
+    fromString = (input, encoding) => {
+      if (typeof input !== "string") {
+        throw new TypeError(`The "input" argument must be of type string. Received type ${typeof input} (${input})`);
+      }
+      return encoding ? Buffer.from(input, encoding) : Buffer.from(input);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js
+var BASE64_REGEX, fromBase64;
+var init_fromBase64 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js"() {
+    init_buffer_from();
+    BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
+    fromBase64 = (input) => {
+      if (input.length * 3 % 4 !== 0) {
+        throw new TypeError(`Incorrect padding on base64 string.`);
+      }
+      if (!BASE64_REGEX.exec(input)) {
+        throw new TypeError(`Invalid base64 string.`);
+      }
+      const buffer = fromString(input, "base64");
+      return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js
+var fromUtf8;
+var init_fromUtf8 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js"() {
+    init_buffer_from();
+    fromUtf8 = (input) => {
+      const buf2 = fromString(input, "utf8");
+      return new Uint8Array(buf2.buffer, buf2.byteOffset, buf2.byteLength / Uint8Array.BYTES_PER_ELEMENT);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js
+var toBase64;
+var init_toBase64 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js"() {
+    init_buffer_from();
+    init_fromUtf8();
+    toBase64 = (_input) => {
+      let input;
+      if (typeof _input === "string") {
+        input = fromUtf8(_input);
+      } else {
+        input = _input;
+      }
+      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
+        throw new Error("@smithy/util-base64: toBase64 encoder function only accepts string | Uint8Array.");
+      }
+      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("base64");
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js
+function bindUint8ArrayBlobAdapter(toUtf83, fromUtf83, toBase643, fromBase642) {
+  return class Uint8ArrayBlobAdapter2 extends Uint8Array {
+    static fromString(source, encoding = "utf-8") {
+      if (typeof source === "string") {
+        if (encoding === "base64") {
+          return Uint8ArrayBlobAdapter2.mutate(fromBase642(source));
         }
-      };
-      return stack;
+        return Uint8ArrayBlobAdapter2.mutate(fromUtf83(source));
+      }
+      throw new Error(`Unsupported conversion from ${typeof source} to Uint8ArrayBlobAdapter.`);
+    }
+    static mutate(source) {
+      Object.setPrototypeOf(source, Uint8ArrayBlobAdapter2.prototype);
+      return source;
+    }
+    transformToString(encoding = "utf-8") {
+      if (encoding === "base64") {
+        return toBase643(this);
+      }
+      return toUtf83(this);
+    }
+  };
+}
+var init_Uint8ArrayBlobAdapter = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js"() {
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js
+var toUtf8;
+var init_toUtf8 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js"() {
+    init_buffer_from();
+    toUtf8 = (input) => {
+      if (typeof input === "string") {
+        return input;
+      }
+      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
+        throw new Error("@smithy/util-utf8: toUtf8 encoder function only accepts string | Uint8Array.");
+      }
+      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("utf8");
     };
-    stepWeights = {
-      initialize: 5,
-      serialize: 4,
-      build: 3,
-      finalizeRequest: 2,
-      deserialize: 1
-    };
-    priorityWeights = {
-      high: 3,
-      normal: 2,
-      low: 1
-    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js
+function bindV4(getRandomValues2) {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return () => crypto.randomUUID();
+  }
+  return () => {
+    const rnds = new Uint8Array(16);
+    getRandomValues2(rnds);
+    rnds[6] = rnds[6] & 15 | 64;
+    rnds[8] = rnds[8] & 63 | 128;
+    return decimalToHex[rnds[0]] + decimalToHex[rnds[1]] + decimalToHex[rnds[2]] + decimalToHex[rnds[3]] + "-" + decimalToHex[rnds[4]] + decimalToHex[rnds[5]] + "-" + decimalToHex[rnds[6]] + decimalToHex[rnds[7]] + "-" + decimalToHex[rnds[8]] + decimalToHex[rnds[9]] + "-" + decimalToHex[rnds[10]] + decimalToHex[rnds[11]] + decimalToHex[rnds[12]] + decimalToHex[rnds[13]] + decimalToHex[rnds[14]] + decimalToHex[rnds[15]];
+  };
+}
+var decimalToHex;
+var init_v4 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js"() {
+    decimalToHex = Array.from({ length: 256 }, (_, i5) => i5.toString(16).padStart(2, "0"));
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js
+var copyDocumentWithTransform;
+var init_copyDocumentWithTransform = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js"() {
+    copyDocumentWithTransform = (source, _schemaRef, _transform = (_) => _) => source;
   }
 });
 
@@ -19844,6 +19761,1793 @@ var init_transport = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js
+var parseBoolean, expectBoolean, expectNumber, MAX_FLOAT, expectFloat32, expectLong, expectInt, expectInt32, expectShort, expectByte, expectSizedInt, castInt, expectNonNull, expectObject, expectString, expectUnion, strictParseDouble, strictParseFloat, strictParseFloat32, NUMBER_REGEX, parseNumber, limitedParseDouble, handleFloat, limitedParseFloat, limitedParseFloat32, parseFloatString, strictParseLong, strictParseInt, strictParseInt32, strictParseShort, strictParseByte, stackTraceWarning, logger;
+var init_parse_utils = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js"() {
+    init_transport();
+    parseBoolean = (value) => {
+      switch (value) {
+        case "true":
+          return true;
+        case "false":
+          return false;
+        default:
+          throw new Error(`Unable to parse boolean value "${value}"`);
+      }
+    };
+    expectBoolean = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (typeof value === "number") {
+        if (value === 0 || value === 1) {
+          logger.warn(stackTraceWarning(`Expected boolean, got ${typeof value}: ${value}`));
+        }
+        if (value === 0) {
+          return false;
+        }
+        if (value === 1) {
+          return true;
+        }
+      }
+      if (typeof value === "string") {
+        const lower = value.toLowerCase();
+        if (lower === "false" || lower === "true") {
+          logger.warn(stackTraceWarning(`Expected boolean, got ${typeof value}: ${value}`));
+        }
+        if (lower === "false") {
+          return false;
+        }
+        if (lower === "true") {
+          return true;
+        }
+      }
+      if (typeof value === "boolean") {
+        return value;
+      }
+      throw new TypeError(`Expected boolean, got ${typeof value}: ${value}`);
+    };
+    expectNumber = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (typeof value === "string") {
+        const parsed = parseFloat(value);
+        if (!Number.isNaN(parsed)) {
+          if (String(parsed) !== String(value)) {
+            logger.warn(stackTraceWarning(`Expected number but observed string: ${value}`));
+          }
+          return parsed;
+        }
+      }
+      if (typeof value === "number") {
+        return value;
+      }
+      throw new TypeError(`Expected number, got ${typeof value}: ${value}`);
+    };
+    MAX_FLOAT = Math.ceil(2 ** 127 * (2 - 2 ** -23));
+    expectFloat32 = (value) => {
+      const expected = expectNumber(value);
+      if (expected !== void 0 && !Number.isNaN(expected) && expected !== Infinity && expected !== -Infinity) {
+        if (Math.abs(expected) > MAX_FLOAT) {
+          throw new TypeError(`Expected 32-bit float, got ${value}`);
+        }
+      }
+      return expected;
+    };
+    expectLong = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (Number.isInteger(value) && !Number.isNaN(value)) {
+        return value;
+      }
+      throw new TypeError(`Expected integer, got ${typeof value}: ${value}`);
+    };
+    expectInt = expectLong;
+    expectInt32 = (value) => expectSizedInt(value, 32);
+    expectShort = (value) => expectSizedInt(value, 16);
+    expectByte = (value) => expectSizedInt(value, 8);
+    expectSizedInt = (value, size) => {
+      const expected = expectLong(value);
+      if (expected !== void 0 && castInt(expected, size) !== expected) {
+        throw new TypeError(`Expected ${size}-bit integer, got ${value}`);
+      }
+      return expected;
+    };
+    castInt = (value, size) => {
+      switch (size) {
+        case 32:
+          return Int32Array.of(value)[0];
+        case 16:
+          return Int16Array.of(value)[0];
+        case 8:
+          return Int8Array.of(value)[0];
+      }
+    };
+    expectNonNull = (value, location) => {
+      if (value === null || value === void 0) {
+        if (location) {
+          throw new TypeError(`Expected a non-null value for ${location}`);
+        }
+        throw new TypeError("Expected a non-null value");
+      }
+      return value;
+    };
+    expectObject = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (typeof value === "object" && !Array.isArray(value)) {
+        return value;
+      }
+      const receivedType = Array.isArray(value) ? "array" : typeof value;
+      throw new TypeError(`Expected object, got ${receivedType}: ${value}`);
+    };
+    expectString = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (typeof value === "string") {
+        return value;
+      }
+      if (["boolean", "number", "bigint"].includes(typeof value)) {
+        logger.warn(stackTraceWarning(`Expected string, got ${typeof value}: ${value}`));
+        return String(value);
+      }
+      throw new TypeError(`Expected string, got ${typeof value}: ${value}`);
+    };
+    expectUnion = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      const asObject = expectObject(value);
+      const setKeys = [];
+      for (const k5 in asObject) {
+        if (!hasOwn(asObject, k5)) {
+          continue;
+        }
+        if (asObject[k5] != null) {
+          setKeys.push(k5);
+        }
+      }
+      if (setKeys.length === 0) {
+        throw new TypeError(`Unions must have exactly one non-null member. None were found.`);
+      }
+      if (setKeys.length > 1) {
+        throw new TypeError(`Unions must have exactly one non-null member. Keys ${setKeys} were not null.`);
+      }
+      return asObject;
+    };
+    strictParseDouble = (value) => {
+      if (typeof value == "string") {
+        return expectNumber(parseNumber(value));
+      }
+      return expectNumber(value);
+    };
+    strictParseFloat = strictParseDouble;
+    strictParseFloat32 = (value) => {
+      if (typeof value == "string") {
+        return expectFloat32(parseNumber(value));
+      }
+      return expectFloat32(value);
+    };
+    NUMBER_REGEX = /(-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?)|(-?Infinity)|(NaN)/g;
+    parseNumber = (value) => {
+      const matches = value.match(NUMBER_REGEX);
+      if (matches === null || matches[0].length !== value.length) {
+        throw new TypeError(`Expected real number, got implicit NaN`);
+      }
+      return parseFloat(value);
+    };
+    limitedParseDouble = (value) => {
+      if (typeof value == "string") {
+        return parseFloatString(value);
+      }
+      return expectNumber(value);
+    };
+    handleFloat = limitedParseDouble;
+    limitedParseFloat = limitedParseDouble;
+    limitedParseFloat32 = (value) => {
+      if (typeof value == "string") {
+        return parseFloatString(value);
+      }
+      return expectFloat32(value);
+    };
+    parseFloatString = (value) => {
+      switch (value) {
+        case "NaN":
+          return NaN;
+        case "Infinity":
+          return Infinity;
+        case "-Infinity":
+          return -Infinity;
+        default:
+          throw new Error(`Unable to parse float value: ${value}`);
+      }
+    };
+    strictParseLong = (value) => {
+      if (typeof value === "string") {
+        return expectLong(parseNumber(value));
+      }
+      return expectLong(value);
+    };
+    strictParseInt = strictParseLong;
+    strictParseInt32 = (value) => {
+      if (typeof value === "string") {
+        return expectInt32(parseNumber(value));
+      }
+      return expectInt32(value);
+    };
+    strictParseShort = (value) => {
+      if (typeof value === "string") {
+        return expectShort(parseNumber(value));
+      }
+      return expectShort(value);
+    };
+    strictParseByte = (value) => {
+      if (typeof value === "string") {
+        return expectByte(parseNumber(value));
+      }
+      return expectByte(value);
+    };
+    stackTraceWarning = (message) => {
+      return String(new TypeError(message).stack || message).split("\n").slice(0, 5).filter((s2) => !s2.includes("stackTraceWarning")).join("\n");
+    };
+    logger = {
+      warn: console.warn
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js
+function dateToUtcString(date2) {
+  const year2 = date2.getUTCFullYear();
+  const month = date2.getUTCMonth();
+  const dayOfWeek = date2.getUTCDay();
+  const dayOfMonthInt = date2.getUTCDate();
+  const hoursInt = date2.getUTCHours();
+  const minutesInt = date2.getUTCMinutes();
+  const secondsInt = date2.getUTCSeconds();
+  const dayOfMonthString = dayOfMonthInt < 10 ? `0${dayOfMonthInt}` : `${dayOfMonthInt}`;
+  const hoursString = hoursInt < 10 ? `0${hoursInt}` : `${hoursInt}`;
+  const minutesString = minutesInt < 10 ? `0${minutesInt}` : `${minutesInt}`;
+  const secondsString = secondsInt < 10 ? `0${secondsInt}` : `${secondsInt}`;
+  return `${DAYS[dayOfWeek]}, ${dayOfMonthString} ${MONTHS[month]} ${year2} ${hoursString}:${minutesString}:${secondsString} GMT`;
+}
+var DAYS, MONTHS, RFC3339, parseRfc3339DateTime, RFC3339_WITH_OFFSET, parseRfc3339DateTimeWithOffset, IMF_FIXDATE, RFC_850_DATE, ASC_TIME, parseRfc7231DateTime, parseEpochTimestamp, buildDate, parseTwoDigitYear, FIFTY_YEARS_IN_MILLIS, adjustRfc850Year, parseMonthByShortName, DAYS_IN_MONTH, validateDayOfMonth, isLeapYear, parseDateValue, parseMilliseconds, parseOffsetToMilliseconds, stripLeadingZeroes;
+var init_date_utils = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js"() {
+    init_parse_utils();
+    DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    RFC3339 = new RegExp(/^(\d{4})-(\d{2})-(\d{2})[tT](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?[zZ]$/);
+    parseRfc3339DateTime = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (typeof value !== "string") {
+        throw new TypeError("RFC-3339 date-times must be expressed as strings");
+      }
+      const match = RFC3339.exec(value);
+      if (!match) {
+        throw new TypeError("Invalid RFC-3339 date-time value");
+      }
+      const [_, yearStr, monthStr, dayStr, hours, minutes, seconds, fractionalMilliseconds] = match;
+      const year2 = strictParseShort(stripLeadingZeroes(yearStr));
+      const month = parseDateValue(monthStr, "month", 1, 12);
+      const day = parseDateValue(dayStr, "day", 1, 31);
+      return buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
+    };
+    RFC3339_WITH_OFFSET = new RegExp(/^(\d{4})-(\d{2})-(\d{2})[tT](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(([-+]\d{2}:\d{2})|[zZ])$/);
+    parseRfc3339DateTimeWithOffset = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (typeof value !== "string") {
+        throw new TypeError("RFC-3339 date-times must be expressed as strings");
+      }
+      const match = RFC3339_WITH_OFFSET.exec(value);
+      if (!match) {
+        throw new TypeError("Invalid RFC-3339 date-time value");
+      }
+      const [_, yearStr, monthStr, dayStr, hours, minutes, seconds, fractionalMilliseconds, offsetStr] = match;
+      const year2 = strictParseShort(stripLeadingZeroes(yearStr));
+      const month = parseDateValue(monthStr, "month", 1, 12);
+      const day = parseDateValue(dayStr, "day", 1, 31);
+      const date2 = buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
+      if (offsetStr.toUpperCase() != "Z") {
+        date2.setTime(date2.getTime() - parseOffsetToMilliseconds(offsetStr));
+      }
+      return date2;
+    };
+    IMF_FIXDATE = new RegExp(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
+    RFC_850_DATE = new RegExp(/^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2})-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-(\d{2}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
+    ASC_TIME = new RegExp(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ( [1-9]|\d{2}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? (\d{4})$/);
+    parseRfc7231DateTime = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      if (typeof value !== "string") {
+        throw new TypeError("RFC-7231 date-times must be expressed as strings");
+      }
+      let match = IMF_FIXDATE.exec(value);
+      if (match) {
+        const [_, dayStr, monthStr, yearStr, hours, minutes, seconds, fractionalMilliseconds] = match;
+        return buildDate(strictParseShort(stripLeadingZeroes(yearStr)), parseMonthByShortName(monthStr), parseDateValue(dayStr, "day", 1, 31), { hours, minutes, seconds, fractionalMilliseconds });
+      }
+      match = RFC_850_DATE.exec(value);
+      if (match) {
+        const [_, dayStr, monthStr, yearStr, hours, minutes, seconds, fractionalMilliseconds] = match;
+        return adjustRfc850Year(buildDate(parseTwoDigitYear(yearStr), parseMonthByShortName(monthStr), parseDateValue(dayStr, "day", 1, 31), {
+          hours,
+          minutes,
+          seconds,
+          fractionalMilliseconds
+        }));
+      }
+      match = ASC_TIME.exec(value);
+      if (match) {
+        const [_, monthStr, dayStr, hours, minutes, seconds, fractionalMilliseconds, yearStr] = match;
+        return buildDate(strictParseShort(stripLeadingZeroes(yearStr)), parseMonthByShortName(monthStr), parseDateValue(dayStr.trimLeft(), "day", 1, 31), { hours, minutes, seconds, fractionalMilliseconds });
+      }
+      throw new TypeError("Invalid RFC-7231 date-time value");
+    };
+    parseEpochTimestamp = (value) => {
+      if (value === null || value === void 0) {
+        return void 0;
+      }
+      let valueAsDouble;
+      if (typeof value === "number") {
+        valueAsDouble = value;
+      } else if (typeof value === "string") {
+        valueAsDouble = strictParseDouble(value);
+      } else if (typeof value === "object" && value.tag === 1) {
+        valueAsDouble = value.value;
+      } else {
+        throw new TypeError("Epoch timestamps must be expressed as floating point numbers or their string representation");
+      }
+      if (Number.isNaN(valueAsDouble) || valueAsDouble === Infinity || valueAsDouble === -Infinity) {
+        throw new TypeError("Epoch timestamps must be valid, non-Infinite, non-NaN numerics");
+      }
+      return new Date(Math.round(valueAsDouble * 1e3));
+    };
+    buildDate = (year2, month, day, time2) => {
+      const adjustedMonth = month - 1;
+      validateDayOfMonth(year2, adjustedMonth, day);
+      return new Date(Date.UTC(year2, adjustedMonth, day, parseDateValue(time2.hours, "hour", 0, 23), parseDateValue(time2.minutes, "minute", 0, 59), parseDateValue(time2.seconds, "seconds", 0, 60), parseMilliseconds(time2.fractionalMilliseconds)));
+    };
+    parseTwoDigitYear = (value) => {
+      const thisYear = (/* @__PURE__ */ new Date()).getUTCFullYear();
+      const valueInThisCentury = Math.floor(thisYear / 100) * 100 + strictParseShort(stripLeadingZeroes(value));
+      if (valueInThisCentury < thisYear) {
+        return valueInThisCentury + 100;
+      }
+      return valueInThisCentury;
+    };
+    FIFTY_YEARS_IN_MILLIS = 50 * 365 * 24 * 60 * 60 * 1e3;
+    adjustRfc850Year = (input) => {
+      if (input.getTime() - (/* @__PURE__ */ new Date()).getTime() > FIFTY_YEARS_IN_MILLIS) {
+        return new Date(Date.UTC(input.getUTCFullYear() - 100, input.getUTCMonth(), input.getUTCDate(), input.getUTCHours(), input.getUTCMinutes(), input.getUTCSeconds(), input.getUTCMilliseconds()));
+      }
+      return input;
+    };
+    parseMonthByShortName = (value) => {
+      const monthIdx = MONTHS.indexOf(value);
+      if (monthIdx < 0) {
+        throw new TypeError(`Invalid month: ${value}`);
+      }
+      return monthIdx + 1;
+    };
+    DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    validateDayOfMonth = (year2, month, day) => {
+      let maxDays = DAYS_IN_MONTH[month];
+      if (month === 1 && isLeapYear(year2)) {
+        maxDays = 29;
+      }
+      if (day > maxDays) {
+        throw new TypeError(`Invalid day for ${MONTHS[month]} in ${year2}: ${day}`);
+      }
+    };
+    isLeapYear = (year2) => {
+      return year2 % 4 === 0 && (year2 % 100 !== 0 || year2 % 400 === 0);
+    };
+    parseDateValue = (value, type, lower, upper) => {
+      const dateVal = strictParseByte(stripLeadingZeroes(value));
+      if (dateVal < lower || dateVal > upper) {
+        throw new TypeError(`${type} must be between ${lower} and ${upper}, inclusive`);
+      }
+      return dateVal;
+    };
+    parseMilliseconds = (value) => {
+      if (value === null || value === void 0) {
+        return 0;
+      }
+      return strictParseFloat32("0." + value) * 1e3;
+    };
+    parseOffsetToMilliseconds = (value) => {
+      const directionStr = value[0];
+      let direction = 1;
+      if (directionStr == "+") {
+        direction = 1;
+      } else if (directionStr == "-") {
+        direction = -1;
+      } else {
+        throw new TypeError(`Offset direction, ${directionStr}, must be "+" or "-"`);
+      }
+      const hour = Number(value.substring(1, 3));
+      const minute = Number(value.substring(4, 6));
+      return direction * (hour * 60 + minute) * 60 * 1e3;
+    };
+    stripLeadingZeroes = (value) => {
+      let idx = 0;
+      while (idx < value.length - 1 && value.charAt(idx) === "0") {
+        idx++;
+      }
+      if (idx === 0) {
+        return value;
+      }
+      return value.slice(idx);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js
+var LazyJsonString;
+var init_lazy_json = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js"() {
+    LazyJsonString = function LazyJsonString2(val) {
+      const str = Object.assign(new String(val), {
+        deserializeJSON() {
+          return JSON.parse(String(val));
+        },
+        toString() {
+          return String(val);
+        },
+        toJSON() {
+          return String(val);
+        }
+      });
+      return str;
+    };
+    LazyJsonString.from = (object) => {
+      if (object && typeof object === "object" && (object instanceof LazyJsonString || "deserializeJSON" in object)) {
+        return object;
+      } else if (typeof object === "string" || Object.getPrototypeOf(object) === String.prototype) {
+        return LazyJsonString(String(object));
+      }
+      return LazyJsonString(JSON.stringify(object));
+    };
+    LazyJsonString.fromObject = LazyJsonString.from;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js
+function quoteHeader(part) {
+  if (part.includes(",") || part.includes('"')) {
+    part = `"${part.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  }
+  return part;
+}
+var init_quote_header = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js"() {
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js
+function range(v, min, max) {
+  const _v = Number(v);
+  if (_v < min || _v > max) {
+    throw new Error(`Value ${_v} out of range [${min}, ${max}]`);
+  }
+}
+var ddd, mmm, time, date, year, RFC3339_WITH_OFFSET2, IMF_FIXDATE_NATIVE, IMF_FIXDATE2, RFC_850_DATE2, ASC_TIME2, months, _parseEpochTimestamp, _parseRfc3339DateTimeWithOffset, _parseRfc7231DateTime;
+var init_schema_date_utils = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js"() {
+    ddd = `(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:[ne|u?r]?s?day)?`;
+    mmm = `(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)`;
+    time = `(\\d?\\d):(\\d{2}):(\\d{2})(?:\\.(\\d+))?`;
+    date = `(\\d?\\d)`;
+    year = `(\\d{4})`;
+    RFC3339_WITH_OFFSET2 = new RegExp(/^(\d{4})-(\d\d)-(\d\d)[tT](\d\d):(\d\d):(\d\d)(\.(\d+))?(([-+]\d\d:\d\d)|[zZ])$/);
+    IMF_FIXDATE_NATIVE = /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (?:0[1-9]|[12]\d|3[01]) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [1-9]\d{3} (?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d GMT$/;
+    IMF_FIXDATE2 = new RegExp(`^${ddd}, ${date} ${mmm} ${year} ${time} GMT$`);
+    RFC_850_DATE2 = new RegExp(`^${ddd}, ${date}-${mmm}-(\\d\\d) ${time} GMT$`);
+    ASC_TIME2 = new RegExp(`^${ddd} ${mmm} ( [1-9]|\\d\\d) ${time} ${year}$`);
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    _parseEpochTimestamp = (value) => {
+      if (value == null) {
+        return void 0;
+      }
+      let num = NaN;
+      if (typeof value === "number") {
+        num = value;
+      } else if (typeof value === "string") {
+        if (!/^-?\d*\.?\d+$/.test(value)) {
+          throw new TypeError(`parseEpochTimestamp - numeric string invalid.`);
+        }
+        num = Number.parseFloat(value);
+      } else if (typeof value === "object" && value.tag === 1) {
+        num = value.value;
+      }
+      if (isNaN(num) || Math.abs(num) === Infinity) {
+        throw new TypeError("Epoch timestamps must be valid finite numbers.");
+      }
+      return new Date(Math.round(num * 1e3));
+    };
+    _parseRfc3339DateTimeWithOffset = (value) => {
+      if (value == null) {
+        return void 0;
+      }
+      if (typeof value !== "string") {
+        throw new TypeError("RFC3339 timestamps must be strings");
+      }
+      const matches = RFC3339_WITH_OFFSET2.exec(value);
+      if (!matches) {
+        throw new TypeError(`Invalid RFC3339 timestamp format ${value}`);
+      }
+      const [, yearStr, monthStr, dayStr, hours, minutes, seconds, , ms, offsetStr] = matches;
+      range(monthStr, 1, 12);
+      range(dayStr, 1, 31);
+      range(hours, 0, 23);
+      range(minutes, 0, 59);
+      range(seconds, 0, 60);
+      const date2 = new Date(Date.UTC(Number(yearStr), Number(monthStr) - 1, Number(dayStr), Number(hours), Number(minutes), Number(seconds), Number(ms) ? Math.round(parseFloat(`0.${ms}`) * 1e3) : 0));
+      date2.setUTCFullYear(Number(yearStr));
+      if (offsetStr.toUpperCase() != "Z") {
+        const [, sign2, offsetH, offsetM] = /([+-])(\d\d):(\d\d)/.exec(offsetStr) || [void 0, "+", 0, 0];
+        const scalar = sign2 === "-" ? 1 : -1;
+        date2.setTime(date2.getTime() + scalar * (Number(offsetH) * 60 * 60 * 1e3 + Number(offsetM) * 60 * 1e3));
+      }
+      return date2;
+    };
+    _parseRfc7231DateTime = (value) => {
+      if (value == null) {
+        return void 0;
+      }
+      if (typeof value !== "string") {
+        throw new TypeError("RFC7231 timestamps must be strings.");
+      }
+      if (IMF_FIXDATE_NATIVE.test(value)) {
+        return new Date(value);
+      }
+      let day;
+      let month;
+      let year2;
+      let hour;
+      let minute;
+      let second;
+      let fraction;
+      let matches;
+      if (matches = IMF_FIXDATE2.exec(value)) {
+        [, day, month, year2, hour, minute, second, fraction] = matches;
+      } else if (matches = RFC_850_DATE2.exec(value)) {
+        [, day, month, year2, hour, minute, second, fraction] = matches;
+        year2 = (Number(year2) + 1900).toString();
+      } else if (matches = ASC_TIME2.exec(value)) {
+        [, month, day, hour, minute, second, fraction, year2] = matches;
+      }
+      if (year2 && second) {
+        const timestamp = Date.UTC(Number(year2), months.indexOf(month), Number(day), Number(hour), Number(minute), Number(second), fraction ? Math.round(parseFloat(`0.${fraction}`) * 1e3) : 0);
+        range(day, 1, 31);
+        range(hour, 0, 23);
+        range(minute, 0, 59);
+        range(second, 0, 60);
+        const date2 = new Date(timestamp);
+        date2.setUTCFullYear(Number(year2));
+        return date2;
+      }
+      throw new TypeError(`Invalid RFC7231 date-time value ${value}.`);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/split-every.js
+function splitEvery(value, delimiter, numDelimiters) {
+  if (numDelimiters <= 0 || !Number.isInteger(numDelimiters)) {
+    throw new Error("Invalid number of delimiters (" + numDelimiters + ") for splitEvery.");
+  }
+  const segments = value.split(delimiter);
+  if (numDelimiters === 1) {
+    return segments;
+  }
+  const compoundSegments = [];
+  let currentSegment = "";
+  for (let i5 = 0; i5 < segments.length; i5++) {
+    if (currentSegment === "") {
+      currentSegment = segments[i5];
+    } else {
+      currentSegment += delimiter + segments[i5];
+    }
+    if ((i5 + 1) % numDelimiters === 0) {
+      compoundSegments.push(currentSegment);
+      currentSegment = "";
+    }
+  }
+  if (currentSegment !== "") {
+    compoundSegments.push(currentSegment);
+  }
+  return compoundSegments;
+}
+var init_split_every = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/split-every.js"() {
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/split-header.js
+var splitHeader;
+var init_split_header = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/split-header.js"() {
+    splitHeader = (value) => {
+      const z = value.length;
+      const values = [];
+      let withinQuotes = false;
+      let escaped = false;
+      let anchor = 0;
+      for (let i5 = 0; i5 < z; ++i5) {
+        const char = value[i5];
+        switch (char) {
+          case `"`:
+            if (!escaped) {
+              withinQuotes = !withinQuotes;
+            }
+            break;
+          case ",":
+            if (!withinQuotes) {
+              values.push(value.slice(anchor, i5));
+              anchor = i5 + 1;
+            }
+            break;
+          default:
+        }
+        escaped = char === "\\" && !escaped;
+      }
+      values.push(value.slice(anchor));
+      return values.map((v) => {
+        v = v.trim();
+        const z2 = v.length;
+        if (z2 < 2) {
+          return v;
+        }
+        if (v[0] === `"` && v[z2 - 1] === `"`) {
+          v = v.slice(1, z2 - 1);
+          return v.replace(/\\(["\\])/g, "$1");
+        }
+        return v.replace(/\\"/g, '"');
+      });
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js
+function nv(input) {
+  return new NumericValue(String(input), "bigDecimal");
+}
+var format, NumericValue;
+var init_NumericValue = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js"() {
+    format = /^-?((0|[1-9]\d*)(\.\d+)?|\.\d+)([eE][+-]?\d+)?$/;
+    NumericValue = class _NumericValue {
+      string;
+      type;
+      constructor(string, type) {
+        this.string = string;
+        this.type = type;
+        if (!format.test(string)) {
+          throw new Error(`@smithy/core/serde - NumericValue string must conform to the Smithy bigDecimal format. Received: "${string}"`);
+        }
+      }
+      toString() {
+        return this.string;
+      }
+      static [Symbol.hasInstance](object) {
+        if (!object || typeof object !== "object") {
+          return false;
+        }
+        const _nv = object;
+        return _NumericValue.prototype.isPrototypeOf(object) || _nv.type === "bigDecimal" && format.test(_nv.string);
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js
+function fromHex(encoded) {
+  if (encoded.length % 2 !== 0) {
+    throw new Error("Hex encoded strings must have an even number length");
+  }
+  const out = new Uint8Array(encoded.length / 2);
+  for (let i5 = 0; i5 < encoded.length; i5 += 2) {
+    const encodedByte = encoded.slice(i5, i5 + 2).toLowerCase();
+    if (encodedByte in HEX_TO_SHORT) {
+      out[i5 / 2] = HEX_TO_SHORT[encodedByte];
+    } else {
+      throw new Error(`Cannot decode unrecognized sequence ${encodedByte} as hexadecimal`);
+    }
+  }
+  return out;
+}
+function toHex(bytes) {
+  let out = "";
+  for (let i5 = 0; i5 < bytes.byteLength; i5++) {
+    out += SHORT_TO_HEX[bytes[i5]];
+  }
+  return out;
+}
+var SHORT_TO_HEX, HEX_TO_SHORT;
+var init_hex_encoding = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js"() {
+    SHORT_TO_HEX = {};
+    HEX_TO_SHORT = {};
+    for (let i5 = 0; i5 < 256; i5++) {
+      let encodedByte = i5.toString(16).toLowerCase();
+      if (encodedByte.length === 1) {
+        encodedByte = `0${encodedByte}`;
+      }
+      SHORT_TO_HEX[i5] = encodedByte;
+      HEX_TO_SHORT[encodedByte] = i5;
+    }
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js
+var import_node_fs, calculateBodyLength;
+var init_calculateBodyLength = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js"() {
+    import_node_fs = require("node:fs");
+    calculateBodyLength = (body) => {
+      if (!body) {
+        return 0;
+      }
+      if (typeof body === "string") {
+        return Buffer.byteLength(body);
+      } else if (typeof body.byteLength === "number") {
+        return body.byteLength;
+      } else if (typeof body.size === "number") {
+        return body.size;
+      } else if (typeof body.start === "number" && typeof body.end === "number") {
+        return body.end + 1 - body.start;
+      } else if (body instanceof import_node_fs.ReadStream) {
+        if (body.path != null) {
+          return (0, import_node_fs.lstatSync)(body.path).size;
+        } else if (typeof body.fd === "number") {
+          return (0, import_node_fs.fstatSync)(body.fd).size;
+        }
+      }
+      throw new Error(`Body Length computation failed for ${body}`);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js
+var toUint8Array;
+var init_toUint8Array = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js"() {
+    init_fromUtf8();
+    toUint8Array = (data2) => {
+      if (data2 instanceof Uint8Array) {
+        return data2;
+      }
+      if (typeof data2 === "string") {
+        return fromUtf8(data2);
+      }
+      if (ArrayBuffer.isView(data2)) {
+        return new Uint8Array(data2.buffer, data2.byteOffset, data2.byteLength / Uint8Array.BYTES_PER_ELEMENT);
+      }
+      return new Uint8Array(data2);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js
+function concatBytes(arrays, length) {
+  if (length === void 0) {
+    length = 0;
+    for (const bytes of arrays) {
+      length += bytes.byteLength;
+    }
+  }
+  const result = new Uint8Array(length);
+  let offset = 0;
+  for (const buf2 of arrays) {
+    result.set(buf2, offset);
+    offset += buf2.byteLength;
+  }
+  return result;
+}
+var init_concatBytes = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js"() {
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js
+var deserializerMiddleware, findHeader;
+var init_deserializerMiddleware = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js"() {
+    init_transport();
+    deserializerMiddleware = (options, deserializer) => (next, context) => async (args) => {
+      const { response } = await next(args);
+      try {
+        const parsed = await deserializer(response, options);
+        return {
+          response,
+          output: parsed
+        };
+      } catch (error3) {
+        Object.defineProperty(error3, "$response", {
+          value: response,
+          enumerable: false,
+          writable: false,
+          configurable: false
+        });
+        if (!("$metadata" in error3)) {
+          const hint = `Deserialization error: to see the raw response, inspect the hidden field {error}.$response on this object.`;
+          try {
+            error3.message += "\n  " + hint;
+          } catch (ignored) {
+            if (!context.logger || context.logger?.constructor?.name === "NoOpLogger") {
+              console.warn(hint);
+            } else {
+              context.logger?.warn?.(hint);
+            }
+          }
+          if (typeof error3.$responseBodyText !== "undefined") {
+            if (error3.$response) {
+              error3.$response.body = error3.$responseBodyText;
+            }
+          }
+          try {
+            if (HttpResponse.isInstance(response)) {
+              const { headers = {} } = response;
+              const headerEntries = Object.entries(headers);
+              error3.$metadata = {
+                httpStatusCode: response.statusCode,
+                requestId: findHeader(/^x-[\w-]+-request-?id$/, headerEntries),
+                extendedRequestId: findHeader(/^x-[\w-]+-id-2$/, headerEntries),
+                cfId: findHeader(/^x-[\w-]+-cf-id$/, headerEntries)
+              };
+            }
+          } catch (ignored) {
+          }
+        }
+        throw error3;
+      }
+    };
+    findHeader = (pattern, headers) => {
+      return (headers.find(([k5]) => {
+        return k5.match(pattern);
+      }) || [void 0, void 0])[1];
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js
+var ProviderError;
+var init_ProviderError = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js"() {
+    ProviderError = class _ProviderError extends Error {
+      name = "ProviderError";
+      tryNextLink;
+      constructor(message, options = true) {
+        let logger2;
+        let tryNextLink = true;
+        if (typeof options === "boolean") {
+          logger2 = void 0;
+          tryNextLink = options;
+        } else if (options != null && typeof options === "object") {
+          logger2 = options.logger;
+          tryNextLink = options.tryNextLink ?? true;
+        }
+        super(message);
+        this.tryNextLink = tryNextLink;
+        Object.setPrototypeOf(this, _ProviderError.prototype);
+        logger2?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
+      }
+      static from(error3, options = true) {
+        return Object.assign(new this(error3.message, options), error3);
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js
+var CredentialsProviderError;
+var init_CredentialsProviderError = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js"() {
+    init_ProviderError();
+    CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
+      name = "CredentialsProviderError";
+      constructor(message, options = true) {
+        super(message, options);
+        Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js
+var TokenProviderError;
+var init_TokenProviderError = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js"() {
+    init_ProviderError();
+    TokenProviderError = class _TokenProviderError extends ProviderError {
+      name = "TokenProviderError";
+      constructor(message, options = true) {
+        super(message, options);
+        Object.setPrototypeOf(this, _TokenProviderError.prototype);
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js
+var chain;
+var init_chain = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js"() {
+    init_ProviderError();
+    chain = (...providers) => async () => {
+      if (providers.length === 0) {
+        throw new ProviderError("No providers in chain");
+      }
+      let lastProviderError;
+      for (const provider of providers) {
+        try {
+          const credentials = await provider();
+          return credentials;
+        } catch (err) {
+          lastProviderError = err;
+          if (err?.tryNextLink) {
+            continue;
+          }
+          throw err;
+        }
+      }
+      throw lastProviderError;
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js
+var fromValue;
+var init_fromValue = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js"() {
+    fromValue = (staticValue) => () => Promise.resolve(staticValue);
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js
+var memoize;
+var init_memoize = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js"() {
+    memoize = (provider, isExpired, requiresRefresh) => {
+      let resolved;
+      let pending;
+      let hasResult;
+      let isConstant = false;
+      const coalesceProvider = async () => {
+        if (!pending) {
+          pending = provider();
+        }
+        try {
+          resolved = await pending;
+          hasResult = true;
+          isConstant = false;
+        } finally {
+          pending = void 0;
+        }
+        return resolved;
+      };
+      if (isExpired === void 0) {
+        return async (options) => {
+          if (!hasResult || options?.forceRefresh) {
+            resolved = await coalesceProvider();
+          }
+          return resolved;
+        };
+      }
+      return async (options) => {
+        if (!hasResult || options?.forceRefresh) {
+          resolved = await coalesceProvider();
+        }
+        if (isConstant) {
+          return resolved;
+        }
+        if (requiresRefresh && !requiresRefresh(resolved)) {
+          isConstant = true;
+          return resolved;
+        }
+        if (isExpired(resolved)) {
+          await coalesceProvider();
+          return resolved;
+        }
+        return resolved;
+      };
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js
+var booleanSelector;
+var init_booleanSelector = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js"() {
+    booleanSelector = (obj, key, type) => {
+      if (!(key in obj)) {
+        return void 0;
+      }
+      if (obj[key] === "true") {
+        return true;
+      }
+      if (obj[key] === "false") {
+        return false;
+      }
+      throw new Error(`Cannot load ${type} "${key}". Expected "true" or "false", got ${obj[key]}.`);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js
+var numberSelector;
+var init_numberSelector = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js"() {
+    numberSelector = (obj, key, type) => {
+      if (!(key in obj)) {
+        return void 0;
+      }
+      const numberValue = parseInt(obj[key], 10);
+      if (Number.isNaN(numberValue)) {
+        throw new TypeError(`Cannot load ${type} '${key}'. Expected number, got '${obj[key]}'.`);
+      }
+      return numberValue;
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js
+var SelectorType;
+var init_types = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js"() {
+    (function(SelectorType2) {
+      SelectorType2["ENV"] = "env";
+      SelectorType2["CONFIG"] = "shared config entry";
+    })(SelectorType || (SelectorType = {}));
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js
+var import_node_os, import_node_path, homeDirCache, getHomeDirCacheKey, getHomeDir;
+var init_getHomeDir = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js"() {
+    import_node_os = require("node:os");
+    import_node_path = require("node:path");
+    homeDirCache = {};
+    getHomeDirCacheKey = () => {
+      if (process && process.geteuid) {
+        return `${process.geteuid()}`;
+      }
+      return "DEFAULT";
+    };
+    getHomeDir = () => {
+      const { HOME, USERPROFILE, HOMEPATH, HOMEDRIVE = `C:${import_node_path.sep}` } = process.env;
+      if (HOME) {
+        return HOME;
+      }
+      if (USERPROFILE) {
+        return USERPROFILE;
+      }
+      if (HOMEPATH) {
+        return `${HOMEDRIVE}${HOMEPATH}`;
+      }
+      const homeDirCacheKey = getHomeDirCacheKey();
+      if (!homeDirCache[homeDirCacheKey]) {
+        homeDirCache[homeDirCacheKey] = (0, import_node_os.homedir)();
+      }
+      return homeDirCache[homeDirCacheKey];
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js
+var ENV_PROFILE, DEFAULT_PROFILE, getProfileName;
+var init_getProfileName = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js"() {
+    ENV_PROFILE = "AWS_PROFILE";
+    DEFAULT_PROFILE = "default";
+    getProfileName = (init) => init.profile || process.env[ENV_PROFILE] || DEFAULT_PROFILE;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js
+var import_node_crypto, import_node_path2, getSSOTokenFilepath;
+var init_getSSOTokenFilepath = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js"() {
+    import_node_crypto = require("node:crypto");
+    import_node_path2 = require("node:path");
+    init_getHomeDir();
+    getSSOTokenFilepath = (id) => {
+      const hasher = (0, import_node_crypto.createHash)("sha1");
+      const cacheName = hasher.update(id).digest("hex");
+      return (0, import_node_path2.join)(getHomeDir(), ".aws", "sso", "cache", `${cacheName}.json`);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js
+var import_promises, tokenIntercept, getSSOTokenFromFile;
+var init_getSSOTokenFromFile = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js"() {
+    import_promises = require("node:fs/promises");
+    init_getSSOTokenFilepath();
+    tokenIntercept = {};
+    getSSOTokenFromFile = async (id) => {
+      if (tokenIntercept[id]) {
+        return tokenIntercept[id];
+      }
+      const ssoTokenFilepath = getSSOTokenFilepath(id);
+      const ssoTokenText = await (0, import_promises.readFile)(ssoTokenFilepath, "utf8");
+      return JSON.parse(ssoTokenText);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js
+var CONFIG_PREFIX_SEPARATOR;
+var init_constants = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js"() {
+    CONFIG_PREFIX_SEPARATOR = ".";
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js
+var import_types2, getConfigData;
+var init_getConfigData = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js"() {
+    import_types2 = __toESM(require_dist_cjs());
+    init_constants();
+    getConfigData = (data2) => Object.entries(data2).filter(([key]) => {
+      const indexOfSeparator = key.indexOf(CONFIG_PREFIX_SEPARATOR);
+      if (indexOfSeparator === -1) {
+        return false;
+      }
+      return Object.values(import_types2.IniSectionType).includes(key.substring(0, indexOfSeparator));
+    }).reduce((acc, [key, value]) => {
+      const indexOfSeparator = key.indexOf(CONFIG_PREFIX_SEPARATOR);
+      const updatedKey = key.substring(0, indexOfSeparator) === import_types2.IniSectionType.PROFILE ? key.substring(indexOfSeparator + 1) : key;
+      acc[updatedKey] = value;
+      return acc;
+    }, {
+      ...data2.default && { default: data2.default }
+    });
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js
+var import_node_path3, ENV_CONFIG_PATH, getConfigFilepath;
+var init_getConfigFilepath = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js"() {
+    import_node_path3 = require("node:path");
+    init_getHomeDir();
+    ENV_CONFIG_PATH = "AWS_CONFIG_FILE";
+    getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || (0, import_node_path3.join)(getHomeDir(), ".aws", "config");
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js
+var import_node_path4, ENV_CREDENTIALS_PATH, getCredentialsFilepath;
+var init_getCredentialsFilepath = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js"() {
+    import_node_path4 = require("node:path");
+    init_getHomeDir();
+    ENV_CREDENTIALS_PATH = "AWS_SHARED_CREDENTIALS_FILE";
+    getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || (0, import_node_path4.join)(getHomeDir(), ".aws", "credentials");
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js
+var import_types3, prefixKeyRegex, profileNameBlockList, parseIni;
+var init_parseIni = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js"() {
+    import_types3 = __toESM(require_dist_cjs());
+    init_constants();
+    prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@+.%:/]+)\2$/;
+    profileNameBlockList = ["__proto__", "profile __proto__"];
+    parseIni = (iniData) => {
+      const map3 = {};
+      let currentSection;
+      let currentSubSection;
+      for (const iniLine of iniData.split(/\r?\n/)) {
+        const trimmedLine = iniLine.split(/(^|\s)[;#]/)[0].trim();
+        const isSection = trimmedLine[0] === "[" && trimmedLine[trimmedLine.length - 1] === "]";
+        if (isSection) {
+          currentSection = void 0;
+          currentSubSection = void 0;
+          const sectionName = trimmedLine.substring(1, trimmedLine.length - 1);
+          const matches = prefixKeyRegex.exec(sectionName);
+          if (matches) {
+            const [, prefix, , name] = matches;
+            if (Object.values(import_types3.IniSectionType).includes(prefix)) {
+              currentSection = [prefix, name].join(CONFIG_PREFIX_SEPARATOR);
+            }
+          } else {
+            currentSection = sectionName;
+          }
+          if (profileNameBlockList.includes(sectionName)) {
+            throw new Error(`Found invalid profile name "${sectionName}"`);
+          }
+        } else if (currentSection) {
+          const indexOfEqualsSign = trimmedLine.indexOf("=");
+          if (![0, -1].includes(indexOfEqualsSign)) {
+            const [name, value] = [
+              trimmedLine.substring(0, indexOfEqualsSign).trim(),
+              trimmedLine.substring(indexOfEqualsSign + 1).trim()
+            ];
+            if (value === "") {
+              currentSubSection = name;
+            } else {
+              if (currentSubSection && iniLine.trimStart() === iniLine) {
+                currentSubSection = void 0;
+              }
+              map3[currentSection] = map3[currentSection] || {};
+              const key = currentSubSection ? [currentSubSection, name].join(CONFIG_PREFIX_SEPARATOR) : name;
+              map3[currentSection][key] = value;
+            }
+          }
+        }
+      }
+      return map3;
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js
+var import_promises2, filePromises, fileIntercept, readFile2;
+var init_readFile = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js"() {
+    import_promises2 = require("node:fs/promises");
+    filePromises = {};
+    fileIntercept = {};
+    readFile2 = (path4, options) => {
+      if (fileIntercept[path4] !== void 0) {
+        return fileIntercept[path4];
+      }
+      if (!filePromises[path4] || options?.ignoreCache) {
+        filePromises[path4] = (0, import_promises2.readFile)(path4, "utf8");
+      }
+      return filePromises[path4];
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js
+var import_node_path5, swallowError, loadSharedConfigFiles;
+var init_loadSharedConfigFiles = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js"() {
+    import_node_path5 = require("node:path");
+    init_getConfigData();
+    init_getConfigFilepath();
+    init_getCredentialsFilepath();
+    init_getHomeDir();
+    init_parseIni();
+    init_readFile();
+    init_constants();
+    swallowError = () => ({});
+    loadSharedConfigFiles = async (init = {}) => {
+      const { filepath = getCredentialsFilepath(), configFilepath = getConfigFilepath() } = init;
+      const homeDir = getHomeDir();
+      const relativeHomeDirPrefix = "~/";
+      let resolvedFilepath = filepath;
+      if (filepath.startsWith(relativeHomeDirPrefix)) {
+        resolvedFilepath = (0, import_node_path5.join)(homeDir, filepath.slice(2));
+      }
+      let resolvedConfigFilepath = configFilepath;
+      if (configFilepath.startsWith(relativeHomeDirPrefix)) {
+        resolvedConfigFilepath = (0, import_node_path5.join)(homeDir, configFilepath.slice(2));
+      }
+      const parsedFiles = await Promise.all([
+        readFile2(resolvedConfigFilepath, {
+          ignoreCache: init.ignoreCache
+        }).then(parseIni).then(getConfigData).catch(swallowError),
+        readFile2(resolvedFilepath, {
+          ignoreCache: init.ignoreCache
+        }).then(parseIni).catch(swallowError)
+      ]);
+      return {
+        configFile: parsedFiles[0],
+        credentialsFile: parsedFiles[1]
+      };
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js
+var import_types4, getSsoSessionData;
+var init_getSsoSessionData = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js"() {
+    import_types4 = __toESM(require_dist_cjs());
+    init_loadSharedConfigFiles();
+    getSsoSessionData = (data2) => Object.entries(data2).filter(([key]) => key.startsWith(import_types4.IniSectionType.SSO_SESSION + CONFIG_PREFIX_SEPARATOR)).reduce((acc, [key, value]) => ({ ...acc, [key.substring(key.indexOf(CONFIG_PREFIX_SEPARATOR) + 1)]: value }), {});
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js
+var swallowError2, loadSsoSessionData;
+var init_loadSsoSessionData = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js"() {
+    init_getConfigFilepath();
+    init_getSsoSessionData();
+    init_parseIni();
+    init_readFile();
+    swallowError2 = () => ({});
+    loadSsoSessionData = async (init = {}) => readFile2(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError2);
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js
+var mergeConfigFiles;
+var init_mergeConfigFiles = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js"() {
+    mergeConfigFiles = (...files) => {
+      const merged = {};
+      for (const file2 of files) {
+        for (const [key, values] of Object.entries(file2)) {
+          if (merged[key] !== void 0) {
+            Object.assign(merged[key], values);
+          } else {
+            merged[key] = values;
+          }
+        }
+      }
+      return merged;
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js
+var parseKnownFiles;
+var init_parseKnownFiles = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js"() {
+    init_loadSharedConfigFiles();
+    init_mergeConfigFiles();
+    parseKnownFiles = async (init) => {
+      const parsedFiles = await loadSharedConfigFiles(init);
+      return mergeConfigFiles(parsedFiles.configFile, parsedFiles.credentialsFile);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js
+var externalDataInterceptor;
+var init_externalDataInterceptor = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js"() {
+    init_getSSOTokenFromFile();
+    init_readFile();
+    externalDataInterceptor = {
+      getFileRecord() {
+        return fileIntercept;
+      },
+      interceptFile(path4, contents) {
+        fileIntercept[path4] = Promise.resolve(contents);
+      },
+      getTokenRecord() {
+        return tokenIntercept;
+      },
+      interceptToken(id, contents) {
+        tokenIntercept[id] = contents;
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js
+function getSelectorName(functionString) {
+  try {
+    const constants4 = new Set(Array.from(functionString.match(/([A-Z_]){3,}/g) ?? []));
+    constants4.delete("CONFIG");
+    constants4.delete("CONFIG_PREFIX_SEPARATOR");
+    constants4.delete("ENV");
+    return [...constants4].join(", ");
+  } catch (ignored) {
+    return functionString;
+  }
+}
+var init_getSelectorName = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js"() {
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js
+var fromEnv;
+var init_fromEnv = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js"() {
+    init_CredentialsProviderError();
+    init_getSelectorName();
+    fromEnv = (envVarSelector, options) => async () => {
+      try {
+        const config = envVarSelector(process.env, options);
+        if (config === void 0) {
+          throw new Error();
+        }
+        return config;
+      } catch (e5) {
+        throw new CredentialsProviderError(e5.message || `Not found in ENV: ${getSelectorName(envVarSelector.toString())}`, { logger: options?.logger });
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js
+var fromSharedConfigFiles;
+var init_fromSharedConfigFiles = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js"() {
+    init_CredentialsProviderError();
+    init_getProfileName();
+    init_loadSharedConfigFiles();
+    init_getSelectorName();
+    fromSharedConfigFiles = (configSelector, { preferredFile = "config", ...init } = {}) => async () => {
+      const profile = getProfileName(init);
+      const { configFile, credentialsFile } = await loadSharedConfigFiles(init);
+      const profileFromCredentials = credentialsFile[profile] || {};
+      const profileFromConfig = configFile[profile] || {};
+      const mergedProfile = preferredFile === "config" ? { ...profileFromCredentials, ...profileFromConfig } : { ...profileFromConfig, ...profileFromCredentials };
+      try {
+        const cfgFile = preferredFile === "config" ? configFile : credentialsFile;
+        const configValue = configSelector(mergedProfile, cfgFile);
+        if (configValue === void 0) {
+          throw new Error();
+        }
+        return configValue;
+      } catch (e5) {
+        throw new CredentialsProviderError(e5.message || `Not found in config files w/ profile [${profile}]: ${getSelectorName(configSelector.toString())}`, { logger: init.logger });
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js
+var isFunction, fromStatic;
+var init_fromStatic = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js"() {
+    init_fromValue();
+    isFunction = (func) => typeof func === "function";
+    fromStatic = (defaultValue) => isFunction(defaultValue) ? async () => await defaultValue() : fromValue(defaultValue);
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js
+var loadConfig;
+var init_configLoader = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js"() {
+    init_chain();
+    init_memoize();
+    init_fromEnv();
+    init_fromSharedConfigFiles();
+    init_fromStatic();
+    loadConfig = ({ environmentVariableSelector, configFileSelector, default: defaultValue }, configuration = {}) => {
+      const { signingName, logger: logger2 } = configuration;
+      const envOptions = { signingName, logger: logger2 };
+      return memoize(chain(fromEnv(environmentVariableSelector, envOptions), fromSharedConfigFiles(configFileSelector, configuration), fromStatic(defaultValue)));
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js
+var ENV_USE_DUALSTACK_ENDPOINT, CONFIG_USE_DUALSTACK_ENDPOINT, DEFAULT_USE_DUALSTACK_ENDPOINT, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, nodeDualstackConfigSelectors;
+var init_NodeUseDualstackEndpointConfigOptions = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js"() {
+    init_booleanSelector();
+    init_types();
+    ENV_USE_DUALSTACK_ENDPOINT = "AWS_USE_DUALSTACK_ENDPOINT";
+    CONFIG_USE_DUALSTACK_ENDPOINT = "use_dualstack_endpoint";
+    DEFAULT_USE_DUALSTACK_ENDPOINT = false;
+    NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_DUALSTACK_ENDPOINT, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_DUALSTACK_ENDPOINT, SelectorType.CONFIG),
+      default: false
+    };
+    nodeDualstackConfigSelectors = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_DUALSTACK_ENDPOINT, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_DUALSTACK_ENDPOINT, SelectorType.CONFIG),
+      default: void 0
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js
+var ENV_USE_FIPS_ENDPOINT, CONFIG_USE_FIPS_ENDPOINT, DEFAULT_USE_FIPS_ENDPOINT, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, nodeFipsConfigSelectors;
+var init_NodeUseFipsEndpointConfigOptions = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js"() {
+    init_booleanSelector();
+    init_types();
+    ENV_USE_FIPS_ENDPOINT = "AWS_USE_FIPS_ENDPOINT";
+    CONFIG_USE_FIPS_ENDPOINT = "use_fips_endpoint";
+    DEFAULT_USE_FIPS_ENDPOINT = false;
+    NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_FIPS_ENDPOINT, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_FIPS_ENDPOINT, SelectorType.CONFIG),
+      default: false
+    };
+    nodeFipsConfigSelectors = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_FIPS_ENDPOINT, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_FIPS_ENDPOINT, SelectorType.CONFIG),
+      default: void 0
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js
+var getAllAliases, getMiddlewareNameWithAliases, constructStack, stepWeights, priorityWeights;
+var init_MiddlewareStack = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js"() {
+    getAllAliases = (name, aliases) => {
+      const _aliases = [];
+      if (name) {
+        _aliases.push(name);
+      }
+      if (aliases) {
+        for (const alias of aliases) {
+          _aliases.push(alias);
+        }
+      }
+      return _aliases;
+    };
+    getMiddlewareNameWithAliases = (name, aliases) => {
+      return `${name || "anonymous"}${aliases && aliases.length > 0 ? ` (a.k.a. ${aliases.join(",")})` : ""}`;
+    };
+    constructStack = () => {
+      let absoluteEntries = [];
+      let relativeEntries = [];
+      let identifyOnResolve = false;
+      const entriesNameSet = /* @__PURE__ */ new Set();
+      const sort = (entries) => entries.sort((a5, b6) => stepWeights[b6.step] - stepWeights[a5.step] || priorityWeights[b6.priority || "normal"] - priorityWeights[a5.priority || "normal"]);
+      const removeByName = (toRemove) => {
+        let isRemoved = false;
+        const filterCb = (entry) => {
+          const aliases = getAllAliases(entry.name, entry.aliases);
+          if (aliases.includes(toRemove)) {
+            isRemoved = true;
+            for (const alias of aliases) {
+              entriesNameSet.delete(alias);
+            }
+            return false;
+          }
+          return true;
+        };
+        absoluteEntries = absoluteEntries.filter(filterCb);
+        relativeEntries = relativeEntries.filter(filterCb);
+        return isRemoved;
+      };
+      const removeByReference = (toRemove) => {
+        let isRemoved = false;
+        const filterCb = (entry) => {
+          if (entry.middleware === toRemove) {
+            isRemoved = true;
+            for (const alias of getAllAliases(entry.name, entry.aliases)) {
+              entriesNameSet.delete(alias);
+            }
+            return false;
+          }
+          return true;
+        };
+        absoluteEntries = absoluteEntries.filter(filterCb);
+        relativeEntries = relativeEntries.filter(filterCb);
+        return isRemoved;
+      };
+      const cloneTo = (toStack) => {
+        absoluteEntries.forEach((entry) => {
+          toStack.add(entry.middleware, { ...entry });
+        });
+        relativeEntries.forEach((entry) => {
+          toStack.addRelativeTo(entry.middleware, { ...entry });
+        });
+        toStack.identifyOnResolve?.(stack.identifyOnResolve());
+        return toStack;
+      };
+      const expandRelativeMiddlewareList = (from) => {
+        const expandedMiddlewareList = [];
+        from.before.forEach((entry) => {
+          if (entry.before.length === 0 && entry.after.length === 0) {
+            expandedMiddlewareList.push(entry);
+          } else {
+            expandedMiddlewareList.push(...expandRelativeMiddlewareList(entry));
+          }
+        });
+        expandedMiddlewareList.push(from);
+        from.after.reverse().forEach((entry) => {
+          if (entry.before.length === 0 && entry.after.length === 0) {
+            expandedMiddlewareList.push(entry);
+          } else {
+            expandedMiddlewareList.push(...expandRelativeMiddlewareList(entry));
+          }
+        });
+        return expandedMiddlewareList;
+      };
+      const getMiddlewareList = (debug13 = false) => {
+        const normalizedAbsoluteEntries = [];
+        const normalizedRelativeEntries = [];
+        const normalizedEntriesNameMap = {};
+        absoluteEntries.forEach((entry) => {
+          const normalizedEntry = {
+            ...entry,
+            before: [],
+            after: []
+          };
+          for (const alias of getAllAliases(normalizedEntry.name, normalizedEntry.aliases)) {
+            normalizedEntriesNameMap[alias] = normalizedEntry;
+          }
+          normalizedAbsoluteEntries.push(normalizedEntry);
+        });
+        relativeEntries.forEach((entry) => {
+          const normalizedEntry = {
+            ...entry,
+            before: [],
+            after: []
+          };
+          for (const alias of getAllAliases(normalizedEntry.name, normalizedEntry.aliases)) {
+            normalizedEntriesNameMap[alias] = normalizedEntry;
+          }
+          normalizedRelativeEntries.push(normalizedEntry);
+        });
+        normalizedRelativeEntries.forEach((entry) => {
+          if (entry.toMiddleware) {
+            const toMiddleware = normalizedEntriesNameMap[entry.toMiddleware];
+            if (toMiddleware === void 0) {
+              if (debug13) {
+                return;
+              }
+              throw new Error(`${entry.toMiddleware} is not found when adding ${getMiddlewareNameWithAliases(entry.name, entry.aliases)} middleware ${entry.relation} ${entry.toMiddleware}`);
+            }
+            if (entry.relation === "after") {
+              toMiddleware.after.push(entry);
+            }
+            if (entry.relation === "before") {
+              toMiddleware.before.push(entry);
+            }
+          }
+        });
+        const mainChain = sort(normalizedAbsoluteEntries).map(expandRelativeMiddlewareList).reduce((wholeList, expandedMiddlewareList) => {
+          wholeList.push(...expandedMiddlewareList);
+          return wholeList;
+        }, []);
+        return mainChain;
+      };
+      const stack = {
+        add: (middleware, options = {}) => {
+          const { name, override, aliases: _aliases } = options;
+          const entry = {
+            step: "initialize",
+            priority: "normal",
+            middleware,
+            ...options
+          };
+          const aliases = getAllAliases(name, _aliases);
+          if (aliases.length > 0) {
+            if (aliases.some((alias) => entriesNameSet.has(alias))) {
+              if (!override) {
+                throw new Error(`Duplicate middleware name '${getMiddlewareNameWithAliases(name, _aliases)}'`);
+              }
+              for (const alias of aliases) {
+                const toOverrideIndex = absoluteEntries.findIndex((entry2) => entry2.name === alias || entry2.aliases?.some((a5) => a5 === alias));
+                if (toOverrideIndex === -1) {
+                  continue;
+                }
+                const toOverride = absoluteEntries[toOverrideIndex];
+                if (toOverride.step !== entry.step || entry.priority !== toOverride.priority) {
+                  throw new Error(`"${getMiddlewareNameWithAliases(toOverride.name, toOverride.aliases)}" middleware with ${toOverride.priority} priority in ${toOverride.step} step cannot be overridden by "${getMiddlewareNameWithAliases(name, _aliases)}" middleware with ${entry.priority} priority in ${entry.step} step.`);
+                }
+                absoluteEntries.splice(toOverrideIndex, 1);
+              }
+            }
+            for (const alias of aliases) {
+              entriesNameSet.add(alias);
+            }
+          }
+          absoluteEntries.push(entry);
+        },
+        addRelativeTo: (middleware, options) => {
+          const { name, override, aliases: _aliases } = options;
+          const entry = {
+            middleware,
+            ...options
+          };
+          const aliases = getAllAliases(name, _aliases);
+          if (aliases.length > 0) {
+            if (aliases.some((alias) => entriesNameSet.has(alias))) {
+              if (!override) {
+                throw new Error(`Duplicate middleware name '${getMiddlewareNameWithAliases(name, _aliases)}'`);
+              }
+              for (const alias of aliases) {
+                const toOverrideIndex = relativeEntries.findIndex((entry2) => entry2.name === alias || entry2.aliases?.some((a5) => a5 === alias));
+                if (toOverrideIndex === -1) {
+                  continue;
+                }
+                const toOverride = relativeEntries[toOverrideIndex];
+                if (toOverride.toMiddleware !== entry.toMiddleware || toOverride.relation !== entry.relation) {
+                  throw new Error(`"${getMiddlewareNameWithAliases(toOverride.name, toOverride.aliases)}" middleware ${toOverride.relation} "${toOverride.toMiddleware}" middleware cannot be overridden by "${getMiddlewareNameWithAliases(name, _aliases)}" middleware ${entry.relation} "${entry.toMiddleware}" middleware.`);
+                }
+                relativeEntries.splice(toOverrideIndex, 1);
+              }
+            }
+            for (const alias of aliases) {
+              entriesNameSet.add(alias);
+            }
+          }
+          relativeEntries.push(entry);
+        },
+        clone: () => cloneTo(constructStack()),
+        use: (plugin) => {
+          plugin.applyToStack(stack);
+        },
+        remove: (toRemove) => {
+          if (typeof toRemove === "string") {
+            return removeByName(toRemove);
+          } else {
+            return removeByReference(toRemove);
+          }
+        },
+        removeByTag: (toRemove) => {
+          let isRemoved = false;
+          const filterCb = (entry) => {
+            const { tags, name, aliases: _aliases } = entry;
+            if (tags && tags.includes(toRemove)) {
+              const aliases = getAllAliases(name, _aliases);
+              for (const alias of aliases) {
+                entriesNameSet.delete(alias);
+              }
+              isRemoved = true;
+              return false;
+            }
+            return true;
+          };
+          absoluteEntries = absoluteEntries.filter(filterCb);
+          relativeEntries = relativeEntries.filter(filterCb);
+          return isRemoved;
+        },
+        concat: (from) => {
+          const cloned = cloneTo(constructStack());
+          cloned.use(from);
+          cloned.identifyOnResolve(identifyOnResolve || cloned.identifyOnResolve() || (from.identifyOnResolve?.() ?? false));
+          return cloned;
+        },
+        applyToStack: cloneTo,
+        identify: () => {
+          return getMiddlewareList(true).map((mw) => {
+            const step = mw.step ?? mw.relation + " " + mw.toMiddleware;
+            return getMiddlewareNameWithAliases(mw.name, mw.aliases) + " - " + step;
+          });
+        },
+        identifyOnResolve(toggle) {
+          if (typeof toggle === "boolean") {
+            identifyOnResolve = toggle;
+          }
+          return identifyOnResolve;
+        },
+        resolve: (handler, context) => {
+          for (const middleware of getMiddlewareList().map((entry) => entry.middleware).reverse()) {
+            handler = middleware(handler, context);
+          }
+          if (identifyOnResolve) {
+            console.log(stack.identify());
+          }
+          return handler;
+        }
+      };
+      return stack;
+    };
+    stepWeights = {
+      initialize: 5,
+      serialize: 4,
+      build: 3,
+      finalizeRequest: 2,
+      deserialize: 1
+    };
+    priorityWeights = {
+      high: 3,
+      normal: 2,
+      low: 1
+    };
+  }
+});
+
 // node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidFunction.js
 var invalidFunction;
 var init_invalidFunction = __esm({
@@ -20178,7 +21882,7 @@ var init_operation = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaDeserializationMiddleware.js
-var schemaDeserializationMiddleware, findHeader;
+var schemaDeserializationMiddleware, findHeader2;
 var init_schemaDeserializationMiddleware = __esm({
   "node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaDeserializationMiddleware.js"() {
     init_transport();
@@ -20225,9 +21929,9 @@ var init_schemaDeserializationMiddleware = __esm({
               const headerEntries = Object.entries(headers);
               error3.$metadata = {
                 httpStatusCode: statusCode,
-                requestId: findHeader(/^x-[\w-]+-request-?id$/, headerEntries),
-                extendedRequestId: findHeader(/^x-[\w-]+-id-2$/, headerEntries),
-                cfId: findHeader(/^x-[\w-]+-cf-id$/, headerEntries)
+                requestId: findHeader2(/^x-[\w-]+-request-?id$/, headerEntries),
+                extendedRequestId: findHeader2(/^x-[\w-]+-id-2$/, headerEntries),
+                cfId: findHeader2(/^x-[\w-]+-cf-id$/, headerEntries)
               };
             }
           } catch (ignored) {
@@ -20236,7 +21940,7 @@ var init_schemaDeserializationMiddleware = __esm({
         throw error3;
       }
     };
-    findHeader = (pattern, headers) => {
+    findHeader2 = (pattern, headers) => {
       return (headers.find(([k5]) => {
         return k5.match(pattern);
       }) || [void 0, void 0])[1];
@@ -21010,10 +22714,10 @@ var init_schemaLogFilter = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/client/smithy-client/command.js
-var import_types2, operationEventStreamMarker, Command2, ClassBuilder;
+var import_types7, operationEventStreamMarker, Command2, ClassBuilder;
 var init_command = __esm({
   "node_modules/@smithy/core/dist-es/submodules/client/smithy-client/command.js"() {
-    import_types2 = __toESM(require_dist_cjs());
+    import_types7 = __toESM(require_dist_cjs());
     init_MiddlewareStack();
     init_schemaLogFilter();
     init_schema();
@@ -21030,7 +22734,7 @@ var init_command = __esm({
         }
         const stack = clientStack.concat(this.middlewareStack);
         const { logger: logger2 } = configuration;
-        const additionalSmithyContext = additionalContext[import_types2.SMITHY_CONTEXT_KEY];
+        const additionalSmithyContext = additionalContext[import_types7.SMITHY_CONTEXT_KEY];
         const handlerExecutionContext = {
           logger: logger2,
           clientName,
@@ -21038,7 +22742,7 @@ var init_command = __esm({
           inputFilterSensitiveLog,
           outputFilterSensitiveLog,
           ...additionalContext,
-          [import_types2.SMITHY_CONTEXT_KEY]: {
+          [import_types7.SMITHY_CONTEXT_KEY]: {
             ...additionalSmithyContext,
             commandInstance: this,
             ...smithyContext,
@@ -21171,7 +22875,7 @@ var init_command = __esm({
 
 // node_modules/@smithy/core/dist-es/submodules/client/smithy-client/constants.js
 var SENSITIVE_STRING2;
-var init_constants = __esm({
+var init_constants2 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/client/smithy-client/constants.js"() {
     SENSITIVE_STRING2 = "***SensitiveInformation***";
   }
@@ -21393,19 +23097,19 @@ var init_emitWarningIfUnsupportedVersion2 = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/checksum.js
-var import_types3, knownAlgorithms, getChecksumConfiguration, resolveChecksumRuntimeConfig;
+var import_types8, knownAlgorithms, getChecksumConfiguration, resolveChecksumRuntimeConfig;
 var init_checksum = __esm({
   "node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/checksum.js"() {
     init_transport();
-    import_types3 = __toESM(require_dist_cjs());
-    knownAlgorithms = Object.values(import_types3.AlgorithmId);
+    import_types8 = __toESM(require_dist_cjs());
+    knownAlgorithms = Object.values(import_types8.AlgorithmId);
     getChecksumConfiguration = (runtimeConfig) => {
       const checksumAlgorithms = [];
-      for (const id in import_types3.AlgorithmId) {
-        if (!hasOwn(import_types3.AlgorithmId, id)) {
+      for (const id in import_types8.AlgorithmId) {
+        if (!hasOwn(import_types8.AlgorithmId, id)) {
           continue;
         }
-        const algorithmId = import_types3.AlgorithmId[id];
+        const algorithmId = import_types8.AlgorithmId[id];
         if (runtimeConfig[algorithmId] === void 0) {
           continue;
         }
@@ -21718,7 +23422,7 @@ var init_client_command_builder = __esm({
 // node_modules/@smithy/core/dist-es/submodules/client/index.js
 var client_exports = {};
 __export(client_exports, {
-  AlgorithmId: () => import_types3.AlgorithmId,
+  AlgorithmId: () => import_types8.AlgorithmId,
   Client: () => Client,
   Command: () => Command2,
   NoOpLogger: () => NoOpLogger,
@@ -21769,7 +23473,7 @@ var init_client2 = __esm({
     init_waiter();
     init_client();
     init_command();
-    init_constants();
+    init_constants2();
     init_create_aggregated_client();
     init_default_error_handler();
     init_defaults_mode();
@@ -21787,1668 +23491,6 @@ var init_client2 = __esm({
     init_ser_utils();
     init_serde_json();
     init_client_command_builder();
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js
-var isArrayBuffer;
-var init_is_array_buffer = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js"() {
-    isArrayBuffer = (arg) => typeof ArrayBuffer === "function" && arg instanceof ArrayBuffer || Object.prototype.toString.call(arg) === "[object ArrayBuffer]";
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js
-var fromArrayBuffer, fromString;
-var init_buffer_from = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js"() {
-    init_is_array_buffer();
-    fromArrayBuffer = (input, offset = 0, length = input.byteLength - offset) => {
-      if (!isArrayBuffer(input)) {
-        throw new TypeError(`The "input" argument must be ArrayBuffer. Received type ${typeof input} (${input})`);
-      }
-      return Buffer.from(input, offset, length);
-    };
-    fromString = (input, encoding) => {
-      if (typeof input !== "string") {
-        throw new TypeError(`The "input" argument must be of type string. Received type ${typeof input} (${input})`);
-      }
-      return encoding ? Buffer.from(input, encoding) : Buffer.from(input);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js
-var BASE64_REGEX, fromBase64;
-var init_fromBase64 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js"() {
-    init_buffer_from();
-    BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
-    fromBase64 = (input) => {
-      if (input.length * 3 % 4 !== 0) {
-        throw new TypeError(`Incorrect padding on base64 string.`);
-      }
-      if (!BASE64_REGEX.exec(input)) {
-        throw new TypeError(`Invalid base64 string.`);
-      }
-      const buffer = fromString(input, "base64");
-      return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js
-var fromUtf8;
-var init_fromUtf8 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js"() {
-    init_buffer_from();
-    fromUtf8 = (input) => {
-      const buf2 = fromString(input, "utf8");
-      return new Uint8Array(buf2.buffer, buf2.byteOffset, buf2.byteLength / Uint8Array.BYTES_PER_ELEMENT);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js
-var toBase64;
-var init_toBase64 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js"() {
-    init_buffer_from();
-    init_fromUtf8();
-    toBase64 = (_input) => {
-      let input;
-      if (typeof _input === "string") {
-        input = fromUtf8(_input);
-      } else {
-        input = _input;
-      }
-      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
-        throw new Error("@smithy/util-base64: toBase64 encoder function only accepts string | Uint8Array.");
-      }
-      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("base64");
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js
-function bindUint8ArrayBlobAdapter(toUtf83, fromUtf83, toBase643, fromBase642) {
-  return class Uint8ArrayBlobAdapter2 extends Uint8Array {
-    static fromString(source, encoding = "utf-8") {
-      if (typeof source === "string") {
-        if (encoding === "base64") {
-          return Uint8ArrayBlobAdapter2.mutate(fromBase642(source));
-        }
-        return Uint8ArrayBlobAdapter2.mutate(fromUtf83(source));
-      }
-      throw new Error(`Unsupported conversion from ${typeof source} to Uint8ArrayBlobAdapter.`);
-    }
-    static mutate(source) {
-      Object.setPrototypeOf(source, Uint8ArrayBlobAdapter2.prototype);
-      return source;
-    }
-    transformToString(encoding = "utf-8") {
-      if (encoding === "base64") {
-        return toBase643(this);
-      }
-      return toUtf83(this);
-    }
-  };
-}
-var init_Uint8ArrayBlobAdapter = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js
-var toUtf8;
-var init_toUtf8 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js"() {
-    init_buffer_from();
-    toUtf8 = (input) => {
-      if (typeof input === "string") {
-        return input;
-      }
-      if (typeof input !== "object" || typeof input.byteOffset !== "number" || typeof input.byteLength !== "number") {
-        throw new Error("@smithy/util-utf8: toUtf8 encoder function only accepts string | Uint8Array.");
-      }
-      return fromArrayBuffer(input.buffer, input.byteOffset, input.byteLength).toString("utf8");
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js
-function bindV4(getRandomValues2) {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return () => crypto.randomUUID();
-  }
-  return () => {
-    const rnds = new Uint8Array(16);
-    getRandomValues2(rnds);
-    rnds[6] = rnds[6] & 15 | 64;
-    rnds[8] = rnds[8] & 63 | 128;
-    return decimalToHex[rnds[0]] + decimalToHex[rnds[1]] + decimalToHex[rnds[2]] + decimalToHex[rnds[3]] + "-" + decimalToHex[rnds[4]] + decimalToHex[rnds[5]] + "-" + decimalToHex[rnds[6]] + decimalToHex[rnds[7]] + "-" + decimalToHex[rnds[8]] + decimalToHex[rnds[9]] + "-" + decimalToHex[rnds[10]] + decimalToHex[rnds[11]] + decimalToHex[rnds[12]] + decimalToHex[rnds[13]] + decimalToHex[rnds[14]] + decimalToHex[rnds[15]];
-  };
-}
-var decimalToHex;
-var init_v4 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js"() {
-    decimalToHex = Array.from({ length: 256 }, (_, i5) => i5.toString(16).padStart(2, "0"));
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js
-var copyDocumentWithTransform;
-var init_copyDocumentWithTransform = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js"() {
-    copyDocumentWithTransform = (source, _schemaRef, _transform = (_) => _) => source;
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js
-var parseBoolean, expectBoolean, expectNumber, MAX_FLOAT, expectFloat32, expectLong, expectInt, expectInt32, expectShort, expectByte, expectSizedInt, castInt, expectNonNull, expectObject, expectString, expectUnion, strictParseDouble, strictParseFloat, strictParseFloat32, NUMBER_REGEX, parseNumber, limitedParseDouble, handleFloat, limitedParseFloat, limitedParseFloat32, parseFloatString, strictParseLong, strictParseInt, strictParseInt32, strictParseShort, strictParseByte, stackTraceWarning, logger;
-var init_parse_utils = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js"() {
-    init_transport();
-    parseBoolean = (value) => {
-      switch (value) {
-        case "true":
-          return true;
-        case "false":
-          return false;
-        default:
-          throw new Error(`Unable to parse boolean value "${value}"`);
-      }
-    };
-    expectBoolean = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (typeof value === "number") {
-        if (value === 0 || value === 1) {
-          logger.warn(stackTraceWarning(`Expected boolean, got ${typeof value}: ${value}`));
-        }
-        if (value === 0) {
-          return false;
-        }
-        if (value === 1) {
-          return true;
-        }
-      }
-      if (typeof value === "string") {
-        const lower = value.toLowerCase();
-        if (lower === "false" || lower === "true") {
-          logger.warn(stackTraceWarning(`Expected boolean, got ${typeof value}: ${value}`));
-        }
-        if (lower === "false") {
-          return false;
-        }
-        if (lower === "true") {
-          return true;
-        }
-      }
-      if (typeof value === "boolean") {
-        return value;
-      }
-      throw new TypeError(`Expected boolean, got ${typeof value}: ${value}`);
-    };
-    expectNumber = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (typeof value === "string") {
-        const parsed = parseFloat(value);
-        if (!Number.isNaN(parsed)) {
-          if (String(parsed) !== String(value)) {
-            logger.warn(stackTraceWarning(`Expected number but observed string: ${value}`));
-          }
-          return parsed;
-        }
-      }
-      if (typeof value === "number") {
-        return value;
-      }
-      throw new TypeError(`Expected number, got ${typeof value}: ${value}`);
-    };
-    MAX_FLOAT = Math.ceil(2 ** 127 * (2 - 2 ** -23));
-    expectFloat32 = (value) => {
-      const expected = expectNumber(value);
-      if (expected !== void 0 && !Number.isNaN(expected) && expected !== Infinity && expected !== -Infinity) {
-        if (Math.abs(expected) > MAX_FLOAT) {
-          throw new TypeError(`Expected 32-bit float, got ${value}`);
-        }
-      }
-      return expected;
-    };
-    expectLong = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (Number.isInteger(value) && !Number.isNaN(value)) {
-        return value;
-      }
-      throw new TypeError(`Expected integer, got ${typeof value}: ${value}`);
-    };
-    expectInt = expectLong;
-    expectInt32 = (value) => expectSizedInt(value, 32);
-    expectShort = (value) => expectSizedInt(value, 16);
-    expectByte = (value) => expectSizedInt(value, 8);
-    expectSizedInt = (value, size) => {
-      const expected = expectLong(value);
-      if (expected !== void 0 && castInt(expected, size) !== expected) {
-        throw new TypeError(`Expected ${size}-bit integer, got ${value}`);
-      }
-      return expected;
-    };
-    castInt = (value, size) => {
-      switch (size) {
-        case 32:
-          return Int32Array.of(value)[0];
-        case 16:
-          return Int16Array.of(value)[0];
-        case 8:
-          return Int8Array.of(value)[0];
-      }
-    };
-    expectNonNull = (value, location) => {
-      if (value === null || value === void 0) {
-        if (location) {
-          throw new TypeError(`Expected a non-null value for ${location}`);
-        }
-        throw new TypeError("Expected a non-null value");
-      }
-      return value;
-    };
-    expectObject = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (typeof value === "object" && !Array.isArray(value)) {
-        return value;
-      }
-      const receivedType = Array.isArray(value) ? "array" : typeof value;
-      throw new TypeError(`Expected object, got ${receivedType}: ${value}`);
-    };
-    expectString = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (typeof value === "string") {
-        return value;
-      }
-      if (["boolean", "number", "bigint"].includes(typeof value)) {
-        logger.warn(stackTraceWarning(`Expected string, got ${typeof value}: ${value}`));
-        return String(value);
-      }
-      throw new TypeError(`Expected string, got ${typeof value}: ${value}`);
-    };
-    expectUnion = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      const asObject = expectObject(value);
-      const setKeys = [];
-      for (const k5 in asObject) {
-        if (!hasOwn(asObject, k5)) {
-          continue;
-        }
-        if (asObject[k5] != null) {
-          setKeys.push(k5);
-        }
-      }
-      if (setKeys.length === 0) {
-        throw new TypeError(`Unions must have exactly one non-null member. None were found.`);
-      }
-      if (setKeys.length > 1) {
-        throw new TypeError(`Unions must have exactly one non-null member. Keys ${setKeys} were not null.`);
-      }
-      return asObject;
-    };
-    strictParseDouble = (value) => {
-      if (typeof value == "string") {
-        return expectNumber(parseNumber(value));
-      }
-      return expectNumber(value);
-    };
-    strictParseFloat = strictParseDouble;
-    strictParseFloat32 = (value) => {
-      if (typeof value == "string") {
-        return expectFloat32(parseNumber(value));
-      }
-      return expectFloat32(value);
-    };
-    NUMBER_REGEX = /(-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?)|(-?Infinity)|(NaN)/g;
-    parseNumber = (value) => {
-      const matches = value.match(NUMBER_REGEX);
-      if (matches === null || matches[0].length !== value.length) {
-        throw new TypeError(`Expected real number, got implicit NaN`);
-      }
-      return parseFloat(value);
-    };
-    limitedParseDouble = (value) => {
-      if (typeof value == "string") {
-        return parseFloatString(value);
-      }
-      return expectNumber(value);
-    };
-    handleFloat = limitedParseDouble;
-    limitedParseFloat = limitedParseDouble;
-    limitedParseFloat32 = (value) => {
-      if (typeof value == "string") {
-        return parseFloatString(value);
-      }
-      return expectFloat32(value);
-    };
-    parseFloatString = (value) => {
-      switch (value) {
-        case "NaN":
-          return NaN;
-        case "Infinity":
-          return Infinity;
-        case "-Infinity":
-          return -Infinity;
-        default:
-          throw new Error(`Unable to parse float value: ${value}`);
-      }
-    };
-    strictParseLong = (value) => {
-      if (typeof value === "string") {
-        return expectLong(parseNumber(value));
-      }
-      return expectLong(value);
-    };
-    strictParseInt = strictParseLong;
-    strictParseInt32 = (value) => {
-      if (typeof value === "string") {
-        return expectInt32(parseNumber(value));
-      }
-      return expectInt32(value);
-    };
-    strictParseShort = (value) => {
-      if (typeof value === "string") {
-        return expectShort(parseNumber(value));
-      }
-      return expectShort(value);
-    };
-    strictParseByte = (value) => {
-      if (typeof value === "string") {
-        return expectByte(parseNumber(value));
-      }
-      return expectByte(value);
-    };
-    stackTraceWarning = (message) => {
-      return String(new TypeError(message).stack || message).split("\n").slice(0, 5).filter((s2) => !s2.includes("stackTraceWarning")).join("\n");
-    };
-    logger = {
-      warn: console.warn
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js
-function dateToUtcString(date2) {
-  const year2 = date2.getUTCFullYear();
-  const month = date2.getUTCMonth();
-  const dayOfWeek = date2.getUTCDay();
-  const dayOfMonthInt = date2.getUTCDate();
-  const hoursInt = date2.getUTCHours();
-  const minutesInt = date2.getUTCMinutes();
-  const secondsInt = date2.getUTCSeconds();
-  const dayOfMonthString = dayOfMonthInt < 10 ? `0${dayOfMonthInt}` : `${dayOfMonthInt}`;
-  const hoursString = hoursInt < 10 ? `0${hoursInt}` : `${hoursInt}`;
-  const minutesString = minutesInt < 10 ? `0${minutesInt}` : `${minutesInt}`;
-  const secondsString = secondsInt < 10 ? `0${secondsInt}` : `${secondsInt}`;
-  return `${DAYS[dayOfWeek]}, ${dayOfMonthString} ${MONTHS[month]} ${year2} ${hoursString}:${minutesString}:${secondsString} GMT`;
-}
-var DAYS, MONTHS, RFC3339, parseRfc3339DateTime, RFC3339_WITH_OFFSET, parseRfc3339DateTimeWithOffset, IMF_FIXDATE, RFC_850_DATE, ASC_TIME, parseRfc7231DateTime, parseEpochTimestamp, buildDate, parseTwoDigitYear, FIFTY_YEARS_IN_MILLIS, adjustRfc850Year, parseMonthByShortName, DAYS_IN_MONTH, validateDayOfMonth, isLeapYear, parseDateValue, parseMilliseconds, parseOffsetToMilliseconds, stripLeadingZeroes;
-var init_date_utils = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js"() {
-    init_parse_utils();
-    DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    RFC3339 = new RegExp(/^(\d{4})-(\d{2})-(\d{2})[tT](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?[zZ]$/);
-    parseRfc3339DateTime = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (typeof value !== "string") {
-        throw new TypeError("RFC-3339 date-times must be expressed as strings");
-      }
-      const match = RFC3339.exec(value);
-      if (!match) {
-        throw new TypeError("Invalid RFC-3339 date-time value");
-      }
-      const [_, yearStr, monthStr, dayStr, hours, minutes, seconds, fractionalMilliseconds] = match;
-      const year2 = strictParseShort(stripLeadingZeroes(yearStr));
-      const month = parseDateValue(monthStr, "month", 1, 12);
-      const day = parseDateValue(dayStr, "day", 1, 31);
-      return buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
-    };
-    RFC3339_WITH_OFFSET = new RegExp(/^(\d{4})-(\d{2})-(\d{2})[tT](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(([-+]\d{2}:\d{2})|[zZ])$/);
-    parseRfc3339DateTimeWithOffset = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (typeof value !== "string") {
-        throw new TypeError("RFC-3339 date-times must be expressed as strings");
-      }
-      const match = RFC3339_WITH_OFFSET.exec(value);
-      if (!match) {
-        throw new TypeError("Invalid RFC-3339 date-time value");
-      }
-      const [_, yearStr, monthStr, dayStr, hours, minutes, seconds, fractionalMilliseconds, offsetStr] = match;
-      const year2 = strictParseShort(stripLeadingZeroes(yearStr));
-      const month = parseDateValue(monthStr, "month", 1, 12);
-      const day = parseDateValue(dayStr, "day", 1, 31);
-      const date2 = buildDate(year2, month, day, { hours, minutes, seconds, fractionalMilliseconds });
-      if (offsetStr.toUpperCase() != "Z") {
-        date2.setTime(date2.getTime() - parseOffsetToMilliseconds(offsetStr));
-      }
-      return date2;
-    };
-    IMF_FIXDATE = new RegExp(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
-    RFC_850_DATE = new RegExp(/^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2})-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-(\d{2}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? GMT$/);
-    ASC_TIME = new RegExp(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ( [1-9]|\d{2}) (\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))? (\d{4})$/);
-    parseRfc7231DateTime = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      if (typeof value !== "string") {
-        throw new TypeError("RFC-7231 date-times must be expressed as strings");
-      }
-      let match = IMF_FIXDATE.exec(value);
-      if (match) {
-        const [_, dayStr, monthStr, yearStr, hours, minutes, seconds, fractionalMilliseconds] = match;
-        return buildDate(strictParseShort(stripLeadingZeroes(yearStr)), parseMonthByShortName(monthStr), parseDateValue(dayStr, "day", 1, 31), { hours, minutes, seconds, fractionalMilliseconds });
-      }
-      match = RFC_850_DATE.exec(value);
-      if (match) {
-        const [_, dayStr, monthStr, yearStr, hours, minutes, seconds, fractionalMilliseconds] = match;
-        return adjustRfc850Year(buildDate(parseTwoDigitYear(yearStr), parseMonthByShortName(monthStr), parseDateValue(dayStr, "day", 1, 31), {
-          hours,
-          minutes,
-          seconds,
-          fractionalMilliseconds
-        }));
-      }
-      match = ASC_TIME.exec(value);
-      if (match) {
-        const [_, monthStr, dayStr, hours, minutes, seconds, fractionalMilliseconds, yearStr] = match;
-        return buildDate(strictParseShort(stripLeadingZeroes(yearStr)), parseMonthByShortName(monthStr), parseDateValue(dayStr.trimLeft(), "day", 1, 31), { hours, minutes, seconds, fractionalMilliseconds });
-      }
-      throw new TypeError("Invalid RFC-7231 date-time value");
-    };
-    parseEpochTimestamp = (value) => {
-      if (value === null || value === void 0) {
-        return void 0;
-      }
-      let valueAsDouble;
-      if (typeof value === "number") {
-        valueAsDouble = value;
-      } else if (typeof value === "string") {
-        valueAsDouble = strictParseDouble(value);
-      } else if (typeof value === "object" && value.tag === 1) {
-        valueAsDouble = value.value;
-      } else {
-        throw new TypeError("Epoch timestamps must be expressed as floating point numbers or their string representation");
-      }
-      if (Number.isNaN(valueAsDouble) || valueAsDouble === Infinity || valueAsDouble === -Infinity) {
-        throw new TypeError("Epoch timestamps must be valid, non-Infinite, non-NaN numerics");
-      }
-      return new Date(Math.round(valueAsDouble * 1e3));
-    };
-    buildDate = (year2, month, day, time2) => {
-      const adjustedMonth = month - 1;
-      validateDayOfMonth(year2, adjustedMonth, day);
-      return new Date(Date.UTC(year2, adjustedMonth, day, parseDateValue(time2.hours, "hour", 0, 23), parseDateValue(time2.minutes, "minute", 0, 59), parseDateValue(time2.seconds, "seconds", 0, 60), parseMilliseconds(time2.fractionalMilliseconds)));
-    };
-    parseTwoDigitYear = (value) => {
-      const thisYear = (/* @__PURE__ */ new Date()).getUTCFullYear();
-      const valueInThisCentury = Math.floor(thisYear / 100) * 100 + strictParseShort(stripLeadingZeroes(value));
-      if (valueInThisCentury < thisYear) {
-        return valueInThisCentury + 100;
-      }
-      return valueInThisCentury;
-    };
-    FIFTY_YEARS_IN_MILLIS = 50 * 365 * 24 * 60 * 60 * 1e3;
-    adjustRfc850Year = (input) => {
-      if (input.getTime() - (/* @__PURE__ */ new Date()).getTime() > FIFTY_YEARS_IN_MILLIS) {
-        return new Date(Date.UTC(input.getUTCFullYear() - 100, input.getUTCMonth(), input.getUTCDate(), input.getUTCHours(), input.getUTCMinutes(), input.getUTCSeconds(), input.getUTCMilliseconds()));
-      }
-      return input;
-    };
-    parseMonthByShortName = (value) => {
-      const monthIdx = MONTHS.indexOf(value);
-      if (monthIdx < 0) {
-        throw new TypeError(`Invalid month: ${value}`);
-      }
-      return monthIdx + 1;
-    };
-    DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    validateDayOfMonth = (year2, month, day) => {
-      let maxDays = DAYS_IN_MONTH[month];
-      if (month === 1 && isLeapYear(year2)) {
-        maxDays = 29;
-      }
-      if (day > maxDays) {
-        throw new TypeError(`Invalid day for ${MONTHS[month]} in ${year2}: ${day}`);
-      }
-    };
-    isLeapYear = (year2) => {
-      return year2 % 4 === 0 && (year2 % 100 !== 0 || year2 % 400 === 0);
-    };
-    parseDateValue = (value, type, lower, upper) => {
-      const dateVal = strictParseByte(stripLeadingZeroes(value));
-      if (dateVal < lower || dateVal > upper) {
-        throw new TypeError(`${type} must be between ${lower} and ${upper}, inclusive`);
-      }
-      return dateVal;
-    };
-    parseMilliseconds = (value) => {
-      if (value === null || value === void 0) {
-        return 0;
-      }
-      return strictParseFloat32("0." + value) * 1e3;
-    };
-    parseOffsetToMilliseconds = (value) => {
-      const directionStr = value[0];
-      let direction = 1;
-      if (directionStr == "+") {
-        direction = 1;
-      } else if (directionStr == "-") {
-        direction = -1;
-      } else {
-        throw new TypeError(`Offset direction, ${directionStr}, must be "+" or "-"`);
-      }
-      const hour = Number(value.substring(1, 3));
-      const minute = Number(value.substring(4, 6));
-      return direction * (hour * 60 + minute) * 60 * 1e3;
-    };
-    stripLeadingZeroes = (value) => {
-      let idx = 0;
-      while (idx < value.length - 1 && value.charAt(idx) === "0") {
-        idx++;
-      }
-      if (idx === 0) {
-        return value;
-      }
-      return value.slice(idx);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js
-var LazyJsonString;
-var init_lazy_json = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js"() {
-    LazyJsonString = function LazyJsonString2(val) {
-      const str = Object.assign(new String(val), {
-        deserializeJSON() {
-          return JSON.parse(String(val));
-        },
-        toString() {
-          return String(val);
-        },
-        toJSON() {
-          return String(val);
-        }
-      });
-      return str;
-    };
-    LazyJsonString.from = (object) => {
-      if (object && typeof object === "object" && (object instanceof LazyJsonString || "deserializeJSON" in object)) {
-        return object;
-      } else if (typeof object === "string" || Object.getPrototypeOf(object) === String.prototype) {
-        return LazyJsonString(String(object));
-      }
-      return LazyJsonString(JSON.stringify(object));
-    };
-    LazyJsonString.fromObject = LazyJsonString.from;
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js
-function quoteHeader(part) {
-  if (part.includes(",") || part.includes('"')) {
-    part = `"${part.replace(/"/g, '\\"')}"`;
-  }
-  return part;
-}
-var init_quote_header = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js
-function range(v, min, max) {
-  const _v = Number(v);
-  if (_v < min || _v > max) {
-    throw new Error(`Value ${_v} out of range [${min}, ${max}]`);
-  }
-}
-var ddd, mmm, time, date, year, RFC3339_WITH_OFFSET2, IMF_FIXDATE2, RFC_850_DATE2, ASC_TIME2, months, _parseEpochTimestamp, _parseRfc3339DateTimeWithOffset, _parseRfc7231DateTime;
-var init_schema_date_utils = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js"() {
-    ddd = `(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:[ne|u?r]?s?day)?`;
-    mmm = `(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)`;
-    time = `(\\d?\\d):(\\d{2}):(\\d{2})(?:\\.(\\d+))?`;
-    date = `(\\d?\\d)`;
-    year = `(\\d{4})`;
-    RFC3339_WITH_OFFSET2 = new RegExp(/^(\d{4})-(\d\d)-(\d\d)[tT](\d\d):(\d\d):(\d\d)(\.(\d+))?(([-+]\d\d:\d\d)|[zZ])$/);
-    IMF_FIXDATE2 = new RegExp(`^${ddd}, ${date} ${mmm} ${year} ${time} GMT$`);
-    RFC_850_DATE2 = new RegExp(`^${ddd}, ${date}-${mmm}-(\\d\\d) ${time} GMT$`);
-    ASC_TIME2 = new RegExp(`^${ddd} ${mmm} ( [1-9]|\\d\\d) ${time} ${year}$`);
-    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    _parseEpochTimestamp = (value) => {
-      if (value == null) {
-        return void 0;
-      }
-      let num = NaN;
-      if (typeof value === "number") {
-        num = value;
-      } else if (typeof value === "string") {
-        if (!/^-?\d*\.?\d+$/.test(value)) {
-          throw new TypeError(`parseEpochTimestamp - numeric string invalid.`);
-        }
-        num = Number.parseFloat(value);
-      } else if (typeof value === "object" && value.tag === 1) {
-        num = value.value;
-      }
-      if (isNaN(num) || Math.abs(num) === Infinity) {
-        throw new TypeError("Epoch timestamps must be valid finite numbers.");
-      }
-      return new Date(Math.round(num * 1e3));
-    };
-    _parseRfc3339DateTimeWithOffset = (value) => {
-      if (value == null) {
-        return void 0;
-      }
-      if (typeof value !== "string") {
-        throw new TypeError("RFC3339 timestamps must be strings");
-      }
-      const matches = RFC3339_WITH_OFFSET2.exec(value);
-      if (!matches) {
-        throw new TypeError(`Invalid RFC3339 timestamp format ${value}`);
-      }
-      const [, yearStr, monthStr, dayStr, hours, minutes, seconds, , ms, offsetStr] = matches;
-      range(monthStr, 1, 12);
-      range(dayStr, 1, 31);
-      range(hours, 0, 23);
-      range(minutes, 0, 59);
-      range(seconds, 0, 60);
-      const date2 = new Date(Date.UTC(Number(yearStr), Number(monthStr) - 1, Number(dayStr), Number(hours), Number(minutes), Number(seconds), Number(ms) ? Math.round(parseFloat(`0.${ms}`) * 1e3) : 0));
-      date2.setUTCFullYear(Number(yearStr));
-      if (offsetStr.toUpperCase() != "Z") {
-        const [, sign2, offsetH, offsetM] = /([+-])(\d\d):(\d\d)/.exec(offsetStr) || [void 0, "+", 0, 0];
-        const scalar = sign2 === "-" ? 1 : -1;
-        date2.setTime(date2.getTime() + scalar * (Number(offsetH) * 60 * 60 * 1e3 + Number(offsetM) * 60 * 1e3));
-      }
-      return date2;
-    };
-    _parseRfc7231DateTime = (value) => {
-      if (value == null) {
-        return void 0;
-      }
-      if (typeof value !== "string") {
-        throw new TypeError("RFC7231 timestamps must be strings.");
-      }
-      let day;
-      let month;
-      let year2;
-      let hour;
-      let minute;
-      let second;
-      let fraction;
-      let matches;
-      if (matches = IMF_FIXDATE2.exec(value)) {
-        [, day, month, year2, hour, minute, second, fraction] = matches;
-      } else if (matches = RFC_850_DATE2.exec(value)) {
-        [, day, month, year2, hour, minute, second, fraction] = matches;
-        year2 = (Number(year2) + 1900).toString();
-      } else if (matches = ASC_TIME2.exec(value)) {
-        [, month, day, hour, minute, second, fraction, year2] = matches;
-      }
-      if (year2 && second) {
-        const timestamp = Date.UTC(Number(year2), months.indexOf(month), Number(day), Number(hour), Number(minute), Number(second), fraction ? Math.round(parseFloat(`0.${fraction}`) * 1e3) : 0);
-        range(day, 1, 31);
-        range(hour, 0, 23);
-        range(minute, 0, 59);
-        range(second, 0, 60);
-        const date2 = new Date(timestamp);
-        date2.setUTCFullYear(Number(year2));
-        return date2;
-      }
-      throw new TypeError(`Invalid RFC7231 date-time value ${value}.`);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/split-every.js
-function splitEvery(value, delimiter, numDelimiters) {
-  if (numDelimiters <= 0 || !Number.isInteger(numDelimiters)) {
-    throw new Error("Invalid number of delimiters (" + numDelimiters + ") for splitEvery.");
-  }
-  const segments = value.split(delimiter);
-  if (numDelimiters === 1) {
-    return segments;
-  }
-  const compoundSegments = [];
-  let currentSegment = "";
-  for (let i5 = 0; i5 < segments.length; i5++) {
-    if (currentSegment === "") {
-      currentSegment = segments[i5];
-    } else {
-      currentSegment += delimiter + segments[i5];
-    }
-    if ((i5 + 1) % numDelimiters === 0) {
-      compoundSegments.push(currentSegment);
-      currentSegment = "";
-    }
-  }
-  if (currentSegment !== "") {
-    compoundSegments.push(currentSegment);
-  }
-  return compoundSegments;
-}
-var init_split_every = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/split-every.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/split-header.js
-var splitHeader;
-var init_split_header = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/split-header.js"() {
-    splitHeader = (value) => {
-      const z = value.length;
-      const values = [];
-      let withinQuotes = false;
-      let prevChar = void 0;
-      let anchor = 0;
-      for (let i5 = 0; i5 < z; ++i5) {
-        const char = value[i5];
-        switch (char) {
-          case `"`:
-            if (prevChar !== "\\") {
-              withinQuotes = !withinQuotes;
-            }
-            break;
-          case ",":
-            if (!withinQuotes) {
-              values.push(value.slice(anchor, i5));
-              anchor = i5 + 1;
-            }
-            break;
-          default:
-        }
-        prevChar = char;
-      }
-      values.push(value.slice(anchor));
-      return values.map((v) => {
-        v = v.trim();
-        const z2 = v.length;
-        if (z2 < 2) {
-          return v;
-        }
-        if (v[0] === `"` && v[z2 - 1] === `"`) {
-          v = v.slice(1, z2 - 1);
-        }
-        return v.replace(/\\"/g, '"');
-      });
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js
-function nv(input) {
-  return new NumericValue(String(input), "bigDecimal");
-}
-var format, NumericValue;
-var init_NumericValue = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js"() {
-    format = /^-?((0|[1-9]\d*)(\.\d+)?|\.\d+)([eE][+-]?\d+)?$/;
-    NumericValue = class _NumericValue {
-      string;
-      type;
-      constructor(string, type) {
-        this.string = string;
-        this.type = type;
-        if (!format.test(string)) {
-          throw new Error(`@smithy/core/serde - NumericValue string must conform to the Smithy bigDecimal format. Received: "${string}"`);
-        }
-      }
-      toString() {
-        return this.string;
-      }
-      static [Symbol.hasInstance](object) {
-        if (!object || typeof object !== "object") {
-          return false;
-        }
-        const _nv = object;
-        return _NumericValue.prototype.isPrototypeOf(object) || _nv.type === "bigDecimal" && format.test(_nv.string);
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js
-function fromHex(encoded) {
-  if (encoded.length % 2 !== 0) {
-    throw new Error("Hex encoded strings must have an even number length");
-  }
-  const out = new Uint8Array(encoded.length / 2);
-  for (let i5 = 0; i5 < encoded.length; i5 += 2) {
-    const encodedByte = encoded.slice(i5, i5 + 2).toLowerCase();
-    if (encodedByte in HEX_TO_SHORT) {
-      out[i5 / 2] = HEX_TO_SHORT[encodedByte];
-    } else {
-      throw new Error(`Cannot decode unrecognized sequence ${encodedByte} as hexadecimal`);
-    }
-  }
-  return out;
-}
-function toHex(bytes) {
-  let out = "";
-  for (let i5 = 0; i5 < bytes.byteLength; i5++) {
-    out += SHORT_TO_HEX[bytes[i5]];
-  }
-  return out;
-}
-var SHORT_TO_HEX, HEX_TO_SHORT;
-var init_hex_encoding = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js"() {
-    SHORT_TO_HEX = {};
-    HEX_TO_SHORT = {};
-    for (let i5 = 0; i5 < 256; i5++) {
-      let encodedByte = i5.toString(16).toLowerCase();
-      if (encodedByte.length === 1) {
-        encodedByte = `0${encodedByte}`;
-      }
-      SHORT_TO_HEX[i5] = encodedByte;
-      HEX_TO_SHORT[encodedByte] = i5;
-    }
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js
-var import_node_fs, calculateBodyLength;
-var init_calculateBodyLength = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js"() {
-    import_node_fs = require("node:fs");
-    calculateBodyLength = (body) => {
-      if (!body) {
-        return 0;
-      }
-      if (typeof body === "string") {
-        return Buffer.byteLength(body);
-      } else if (typeof body.byteLength === "number") {
-        return body.byteLength;
-      } else if (typeof body.size === "number") {
-        return body.size;
-      } else if (typeof body.start === "number" && typeof body.end === "number") {
-        return body.end + 1 - body.start;
-      } else if (body instanceof import_node_fs.ReadStream) {
-        if (body.path != null) {
-          return (0, import_node_fs.lstatSync)(body.path).size;
-        } else if (typeof body.fd === "number") {
-          return (0, import_node_fs.fstatSync)(body.fd).size;
-        }
-      }
-      throw new Error(`Body Length computation failed for ${body}`);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js
-var toUint8Array;
-var init_toUint8Array = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js"() {
-    init_fromUtf8();
-    toUint8Array = (data2) => {
-      if (data2 instanceof Uint8Array) {
-        return data2;
-      }
-      if (typeof data2 === "string") {
-        return fromUtf8(data2);
-      }
-      if (ArrayBuffer.isView(data2)) {
-        return new Uint8Array(data2.buffer, data2.byteOffset, data2.byteLength / Uint8Array.BYTES_PER_ELEMENT);
-      }
-      return new Uint8Array(data2);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js
-function concatBytes(arrays, length) {
-  if (length === void 0) {
-    length = 0;
-    for (const bytes of arrays) {
-      length += bytes.byteLength;
-    }
-  }
-  const result = new Uint8Array(length);
-  let offset = 0;
-  for (const buf2 of arrays) {
-    result.set(buf2, offset);
-    offset += buf2.byteLength;
-  }
-  return result;
-}
-var init_concatBytes = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js
-var deserializerMiddleware, findHeader2;
-var init_deserializerMiddleware = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js"() {
-    init_transport();
-    deserializerMiddleware = (options, deserializer) => (next, context) => async (args) => {
-      const { response } = await next(args);
-      try {
-        const parsed = await deserializer(response, options);
-        return {
-          response,
-          output: parsed
-        };
-      } catch (error3) {
-        Object.defineProperty(error3, "$response", {
-          value: response,
-          enumerable: false,
-          writable: false,
-          configurable: false
-        });
-        if (!("$metadata" in error3)) {
-          const hint = `Deserialization error: to see the raw response, inspect the hidden field {error}.$response on this object.`;
-          try {
-            error3.message += "\n  " + hint;
-          } catch (ignored) {
-            if (!context.logger || context.logger?.constructor?.name === "NoOpLogger") {
-              console.warn(hint);
-            } else {
-              context.logger?.warn?.(hint);
-            }
-          }
-          if (typeof error3.$responseBodyText !== "undefined") {
-            if (error3.$response) {
-              error3.$response.body = error3.$responseBodyText;
-            }
-          }
-          try {
-            if (HttpResponse.isInstance(response)) {
-              const { headers = {} } = response;
-              const headerEntries = Object.entries(headers);
-              error3.$metadata = {
-                httpStatusCode: response.statusCode,
-                requestId: findHeader2(/^x-[\w-]+-request-?id$/, headerEntries),
-                extendedRequestId: findHeader2(/^x-[\w-]+-id-2$/, headerEntries),
-                cfId: findHeader2(/^x-[\w-]+-cf-id$/, headerEntries)
-              };
-            }
-          } catch (ignored) {
-          }
-        }
-        throw error3;
-      }
-    };
-    findHeader2 = (pattern, headers) => {
-      return (headers.find(([k5]) => {
-        return k5.match(pattern);
-      }) || [void 0, void 0])[1];
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js
-var ProviderError;
-var init_ProviderError = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js"() {
-    ProviderError = class _ProviderError extends Error {
-      name = "ProviderError";
-      tryNextLink;
-      constructor(message, options = true) {
-        let logger2;
-        let tryNextLink = true;
-        if (typeof options === "boolean") {
-          logger2 = void 0;
-          tryNextLink = options;
-        } else if (options != null && typeof options === "object") {
-          logger2 = options.logger;
-          tryNextLink = options.tryNextLink ?? true;
-        }
-        super(message);
-        this.tryNextLink = tryNextLink;
-        Object.setPrototypeOf(this, _ProviderError.prototype);
-        logger2?.debug?.(`@smithy/property-provider ${tryNextLink ? "->" : "(!)"} ${message}`);
-      }
-      static from(error3, options = true) {
-        return Object.assign(new this(error3.message, options), error3);
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js
-var CredentialsProviderError;
-var init_CredentialsProviderError = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js"() {
-    init_ProviderError();
-    CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
-      name = "CredentialsProviderError";
-      constructor(message, options = true) {
-        super(message, options);
-        Object.setPrototypeOf(this, _CredentialsProviderError.prototype);
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js
-var TokenProviderError;
-var init_TokenProviderError = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js"() {
-    init_ProviderError();
-    TokenProviderError = class _TokenProviderError extends ProviderError {
-      name = "TokenProviderError";
-      constructor(message, options = true) {
-        super(message, options);
-        Object.setPrototypeOf(this, _TokenProviderError.prototype);
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js
-var chain;
-var init_chain = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js"() {
-    init_ProviderError();
-    chain = (...providers) => async () => {
-      if (providers.length === 0) {
-        throw new ProviderError("No providers in chain");
-      }
-      let lastProviderError;
-      for (const provider of providers) {
-        try {
-          const credentials = await provider();
-          return credentials;
-        } catch (err) {
-          lastProviderError = err;
-          if (err?.tryNextLink) {
-            continue;
-          }
-          throw err;
-        }
-      }
-      throw lastProviderError;
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js
-var fromValue;
-var init_fromValue = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js"() {
-    fromValue = (staticValue) => () => Promise.resolve(staticValue);
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js
-var memoize;
-var init_memoize = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js"() {
-    memoize = (provider, isExpired, requiresRefresh) => {
-      let resolved;
-      let pending;
-      let hasResult;
-      let isConstant = false;
-      const coalesceProvider = async () => {
-        if (!pending) {
-          pending = provider();
-        }
-        try {
-          resolved = await pending;
-          hasResult = true;
-          isConstant = false;
-        } finally {
-          pending = void 0;
-        }
-        return resolved;
-      };
-      if (isExpired === void 0) {
-        return async (options) => {
-          if (!hasResult || options?.forceRefresh) {
-            resolved = await coalesceProvider();
-          }
-          return resolved;
-        };
-      }
-      return async (options) => {
-        if (!hasResult || options?.forceRefresh) {
-          resolved = await coalesceProvider();
-        }
-        if (isConstant) {
-          return resolved;
-        }
-        if (requiresRefresh && !requiresRefresh(resolved)) {
-          isConstant = true;
-          return resolved;
-        }
-        if (isExpired(resolved)) {
-          await coalesceProvider();
-          return resolved;
-        }
-        return resolved;
-      };
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js
-var booleanSelector;
-var init_booleanSelector = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js"() {
-    booleanSelector = (obj, key, type) => {
-      if (!(key in obj)) {
-        return void 0;
-      }
-      if (obj[key] === "true") {
-        return true;
-      }
-      if (obj[key] === "false") {
-        return false;
-      }
-      throw new Error(`Cannot load ${type} "${key}". Expected "true" or "false", got ${obj[key]}.`);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js
-var numberSelector;
-var init_numberSelector = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js"() {
-    numberSelector = (obj, key, type) => {
-      if (!(key in obj)) {
-        return void 0;
-      }
-      const numberValue = parseInt(obj[key], 10);
-      if (Number.isNaN(numberValue)) {
-        throw new TypeError(`Cannot load ${type} '${key}'. Expected number, got '${obj[key]}'.`);
-      }
-      return numberValue;
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js
-var SelectorType;
-var init_types = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js"() {
-    (function(SelectorType2) {
-      SelectorType2["ENV"] = "env";
-      SelectorType2["CONFIG"] = "shared config entry";
-    })(SelectorType || (SelectorType = {}));
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js
-var import_node_os, import_node_path, homeDirCache, getHomeDirCacheKey, getHomeDir;
-var init_getHomeDir = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js"() {
-    import_node_os = require("node:os");
-    import_node_path = require("node:path");
-    homeDirCache = {};
-    getHomeDirCacheKey = () => {
-      if (process && process.geteuid) {
-        return `${process.geteuid()}`;
-      }
-      return "DEFAULT";
-    };
-    getHomeDir = () => {
-      const { HOME, USERPROFILE, HOMEPATH, HOMEDRIVE = `C:${import_node_path.sep}` } = process.env;
-      if (HOME) {
-        return HOME;
-      }
-      if (USERPROFILE) {
-        return USERPROFILE;
-      }
-      if (HOMEPATH) {
-        return `${HOMEDRIVE}${HOMEPATH}`;
-      }
-      const homeDirCacheKey = getHomeDirCacheKey();
-      if (!homeDirCache[homeDirCacheKey]) {
-        homeDirCache[homeDirCacheKey] = (0, import_node_os.homedir)();
-      }
-      return homeDirCache[homeDirCacheKey];
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js
-var ENV_PROFILE, DEFAULT_PROFILE, getProfileName;
-var init_getProfileName = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js"() {
-    ENV_PROFILE = "AWS_PROFILE";
-    DEFAULT_PROFILE = "default";
-    getProfileName = (init) => init.profile || process.env[ENV_PROFILE] || DEFAULT_PROFILE;
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js
-var import_node_crypto, import_node_path2, getSSOTokenFilepath;
-var init_getSSOTokenFilepath = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js"() {
-    import_node_crypto = require("node:crypto");
-    import_node_path2 = require("node:path");
-    init_getHomeDir();
-    getSSOTokenFilepath = (id) => {
-      const hasher = (0, import_node_crypto.createHash)("sha1");
-      const cacheName = hasher.update(id).digest("hex");
-      return (0, import_node_path2.join)(getHomeDir(), ".aws", "sso", "cache", `${cacheName}.json`);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js
-var import_promises, tokenIntercept, getSSOTokenFromFile;
-var init_getSSOTokenFromFile = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js"() {
-    import_promises = require("node:fs/promises");
-    init_getSSOTokenFilepath();
-    tokenIntercept = {};
-    getSSOTokenFromFile = async (id) => {
-      if (tokenIntercept[id]) {
-        return tokenIntercept[id];
-      }
-      const ssoTokenFilepath = getSSOTokenFilepath(id);
-      const ssoTokenText = await (0, import_promises.readFile)(ssoTokenFilepath, "utf8");
-      return JSON.parse(ssoTokenText);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js
-var CONFIG_PREFIX_SEPARATOR;
-var init_constants2 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js"() {
-    CONFIG_PREFIX_SEPARATOR = ".";
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js
-var import_types4, getConfigData;
-var init_getConfigData = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js"() {
-    import_types4 = __toESM(require_dist_cjs());
-    init_constants2();
-    getConfigData = (data2) => Object.entries(data2).filter(([key]) => {
-      const indexOfSeparator = key.indexOf(CONFIG_PREFIX_SEPARATOR);
-      if (indexOfSeparator === -1) {
-        return false;
-      }
-      return Object.values(import_types4.IniSectionType).includes(key.substring(0, indexOfSeparator));
-    }).reduce((acc, [key, value]) => {
-      const indexOfSeparator = key.indexOf(CONFIG_PREFIX_SEPARATOR);
-      const updatedKey = key.substring(0, indexOfSeparator) === import_types4.IniSectionType.PROFILE ? key.substring(indexOfSeparator + 1) : key;
-      acc[updatedKey] = value;
-      return acc;
-    }, {
-      ...data2.default && { default: data2.default }
-    });
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js
-var import_node_path3, ENV_CONFIG_PATH, getConfigFilepath;
-var init_getConfigFilepath = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js"() {
-    import_node_path3 = require("node:path");
-    init_getHomeDir();
-    ENV_CONFIG_PATH = "AWS_CONFIG_FILE";
-    getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || (0, import_node_path3.join)(getHomeDir(), ".aws", "config");
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js
-var import_node_path4, ENV_CREDENTIALS_PATH, getCredentialsFilepath;
-var init_getCredentialsFilepath = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js"() {
-    import_node_path4 = require("node:path");
-    init_getHomeDir();
-    ENV_CREDENTIALS_PATH = "AWS_SHARED_CREDENTIALS_FILE";
-    getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || (0, import_node_path4.join)(getHomeDir(), ".aws", "credentials");
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js
-var import_types5, prefixKeyRegex, profileNameBlockList, parseIni;
-var init_parseIni = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js"() {
-    import_types5 = __toESM(require_dist_cjs());
-    init_constants2();
-    prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@+.%:/]+)\2$/;
-    profileNameBlockList = ["__proto__", "profile __proto__"];
-    parseIni = (iniData) => {
-      const map3 = {};
-      let currentSection;
-      let currentSubSection;
-      for (const iniLine of iniData.split(/\r?\n/)) {
-        const trimmedLine = iniLine.split(/(^|\s)[;#]/)[0].trim();
-        const isSection = trimmedLine[0] === "[" && trimmedLine[trimmedLine.length - 1] === "]";
-        if (isSection) {
-          currentSection = void 0;
-          currentSubSection = void 0;
-          const sectionName = trimmedLine.substring(1, trimmedLine.length - 1);
-          const matches = prefixKeyRegex.exec(sectionName);
-          if (matches) {
-            const [, prefix, , name] = matches;
-            if (Object.values(import_types5.IniSectionType).includes(prefix)) {
-              currentSection = [prefix, name].join(CONFIG_PREFIX_SEPARATOR);
-            }
-          } else {
-            currentSection = sectionName;
-          }
-          if (profileNameBlockList.includes(sectionName)) {
-            throw new Error(`Found invalid profile name "${sectionName}"`);
-          }
-        } else if (currentSection) {
-          const indexOfEqualsSign = trimmedLine.indexOf("=");
-          if (![0, -1].includes(indexOfEqualsSign)) {
-            const [name, value] = [
-              trimmedLine.substring(0, indexOfEqualsSign).trim(),
-              trimmedLine.substring(indexOfEqualsSign + 1).trim()
-            ];
-            if (value === "") {
-              currentSubSection = name;
-            } else {
-              if (currentSubSection && iniLine.trimStart() === iniLine) {
-                currentSubSection = void 0;
-              }
-              map3[currentSection] = map3[currentSection] || {};
-              const key = currentSubSection ? [currentSubSection, name].join(CONFIG_PREFIX_SEPARATOR) : name;
-              map3[currentSection][key] = value;
-            }
-          }
-        }
-      }
-      return map3;
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js
-var import_promises2, filePromises, fileIntercept, readFile2;
-var init_readFile = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js"() {
-    import_promises2 = require("node:fs/promises");
-    filePromises = {};
-    fileIntercept = {};
-    readFile2 = (path4, options) => {
-      if (fileIntercept[path4] !== void 0) {
-        return fileIntercept[path4];
-      }
-      if (!filePromises[path4] || options?.ignoreCache) {
-        filePromises[path4] = (0, import_promises2.readFile)(path4, "utf8");
-      }
-      return filePromises[path4];
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js
-var import_node_path5, swallowError, loadSharedConfigFiles;
-var init_loadSharedConfigFiles = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js"() {
-    import_node_path5 = require("node:path");
-    init_getConfigData();
-    init_getConfigFilepath();
-    init_getCredentialsFilepath();
-    init_getHomeDir();
-    init_parseIni();
-    init_readFile();
-    init_constants2();
-    swallowError = () => ({});
-    loadSharedConfigFiles = async (init = {}) => {
-      const { filepath = getCredentialsFilepath(), configFilepath = getConfigFilepath() } = init;
-      const homeDir = getHomeDir();
-      const relativeHomeDirPrefix = "~/";
-      let resolvedFilepath = filepath;
-      if (filepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedFilepath = (0, import_node_path5.join)(homeDir, filepath.slice(2));
-      }
-      let resolvedConfigFilepath = configFilepath;
-      if (configFilepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedConfigFilepath = (0, import_node_path5.join)(homeDir, configFilepath.slice(2));
-      }
-      const parsedFiles = await Promise.all([
-        readFile2(resolvedConfigFilepath, {
-          ignoreCache: init.ignoreCache
-        }).then(parseIni).then(getConfigData).catch(swallowError),
-        readFile2(resolvedFilepath, {
-          ignoreCache: init.ignoreCache
-        }).then(parseIni).catch(swallowError)
-      ]);
-      return {
-        configFile: parsedFiles[0],
-        credentialsFile: parsedFiles[1]
-      };
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js
-var import_types6, getSsoSessionData;
-var init_getSsoSessionData = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js"() {
-    import_types6 = __toESM(require_dist_cjs());
-    init_loadSharedConfigFiles();
-    getSsoSessionData = (data2) => Object.entries(data2).filter(([key]) => key.startsWith(import_types6.IniSectionType.SSO_SESSION + CONFIG_PREFIX_SEPARATOR)).reduce((acc, [key, value]) => ({ ...acc, [key.substring(key.indexOf(CONFIG_PREFIX_SEPARATOR) + 1)]: value }), {});
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js
-var swallowError2, loadSsoSessionData;
-var init_loadSsoSessionData = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js"() {
-    init_getConfigFilepath();
-    init_getSsoSessionData();
-    init_parseIni();
-    init_readFile();
-    swallowError2 = () => ({});
-    loadSsoSessionData = async (init = {}) => readFile2(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError2);
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js
-var mergeConfigFiles;
-var init_mergeConfigFiles = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js"() {
-    mergeConfigFiles = (...files) => {
-      const merged = {};
-      for (const file2 of files) {
-        for (const [key, values] of Object.entries(file2)) {
-          if (merged[key] !== void 0) {
-            Object.assign(merged[key], values);
-          } else {
-            merged[key] = values;
-          }
-        }
-      }
-      return merged;
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js
-var parseKnownFiles;
-var init_parseKnownFiles = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js"() {
-    init_loadSharedConfigFiles();
-    init_mergeConfigFiles();
-    parseKnownFiles = async (init) => {
-      const parsedFiles = await loadSharedConfigFiles(init);
-      return mergeConfigFiles(parsedFiles.configFile, parsedFiles.credentialsFile);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js
-var externalDataInterceptor;
-var init_externalDataInterceptor = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js"() {
-    init_getSSOTokenFromFile();
-    init_readFile();
-    externalDataInterceptor = {
-      getFileRecord() {
-        return fileIntercept;
-      },
-      interceptFile(path4, contents) {
-        fileIntercept[path4] = Promise.resolve(contents);
-      },
-      getTokenRecord() {
-        return tokenIntercept;
-      },
-      interceptToken(id, contents) {
-        tokenIntercept[id] = contents;
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js
-function getSelectorName(functionString) {
-  try {
-    const constants4 = new Set(Array.from(functionString.match(/([A-Z_]){3,}/g) ?? []));
-    constants4.delete("CONFIG");
-    constants4.delete("CONFIG_PREFIX_SEPARATOR");
-    constants4.delete("ENV");
-    return [...constants4].join(", ");
-  } catch (ignored) {
-    return functionString;
-  }
-}
-var init_getSelectorName = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js"() {
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js
-var fromEnv;
-var init_fromEnv = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js"() {
-    init_CredentialsProviderError();
-    init_getSelectorName();
-    fromEnv = (envVarSelector, options) => async () => {
-      try {
-        const config = envVarSelector(process.env, options);
-        if (config === void 0) {
-          throw new Error();
-        }
-        return config;
-      } catch (e5) {
-        throw new CredentialsProviderError(e5.message || `Not found in ENV: ${getSelectorName(envVarSelector.toString())}`, { logger: options?.logger });
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js
-var fromSharedConfigFiles;
-var init_fromSharedConfigFiles = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js"() {
-    init_CredentialsProviderError();
-    init_getProfileName();
-    init_loadSharedConfigFiles();
-    init_getSelectorName();
-    fromSharedConfigFiles = (configSelector, { preferredFile = "config", ...init } = {}) => async () => {
-      const profile = getProfileName(init);
-      const { configFile, credentialsFile } = await loadSharedConfigFiles(init);
-      const profileFromCredentials = credentialsFile[profile] || {};
-      const profileFromConfig = configFile[profile] || {};
-      const mergedProfile = preferredFile === "config" ? { ...profileFromCredentials, ...profileFromConfig } : { ...profileFromConfig, ...profileFromCredentials };
-      try {
-        const cfgFile = preferredFile === "config" ? configFile : credentialsFile;
-        const configValue = configSelector(mergedProfile, cfgFile);
-        if (configValue === void 0) {
-          throw new Error();
-        }
-        return configValue;
-      } catch (e5) {
-        throw new CredentialsProviderError(e5.message || `Not found in config files w/ profile [${profile}]: ${getSelectorName(configSelector.toString())}`, { logger: init.logger });
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js
-var isFunction, fromStatic;
-var init_fromStatic = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js"() {
-    init_fromValue();
-    isFunction = (func) => typeof func === "function";
-    fromStatic = (defaultValue) => isFunction(defaultValue) ? async () => await defaultValue() : fromValue(defaultValue);
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js
-var loadConfig;
-var init_configLoader = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js"() {
-    init_chain();
-    init_memoize();
-    init_fromEnv();
-    init_fromSharedConfigFiles();
-    init_fromStatic();
-    loadConfig = ({ environmentVariableSelector, configFileSelector, default: defaultValue }, configuration = {}) => {
-      const { signingName, logger: logger2 } = configuration;
-      const envOptions = { signingName, logger: logger2 };
-      return memoize(chain(fromEnv(environmentVariableSelector, envOptions), fromSharedConfigFiles(configFileSelector, configuration), fromStatic(defaultValue)));
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js
-var ENV_USE_DUALSTACK_ENDPOINT, CONFIG_USE_DUALSTACK_ENDPOINT, DEFAULT_USE_DUALSTACK_ENDPOINT, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, nodeDualstackConfigSelectors;
-var init_NodeUseDualstackEndpointConfigOptions = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js"() {
-    init_booleanSelector();
-    init_types();
-    ENV_USE_DUALSTACK_ENDPOINT = "AWS_USE_DUALSTACK_ENDPOINT";
-    CONFIG_USE_DUALSTACK_ENDPOINT = "use_dualstack_endpoint";
-    DEFAULT_USE_DUALSTACK_ENDPOINT = false;
-    NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS = {
-      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_DUALSTACK_ENDPOINT, SelectorType.ENV),
-      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_DUALSTACK_ENDPOINT, SelectorType.CONFIG),
-      default: false
-    };
-    nodeDualstackConfigSelectors = {
-      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_DUALSTACK_ENDPOINT, SelectorType.ENV),
-      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_DUALSTACK_ENDPOINT, SelectorType.CONFIG),
-      default: void 0
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js
-var ENV_USE_FIPS_ENDPOINT, CONFIG_USE_FIPS_ENDPOINT, DEFAULT_USE_FIPS_ENDPOINT, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, nodeFipsConfigSelectors;
-var init_NodeUseFipsEndpointConfigOptions = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js"() {
-    init_booleanSelector();
-    init_types();
-    ENV_USE_FIPS_ENDPOINT = "AWS_USE_FIPS_ENDPOINT";
-    CONFIG_USE_FIPS_ENDPOINT = "use_fips_endpoint";
-    DEFAULT_USE_FIPS_ENDPOINT = false;
-    NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS = {
-      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_FIPS_ENDPOINT, SelectorType.ENV),
-      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_FIPS_ENDPOINT, SelectorType.CONFIG),
-      default: false
-    };
-    nodeFipsConfigSelectors = {
-      environmentVariableSelector: (env2) => booleanSelector(env2, ENV_USE_FIPS_ENDPOINT, SelectorType.ENV),
-      configFileSelector: (profile) => booleanSelector(profile, CONFIG_USE_FIPS_ENDPOINT, SelectorType.CONFIG),
-      default: void 0
-    };
   }
 });
 
@@ -23922,7 +23964,7 @@ var init_config2 = __esm({
     init_getProfileName();
     init_getSSOTokenFilepath();
     init_getSSOTokenFromFile();
-    init_constants2();
+    init_constants();
     init_loadSharedConfigFiles();
     init_loadSsoSessionData();
     init_parseKnownFiles();
@@ -24198,7 +24240,7 @@ var init_getEndpointFromInstructions = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/endpointMiddleware.js
-function setFeature(context, feature, value) {
+function setFeature2(context, feature, value) {
   if (!context.__smithy_context) {
     context.__smithy_context = { features: {} };
   } else if (!context.__smithy_context.features) {
@@ -24211,7 +24253,7 @@ function bindEndpointMiddleware(getEndpointFromConfig2) {
   return ({ config, instructions }) => {
     return (next, context) => async (args) => {
       if (config.isCustomEndpoint) {
-        setFeature(context, "ENDPOINT_OVERRIDE", "N");
+        setFeature2(context, "ENDPOINT_OVERRIDE", "N");
       }
       const endpoint = await getEndpointFromInstructions2(args.input, {
         getEndpointParameterInstructions() {
@@ -25287,12 +25329,12 @@ var init_hash_node = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js
-var import_node_stream2, ChecksumStream;
+var import_node_stream, ChecksumStream;
 var init_ChecksumStream = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js"() {
-    import_node_stream2 = require("node:stream");
+    import_node_stream = require("node:stream");
     init_toBase64();
-    ChecksumStream = class extends import_node_stream2.Readable {
+    ChecksumStream = class extends import_node_stream.Readable {
       expectedChecksum;
       checksumSourceLocation;
       checksum;
@@ -25649,7 +25691,7 @@ function createBufferedReadable(upstream, size, logger2) {
   if (isReadableStream(upstream)) {
     return createBufferedReadableStream(upstream, size, logger2);
   }
-  const downstream = new import_node_stream3.Readable({ read() {
+  const downstream = new import_node_stream2.Readable({ read() {
   } });
   let streamBufferingLoggedWarning = false;
   let bytesSeen = 0;
@@ -25698,10 +25740,10 @@ function createBufferedReadable(upstream, size, logger2) {
   });
   return downstream;
 }
-var import_node_stream3;
+var import_node_stream2;
 var init_createBufferedReadable = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.js"() {
-    import_node_stream3 = require("node:stream");
+    import_node_stream2 = require("node:stream");
     init_ByteArrayCollector();
     init_createBufferedReadable_browser();
     init_stream_type_check();
@@ -25756,7 +25798,7 @@ function getAwsChunkedEncodingStream2(stream, options) {
   const digest2 = checksumRequired ? streamHasher(checksumAlgorithmFn, readable) : void 0;
   Promise.resolve(digest2).catch(() => {
   });
-  const awsChunkedEncodingStream = new import_node_stream4.Readable({
+  const awsChunkedEncodingStream = new import_node_stream3.Readable({
     read() {
       readable.resume();
     }
@@ -25795,10 +25837,10 @@ function getAwsChunkedEncodingStream2(stream, options) {
   });
   return awsChunkedEncodingStream;
 }
-var import_node_stream4;
+var import_node_stream3;
 var init_getAwsChunkedEncodingStream = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.js"() {
-    import_node_stream4 = require("node:stream");
+    import_node_stream3 = require("node:stream");
     init_getAwsChunkedEncodingStream_browser();
     init_stream_type_check();
   }
@@ -25841,10 +25883,10 @@ var init_headStream_browser = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.js
-var import_node_stream5, headStream2, Collector;
+var import_node_stream4, headStream2, Collector;
 var init_headStream = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.js"() {
-    import_node_stream5 = require("node:stream");
+    import_node_stream4 = require("node:stream");
     init_concatBytes();
     init_headStream_browser();
     init_stream_type_check();
@@ -25867,7 +25909,7 @@ var init_headStream = __esm({
         });
       });
     };
-    Collector = class extends import_node_stream5.Writable {
+    Collector = class extends import_node_stream4.Writable {
       buffers = [];
       limit = Infinity;
       bytesBuffered = 0;
@@ -26001,10 +26043,10 @@ var init_sdk_stream_mixin_browser = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js
-var import_node_stream6, streamCollector2, Collector2;
+var import_node_stream5, streamCollector2, Collector2;
 var init_stream_collector = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js"() {
-    import_node_stream6 = require("node:stream");
+    import_node_stream5 = require("node:stream");
     init_concatBytes();
     init_stream_collector_browser();
     init_stream_type_check();
@@ -26030,7 +26072,7 @@ var init_stream_collector = __esm({
         });
       });
     };
-    Collector2 = class extends import_node_stream6.Writable {
+    Collector2 = class extends import_node_stream5.Writable {
       bufferedBytes = [];
       _write(chunk, encoding, callback) {
         this.bufferedBytes.push(chunk);
@@ -26041,16 +26083,16 @@ var init_stream_collector = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.js
-var import_node_stream7, ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED2, sdkStreamMixin2;
+var import_node_stream6, ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED2, sdkStreamMixin2;
 var init_sdk_stream_mixin = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.js"() {
-    import_node_stream7 = require("node:stream");
+    import_node_stream6 = require("node:stream");
     init_buffer_from();
     init_sdk_stream_mixin_browser();
     init_stream_collector();
     ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED2 = "The stream has already been transformed.";
     sdkStreamMixin2 = (stream) => {
-      if (!(stream instanceof import_node_stream7.Readable)) {
+      if (!(stream instanceof import_node_stream6.Readable)) {
         try {
           return sdkStreamMixin(stream);
         } catch (ignored) {
@@ -26084,11 +26126,11 @@ var init_sdk_stream_mixin = __esm({
           if (stream.readableFlowing !== null) {
             throw new Error("The stream has been consumed by other callbacks.");
           }
-          if (typeof import_node_stream7.Readable.toWeb !== "function") {
+          if (typeof import_node_stream6.Readable.toWeb !== "function") {
             throw new Error("Readable.toWeb() is not supported. Please ensure a polyfill is available.");
           }
           transformed = true;
-          return import_node_stream7.Readable.toWeb(stream);
+          return import_node_stream6.Readable.toWeb(stream);
         }
       });
     };
@@ -26113,16 +26155,16 @@ async function splitStream2(stream) {
   if (isReadableStream(stream) || isBlob(stream)) {
     return splitStream(stream);
   }
-  const stream1 = new import_node_stream8.PassThrough();
-  const stream2 = new import_node_stream8.PassThrough();
+  const stream1 = new import_node_stream7.PassThrough();
+  const stream2 = new import_node_stream7.PassThrough();
   stream.pipe(stream1);
   stream.pipe(stream2);
   return [stream1, stream2];
 }
-var import_node_stream8;
+var import_node_stream7;
 var init_splitStream = __esm({
   "node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.js"() {
-    import_node_stream8 = require("node:stream");
+    import_node_stream7 = require("node:stream");
     init_splitStream_browser();
     init_stream_type_check();
   }
@@ -26283,12 +26325,208 @@ var init_collect_stream_body = __esm({
 
 // node_modules/@smithy/core/dist-es/submodules/protocols/extended-encode-uri-component.js
 function extendedEncodeURIComponent(str) {
+  if (/^[\w.~-]+$/.test(str)) {
+    return str;
+  }
   return encodeURIComponent(str).replace(/[!'()*]/g, function(c5) {
     return "%" + c5.charCodeAt(0).toString(16).toUpperCase();
   });
 }
 var init_extended_encode_uri_component = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/extended-encode-uri-component.js"() {
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/protocols/HttpBindingNormalizedSchema.js
+var HTTP_BINDINGS, HttpBindingNormalizedSchema, buildHttpBindings, buildPathSegments, buildHttpOperationBindings, EMPTY_BINDINGS, getHttpOperationBindings, createBodySchema;
+var init_HttpBindingNormalizedSchema = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/protocols/HttpBindingNormalizedSchema.js"() {
+    init_schema();
+    init_serde();
+    HTTP_BINDINGS = /* @__PURE__ */ Symbol.for("@smithy/schema-x");
+    HttpBindingNormalizedSchema = class _HttpBindingNormalizedSchema extends NormalizedSchema {
+      static identity = /* @__PURE__ */ Symbol.for("@smithy/HttpBindingNormalizedSchema");
+      identity = _HttpBindingNormalizedSchema.identity;
+      bindings;
+      constructor(schema) {
+        super(schema);
+      }
+      static of(schema) {
+        const ns = NormalizedSchema.of(schema);
+        if (ns.identity === _HttpBindingNormalizedSchema.identity) {
+          return ns;
+        }
+        const schemaCache = ns.isMemberSchema() ? ns : ns.getSchema();
+        const cache5 = typeof schemaCache === "object" && schemaCache !== null ? schemaCache : ns;
+        return cache5[HTTP_BINDINGS] ??= new _HttpBindingNormalizedSchema(ns);
+      }
+      getHttpBindingLocation(traits) {
+        if (traits.httpPayload) {
+          return 36;
+        }
+        if (traits.httpLabel) {
+          return 33;
+        }
+        if (traits.httpHeader) {
+          return 38;
+        }
+        if (typeof traits.httpPrefixHeaders === "string") {
+          return 39;
+        }
+        if (traits.httpQuery) {
+          return 34;
+        }
+        if (traits.httpQueryParams) {
+          return 35;
+        }
+        if (traits.httpResponseCode) {
+          return 37;
+        }
+        return 32;
+      }
+      getHttpBindingValue(location, traits, nested = false) {
+        const raw = this.getSchema();
+        const type = typeof raw === "number" ? raw & 255 : this.isListSchema() ? 64 : 255;
+        const slot = location & 7;
+        const media = traits.mediaType ? traits.mediaType === "application/json" || traits.mediaType.endsWith("+json") ? 2 : 1 : 0;
+        const stream = traits.streaming || type === 42 ? this.isStructSchema() ? 2 : 1 : 0;
+        const timestamp = type >= 4 && type <= 7 ? slot >= 6 ? 2 : slot > 0 && slot < 4 ? 1 : 0 : 0;
+        let flags = type | media << 8 | (traits.idempotencyToken ? 1 : 0) << 10 | stream << 11 | (traits.sparse ? 1 : 0) << 13 | timestamp << 14 | (traits.hostLabel ? 1 : 0) << 17 | (location === 36 && typeof raw !== "object" ? 1 : 0) << 18;
+        const category = type & 192;
+        const collectionValue = slot & 2 && (category === 64 || !nested && slot & 1) ? this.getHttpBindingCollectionValue(location, traits) : void 0;
+        const valueType = (collectionValue?.[1] ?? 0) & 255;
+        flags |= (slot >= 6 && (valueType === 4 || valueType === 6) ? 1 : 0) << 16;
+        return [this, flags, collectionValue];
+      }
+      getHttpBindingCollectionValue(location, traits = this.getMergedTraits()) {
+        const valueSchema = _HttpBindingNormalizedSchema.of(this.getValueSchema());
+        return valueSchema.getHttpBindingValue(location, { ...valueSchema.getMergedTraits(), ...traits }, true);
+      }
+      getHttpBindings() {
+        const source = this.getSchema();
+        return typeof source !== "object" || source === null ? EMPTY_BINDINGS : this.bindings ??= buildHttpBindings(this);
+      }
+    };
+    buildHttpBindings = (schema) => {
+      const bodyMemberNames = [];
+      const bodyMemberSchemas = [];
+      const requestBodyMemberNames = [];
+      const requestBodyMemberSchemas = [];
+      const memberBindings = [];
+      const byName = {};
+      const headers = {};
+      const prefixHeaders = [];
+      const responseBindings = { headers, prefixHeaders };
+      const bindings = {
+        request: { memberBindings, byName },
+        response: {
+          bodyMemberNames,
+          bindings: responseBindings
+        }
+      };
+      const { request, response } = bindings;
+      for (const [name, member2] of schema.structIterator()) {
+        const bindingSchema = HttpBindingNormalizedSchema.of(member2);
+        const traits = bindingSchema.getMergedTraits();
+        const location = bindingSchema.getHttpBindingLocation(traits);
+        const wireName = traits.httpHeader?.toLowerCase() ?? traits.httpPrefixHeaders?.toLowerCase() ?? traits.httpQuery;
+        const value = bindingSchema.getHttpBindingValue(location, traits);
+        const binding = [name, value, location, wireName];
+        if (name === "__proto__") {
+          writeKey(byName);
+        }
+        byName[name] = binding;
+        if (value[1] >> 10 & 1) {
+          request.hasIdempotency = true;
+        }
+        memberBindings.push(binding);
+        const slot = location & 7;
+        if (slot === 0) {
+          requestBodyMemberNames.push(name);
+          requestBodyMemberSchemas.push(member2);
+        }
+        if ((slot & 4) === 0) {
+          bodyMemberNames.push(name);
+          bodyMemberSchemas.push(member2);
+        } else if ((slot & 6) === 4) {
+          if (slot & 1) {
+            responseBindings.statusCode = binding;
+          } else {
+            responseBindings.payload = binding;
+            const type = value[1] & 255;
+            request.contentTypeInstruction = traits.mediaType ?? (type === 0 ? "text/plain" : type === 21 || type === 42 ? "application/octet-stream" : null);
+          }
+        } else if (slot & 1) {
+          request.hasPrefixHeaders = true;
+          prefixHeaders.push(binding);
+        } else {
+          if (wireName === "__proto__") {
+            writeKey(headers);
+          }
+          headers[wireName] = binding;
+        }
+      }
+      if (request.contentTypeInstruction === void 0 && requestBodyMemberNames.length) {
+        request.contentTypeInstruction = null;
+      }
+      request.syntheticBodySchema = createBodySchema(schema, requestBodyMemberNames, requestBodyMemberSchemas);
+      response.syntheticBodySchema = createBodySchema(schema, bodyMemberNames, bodyMemberSchemas);
+      return bindings;
+    };
+    buildPathSegments = (path4) => {
+      const segments = [];
+      let offset = 0;
+      for (const match of path4.matchAll(/\{([^{}+]+)(\+)?\}/g)) {
+        if (match.index > offset) {
+          segments.push([path4.slice(offset, match.index), 0]);
+        }
+        segments.push([match[1], match[2] ? 2 : 1]);
+        offset = match.index + match[0].length;
+      }
+      if (segments.length && offset < path4.length) {
+        segments.push([path4.slice(offset), 0]);
+      }
+      return segments.length ? segments : void 0;
+    };
+    buildHttpOperationBindings = (schema) => {
+      const { http: http5, endpoint } = translateTraits(schema.traits ?? {});
+      const [path4, search] = http5?.[1].split("?") ?? [];
+      return [
+        http5?.[0],
+        path4,
+        search ? [...new URLSearchParams(search)] : [],
+        path4 ? buildPathSegments(path4) : void 0,
+        endpoint?.[0]
+      ];
+    };
+    EMPTY_BINDINGS = {
+      request: { memberBindings: [], byName: {} },
+      response: {
+        bodyMemberNames: [],
+        bindings: { headers: {}, prefixHeaders: [] }
+      }
+    };
+    getHttpOperationBindings = (schema) => schema[HTTP_BINDINGS] ??= buildHttpOperationBindings(schema);
+    createBodySchema = (schema, memberNames, memberSchemas) => {
+      if (!memberNames.length) {
+        return void 0;
+      }
+      const source = schema.getSchema();
+      const body = [
+        3,
+        source[1],
+        source[2],
+        schema.getMergedTraits(),
+        memberNames,
+        memberSchemas
+      ];
+      const required = source[6];
+      const bodyRequired = required && memberNames.reduce((count, name) => count + (source[4].indexOf(name) < required ? 1 : 0), 0);
+      if (bodyRequired) {
+        body[6] = bodyRequired;
+      }
+      return body;
+    };
   }
 });
 
@@ -26336,12 +26574,12 @@ var init_blobHasher = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js
-var import_node_stream9, HashCalculator;
+var import_node_stream8, HashCalculator;
 var init_HashCalculator = __esm({
   "node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js"() {
-    import_node_stream9 = require("node:stream");
+    import_node_stream8 = require("node:stream");
     init_serde();
-    HashCalculator = class extends import_node_stream9.Writable {
+    HashCalculator = class extends import_node_stream8.Writable {
       hash;
       constructor(hash, options) {
         super(options);
@@ -27675,10 +27913,10 @@ async function* readableToIterable(readStream) {
     generationEnded = streamEnded && records.length === 0;
   }
 }
-var import_node_stream10, EventStreamMarshaller2, eventStreamSerdeProvider2;
+var import_node_stream9, EventStreamMarshaller2, eventStreamSerdeProvider2;
 var init_EventStreamMarshaller2 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/EventStreamMarshaller.js"() {
-    import_node_stream10 = require("node:stream");
+    import_node_stream9 = require("node:stream");
     init_EventStreamMarshaller();
     EventStreamMarshaller2 = class {
       universalMarshaller;
@@ -27693,7 +27931,7 @@ var init_EventStreamMarshaller2 = __esm({
         return this.universalMarshaller.deserialize(bodyIterable, deserializer);
       }
       serialize(input, serializer) {
-        return import_node_stream10.Readable.from(this.universalMarshaller.serialize(input, serializer));
+        return import_node_stream9.Readable.from(this.universalMarshaller.serialize(input, serializer));
       }
     };
     eventStreamSerdeProvider2 = (options) => new EventStreamMarshaller2(options);
@@ -28071,8 +28309,8 @@ var init_HttpProtocol = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/HttpProtocol.js"() {
     init_transport();
     init_schema();
-    init_transport();
     init_SerdeContext();
+    init_HttpBindingNormalizedSchema();
     HttpProtocol = class extends SerdeContext {
       options;
       compositeErrorRegistry;
@@ -28141,30 +28379,28 @@ var init_HttpProtocol = __esm({
           return request;
         }
       }
-      setHostPrefix(request, operationSchema, input) {
+      setHostPrefix(request, operationSchema, input, operation2 = getHttpOperationBindings(operationSchema)) {
         if (this.serdeContext?.disableHostPrefix) {
           return;
         }
-        const inputNs = NormalizedSchema.of(operationSchema.input);
-        const opTraits = translateTraits(operationSchema.traits ?? {});
-        if (opTraits.endpoint) {
-          let hostPrefix = opTraits.endpoint?.[0];
-          if (typeof hostPrefix === "string") {
-            for (const [name, member2] of inputNs.structIterator()) {
-              if (!member2.getMergedTraits().hostLabel) {
-                continue;
-              }
-              const replacement = input[name];
-              if (typeof replacement !== "string") {
-                throw new Error(`@smithy/core/schema - ${name} in input must be a string as hostLabel.`);
-              }
-              hostPrefix = hostPrefix.replace(`{${name}}`, replacement);
-            }
-            request.hostname = hostPrefix + request.hostname;
-            if (!isValidHostname(request.hostname)) {
-              throw new Error(`[${request.hostname}] is not a valid hostname.`);
-            }
+        const hostPrefix = operation2[4];
+        if (typeof hostPrefix !== "string") {
+          return;
+        }
+        let resolvedHostPrefix = hostPrefix;
+        for (const [name, [, flags]] of HttpBindingNormalizedSchema.of(operationSchema.input).getHttpBindings().request.memberBindings) {
+          if (!(flags >> 17 & 1)) {
+            continue;
           }
+          const replacement = input[name];
+          if (typeof replacement !== "string") {
+            throw new Error(`@smithy/core/schema - ${name} in input must be a string as hostLabel.`);
+          }
+          resolvedHostPrefix = resolvedHostPrefix.replace(`{${name}}`, replacement);
+        }
+        request.hostname = resolvedHostPrefix + request.hostname;
+        if (!isValidHostname(request.hostname)) {
+          throw new Error(`[${request.hostname}] is not a valid hostname.`);
         }
       }
       deserializeMetadata(output) {
@@ -28275,175 +28511,192 @@ var HttpBindingProtocol;
 var init_HttpBindingProtocol = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/HttpBindingProtocol.js"() {
     init_transport();
-    init_schema();
     init_serde();
-    init_transport();
+    init_HttpBindingNormalizedSchema();
     init_HttpProtocol();
     init_collect_stream_body();
     init_extended_encode_uri_component();
     HttpBindingProtocol = class extends HttpProtocol {
       async serializeRequest(operationSchema, _input, context) {
         const input = _input && typeof _input === "object" ? _input : {};
-        const serializer = this.serializer;
         const query = {};
         const headers = {};
         const endpoint = await context.endpoint();
-        const ns = NormalizedSchema.of(operationSchema?.input);
-        const payloadMemberNames = [];
-        const payloadMemberSchemas = [];
-        let hasNonHttpBindingMember = false;
-        let payload2;
-        const request = new HttpRequest({
-          protocol: "",
-          hostname: "",
-          port: void 0,
-          path: "",
-          fragment: void 0,
-          query,
-          headers,
-          body: void 0
-        });
+        const ns = HttpBindingNormalizedSchema.of(operationSchema?.input);
+        const bindings = ns.getHttpBindings().request;
+        const operation2 = getHttpOperationBindings(operationSchema);
+        const request = new HttpRequest({ query, headers });
         if (endpoint) {
           this.updateServiceEndpoint(request, endpoint);
-          this.setHostPrefix(request, operationSchema, input);
-          const opTraits = translateTraits(operationSchema.traits);
-          if (opTraits.http) {
-            request.method = opTraits.http[0];
-            const [path4, search] = opTraits.http[1].split("?");
-            if (request.path == "/") {
-              request.path = path4;
-            } else {
-              request.path += path4;
-            }
-            const traitSearchParams = new URLSearchParams(search ?? "");
-            for (const [key, value] of traitSearchParams) {
+          this.setHostPrefix(request, operationSchema, input, operation2);
+          const [method, path4, staticQuery] = operation2;
+          if (method) {
+            request.method = method;
+            request.path = request.path === "/" ? path4 : request.path + path4;
+            for (const [key, value] of staticQuery) {
               query[key] = value;
             }
           }
         }
-        for (const [memberName, memberNs] of ns.structIterator()) {
-          const memberTraits = memberNs.getMergedTraits() ?? {};
-          const inputMemberValue = input[memberName];
-          if (inputMemberValue == null && !memberNs.isIdempotencyToken()) {
-            if (memberTraits.httpLabel) {
-              if (request.path.includes(`{${memberName}+}`) || request.path.includes(`{${memberName}}`)) {
-                throw new Error(`No value provided for input HTTP label: ${memberName}.`);
-              }
-            }
+        request.query = query;
+        const eventStream = this.serializeHttpBindings(input, request, bindings, operation2);
+        if (eventStream) {
+          request.body = await this.serializeEventStream({ eventStream, requestSchema: ns });
+        }
+        return request;
+      }
+      serializeHttpBindings(input, request, bindings, operation2) {
+        const serializer = this.serializer;
+        const directSerializer = typeof serializer.writeCodec === "function" ? serializer : void 0;
+        const query = request.query;
+        const headers = request.headers;
+        const bodySchema = bindings.syntheticBodySchema;
+        let hasBodyValue = false;
+        let payload2;
+        let eventStream;
+        let labels;
+        const names = Object.getOwnPropertyNames(input);
+        const prototype = Object.getPrototypeOf(input);
+        const sparse = (prototype === Object.prototype || prototype === null) && !bindings.hasIdempotency && !bindings.hasPrefixHeaders && names.length * 2 < bindings.memberBindings.length;
+        const length = sparse ? names.length : bindings.memberBindings.length;
+        for (let i5 = 0; i5 < length; ++i5) {
+          const binding = sparse ? hasOwn(bindings.byName, names[i5]) ? bindings.byName[names[i5]] : void 0 : bindings.memberBindings[i5];
+          if (!binding) {
             continue;
           }
-          if (memberTraits.httpPayload) {
-            const isStreaming = memberNs.isStreaming();
-            if (isStreaming) {
-              const isEventStream = memberNs.isStructSchema();
-              if (isEventStream) {
-                if (input[memberName]) {
-                  payload2 = await this.serializeEventStream({
-                    eventStream: input[memberName],
-                    requestSchema: ns
-                  });
-                }
+          const value = binding[1];
+          const memberName = binding[0];
+          const memberNs = value[0];
+          const flags = value[1];
+          const collectionValue = value[2];
+          const location = binding[2];
+          const wireName = binding[3];
+          const inputMemberValue = input[memberName];
+          if (inputMemberValue == null && !(flags >> 10 & 1)) {
+            continue;
+          }
+          if (location === 36) {
+            const stream = flags >> 11 & 3;
+            if (stream) {
+              if (stream === 2) {
+                eventStream = inputMemberValue || void 0;
               } else {
                 payload2 = inputMemberValue;
               }
             } else {
-              serializer.write(memberNs, inputMemberValue);
+              if (directSerializer) {
+                directSerializer.writeCodec(memberNs, inputMemberValue);
+              } else {
+                serializer.write(memberNs, inputMemberValue);
+              }
               payload2 = serializer.flush();
             }
-          } else if (memberTraits.httpLabel) {
-            serializer.write(memberNs, inputMemberValue);
-            const replacement = serializer.flush();
-            if (request.path.includes(`{${memberName}+}`)) {
-              request.path = request.path.replace(`{${memberName}+}`, replacement.split("/").map(extendedEncodeURIComponent).join("/"));
-            } else if (request.path.includes(`{${memberName}}`)) {
-              request.path = request.path.replace(`{${memberName}}`, extendedEncodeURIComponent(replacement));
+          } else if (location === 33 || location === 38) {
+            const serialized = this.serializeHttpValue(value, inputMemberValue, location, directSerializer);
+            if (location === 33) {
+              (labels ??= /* @__PURE__ */ Object.create(null))[memberName] = serialized;
+            } else {
+              headers[wireName] = serialized;
             }
-          } else if (memberTraits.httpHeader) {
-            serializer.write(memberNs, inputMemberValue);
-            headers[memberTraits.httpHeader.toLowerCase()] = String(serializer.flush());
-          } else if (typeof memberTraits.httpPrefixHeaders === "string") {
+          } else if (location === 39) {
             for (const key in inputMemberValue) {
               if (!hasOwn(inputMemberValue, key)) {
                 continue;
               }
-              const val = inputMemberValue[key];
-              const amalgam = memberTraits.httpPrefixHeaders + key;
-              serializer.write([memberNs.getValueSchema(), { httpHeader: amalgam }], val);
-              headers[amalgam.toLowerCase()] = serializer.flush();
+              const amalgam = wireName + key;
+              headers[amalgam.toLowerCase()] = this.serializeHttpValue(collectionValue, inputMemberValue[key], 38, directSerializer, directSerializer ? collectionValue[0] : [collectionValue[0], { httpHeader: amalgam }]);
             }
-          } else if (memberTraits.httpQuery || memberTraits.httpQueryParams) {
-            this.serializeQuery(memberNs, inputMemberValue, query);
+          } else if ((location & 62) === 34) {
+            this.serializeQuery(value, inputMemberValue, wireName, query, directSerializer);
           } else {
-            hasNonHttpBindingMember = true;
-            payloadMemberNames.push(memberName);
-            payloadMemberSchemas.push(memberNs);
+            hasBodyValue = true;
           }
         }
-        if (hasNonHttpBindingMember && input) {
-          const [namespace, name] = (ns.getName(true) ?? "#Unknown").split("#");
-          const requiredMembers = ns.getSchema()[6];
-          const payloadSchema = [
-            3,
-            namespace,
-            name,
-            ns.getMergedTraits(),
-            payloadMemberNames,
-            payloadMemberSchemas,
-            void 0
-          ];
-          if (requiredMembers) {
-            payloadSchema[6] = requiredMembers;
+        const operationPath = operation2[1];
+        const pathSegments = operation2[3];
+        if (operationPath && pathSegments && request.path.endsWith(operationPath)) {
+          request.path = request.path.slice(0, -operationPath.length) + this.serializePath(pathSegments, labels, bindings);
+        }
+        if (hasBodyValue && bodySchema) {
+          if (directSerializer) {
+            directSerializer.writeCodec(bodySchema, input);
           } else {
-            payloadSchema.pop();
+            serializer.write(bodySchema, input);
           }
-          serializer.write(payloadSchema, input);
           payload2 = serializer.flush();
         }
-        request.headers = headers;
-        request.query = query;
         request.body = payload2;
-        return request;
+        return eventStream;
       }
-      serializeQuery(ns, data2, query) {
-        const serializer = this.serializer;
-        const traits = ns.getMergedTraits();
-        if (traits.httpQueryParams) {
+      serializeQuery(value, data2, wireName, query, directSerializer) {
+        const [ns, flags, collectionValue] = value;
+        const traits = directSerializer ? void 0 : ns.getMergedTraits();
+        if (wireName === void 0) {
           for (const key in data2) {
-            if (!hasOwn(data2, key)) {
+            if (!hasOwn(data2, key) || key in query) {
               continue;
             }
-            if (!(key in query)) {
-              const val = data2[key];
-              const valueSchema = ns.getValueSchema();
-              Object.assign(valueSchema.getMergedTraits(), {
+            if (!directSerializer) {
+              Object.assign(collectionValue[0].getMergedTraits(), {
                 ...traits,
                 httpQuery: key,
                 httpQueryParams: void 0
               });
-              this.serializeQuery(valueSchema, val, query);
             }
+            this.serializeQuery(collectionValue, data2[key], key, query, directSerializer);
           }
           return;
         }
-        if (ns.isListSchema()) {
-          const sparse = !!ns.getMergedTraits().sparse;
+        if ((flags & 192) === 64) {
           const buffer = [];
           for (const item of data2) {
-            serializer.write([ns.getValueSchema(), traits], item);
-            const serializable = serializer.flush();
-            if (sparse || serializable !== void 0) {
-              buffer.push(serializable);
+            const serialized = this.serializeHttpValue(collectionValue, item, 34, directSerializer, directSerializer ? collectionValue[0] : [collectionValue[0], traits]);
+            if (flags >> 13 & 1 || serialized !== void 0) {
+              buffer.push(serialized);
             }
           }
-          query[traits.httpQuery] = buffer;
+          query[wireName] = buffer;
         } else {
-          serializer.write([ns, traits], data2);
-          query[traits.httpQuery] = serializer.flush();
+          query[wireName] = this.serializeHttpValue(value, data2, 34, directSerializer, directSerializer ? ns : [ns, traits]);
         }
+      }
+      serializeHttpValue(value, data2, location, directSerializer, schema = value[0]) {
+        const flags = value[1];
+        const type = flags & 255;
+        if (directSerializer && !(flags & 1792) && (type <= 2 || type === 17 || type === 19)) {
+          return String(data2);
+        }
+        if (directSerializer) {
+          directSerializer.writeHttpBinding(value, data2, location);
+        } else {
+          this.serializer.write(schema, data2);
+        }
+        return this.serializer.flush();
+      }
+      serializePath(segments, labels, bindings) {
+        let path4 = "";
+        for (const [value, kind] of segments) {
+          if (kind === 0) {
+            path4 += value;
+            continue;
+          }
+          const replacement = labels?.[value];
+          if (replacement === void 0) {
+            if (hasOwn(bindings.byName, value) && bindings.byName[value][2] === 33) {
+              throw new Error(`No value provided for input HTTP label: ${value}.`);
+            }
+            path4 += `{${value}${kind === 2 ? "+" : ""}}`;
+          } else {
+            path4 += kind === 2 ? replacement.split("/").map(extendedEncodeURIComponent).join("/") : extendedEncodeURIComponent(replacement);
+          }
+        }
+        return path4;
       }
       async deserializeResponse(operationSchema, context, response) {
         const deserializer = this.deserializer;
-        const ns = NormalizedSchema.of(operationSchema.output);
+        const directDeserializer = typeof deserializer.readCodec === "function" ? deserializer : void 0;
+        const ns = HttpBindingNormalizedSchema.of(operationSchema.output);
+        const responseBindings = ns.getHttpBindings().response;
         const dataObject = {};
         if (response.statusCode >= 300) {
           const bytes = await collectBody(response.body, context);
@@ -28453,106 +28706,93 @@ var init_HttpBindingProtocol = __esm({
           await this.handleError(operationSchema, context, response, dataObject, this.deserializeMetadata(response));
           throw new Error("@smithy/core/protocols - HTTP Protocol error handler failed to throw.");
         }
-        for (const header in response.headers) {
-          if (!hasOwn(response.headers, header)) {
-            continue;
-          }
-          const value = response.headers[header];
-          delete response.headers[header];
-          response.headers[header.toLowerCase()] = value;
-        }
         const nonHttpBindingMembers = await this.deserializeHttpMessage(ns, context, response, dataObject);
         if (nonHttpBindingMembers.length) {
           const bytes = await collectBody(response.body, context);
           if (bytes.byteLength > 0) {
-            const dataFromBody = await deserializer.read(ns, bytes);
+            const dataFromBody = await (directDeserializer ? directDeserializer.readCodec(responseBindings.syntheticBodySchema, bytes) : deserializer.read(responseBindings.syntheticBodySchema, bytes));
             for (const member2 of nonHttpBindingMembers) {
               if (dataFromBody[member2] != null) {
                 dataObject[member2] = dataFromBody[member2];
               }
             }
           }
-        } else if (nonHttpBindingMembers.discardResponseBody) {
+        } else if (!responseBindings.bindings.payload) {
           await collectBody(response.body, context);
         }
         dataObject.$metadata = this.deserializeMetadata(response);
         return dataObject;
       }
       async deserializeHttpMessage(schema, context, response, arg4, arg5) {
-        let dataObject;
-        if (arg4 instanceof Set) {
-          dataObject = arg5;
-        } else {
-          dataObject = arg4;
-        }
-        let discardResponseBody = true;
+        const dataObject = arg4 instanceof Set ? arg5 : arg4;
         const deserializer = this.deserializer;
-        const ns = NormalizedSchema.of(schema);
-        const nonHttpBindingMembers = [];
-        for (const [memberName, memberSchema] of ns.structIterator()) {
-          const memberTraits = memberSchema.getMemberTraits();
-          if (memberTraits.httpPayload) {
-            discardResponseBody = false;
-            const isStreaming = memberSchema.isStreaming();
-            if (isStreaming) {
-              const isEventStream = memberSchema.isStructSchema();
-              if (isEventStream) {
-                dataObject[memberName] = await this.deserializeEventStream({
-                  response,
-                  responseSchema: ns
-                });
-              } else {
-                dataObject[memberName] = sdkStreamMixin2(response.body);
-              }
-            } else if (response.body) {
-              const bytes = await collectBody(response.body, context);
-              if (bytes.byteLength > 0) {
-                dataObject[memberName] = await deserializer.read(memberSchema, bytes);
-              }
+        const directDeserializer = typeof deserializer.readCodec === "function" ? deserializer : void 0;
+        const ns = HttpBindingNormalizedSchema.of(schema);
+        const { bodyMemberNames, bindings: { payload: payload2, statusCode, headers: responseHeaders, prefixHeaders } } = ns.getHttpBindings().response;
+        const headers = response.headers;
+        if (payload2) {
+          const [memberName, value] = payload2;
+          const [memberSchema, flags] = value;
+          const stream = flags >> 11 & 3;
+          if (stream) {
+            if (stream === 2) {
+              dataObject[memberName] = await this.deserializeEventStream({
+                response,
+                responseSchema: ns
+              });
+            } else {
+              dataObject[memberName] = sdkStreamMixin2(response.body);
             }
-          } else if (memberTraits.httpHeader) {
-            const key = String(memberTraits.httpHeader).toLowerCase();
-            const value = response.headers[key];
-            if (null != value) {
-              if (memberSchema.isListSchema()) {
-                const headerListValueSchema = memberSchema.getValueSchema();
-                headerListValueSchema.getMergedTraits().httpHeader = key;
-                let sections;
-                if (headerListValueSchema.isTimestampSchema() && headerListValueSchema.getSchema() === 4) {
-                  sections = splitEvery(value, ",", 2);
-                } else {
-                  sections = splitHeader(value);
-                }
-                const list2 = [];
-                for (const section of sections) {
-                  list2.push(await deserializer.read(headerListValueSchema, section.trim()));
-                }
-                dataObject[memberName] = list2;
-              } else {
-                dataObject[memberName] = await deserializer.read(memberSchema, value);
-              }
+          } else if (response.body) {
+            const bytes = await collectBody(response.body, context);
+            if (bytes.byteLength > 0) {
+              dataObject[memberName] = await (directDeserializer ? directDeserializer.readPayload(value, bytes) : deserializer.read(memberSchema, bytes));
             }
-          } else if (memberTraits.httpPrefixHeaders !== void 0) {
-            dataObject[memberName] = {};
-            for (const header in response.headers) {
-              if (!hasOwn(response.headers, header)) {
-                continue;
-              }
-              if (header.startsWith(memberTraits.httpPrefixHeaders)) {
-                const value = response.headers[header];
-                const valueSchema = memberSchema.getValueSchema();
-                valueSchema.getMergedTraits().httpHeader = header;
-                dataObject[memberName][header.slice(memberTraits.httpPrefixHeaders.length)] = await deserializer.read(valueSchema, value);
-              }
-            }
-          } else if (memberTraits.httpResponseCode) {
-            dataObject[memberName] = response.statusCode;
-          } else {
-            nonHttpBindingMembers.push(memberName);
           }
         }
-        nonHttpBindingMembers.discardResponseBody = discardResponseBody;
-        return nonHttpBindingMembers;
+        for (const header in headers) {
+          if (!hasOwn(headers, header)) {
+            continue;
+          }
+          const lower = header.toLowerCase();
+          const headerValue = headers[header];
+          if (lower !== header) {
+            delete headers[header];
+            headers[lower] = headerValue;
+          }
+          const binding = hasOwn(responseHeaders, lower) ? responseHeaders[lower] : void 0;
+          if (!binding) {
+            continue;
+          }
+          const [memberName, [memberSchema, flags, collectionValue], , wireName] = binding;
+          if (collectionValue) {
+            const sections = flags >> 16 & 1 ? splitEvery(headerValue, ",", 2) : splitHeader(headerValue);
+            const list2 = [];
+            for (const section of sections) {
+              list2.push(directDeserializer ? directDeserializer.readHttpBinding(collectionValue, section.trim(), 38) : await deserializer.read([collectionValue[0], { httpHeader: wireName }], section.trim()));
+            }
+            dataObject[memberName] = list2;
+          } else {
+            dataObject[memberName] = directDeserializer ? directDeserializer.readHttpBinding(binding[1], headerValue, 38) : await deserializer.read(memberSchema, headerValue);
+          }
+        }
+        for (const [memberName, [, , collectionValue], , wireName] of prefixHeaders) {
+          dataObject[memberName] = {};
+          for (const header in headers) {
+            if (!hasOwn(headers, header)) {
+              continue;
+            }
+            if (!header.startsWith(wireName)) {
+              continue;
+            }
+            const headerValue = headers[header];
+            dataObject[memberName][header.slice(wireName.length)] = directDeserializer ? directDeserializer.readHttpBinding(collectionValue, headerValue, 38) : await deserializer.read([collectionValue[0], { httpHeader: header }], headerValue);
+          }
+        }
+        if (statusCode) {
+          dataObject[statusCode[0]] = response.statusCode;
+        }
+        return bodyMemberNames;
       }
     };
   }
@@ -28797,30 +29037,13 @@ var init_requestBuilder = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js
-function determineTimestampFormat(ns, settings) {
-  if (settings.timestampFormat.useTrait) {
-    if (ns.isTimestampSchema() && (ns.getSchema() === 5 || ns.getSchema() === 6 || ns.getSchema() === 7)) {
-      return ns.getSchema();
-    }
-  }
-  const { httpLabel, httpPrefixHeaders, httpHeader, httpQuery } = ns.getMergedTraits();
-  const bindingFormat = settings.httpBindings ? typeof httpPrefixHeaders === "string" || Boolean(httpHeader) ? 6 : Boolean(httpQuery) || Boolean(httpLabel) ? 5 : void 0 : void 0;
-  return bindingFormat ?? settings.timestampFormat.default;
-}
-var init_determineTimestampFormat = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js"() {
-  }
-});
-
 // node_modules/@smithy/core/dist-es/submodules/protocols/serde/FromStringShapeDeserializer.js
 var FromStringShapeDeserializer;
 var init_FromStringShapeDeserializer = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/serde/FromStringShapeDeserializer.js"() {
-    init_schema();
     init_serde();
+    init_HttpBindingNormalizedSchema();
     init_SerdeContext();
-    init_determineTimestampFormat();
     FromStringShapeDeserializer = class extends SerdeContext {
       settings;
       constructor(settings) {
@@ -28828,57 +29051,61 @@ var init_FromStringShapeDeserializer = __esm({
         this.settings = settings;
       }
       read(_schema, data2) {
-        const ns = NormalizedSchema.of(_schema);
-        if (ns.isListSchema()) {
-          return splitHeader(data2).map((item) => this.read(ns.getValueSchema(), item));
-        }
-        if (ns.isBlobSchema()) {
-          return (this.serdeContext?.base64Decoder ?? fromBase64)(data2);
-        }
-        if (ns.isTimestampSchema()) {
-          const format2 = determineTimestampFormat(ns, this.settings);
-          switch (format2) {
-            case 5:
-              return _parseRfc3339DateTimeWithOffset(data2);
-            case 6:
-              return _parseRfc7231DateTime(data2);
-            case 7:
-              return _parseEpochTimestamp(data2);
-            default:
-              console.warn("Missing timestamp format, parsing value with Date constructor:", data2);
-              return new Date(data2);
-          }
-        }
-        if (ns.isStringSchema()) {
-          const mediaType = ns.getMergedTraits().mediaType;
-          let intermediateValue = data2;
-          if (mediaType) {
-            if (ns.getMergedTraits().httpHeader) {
-              intermediateValue = this.base64ToUtf8(intermediateValue);
-            }
-            const isJson = mediaType === "application/json" || mediaType.endsWith("+json");
-            if (isJson) {
-              intermediateValue = LazyJsonString.from(intermediateValue);
-            }
-            return intermediateValue;
-          }
-        }
-        if (ns.isNumericSchema()) {
-          return Number(data2);
-        }
-        if (ns.isBigIntegerSchema()) {
-          return BigInt(data2);
-        }
-        if (ns.isBigDecimalSchema()) {
-          return new NumericValue(data2, "bigDecimal");
-        }
-        if (ns.isBooleanSchema()) {
-          return String(data2).toLowerCase() === "true";
-        }
-        return data2;
+        const ns = HttpBindingNormalizedSchema.of(_schema);
+        const traits = ns.getMergedTraits();
+        const location = ns.getHttpBindingLocation(traits);
+        return this.readHttpBinding(ns.getHttpBindingValue(location, traits), data2, location);
       }
-      base64ToUtf8(base64String) {
-        return (this.serdeContext?.utf8Encoder ?? toUtf8)((this.serdeContext?.base64Decoder ?? fromBase64)(base64String));
+      readHttpBinding([ns, flags, collectionValue], data2, location) {
+        const schema = flags & 255;
+        if ((schema & 192) === 64) {
+          collectionValue ??= ns.getHttpBindingCollectionValue(location);
+          return splitHeader(data2).map((item) => this.readHttpBinding(collectionValue, item, location));
+        }
+        switch (schema) {
+          case 21:
+          case 42:
+            return (this.serdeContext?.base64Decoder ?? fromBase64)(data2);
+          case 4:
+          case 5:
+          case 6:
+          case 7: {
+            const bindingFormat = this.settings.httpBindings ? flags >> 14 & 3 : 0;
+            const format2 = this.settings.timestampFormat.useTrait && schema > 4 ? schema : bindingFormat ? bindingFormat + 4 : this.settings.timestampFormat.default;
+            switch (format2) {
+              case 5:
+                return _parseRfc3339DateTimeWithOffset(data2);
+              case 6:
+                return _parseRfc7231DateTime(data2);
+              case 7:
+                return _parseEpochTimestamp(data2);
+              default:
+                console.warn("Missing timestamp format, parsing value with Date constructor:", data2);
+                return new Date(data2);
+            }
+          }
+          case 0: {
+            const media = flags >> 8 & 3;
+            if (!media) {
+              return data2;
+            }
+            let intermediateValue = data2;
+            if ((location & 6) === 6) {
+              intermediateValue = (this.serdeContext?.utf8Encoder ?? toUtf8)((this.serdeContext?.base64Decoder ?? fromBase64)(intermediateValue));
+            }
+            return media === 2 ? LazyJsonString.from(intermediateValue) : intermediateValue;
+          }
+          case 1:
+            return Number(data2);
+          case 2:
+            return data2.toLowerCase() === "true";
+          case 17:
+            return BigInt(data2);
+          case 19:
+            return new NumericValue(data2, "bigDecimal");
+          default:
+            return data2;
+        }
       }
     };
   }
@@ -28888,8 +29115,8 @@ var init_FromStringShapeDeserializer = __esm({
 var HttpInterceptingShapeDeserializer;
 var init_HttpInterceptingShapeDeserializer = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeDeserializer.js"() {
-    init_schema();
     init_serde();
+    init_HttpBindingNormalizedSchema();
     init_SerdeContext();
     init_FromStringShapeDeserializer();
     HttpInterceptingShapeDeserializer = class extends SerdeContext {
@@ -28906,27 +29133,33 @@ var init_HttpInterceptingShapeDeserializer = __esm({
         this.serdeContext = serdeContext;
       }
       read(schema, data2) {
-        const ns = NormalizedSchema.of(schema);
+        const ns = HttpBindingNormalizedSchema.of(schema);
         const traits = ns.getMergedTraits();
-        const toString = this.serdeContext?.utf8Encoder ?? toUtf8;
         if (traits.httpHeader || traits.httpResponseCode) {
-          return this.stringDeserializer.read(ns, toString(data2));
+          const value = ns.getHttpBindingValue(38, traits);
+          return this.readHttpBinding(value, data2, 38);
         }
         if (traits.httpPayload) {
-          if (ns.isBlobSchema()) {
-            const toBytes = this.serdeContext?.utf8Decoder ?? fromUtf8;
-            if (typeof data2 === "string") {
-              return toBytes(data2);
-            }
-            return data2;
-          } else if (ns.isStringSchema()) {
-            if ("byteLength" in data2) {
-              return toString(data2);
-            }
-            return data2;
-          }
+          return this.readPayload(ns.getHttpBindingValue(36, traits), data2);
         }
-        return this.codecDeserializer.read(ns, data2);
+        return this.readCodec(ns, data2);
+      }
+      readHttpBinding(binding, data2, location) {
+        const value = typeof data2 === "string" ? data2 : (this.serdeContext?.utf8Encoder ?? toUtf8)(data2);
+        return this.stringDeserializer.readHttpBinding(binding, value, location);
+      }
+      readPayload([schema, flags], data2) {
+        const type = flags & 255;
+        if (type === 21 || type === 42) {
+          return typeof data2 === "string" ? (this.serdeContext?.utf8Decoder ?? fromUtf8)(data2) : data2;
+        }
+        if (type === 0) {
+          return typeof data2 === "string" ? data2 : (this.serdeContext?.utf8Encoder ?? toUtf8)(data2);
+        }
+        return this.readCodec(schema, data2);
+      }
+      readCodec(schema, data2) {
+        return this.codecDeserializer.read(schema, data2);
       }
     };
   }
@@ -28936,10 +29169,9 @@ var init_HttpInterceptingShapeDeserializer = __esm({
 var ToStringShapeSerializer;
 var init_ToStringShapeSerializer = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/serde/ToStringShapeSerializer.js"() {
-    init_schema();
     init_serde();
+    init_HttpBindingNormalizedSchema();
     init_SerdeContext();
-    init_determineTimestampFormat();
     ToStringShapeSerializer = class extends SerdeContext {
       settings;
       stringBuffer = "";
@@ -28948,18 +29180,25 @@ var init_ToStringShapeSerializer = __esm({
         this.settings = settings;
       }
       write(schema, value) {
-        const ns = NormalizedSchema.of(schema);
+        const ns = HttpBindingNormalizedSchema.of(schema);
+        const traits = ns.getMergedTraits();
+        const location = ns.getHttpBindingLocation(traits);
+        this.writeHttpBinding(ns.getHttpBindingValue(location, traits), value, location);
+      }
+      writeHttpBinding([ns, flags, collectionValue], value, location) {
+        const schema = flags & 255;
         switch (typeof value) {
           case "object":
             if (value === null) {
               this.stringBuffer = "null";
               return;
             }
-            if (ns.isTimestampSchema()) {
+            if (schema >= 4 && schema <= 7) {
               if (!(value instanceof Date)) {
                 throw new Error(`@smithy/core/protocols - received non-Date value ${value} when schema expected Date in ${ns.getName(true)}`);
               }
-              const format2 = determineTimestampFormat(ns, this.settings);
+              const bindingFormat = this.settings.httpBindings ? flags >> 14 & 3 : 0;
+              const format2 = this.settings.timestampFormat.useTrait && schema > 4 ? schema : bindingFormat ? bindingFormat + 4 : this.settings.timestampFormat.default;
               switch (format2) {
                 case 5:
                   this.stringBuffer = value.toISOString().replace(".000Z", "Z");
@@ -28976,20 +29215,22 @@ var init_ToStringShapeSerializer = __esm({
               }
               return;
             }
-            if (ns.isBlobSchema() && "byteLength" in value) {
+            if ((schema === 21 || schema === 42) && "byteLength" in value) {
               this.stringBuffer = (this.serdeContext?.base64Encoder ?? toBase64)(value);
               return;
             }
-            if (ns.isListSchema() && Array.isArray(value)) {
+            if ((schema & 192) === 64 && Array.isArray(value)) {
+              collectionValue ??= ns.getHttpBindingCollectionValue(location);
+              const valueSchemaType = collectionValue[1] & 255;
+              const isTimestamp = valueSchemaType >= 4 && valueSchemaType <= 7;
               let buffer = "";
               for (const item of value) {
-                this.write([ns.getValueSchema(), ns.getMergedTraits()], item);
+                this.writeHttpBinding(collectionValue, item, location);
                 const headerItem = this.flush();
-                const serialized = ns.getValueSchema().isTimestampSchema() ? headerItem : quoteHeader(headerItem);
-                if (buffer !== "") {
+                if (buffer) {
                   buffer += ", ";
                 }
-                buffer += serialized;
+                buffer += isTimestamp ? headerItem : quoteHeader(headerItem);
               }
               this.stringBuffer = buffer;
               return;
@@ -28997,26 +29238,19 @@ var init_ToStringShapeSerializer = __esm({
             this.stringBuffer = JSON.stringify(value, null, 2);
             break;
           case "string":
-            const mediaType = ns.getMergedTraits().mediaType;
+            const media = flags >> 8 & 3;
             let intermediateValue = value;
-            if (mediaType) {
-              const isJson = mediaType === "application/json" || mediaType.endsWith("+json");
-              if (isJson) {
-                intermediateValue = LazyJsonString.from(intermediateValue);
-              }
-              if (ns.getMergedTraits().httpHeader) {
-                this.stringBuffer = (this.serdeContext?.base64Encoder ?? toBase64)(intermediateValue.toString());
-                return;
-              }
+            if (media === 2) {
+              intermediateValue = LazyJsonString.from(intermediateValue);
+            }
+            if (media && (location & 6) === 6) {
+              this.stringBuffer = (this.serdeContext?.base64Encoder ?? toBase64)(intermediateValue.toString());
+              return;
             }
             this.stringBuffer = value;
             break;
           default:
-            if (ns.isIdempotencyToken()) {
-              this.stringBuffer = generateIdempotencyToken();
-            } else {
-              this.stringBuffer = String(value);
-            }
+            this.stringBuffer = flags >> 10 & 1 ? generateIdempotencyToken() : String(value);
         }
       }
       flush() {
@@ -29032,7 +29266,7 @@ var init_ToStringShapeSerializer = __esm({
 var HttpInterceptingShapeSerializer;
 var init_HttpInterceptingShapeSerializer = __esm({
   "node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeSerializer.js"() {
-    init_schema();
+    init_HttpBindingNormalizedSchema();
     init_ToStringShapeSerializer();
     HttpInterceptingShapeSerializer = class {
       codecSerializer;
@@ -29047,14 +29281,21 @@ var init_HttpInterceptingShapeSerializer = __esm({
         this.stringSerializer.setSerdeContext(serdeContext);
       }
       write(schema, value) {
-        const ns = NormalizedSchema.of(schema);
+        const ns = HttpBindingNormalizedSchema.of(schema);
         const traits = ns.getMergedTraits();
         if (traits.httpHeader || traits.httpLabel || traits.httpQuery) {
-          this.stringSerializer.write(ns, value);
-          this.buffer = this.stringSerializer.flush();
+          const location = ns.getHttpBindingLocation(traits);
+          this.writeHttpBinding(ns.getHttpBindingValue(location, traits), value, location);
           return;
         }
-        return this.codecSerializer.write(ns, value);
+        this.writeCodec(ns, value);
+      }
+      writeHttpBinding(binding, value, location) {
+        this.stringSerializer.writeHttpBinding(binding, value, location);
+        this.buffer = this.stringSerializer.flush();
+      }
+      writeCodec(schema, value) {
+        this.codecSerializer.write(schema, value);
       }
       flush() {
         if (this.buffer !== void 0) {
@@ -29065,6 +29306,23 @@ var init_HttpInterceptingShapeSerializer = __esm({
         return this.codecSerializer.flush();
       }
     };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js
+function determineTimestampFormat(ns, settings) {
+  if (settings.timestampFormat.useTrait) {
+    const schema = ns.getSchema();
+    if (schema === 5 || schema === 6 || schema === 7) {
+      return schema;
+    }
+  }
+  const { httpLabel, httpPrefixHeaders, httpHeader, httpQuery } = ns.getMergedTraits();
+  const bindingFormat = settings.httpBindings ? typeof httpPrefixHeaders === "string" || Boolean(httpHeader) ? 6 : Boolean(httpQuery) || Boolean(httpLabel) ? 5 : void 0 : void 0;
+  return bindingFormat ?? settings.timestampFormat.default;
+}
+var init_determineTimestampFormat = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js"() {
   }
 });
 
@@ -31104,1103 +31362,6 @@ var init_protocols = __esm({
   }
 });
 
-// node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js
-var CLOCK_SKEW_ERROR_CODES, THROTTLING_ERROR_CODES, TRANSIENT_ERROR_CODES, TRANSIENT_ERROR_STATUS_CODES, NODEJS_TIMEOUT_ERROR_CODES, NODEJS_NETWORK_ERROR_CODES;
-var init_constants4 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js"() {
-    CLOCK_SKEW_ERROR_CODES = [
-      "AccessDeniedException",
-      "AuthFailure",
-      "InvalidSignatureException",
-      "RequestExpired",
-      "RequestInTheFuture",
-      "RequestTimeTooSkewed",
-      "SignatureDoesNotMatch"
-    ];
-    THROTTLING_ERROR_CODES = [
-      "BandwidthLimitExceeded",
-      "EC2ThrottledException",
-      "LimitExceededException",
-      "PriorRequestNotComplete",
-      "ProvisionedThroughputExceededException",
-      "RequestLimitExceeded",
-      "RequestThrottled",
-      "RequestThrottledException",
-      "SlowDown",
-      "ThrottledException",
-      "Throttling",
-      "ThrottlingException",
-      "TooManyRequestsException",
-      "TransactionInProgressException"
-    ];
-    TRANSIENT_ERROR_CODES = ["TimeoutError", "RequestTimeout", "RequestTimeoutException"];
-    TRANSIENT_ERROR_STATUS_CODES = [500, 502, 503, 504];
-    NODEJS_TIMEOUT_ERROR_CODES = ["ECONNRESET", "ECONNREFUSED", "EPIPE", "ETIMEDOUT"];
-    NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND", "EAI_AGAIN"];
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js
-function isNodeJsHttp2TransientError(error3) {
-  return error3.code === "ERR_HTTP2_STREAM_ERROR" && error3.message.includes("NGHTTP2_REFUSED_STREAM");
-}
-var isRetryableByTrait, isClockSkewError, isClockSkewCorrectedError, isBrowserNetworkError, isThrottlingError, isTransientError, isServerError;
-var init_service_error_classification = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js"() {
-    init_constants4();
-    isRetryableByTrait = (error3) => error3?.$retryable !== void 0;
-    isClockSkewError = (error3) => CLOCK_SKEW_ERROR_CODES.includes(error3.name);
-    isClockSkewCorrectedError = (error3) => error3.$metadata?.clockSkewCorrected;
-    isBrowserNetworkError = (error3) => {
-      const errorMessages = /* @__PURE__ */ new Set([
-        "Failed to fetch",
-        "NetworkError when attempting to fetch resource",
-        "The Internet connection appears to be offline",
-        "Load failed",
-        "Network request failed"
-      ]);
-      const isValid = error3 && error3 instanceof TypeError;
-      if (!isValid) {
-        return false;
-      }
-      return errorMessages.has(error3.message);
-    };
-    isThrottlingError = (error3) => error3.$metadata?.httpStatusCode === 429 || THROTTLING_ERROR_CODES.includes(error3.name) || error3.$retryable?.throttling == true;
-    isTransientError = (error3, depth = 0) => error3?.name !== "AbortError" && (isRetryableByTrait(error3) || isClockSkewCorrectedError(error3) || error3.name === "InvalidSignatureException" && error3.message?.includes("Signature expired") || TRANSIENT_ERROR_CODES.includes(error3.name) || NODEJS_TIMEOUT_ERROR_CODES.includes(error3?.code || "") || NODEJS_NETWORK_ERROR_CODES.includes(error3?.code || "") || TRANSIENT_ERROR_STATUS_CODES.includes(error3.$metadata?.httpStatusCode || 0) || isBrowserNetworkError(error3) || isNodeJsHttp2TransientError(error3) || error3.cause !== void 0 && depth <= 10 && isTransientError(error3.cause, depth + 1));
-    isServerError = (error3) => {
-      if (error3.$metadata?.httpStatusCode !== void 0) {
-        const statusCode = error3.$metadata.httpStatusCode;
-        if (500 <= statusCode && statusCode <= 599 && !isTransientError(error3)) {
-          return true;
-        }
-        return false;
-      }
-      return false;
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/race.js
-var race, createAbortError, isAbortError;
-var init_race = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/race.js"() {
-    race = (promise, signal) => {
-      if (!signal) {
-        return promise;
-      }
-      let cleanup = () => {
-      };
-      const aborted = new Promise((_, reject) => {
-        const handler = () => reject(createAbortError());
-        if (signal.aborted) {
-          handler();
-        } else if (typeof signal.addEventListener === "function") {
-          signal.addEventListener("abort", handler, { once: true });
-          cleanup = () => signal.removeEventListener("abort", handler);
-        } else {
-          signal.onabort = handler;
-        }
-      });
-      return Promise.race([promise, aborted]).finally(cleanup);
-    };
-    createAbortError = () => Object.assign(new Error("Request aborted"), { name: "AbortError" });
-    isAbortError = (error3) => typeof error3 === "object" && error3 !== null && "name" in error3 && error3.name === "AbortError";
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js
-var DEFAULT_RETRY_DELAY_BASE, MAXIMUM_RETRY_DELAY, THROTTLING_RETRY_DELAY_BASE, INITIAL_RETRY_TOKENS, RETRY_COST, TIMEOUT_RETRY_COST, NO_RETRY_INCREMENT, INVOCATION_ID_HEADER, REQUEST_HEADER;
-var init_constants5 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js"() {
-    DEFAULT_RETRY_DELAY_BASE = 100;
-    MAXIMUM_RETRY_DELAY = 20 * 1e3;
-    THROTTLING_RETRY_DELAY_BASE = 500;
-    INITIAL_RETRY_TOKENS = 500;
-    RETRY_COST = 5;
-    TIMEOUT_RETRY_COST = 10;
-    NO_RETRY_INCREMENT = 1;
-    INVOCATION_ID_HEADER = "amz-sdk-invocation-id";
-    REQUEST_HEADER = "amz-sdk-request";
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js
-function parseRetryAfterHeader(response, logger2) {
-  if (!HttpResponse.isInstance(response)) {
-    return;
-  }
-  for (const header in response.headers) {
-    if (!hasOwn(response.headers, header)) {
-      continue;
-    }
-    const h5 = header.toLowerCase();
-    if (h5 === "retry-after") {
-      const retryAfter = response.headers[header];
-      let retryAfterSeconds = NaN;
-      if (retryAfter.endsWith("GMT")) {
-        try {
-          const date2 = parseRfc7231DateTime(retryAfter);
-          retryAfterSeconds = (date2.getTime() - Date.now()) / 1e3;
-        } catch (e5) {
-          logger2?.trace?.("Failed to parse retry-after header");
-          logger2?.trace?.(e5);
-        }
-      } else if (retryAfter.match(/ GMT, ((\d+)|(\d+\.\d+))$/)) {
-        retryAfterSeconds = Number(retryAfter.match(/ GMT, ([\d.]+)$/)?.[1]);
-      } else if (retryAfter.match(/^((\d+)|(\d+\.\d+))$/)) {
-        retryAfterSeconds = Number(retryAfter);
-      } else if (Date.parse(retryAfter) >= Date.now()) {
-        retryAfterSeconds = (Date.parse(retryAfter) - Date.now()) / 1e3;
-      }
-      if (isNaN(retryAfterSeconds)) {
-        return;
-      }
-      return new Date(Date.now() + retryAfterSeconds * 1e3);
-    } else if (h5 === "x-amz-retry-after") {
-      const v = response.headers[header];
-      const backoffMilliseconds = Number(v);
-      if (isNaN(backoffMilliseconds)) {
-        logger2?.trace?.(`Failed to parse x-amz-retry-after=${v}`);
-        return;
-      }
-      return new Date(Date.now() + backoffMilliseconds);
-    }
-  }
-}
-function getRetryAfterHint(response, logger2) {
-  return parseRetryAfterHeader(response, logger2);
-}
-var init_parseRetryAfterHeader = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js"() {
-    init_transport();
-    init_protocols();
-    init_serde();
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js
-var asSdkError;
-var init_util = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js"() {
-    asSdkError = (error3) => {
-      if (error3 instanceof Error) {
-        return error3;
-      }
-      if (error3 instanceof Object) {
-        return Object.assign(new Error(), error3);
-      }
-      if (typeof error3 === "string") {
-        return new Error(error3);
-      }
-      return new Error(`AWS SDK error wrapper for ${error3}`);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js
-function bindRetryMiddleware(isStreamingPayload2) {
-  return (options) => (next, context) => async (args) => {
-    let retryStrategy = await options.retryStrategy();
-    const maxAttempts = await options.maxAttempts();
-    const abortSignal = context[import_types24.SMITHY_CONTEXT_KEY]?.abortSignal;
-    if (isRetryStrategyV2(retryStrategy)) {
-      retryStrategy = retryStrategy;
-      const retryTokenScope = (context["partition_id"] ?? "") + (context.__retryLongPoll ? ":longpoll" : "");
-      let retryToken = await race(retryStrategy.acquireInitialRetryToken(retryTokenScope), abortSignal);
-      let lastError = new Error();
-      let attempts = 0;
-      let totalRetryDelay = 0;
-      const { request } = args;
-      const isRequest = HttpRequest.isInstance(request);
-      if (isRequest) {
-        request.headers[INVOCATION_ID_HEADER] = v4();
-      }
-      while (true) {
-        try {
-          if (isRequest) {
-            request.headers[REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
-          }
-          const { response, output } = await next(args);
-          retryStrategy.recordSuccess(retryToken);
-          output.$metadata.attempts = attempts + 1;
-          output.$metadata.totalRetryDelay = totalRetryDelay;
-          return { response, output };
-        } catch (e5) {
-          const retryErrorInfo = getRetryErrorInfo(e5, options.logger);
-          lastError = asSdkError(e5);
-          if (isRequest && isStreamingPayload2(request)) {
-            (context.logger instanceof NoOpLogger ? console : context.logger)?.warn("An error was encountered in a non-retryable streaming request.");
-            throw lastError;
-          }
-          try {
-            retryToken = await race(retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo), abortSignal);
-          } catch (refreshError) {
-            if (abortSignal?.aborted && isAbortError(refreshError)) {
-              throw refreshError;
-            }
-            if (!lastError.$metadata) {
-              lastError.$metadata = {};
-            }
-            lastError.$metadata.attempts = attempts + 1;
-            lastError.$metadata.totalRetryDelay = totalRetryDelay;
-            throw lastError;
-          }
-          attempts = retryToken.getRetryCount();
-          const delay = retryToken.getRetryDelay();
-          totalRetryDelay += (retryToken?.$retryLog?.acquisitionDelay ?? 0) + delay;
-          if (delay > 0) {
-            await race(new Promise((resolve) => setTimeout(resolve, delay)), abortSignal);
-          }
-        }
-      }
-    } else {
-      retryStrategy = retryStrategy;
-      if (retryStrategy?.mode) {
-        context.userAgent = [...context.userAgent || [], ["cfg/retry-mode", retryStrategy.mode]];
-      }
-      return retryStrategy.retry(next, args);
-    }
-  };
-}
-function bindGetRetryPlugin(isStreamingPayload2) {
-  const retryMiddleware2 = bindRetryMiddleware(isStreamingPayload2);
-  return (options) => ({
-    applyToStack: (clientStack) => {
-      clientStack.add(retryMiddleware2(options), retryMiddlewareOptions);
-    }
-  });
-}
-var import_types24, isRetryStrategyV2, getRetryErrorInfo, getRetryErrorType, retryMiddlewareOptions;
-var init_retryMiddleware = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js"() {
-    init_client2();
-    init_protocols();
-    init_serde();
-    import_types24 = __toESM(require_dist_cjs());
-    init_service_error_classification();
-    init_race();
-    init_constants5();
-    init_parseRetryAfterHeader();
-    init_util();
-    isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined";
-    getRetryErrorInfo = (error3, logger2) => {
-      const errorInfo = {
-        error: error3,
-        errorType: getRetryErrorType(error3)
-      };
-      const retryAfterHint = parseRetryAfterHeader(error3.$response, logger2);
-      if (retryAfterHint) {
-        errorInfo.retryAfterHint = retryAfterHint;
-      }
-      return errorInfo;
-    };
-    getRetryErrorType = (error3) => {
-      if (isThrottlingError(error3)) {
-        return "THROTTLING";
-      }
-      if (isTransientError(error3)) {
-        return "TRANSIENT";
-      }
-      if (isServerError(error3)) {
-        return "SERVER_ERROR";
-      }
-      return "CLIENT_ERROR";
-    };
-    retryMiddlewareOptions = {
-      name: "retryMiddleware",
-      tags: ["RETRY"],
-      step: "finalizeRequest",
-      priority: "high",
-      override: true
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js
-var DefaultRateLimiter;
-var init_DefaultRateLimiter = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js"() {
-    init_service_error_classification();
-    DefaultRateLimiter = class _DefaultRateLimiter {
-      static setTimeoutFn = (fn, delay) => setTimeout(fn, delay);
-      beta;
-      minCapacity;
-      minFillRate;
-      scaleConstant;
-      smooth;
-      enabled = false;
-      availableTokens = 0;
-      lastMaxRate = 0;
-      measuredTxRate = 0;
-      requestCount = 0;
-      fillRate;
-      lastThrottleTime;
-      lastTimestamp = 0;
-      lastTxRateBucket;
-      maxCapacity;
-      timeWindow = 0;
-      constructor(options) {
-        this.beta = options?.beta ?? 0.7;
-        this.minCapacity = options?.minCapacity ?? 1;
-        this.minFillRate = options?.minFillRate ?? 0.5;
-        this.scaleConstant = options?.scaleConstant ?? 0.4;
-        this.smooth = options?.smooth ?? 0.8;
-        this.lastThrottleTime = this.getCurrentTimeInSeconds();
-        this.lastTxRateBucket = Math.floor(this.getCurrentTimeInSeconds());
-        this.fillRate = this.minFillRate;
-        this.maxCapacity = this.minCapacity;
-      }
-      async getSendToken() {
-        return this.acquireTokenBucket(1);
-      }
-      updateClientSendingRate(response) {
-        let calculatedRate;
-        this.updateMeasuredRate();
-        const retryErrorInfo = response;
-        const isThrottling = retryErrorInfo?.errorType === "THROTTLING" || isThrottlingError(retryErrorInfo?.error ?? response);
-        if (isThrottling) {
-          const rateToUse = !this.enabled ? this.measuredTxRate : Math.min(this.measuredTxRate, this.fillRate);
-          this.lastMaxRate = rateToUse;
-          this.calculateTimeWindow();
-          this.lastThrottleTime = this.getCurrentTimeInSeconds();
-          calculatedRate = this.cubicThrottle(rateToUse);
-          this.enableTokenBucket();
-        } else {
-          this.calculateTimeWindow();
-          calculatedRate = this.cubicSuccess(this.getCurrentTimeInSeconds());
-        }
-        const newRate = Math.min(calculatedRate, 2 * this.measuredTxRate);
-        this.updateTokenBucketRate(newRate);
-      }
-      getCurrentTimeInSeconds() {
-        return Date.now() / 1e3;
-      }
-      async acquireTokenBucket(amount) {
-        if (!this.enabled) {
-          return;
-        }
-        this.refillTokenBucket();
-        while (amount > this.availableTokens) {
-          const delay = (amount - this.availableTokens) / this.fillRate * 1e3;
-          await new Promise((resolve) => _DefaultRateLimiter.setTimeoutFn(resolve, delay));
-          this.refillTokenBucket();
-        }
-        this.availableTokens = this.availableTokens - amount;
-      }
-      refillTokenBucket() {
-        const timestamp = this.getCurrentTimeInSeconds();
-        if (!this.lastTimestamp) {
-          this.lastTimestamp = timestamp;
-          return;
-        }
-        const fillAmount = (timestamp - this.lastTimestamp) * this.fillRate;
-        this.availableTokens = Math.min(this.maxCapacity, this.availableTokens + fillAmount);
-        this.lastTimestamp = timestamp;
-      }
-      calculateTimeWindow() {
-        this.timeWindow = this.getPrecise(Math.pow(this.lastMaxRate * (1 - this.beta) / this.scaleConstant, 1 / 3));
-      }
-      cubicThrottle(rateToUse) {
-        return this.getPrecise(rateToUse * this.beta);
-      }
-      cubicSuccess(timestamp) {
-        return this.getPrecise(this.scaleConstant * Math.pow(timestamp - this.lastThrottleTime - this.timeWindow, 3) + this.lastMaxRate);
-      }
-      enableTokenBucket() {
-        this.enabled = true;
-      }
-      updateTokenBucketRate(newRate) {
-        this.refillTokenBucket();
-        this.fillRate = Math.max(newRate, this.minFillRate);
-        this.maxCapacity = Math.max(newRate, this.minCapacity);
-        this.availableTokens = Math.min(this.availableTokens, this.maxCapacity);
-      }
-      updateMeasuredRate() {
-        const t = this.getCurrentTimeInSeconds();
-        const timeBucket = Math.floor(t * 2) / 2;
-        this.requestCount++;
-        if (timeBucket > this.lastTxRateBucket) {
-          const currentRate = this.requestCount / (timeBucket - this.lastTxRateBucket);
-          this.measuredTxRate = this.getPrecise(currentRate * this.smooth + this.measuredTxRate * (1 - this.smooth));
-          this.requestCount = 0;
-          this.lastTxRateBucket = timeBucket;
-        }
-      }
-      getPrecise(num) {
-        return parseFloat(num.toFixed(8));
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js
-var Retry;
-var init_retries_2026_config = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js"() {
-    Retry = class _Retry {
-      static v2026 = typeof process !== "undefined" && process.env?.SMITHY_NEW_RETRIES_2026 === "true";
-      static delay() {
-        return _Retry.v2026 ? 50 : 100;
-      }
-      static throttlingDelay() {
-        return _Retry.v2026 ? 1e3 : 500;
-      }
-      static cost() {
-        return _Retry.v2026 ? 14 : 5;
-      }
-      static throttlingCost() {
-        return _Retry.v2026 ? 5 : 10;
-      }
-      static modifiedCostType() {
-        return _Retry.v2026 ? "THROTTLING" : "TRANSIENT";
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js
-var DefaultRetryBackoffStrategy;
-var init_DefaultRetryBackoffStrategy = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js"() {
-    init_constants5();
-    init_retries_2026_config();
-    DefaultRetryBackoffStrategy = class {
-      x = Retry.delay();
-      computeNextBackoffDelay(i5) {
-        const b6 = Math.random();
-        const r5 = 2;
-        const t_i = b6 * Math.min(this.x * r5 ** i5, MAXIMUM_RETRY_DELAY);
-        return Math.floor(t_i);
-      }
-      setDelayBase(delay) {
-        this.x = delay;
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js
-var DefaultRetryToken;
-var init_DefaultRetryToken = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js"() {
-    init_constants5();
-    DefaultRetryToken = class {
-      delay;
-      count;
-      cost;
-      longPoll;
-      $retryLog = {
-        acquisitionDelay: 0
-      };
-      constructor(delay, count, cost, longPoll) {
-        this.delay = delay;
-        this.count = count;
-        this.cost = cost;
-        this.longPoll = longPoll;
-      }
-      getRetryCount() {
-        return this.count;
-      }
-      getRetryDelay() {
-        return Math.min(MAXIMUM_RETRY_DELAY, this.delay);
-      }
-      getRetryCost() {
-        return this.cost;
-      }
-      isLongPoll() {
-        return this.longPoll;
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js
-var RETRY_MODES, DEFAULT_MAX_ATTEMPTS, DEFAULT_RETRY_MODE;
-var init_config3 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js"() {
-    (function(RETRY_MODES2) {
-      RETRY_MODES2["STANDARD"] = "standard";
-      RETRY_MODES2["ADAPTIVE"] = "adaptive";
-    })(RETRY_MODES || (RETRY_MODES = {}));
-    DEFAULT_MAX_ATTEMPTS = 3;
-    DEFAULT_RETRY_MODE = RETRY_MODES.STANDARD;
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js
-var refusal, StandardRetryStrategy;
-var init_StandardRetryStrategy = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js"() {
-    init_DefaultRetryBackoffStrategy();
-    init_DefaultRetryToken();
-    init_config3();
-    init_constants5();
-    init_retries_2026_config();
-    refusal = {
-      incompatible: 1,
-      attempts: 2,
-      capacity: 3
-    };
-    StandardRetryStrategy = class {
-      mode = RETRY_MODES.STANDARD;
-      retryBackoffStrategy;
-      capacity = INITIAL_RETRY_TOKENS;
-      maxAttemptsProvider;
-      baseDelay;
-      constructor(arg1) {
-        if (typeof arg1 === "number") {
-          this.maxAttemptsProvider = async () => arg1;
-        } else if (typeof arg1 === "function") {
-          this.maxAttemptsProvider = arg1;
-        } else if (arg1 && typeof arg1 === "object") {
-          this.maxAttemptsProvider = async () => arg1.maxAttempts;
-          this.baseDelay = arg1.baseDelay;
-          this.retryBackoffStrategy = arg1.backoff;
-        }
-        this.maxAttemptsProvider ??= async () => DEFAULT_MAX_ATTEMPTS;
-        this.baseDelay ??= Retry.delay();
-        this.retryBackoffStrategy ??= new DefaultRetryBackoffStrategy();
-      }
-      async acquireInitialRetryToken(retryTokenScope) {
-        return new DefaultRetryToken(Retry.delay(), 0, void 0, Retry.v2026 && retryTokenScope.includes(":longpoll"));
-      }
-      async refreshRetryTokenForRetry(token, errorInfo) {
-        const maxAttempts = await this.getMaxAttempts();
-        const retryCode = this.retryCode(token, errorInfo, maxAttempts);
-        const shouldRetry = retryCode === 0;
-        const isLongPoll = token.isLongPoll?.();
-        if (shouldRetry || isLongPoll) {
-          const errorType = errorInfo.errorType;
-          this.retryBackoffStrategy.setDelayBase(errorType === "THROTTLING" ? Retry.throttlingDelay() : this.baseDelay);
-          const delayFromErrorType = this.retryBackoffStrategy.computeNextBackoffDelay(token.getRetryCount());
-          let retryDelay = delayFromErrorType;
-          if (errorInfo.retryAfterHint instanceof Date) {
-            retryDelay = Math.max(delayFromErrorType, Math.min(errorInfo.retryAfterHint.getTime() - Date.now(), delayFromErrorType + 5e3));
-          }
-          if (!shouldRetry) {
-            const longPollBackoff = Retry.v2026 && retryCode === refusal.capacity && isLongPoll ? retryDelay : 0;
-            if (longPollBackoff > 0) {
-              await new Promise((r5) => setTimeout(r5, longPollBackoff));
-            }
-          } else {
-            const capacityCost = this.getCapacityCost(errorType);
-            this.capacity -= capacityCost;
-            const nextToken = new DefaultRetryToken(0, token.getRetryCount() + 1, capacityCost, token.isLongPoll?.() ?? false);
-            await new Promise((r5) => setTimeout(r5, retryDelay));
-            nextToken.$retryLog.acquisitionDelay = retryDelay;
-            return nextToken;
-          }
-        }
-        throw new Error("No retry token available");
-      }
-      recordSuccess(token) {
-        this.capacity = Math.min(INITIAL_RETRY_TOKENS, this.capacity + (token.getRetryCost() ?? NO_RETRY_INCREMENT));
-      }
-      getCapacity() {
-        return this.capacity;
-      }
-      async maxAttempts() {
-        return this.maxAttemptsProvider();
-      }
-      async getMaxAttempts() {
-        try {
-          return await this.maxAttemptsProvider();
-        } catch (ignored) {
-          console.warn(`Max attempts provider could not resolve. Using default of ${DEFAULT_MAX_ATTEMPTS}`);
-          return DEFAULT_MAX_ATTEMPTS;
-        }
-      }
-      retryCode(tokenToRenew, errorInfo, maxAttempts) {
-        const attempts = tokenToRenew.getRetryCount() + 1;
-        const retryableStatus = this.isRetryableError(errorInfo.errorType) ? 0 : refusal.incompatible;
-        const attemptStatus = attempts < maxAttempts ? 0 : refusal.attempts;
-        const capacityStatus = this.capacity >= this.getCapacityCost(errorInfo.errorType) ? 0 : refusal.capacity;
-        return retryableStatus || attemptStatus || capacityStatus;
-      }
-      getCapacityCost(errorType) {
-        return errorType === Retry.modifiedCostType() ? Retry.throttlingCost() : Retry.cost();
-      }
-      isRetryableError(errorType) {
-        return errorType === "THROTTLING" || errorType === "TRANSIENT";
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js
-var AdaptiveRetryStrategy;
-var init_AdaptiveRetryStrategy = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js"() {
-    init_DefaultRateLimiter();
-    init_StandardRetryStrategy();
-    init_config3();
-    AdaptiveRetryStrategy = class {
-      mode = RETRY_MODES.ADAPTIVE;
-      rateLimiter;
-      standardRetryStrategy;
-      constructor(maxAttemptsProvider, options) {
-        const { rateLimiter } = options ?? {};
-        this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
-        this.standardRetryStrategy = options ? new StandardRetryStrategy({
-          maxAttempts: typeof maxAttemptsProvider === "number" ? maxAttemptsProvider : 3,
-          ...options
-        }) : new StandardRetryStrategy(maxAttemptsProvider);
-      }
-      async acquireInitialRetryToken(retryTokenScope) {
-        const token = await this.standardRetryStrategy.acquireInitialRetryToken(retryTokenScope);
-        await this.rateLimiter.getSendToken();
-        return token;
-      }
-      async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
-        this.rateLimiter.updateClientSendingRate(errorInfo);
-        const token = await this.standardRetryStrategy.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
-        await this.rateLimiter.getSendToken();
-        return token;
-      }
-      recordSuccess(token) {
-        this.rateLimiter.updateClientSendingRate({});
-        this.standardRetryStrategy.recordSuccess(token);
-      }
-      async maxAttemptsProvider() {
-        return this.standardRetryStrategy.maxAttempts();
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js
-var ConfiguredRetryStrategy;
-var init_ConfiguredRetryStrategy = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js"() {
-    init_StandardRetryStrategy();
-    init_retries_2026_config();
-    ConfiguredRetryStrategy = class extends StandardRetryStrategy {
-      computeNextBackoffDelay;
-      constructor(maxAttempts, computeNextBackoffDelay = Retry.delay()) {
-        super(typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts);
-        if (typeof computeNextBackoffDelay === "number") {
-          this.computeNextBackoffDelay = () => computeNextBackoffDelay;
-        } else {
-          this.computeNextBackoffDelay = computeNextBackoffDelay;
-        }
-        this.retryBackoffStrategy.computeNextBackoffDelay = (completedAttempt) => {
-          const nextAttempt = completedAttempt + 1;
-          return this.computeNextBackoffDelay(nextAttempt);
-        };
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js
-var getDefaultRetryQuota;
-var init_defaultRetryQuota = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js"() {
-    init_constants5();
-    getDefaultRetryQuota = (initialRetryTokens, options) => {
-      const MAX_CAPACITY = initialRetryTokens;
-      const noRetryIncrement = options?.noRetryIncrement ?? NO_RETRY_INCREMENT;
-      const retryCost = options?.retryCost ?? RETRY_COST;
-      const timeoutRetryCost = options?.timeoutRetryCost ?? TIMEOUT_RETRY_COST;
-      let availableCapacity = initialRetryTokens;
-      const getCapacityAmount = (error3) => error3.name === "TimeoutError" ? timeoutRetryCost : retryCost;
-      const hasRetryTokens = (error3) => getCapacityAmount(error3) <= availableCapacity;
-      const retrieveRetryTokens = (error3) => {
-        if (!hasRetryTokens(error3)) {
-          throw new Error("No retry token available");
-        }
-        const capacityAmount = getCapacityAmount(error3);
-        availableCapacity -= capacityAmount;
-        return capacityAmount;
-      };
-      const releaseRetryTokens = (capacityReleaseAmount) => {
-        availableCapacity += capacityReleaseAmount ?? noRetryIncrement;
-        availableCapacity = Math.min(availableCapacity, MAX_CAPACITY);
-      };
-      return Object.freeze({
-        hasRetryTokens,
-        retrieveRetryTokens,
-        releaseRetryTokens
-      });
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js
-var defaultDelayDecider;
-var init_delayDecider = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js"() {
-    init_constants5();
-    defaultDelayDecider = (delayBase, attempts) => Math.floor(Math.min(MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase));
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js
-var defaultRetryDecider;
-var init_retryDecider = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js"() {
-    init_service_error_classification();
-    defaultRetryDecider = (error3) => {
-      if (!error3) {
-        return false;
-      }
-      return isRetryableByTrait(error3) || isClockSkewError(error3) || isThrottlingError(error3) || isTransientError(error3);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js
-var StandardRetryStrategy2, getDelayFromRetryAfterHeader;
-var init_StandardRetryStrategy2 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js"() {
-    init_protocols();
-    init_serde();
-    init_service_error_classification();
-    init_config3();
-    init_constants5();
-    init_util();
-    init_defaultRetryQuota();
-    init_delayDecider();
-    init_retryDecider();
-    StandardRetryStrategy2 = class {
-      maxAttemptsProvider;
-      retryDecider;
-      delayDecider;
-      retryQuota;
-      mode = RETRY_MODES.STANDARD;
-      constructor(maxAttemptsProvider, options) {
-        this.maxAttemptsProvider = maxAttemptsProvider;
-        this.retryDecider = options?.retryDecider ?? defaultRetryDecider;
-        this.delayDecider = options?.delayDecider ?? defaultDelayDecider;
-        this.retryQuota = options?.retryQuota ?? getDefaultRetryQuota(INITIAL_RETRY_TOKENS);
-      }
-      shouldRetry(error3, attempts, maxAttempts) {
-        return attempts < maxAttempts && this.retryDecider(error3) && this.retryQuota.hasRetryTokens(error3);
-      }
-      async getMaxAttempts() {
-        let maxAttempts;
-        try {
-          maxAttempts = await this.maxAttemptsProvider();
-        } catch (ignored) {
-          maxAttempts = DEFAULT_MAX_ATTEMPTS;
-        }
-        return maxAttempts;
-      }
-      async retry(next, args, options) {
-        let retryTokenAmount;
-        let attempts = 0;
-        let totalDelay = 0;
-        const maxAttempts = await this.getMaxAttempts();
-        const { request } = args;
-        if (HttpRequest.isInstance(request)) {
-          request.headers[INVOCATION_ID_HEADER] = v4();
-        }
-        while (true) {
-          try {
-            if (HttpRequest.isInstance(request)) {
-              request.headers[REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
-            }
-            if (options?.beforeRequest) {
-              await options.beforeRequest();
-            }
-            const { response, output } = await next(args);
-            if (options?.afterRequest) {
-              options.afterRequest(response);
-            }
-            this.retryQuota.releaseRetryTokens(retryTokenAmount);
-            output.$metadata.attempts = attempts + 1;
-            output.$metadata.totalRetryDelay = totalDelay;
-            return { response, output };
-          } catch (e5) {
-            const err = asSdkError(e5);
-            attempts++;
-            if (this.shouldRetry(err, attempts, maxAttempts)) {
-              retryTokenAmount = this.retryQuota.retrieveRetryTokens(err);
-              const delayFromDecider = this.delayDecider(isThrottlingError(err) ? THROTTLING_RETRY_DELAY_BASE : DEFAULT_RETRY_DELAY_BASE, attempts);
-              const delayFromResponse = getDelayFromRetryAfterHeader(err.$response);
-              const delay = Math.max(delayFromResponse || 0, delayFromDecider);
-              totalDelay += delay;
-              await new Promise((resolve) => setTimeout(resolve, delay));
-              continue;
-            }
-            if (!err.$metadata) {
-              err.$metadata = {};
-            }
-            err.$metadata.attempts = attempts;
-            err.$metadata.totalRetryDelay = totalDelay;
-            throw err;
-          }
-        }
-      }
-    };
-    getDelayFromRetryAfterHeader = (response) => {
-      if (!HttpResponse.isInstance(response)) {
-        return;
-      }
-      const retryAfterHeaderName = Object.keys(response.headers).find((key) => key.toLowerCase() === "retry-after");
-      if (!retryAfterHeaderName) {
-        return;
-      }
-      const retryAfter = response.headers[retryAfterHeaderName];
-      const retryAfterSeconds = Number(retryAfter);
-      if (!Number.isNaN(retryAfterSeconds)) {
-        return Math.min(retryAfterSeconds * 1e3, 2e4);
-      }
-      const retryAfterDate = new Date(retryAfter);
-      return Math.min(retryAfterDate.getTime() - Date.now(), 2e4);
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js
-var AdaptiveRetryStrategy2;
-var init_AdaptiveRetryStrategy2 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js"() {
-    init_DefaultRateLimiter();
-    init_config3();
-    init_StandardRetryStrategy2();
-    AdaptiveRetryStrategy2 = class extends StandardRetryStrategy2 {
-      rateLimiter;
-      constructor(maxAttemptsProvider, options) {
-        const { rateLimiter, ...superOptions } = options ?? {};
-        super(maxAttemptsProvider, superOptions);
-        this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
-        this.mode = RETRY_MODES.ADAPTIVE;
-      }
-      async retry(next, args) {
-        return super.retry(next, args, {
-          beforeRequest: async () => {
-            return this.rateLimiter.getSendToken();
-          },
-          afterRequest: (response) => {
-            this.rateLimiter.updateClientSendingRate(response);
-          }
-        });
-      }
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js
-var ENV_MAX_ATTEMPTS, CONFIG_MAX_ATTEMPTS, NODE_MAX_ATTEMPT_CONFIG_OPTIONS, resolveRetryConfig, ENV_RETRY_MODE, CONFIG_RETRY_MODE, NODE_RETRY_MODE_CONFIG_OPTIONS;
-var init_configurations = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js"() {
-    init_client2();
-    init_AdaptiveRetryStrategy();
-    init_StandardRetryStrategy();
-    init_config3();
-    init_retries_2026_config();
-    ENV_MAX_ATTEMPTS = "AWS_MAX_ATTEMPTS";
-    CONFIG_MAX_ATTEMPTS = "max_attempts";
-    NODE_MAX_ATTEMPT_CONFIG_OPTIONS = {
-      environmentVariableSelector: (env2) => {
-        const value = env2[ENV_MAX_ATTEMPTS];
-        if (!value) {
-          return void 0;
-        }
-        const maxAttempt = parseInt(value);
-        if (Number.isNaN(maxAttempt)) {
-          throw new Error(`Environment variable ${ENV_MAX_ATTEMPTS} mast be a number, got "${value}"`);
-        }
-        return maxAttempt;
-      },
-      configFileSelector: (profile) => {
-        const value = profile[CONFIG_MAX_ATTEMPTS];
-        if (!value) {
-          return void 0;
-        }
-        const maxAttempt = parseInt(value);
-        if (Number.isNaN(maxAttempt)) {
-          throw new Error(`Shared config file entry ${CONFIG_MAX_ATTEMPTS} mast be a number, got "${value}"`);
-        }
-        return maxAttempt;
-      },
-      default: DEFAULT_MAX_ATTEMPTS
-    };
-    resolveRetryConfig = (input, defaults) => {
-      const { retryStrategy, retryMode } = input;
-      const { defaultMaxAttempts = DEFAULT_MAX_ATTEMPTS, defaultBaseDelay = Retry.delay() } = defaults ?? {};
-      const maxAttemptsProvider = normalizeProvider(input.maxAttempts ?? defaultMaxAttempts);
-      let controller = retryStrategy ? Promise.resolve(retryStrategy) : void 0;
-      const getDefault = async () => {
-        const maxAttempts = await maxAttemptsProvider();
-        const adaptive = await normalizeProvider(retryMode)() === RETRY_MODES.ADAPTIVE;
-        if (adaptive) {
-          return new AdaptiveRetryStrategy(maxAttemptsProvider, {
-            maxAttempts,
-            baseDelay: defaultBaseDelay
-          });
-        }
-        return new StandardRetryStrategy({
-          maxAttempts,
-          baseDelay: defaultBaseDelay
-        });
-      };
-      return Object.assign(input, {
-        maxAttempts: maxAttemptsProvider,
-        retryStrategy: () => controller ??= getDefault()
-      });
-    };
-    ENV_RETRY_MODE = "AWS_RETRY_MODE";
-    CONFIG_RETRY_MODE = "retry_mode";
-    NODE_RETRY_MODE_CONFIG_OPTIONS = {
-      environmentVariableSelector: (env2) => env2[ENV_RETRY_MODE],
-      configFileSelector: (profile) => profile[CONFIG_RETRY_MODE],
-      default: DEFAULT_RETRY_MODE
-    };
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js
-var omitRetryHeadersMiddleware, omitRetryHeadersMiddlewareOptions, getOmitRetryHeadersPlugin;
-var init_omitRetryHeadersMiddleware = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js"() {
-    init_protocols();
-    init_constants5();
-    omitRetryHeadersMiddleware = () => (next) => async (args) => {
-      const { request } = args;
-      if (HttpRequest.isInstance(request)) {
-        delete request.headers[INVOCATION_ID_HEADER];
-        delete request.headers[REQUEST_HEADER];
-      }
-      return next(args);
-    };
-    omitRetryHeadersMiddlewareOptions = {
-      name: "omitRetryHeadersMiddleware",
-      tags: ["RETRY", "HEADERS", "OMIT_RETRY_HEADERS"],
-      relation: "before",
-      toMiddleware: "awsAuthMiddleware",
-      override: true
-    };
-    getOmitRetryHeadersPlugin = (options) => ({
-      applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(omitRetryHeadersMiddleware(), omitRetryHeadersMiddlewareOptions);
-      }
-    });
-  }
-});
-
-// node_modules/@smithy/core/dist-es/submodules/retry/index.js
-var retry_exports = {};
-__export(retry_exports, {
-  AdaptiveRetryStrategy: () => AdaptiveRetryStrategy,
-  CONFIG_MAX_ATTEMPTS: () => CONFIG_MAX_ATTEMPTS,
-  CONFIG_RETRY_MODE: () => CONFIG_RETRY_MODE,
-  ConfiguredRetryStrategy: () => ConfiguredRetryStrategy,
-  DEFAULT_MAX_ATTEMPTS: () => DEFAULT_MAX_ATTEMPTS,
-  DEFAULT_RETRY_DELAY_BASE: () => DEFAULT_RETRY_DELAY_BASE,
-  DEFAULT_RETRY_MODE: () => DEFAULT_RETRY_MODE,
-  DefaultRateLimiter: () => DefaultRateLimiter,
-  DeprecatedAdaptiveRetryStrategy: () => AdaptiveRetryStrategy2,
-  DeprecatedStandardRetryStrategy: () => StandardRetryStrategy2,
-  ENV_MAX_ATTEMPTS: () => ENV_MAX_ATTEMPTS,
-  ENV_RETRY_MODE: () => ENV_RETRY_MODE,
-  INITIAL_RETRY_TOKENS: () => INITIAL_RETRY_TOKENS,
-  INVOCATION_ID_HEADER: () => INVOCATION_ID_HEADER,
-  MAXIMUM_RETRY_DELAY: () => MAXIMUM_RETRY_DELAY,
-  NODE_MAX_ATTEMPT_CONFIG_OPTIONS: () => NODE_MAX_ATTEMPT_CONFIG_OPTIONS,
-  NODE_RETRY_MODE_CONFIG_OPTIONS: () => NODE_RETRY_MODE_CONFIG_OPTIONS,
-  NO_RETRY_INCREMENT: () => NO_RETRY_INCREMENT,
-  REQUEST_HEADER: () => REQUEST_HEADER,
-  RETRY_COST: () => RETRY_COST,
-  RETRY_MODES: () => RETRY_MODES,
-  Retry: () => Retry,
-  StandardRetryStrategy: () => StandardRetryStrategy,
-  THROTTLING_RETRY_DELAY_BASE: () => THROTTLING_RETRY_DELAY_BASE,
-  TIMEOUT_RETRY_COST: () => TIMEOUT_RETRY_COST,
-  defaultDelayDecider: () => defaultDelayDecider,
-  defaultRetryDecider: () => defaultRetryDecider,
-  getOmitRetryHeadersPlugin: () => getOmitRetryHeadersPlugin,
-  getRetryAfterHint: () => getRetryAfterHint,
-  getRetryPlugin: () => getRetryPlugin,
-  isBrowserNetworkError: () => isBrowserNetworkError,
-  isClockSkewCorrectedError: () => isClockSkewCorrectedError,
-  isClockSkewError: () => isClockSkewError,
-  isNodeJsHttp2TransientError: () => isNodeJsHttp2TransientError,
-  isRetryableByTrait: () => isRetryableByTrait,
-  isServerError: () => isServerError,
-  isThrottlingError: () => isThrottlingError,
-  isTransientError: () => isTransientError,
-  omitRetryHeadersMiddleware: () => omitRetryHeadersMiddleware,
-  omitRetryHeadersMiddlewareOptions: () => omitRetryHeadersMiddlewareOptions,
-  resolveRetryConfig: () => resolveRetryConfig,
-  retryMiddleware: () => retryMiddleware,
-  retryMiddlewareOptions: () => retryMiddlewareOptions
-});
-var retryMiddleware, getRetryPlugin;
-var init_retry2 = __esm({
-  "node_modules/@smithy/core/dist-es/submodules/retry/index.js"() {
-    init_isStreamingPayload();
-    init_retryMiddleware();
-    init_service_error_classification();
-    init_AdaptiveRetryStrategy();
-    init_ConfiguredRetryStrategy();
-    init_DefaultRateLimiter();
-    init_StandardRetryStrategy();
-    init_config3();
-    init_constants5();
-    init_retries_2026_config();
-    init_AdaptiveRetryStrategy2();
-    init_StandardRetryStrategy2();
-    init_delayDecider();
-    init_retryDecider();
-    init_configurations();
-    init_omitRetryHeadersMiddleware();
-    init_retryMiddleware();
-    init_parseRetryAfterHeader();
-    retryMiddleware = bindRetryMiddleware(isStreamingPayload);
-    getRetryPlugin = bindGetRetryPlugin(isStreamingPayload);
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js
-function setFeature2(context, feature, value) {
-  if (!context.__aws_sdk_context) {
-    context.__aws_sdk_context = {
-      features: {}
-    };
-  } else if (!context.__aws_sdk_context.features) {
-    context.__aws_sdk_context.features = {};
-  }
-  context.__aws_sdk_context.features[feature] = value;
-}
-var init_setFeature = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js"() {
-    init_retry2();
-    Retry.v2026 ||= typeof process === "object" && process.env?.AWS_NEW_RETRIES_2026 === "true";
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js
-function setTokenFeature(token, feature, value) {
-  if (!token.$source) {
-    token.$source = {};
-  }
-  token.$source[feature] = value;
-  return token;
-}
-var init_setTokenFeature = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js"() {
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/client/getDefaultSocketTimeout.js
-var isDefaultSocketTimeoutEnabled, getDefaultSocketTimeout;
-var init_getDefaultSocketTimeout = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/client/getDefaultSocketTimeout.js"() {
-    isDefaultSocketTimeoutEnabled = () => typeof process === "object" && process?.env?.AWS_ENABLE_DEFAULT_SOCKET_TIMEOUT_2026 === "true";
-    getDefaultSocketTimeout = (requestHandler, timeoutMs) => {
-      if (!isDefaultSocketTimeoutEnabled()) {
-        return void 0;
-      }
-      if (typeof requestHandler?.handle === "function") {
-        return void 0;
-      }
-      return timeoutMs;
-    };
-  }
-});
-
 // node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-host-header/hostHeaderMiddleware.js
 function resolveHostHeaderConfig(input) {
   return input;
@@ -32246,21 +31407,26 @@ var init_hostHeaderMiddleware = __esm({
 var loggerMiddleware, loggerMiddlewareOptions, getLoggerPlugin;
 var init_loggerMiddleware = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-logger/loggerMiddleware.js"() {
+    init_client2();
     loggerMiddleware = () => (next, context) => async (args) => {
       try {
         const response = await next(args);
-        const { clientName, commandName, logger: logger2, dynamoDbDocumentClientOptions = {} } = context;
-        const { overrideInputFilterSensitiveLog, overrideOutputFilterSensitiveLog } = dynamoDbDocumentClientOptions;
-        const inputFilterSensitiveLog = overrideInputFilterSensitiveLog ?? context.inputFilterSensitiveLog;
-        const outputFilterSensitiveLog = overrideOutputFilterSensitiveLog ?? context.outputFilterSensitiveLog;
-        const { $metadata, ...outputWithoutMetadata } = response.output;
-        logger2?.info?.({
-          clientName,
-          commandName,
-          input: inputFilterSensitiveLog(args.input),
-          output: outputFilterSensitiveLog(outputWithoutMetadata),
-          metadata: $metadata
-        });
+        const { logger: logger2 } = context;
+        const isNoOpLogger = logger2 instanceof NoOpLogger;
+        if (logger2 && !isNoOpLogger) {
+          const { clientName, commandName, dynamoDbDocumentClientOptions = {} } = context;
+          const { overrideInputFilterSensitiveLog, overrideOutputFilterSensitiveLog } = dynamoDbDocumentClientOptions;
+          const inputFilterSensitiveLog = overrideInputFilterSensitiveLog ?? context.inputFilterSensitiveLog;
+          const outputFilterSensitiveLog = overrideOutputFilterSensitiveLog ?? context.outputFilterSensitiveLog;
+          const { $metadata, ...outputWithoutMetadata } = response.output;
+          logger2.info?.({
+            clientName,
+            commandName,
+            input: inputFilterSensitiveLog(args.input),
+            output: outputFilterSensitiveLog(outputWithoutMetadata),
+            metadata: $metadata
+          });
+        }
         return response;
       } catch (error3) {
         const { clientName, commandName, logger: logger2, dynamoDbDocumentClientOptions = {} } = context;
@@ -32806,11 +31972,11 @@ var init_DefaultIdentityProviderConfig = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js
-var import_types25, HttpApiKeyAuthSigner;
+var import_types24, HttpApiKeyAuthSigner;
 var init_httpApiKeyAuth = __esm({
   "node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js"() {
     init_protocols();
-    import_types25 = __toESM(require_dist_cjs());
+    import_types24 = __toESM(require_dist_cjs());
     HttpApiKeyAuthSigner = class {
       async sign(httpRequest, identity, signingProperties) {
         if (!signingProperties) {
@@ -32826,9 +31992,9 @@ var init_httpApiKeyAuth = __esm({
           throw new Error("request could not be signed with `apiKey` since the `apiKey` is not defined");
         }
         const clonedRequest = HttpRequest.clone(httpRequest);
-        if (signingProperties.in === import_types25.HttpApiKeyAuthLocation.QUERY) {
+        if (signingProperties.in === import_types24.HttpApiKeyAuthLocation.QUERY) {
           clonedRequest.query[signingProperties.name] = identity.apiKey;
-        } else if (signingProperties.in === import_types25.HttpApiKeyAuthLocation.HEADER) {
+        } else if (signingProperties.in === import_types24.HttpApiKeyAuthLocation.HEADER) {
           clonedRequest.headers[signingProperties.name] = signingProperties.scheme ? `${signingProperties.scheme} ${identity.apiKey}` : identity.apiKey;
         } else {
           throw new Error("request can only be signed with `apiKey` locations `query` or `header`, but found: `" + signingProperties.in + "`");
@@ -33014,7 +32180,7 @@ function resolveUserAgentConfig(input) {
   });
 }
 var DEFAULT_UA_APP_ID;
-var init_configurations2 = __esm({
+var init_configurations = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/configurations.js"() {
     init_dist_es();
     DEFAULT_UA_APP_ID = void 0;
@@ -33126,11 +32292,17 @@ var init_partitions = __esm({
             "me-south-1": {
               "description": "Middle East (Bahrain)"
             },
+            "me-west-1": {
+              "description": "Middle East (Saudi Arabia)"
+            },
             "mx-central-1": {
               "description": "Mexico (Central)"
             },
             "sa-east-1": {
               "description": "South America (Sao Paulo)"
+            },
+            "sa-west-1": {
+              "description": "South America (Chile)"
             },
             "us-east-1": {
               "description": "US East (N. Virginia)"
@@ -33351,21 +32523,1079 @@ var init_partition = __esm({
   }
 });
 
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js
+var import_node_stream10, isStreamingPayload;
+var init_isStreamingPayload = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js"() {
+    import_node_stream10 = require("node:stream");
+    isStreamingPayload = (request) => request?.body instanceof import_node_stream10.Readable || typeof ReadableStream !== "undefined" && request?.body instanceof ReadableStream;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js
+var CLOCK_SKEW_ERROR_CODES, THROTTLING_ERROR_CODES, TRANSIENT_ERROR_CODES, TRANSIENT_ERROR_STATUS_CODES, NODEJS_TIMEOUT_ERROR_CODES, NODEJS_NETWORK_ERROR_CODES;
+var init_constants4 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js"() {
+    CLOCK_SKEW_ERROR_CODES = [
+      "AccessDeniedException",
+      "AuthFailure",
+      "InvalidSignatureException",
+      "RequestExpired",
+      "RequestInTheFuture",
+      "RequestTimeTooSkewed",
+      "SignatureDoesNotMatch"
+    ];
+    THROTTLING_ERROR_CODES = [
+      "BandwidthLimitExceeded",
+      "EC2ThrottledException",
+      "LimitExceededException",
+      "PriorRequestNotComplete",
+      "ProvisionedThroughputExceededException",
+      "RequestLimitExceeded",
+      "RequestThrottled",
+      "RequestThrottledException",
+      "SlowDown",
+      "ThrottledException",
+      "Throttling",
+      "ThrottlingException",
+      "TooManyRequestsException",
+      "TransactionInProgressException"
+    ];
+    TRANSIENT_ERROR_CODES = ["TimeoutError", "RequestTimeout", "RequestTimeoutException"];
+    TRANSIENT_ERROR_STATUS_CODES = [500, 502, 503, 504];
+    NODEJS_TIMEOUT_ERROR_CODES = ["ECONNRESET", "ECONNREFUSED", "EPIPE", "ETIMEDOUT"];
+    NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND", "EAI_AGAIN"];
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js
+function isNodeJsHttp2TransientError(error3) {
+  return error3.code === "ERR_HTTP2_STREAM_ERROR" && error3.message.includes("NGHTTP2_REFUSED_STREAM");
+}
+var isRetryableByTrait, isClockSkewError, isClockSkewCorrectedError, isBrowserNetworkError, isThrottlingError, isTransientError, isServerError;
+var init_service_error_classification = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js"() {
+    init_constants4();
+    isRetryableByTrait = (error3) => error3?.$retryable !== void 0;
+    isClockSkewError = (error3) => CLOCK_SKEW_ERROR_CODES.includes(error3.name);
+    isClockSkewCorrectedError = (error3) => error3.$metadata?.clockSkewCorrected;
+    isBrowserNetworkError = (error3) => {
+      const errorMessages = /* @__PURE__ */ new Set([
+        "Failed to fetch",
+        "NetworkError when attempting to fetch resource",
+        "The Internet connection appears to be offline",
+        "Load failed",
+        "Network request failed"
+      ]);
+      const isValid = error3 && error3 instanceof TypeError;
+      if (!isValid) {
+        return false;
+      }
+      return errorMessages.has(error3.message);
+    };
+    isThrottlingError = (error3) => error3.$metadata?.httpStatusCode === 429 || THROTTLING_ERROR_CODES.includes(error3.name) || error3.$retryable?.throttling == true;
+    isTransientError = (error3, depth = 0) => error3?.name !== "AbortError" && (isRetryableByTrait(error3) || isClockSkewCorrectedError(error3) || error3.name === "InvalidSignatureException" && error3.message?.includes("Signature expired") || TRANSIENT_ERROR_CODES.includes(error3.name) || NODEJS_TIMEOUT_ERROR_CODES.includes(error3?.code || "") || NODEJS_NETWORK_ERROR_CODES.includes(error3?.code || "") || TRANSIENT_ERROR_STATUS_CODES.includes(error3.$metadata?.httpStatusCode || 0) || isBrowserNetworkError(error3) || isNodeJsHttp2TransientError(error3) || error3.cause !== void 0 && depth <= 10 && isTransientError(error3.cause, depth + 1));
+    isServerError = (error3) => {
+      if (error3.$metadata?.httpStatusCode !== void 0) {
+        const statusCode = error3.$metadata.httpStatusCode;
+        if (500 <= statusCode && statusCode <= 599 && !isTransientError(error3)) {
+          return true;
+        }
+        return false;
+      }
+      return false;
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/race.js
+var race, createAbortError, isAbortError;
+var init_race = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/race.js"() {
+    race = (promise, signal) => {
+      if (!signal) {
+        return promise;
+      }
+      let cleanup = () => {
+      };
+      const aborted = new Promise((_, reject) => {
+        const handler = () => reject(createAbortError());
+        if (signal.aborted) {
+          handler();
+        } else if (typeof signal.addEventListener === "function") {
+          signal.addEventListener("abort", handler, { once: true });
+          cleanup = () => signal.removeEventListener("abort", handler);
+        } else {
+          signal.onabort = handler;
+        }
+      });
+      return Promise.race([promise, aborted]).finally(cleanup);
+    };
+    createAbortError = () => Object.assign(new Error("Request aborted"), { name: "AbortError" });
+    isAbortError = (error3) => typeof error3 === "object" && error3 !== null && "name" in error3 && error3.name === "AbortError";
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js
+var DEFAULT_RETRY_DELAY_BASE, MAXIMUM_RETRY_DELAY, THROTTLING_RETRY_DELAY_BASE, INITIAL_RETRY_TOKENS, RETRY_COST, TIMEOUT_RETRY_COST, NO_RETRY_INCREMENT, INVOCATION_ID_HEADER, REQUEST_HEADER;
+var init_constants5 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js"() {
+    DEFAULT_RETRY_DELAY_BASE = 100;
+    MAXIMUM_RETRY_DELAY = 20 * 1e3;
+    THROTTLING_RETRY_DELAY_BASE = 500;
+    INITIAL_RETRY_TOKENS = 500;
+    RETRY_COST = 5;
+    TIMEOUT_RETRY_COST = 10;
+    NO_RETRY_INCREMENT = 1;
+    INVOCATION_ID_HEADER = "amz-sdk-invocation-id";
+    REQUEST_HEADER = "amz-sdk-request";
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js
+function parseRetryAfterHeader(response, logger2) {
+  if (!HttpResponse.isInstance(response)) {
+    return;
+  }
+  for (const header in response.headers) {
+    if (!hasOwn(response.headers, header)) {
+      continue;
+    }
+    const h5 = header.toLowerCase();
+    if (h5 === "retry-after") {
+      const retryAfter = response.headers[header];
+      let retryAfterSeconds = NaN;
+      if (retryAfter.endsWith("GMT")) {
+        try {
+          const date2 = parseRfc7231DateTime(retryAfter);
+          retryAfterSeconds = (date2.getTime() - Date.now()) / 1e3;
+        } catch (e5) {
+          logger2?.trace?.("Failed to parse retry-after header");
+          logger2?.trace?.(e5);
+        }
+      } else if (retryAfter.match(/ GMT, ((\d+)|(\d+\.\d+))$/)) {
+        retryAfterSeconds = Number(retryAfter.match(/ GMT, ([\d.]+)$/)?.[1]);
+      } else if (retryAfter.match(/^((\d+)|(\d+\.\d+))$/)) {
+        retryAfterSeconds = Number(retryAfter);
+      } else if (Date.parse(retryAfter) >= Date.now()) {
+        retryAfterSeconds = (Date.parse(retryAfter) - Date.now()) / 1e3;
+      }
+      if (isNaN(retryAfterSeconds)) {
+        return;
+      }
+      return new Date(Date.now() + retryAfterSeconds * 1e3);
+    } else if (h5 === "x-amz-retry-after") {
+      const v = response.headers[header];
+      const backoffMilliseconds = Number(v);
+      if (isNaN(backoffMilliseconds)) {
+        logger2?.trace?.(`Failed to parse x-amz-retry-after=${v}`);
+        return;
+      }
+      return new Date(Date.now() + backoffMilliseconds);
+    }
+  }
+}
+function getRetryAfterHint(response, logger2) {
+  return parseRetryAfterHeader(response, logger2);
+}
+var init_parseRetryAfterHeader = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js"() {
+    init_transport();
+    init_protocols();
+    init_serde();
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js
+var asSdkError;
+var init_util = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js"() {
+    asSdkError = (error3) => {
+      if (error3 instanceof Error) {
+        return error3;
+      }
+      if (error3 instanceof Object) {
+        return Object.assign(new Error(), error3);
+      }
+      if (typeof error3 === "string") {
+        return new Error(error3);
+      }
+      return new Error(`AWS SDK error wrapper for ${error3}`);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js
+function bindRetryMiddleware(isStreamingPayload2) {
+  return (options) => (next, context) => async (args) => {
+    let retryStrategy = await options.retryStrategy();
+    const maxAttempts = await options.maxAttempts();
+    const abortSignal = context[import_types25.SMITHY_CONTEXT_KEY]?.abortSignal;
+    if (isRetryStrategyV2(retryStrategy)) {
+      retryStrategy = retryStrategy;
+      const retryTokenScope = (context["partition_id"] ?? "") + (context.__retryLongPoll ? ":longpoll" : "");
+      let retryToken = await race(retryStrategy.acquireInitialRetryToken(retryTokenScope), abortSignal);
+      let lastError = new Error();
+      let attempts = 0;
+      let totalRetryDelay = 0;
+      const { request } = args;
+      const isRequest = HttpRequest.isInstance(request);
+      if (isRequest) {
+        request.headers[INVOCATION_ID_HEADER] = v4();
+      }
+      while (true) {
+        try {
+          if (isRequest) {
+            request.headers[REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
+          }
+          const { response, output } = await next(args);
+          retryStrategy.recordSuccess(retryToken);
+          output.$metadata.attempts = attempts + 1;
+          output.$metadata.totalRetryDelay = totalRetryDelay;
+          return { response, output };
+        } catch (e5) {
+          const retryErrorInfo = getRetryErrorInfo(e5, options.logger);
+          lastError = asSdkError(e5);
+          if (isRequest && isStreamingPayload2(request)) {
+            (context.logger instanceof NoOpLogger ? console : context.logger)?.warn("An error was encountered in a non-retryable streaming request.");
+            throw lastError;
+          }
+          try {
+            retryToken = await race(retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo), abortSignal);
+          } catch (refreshError) {
+            if (abortSignal?.aborted && isAbortError(refreshError)) {
+              throw refreshError;
+            }
+            if (!lastError.$metadata) {
+              lastError.$metadata = {};
+            }
+            lastError.$metadata.attempts = attempts + 1;
+            lastError.$metadata.totalRetryDelay = totalRetryDelay;
+            throw lastError;
+          }
+          attempts = retryToken.getRetryCount();
+          const delay = retryToken.getRetryDelay();
+          totalRetryDelay += (retryToken?.$retryLog?.acquisitionDelay ?? 0) + delay;
+          if (delay > 0) {
+            await race(new Promise((resolve) => setTimeout(resolve, delay)), abortSignal);
+          }
+        }
+      }
+    } else {
+      retryStrategy = retryStrategy;
+      if (retryStrategy?.mode) {
+        context.userAgent = [...context.userAgent || [], ["cfg/retry-mode", retryStrategy.mode]];
+      }
+      return retryStrategy.retry(next, args);
+    }
+  };
+}
+function bindGetRetryPlugin(isStreamingPayload2) {
+  const retryMiddleware2 = bindRetryMiddleware(isStreamingPayload2);
+  return (options) => ({
+    applyToStack: (clientStack) => {
+      clientStack.add(retryMiddleware2(options), retryMiddlewareOptions);
+    }
+  });
+}
+var import_types25, isRetryStrategyV2, getRetryErrorInfo, getRetryErrorType, retryMiddlewareOptions;
+var init_retryMiddleware = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js"() {
+    init_client2();
+    init_protocols();
+    init_serde();
+    import_types25 = __toESM(require_dist_cjs());
+    init_service_error_classification();
+    init_race();
+    init_constants5();
+    init_parseRetryAfterHeader();
+    init_util();
+    isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined";
+    getRetryErrorInfo = (error3, logger2) => {
+      const errorInfo = {
+        error: error3,
+        errorType: getRetryErrorType(error3)
+      };
+      const retryAfterHint = parseRetryAfterHeader(error3.$response, logger2);
+      if (retryAfterHint) {
+        errorInfo.retryAfterHint = retryAfterHint;
+      }
+      return errorInfo;
+    };
+    getRetryErrorType = (error3) => {
+      if (isThrottlingError(error3)) {
+        return "THROTTLING";
+      }
+      if (isTransientError(error3)) {
+        return "TRANSIENT";
+      }
+      if (isServerError(error3)) {
+        return "SERVER_ERROR";
+      }
+      return "CLIENT_ERROR";
+    };
+    retryMiddlewareOptions = {
+      name: "retryMiddleware",
+      tags: ["RETRY"],
+      step: "finalizeRequest",
+      priority: "high",
+      override: true
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js
+var DefaultRateLimiter;
+var init_DefaultRateLimiter = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js"() {
+    init_service_error_classification();
+    DefaultRateLimiter = class _DefaultRateLimiter {
+      static setTimeoutFn = (fn, delay) => setTimeout(fn, delay);
+      beta;
+      minCapacity;
+      minFillRate;
+      scaleConstant;
+      smooth;
+      enabled = false;
+      availableTokens = 0;
+      lastMaxRate = 0;
+      measuredTxRate = 0;
+      requestCount = 0;
+      fillRate;
+      lastThrottleTime;
+      lastTimestamp = 0;
+      lastTxRateBucket;
+      maxCapacity;
+      timeWindow = 0;
+      constructor(options) {
+        this.beta = options?.beta ?? 0.7;
+        this.minCapacity = options?.minCapacity ?? 1;
+        this.minFillRate = options?.minFillRate ?? 0.5;
+        this.scaleConstant = options?.scaleConstant ?? 0.4;
+        this.smooth = options?.smooth ?? 0.8;
+        this.lastThrottleTime = this.getCurrentTimeInSeconds();
+        this.lastTxRateBucket = Math.floor(this.getCurrentTimeInSeconds());
+        this.fillRate = this.minFillRate;
+        this.maxCapacity = this.minCapacity;
+      }
+      async getSendToken() {
+        return this.acquireTokenBucket(1);
+      }
+      updateClientSendingRate(response) {
+        let calculatedRate;
+        this.updateMeasuredRate();
+        const retryErrorInfo = response;
+        const isThrottling = retryErrorInfo?.errorType === "THROTTLING" || isThrottlingError(retryErrorInfo?.error ?? response);
+        if (isThrottling) {
+          const rateToUse = !this.enabled ? this.measuredTxRate : Math.min(this.measuredTxRate, this.fillRate);
+          this.lastMaxRate = rateToUse;
+          this.calculateTimeWindow();
+          this.lastThrottleTime = this.getCurrentTimeInSeconds();
+          calculatedRate = this.cubicThrottle(rateToUse);
+          this.enableTokenBucket();
+        } else {
+          this.calculateTimeWindow();
+          calculatedRate = this.cubicSuccess(this.getCurrentTimeInSeconds());
+        }
+        const newRate = Math.min(calculatedRate, 2 * this.measuredTxRate);
+        this.updateTokenBucketRate(newRate);
+      }
+      getCurrentTimeInSeconds() {
+        return Date.now() / 1e3;
+      }
+      async acquireTokenBucket(amount) {
+        if (!this.enabled) {
+          return;
+        }
+        this.refillTokenBucket();
+        while (amount > this.availableTokens) {
+          const delay = (amount - this.availableTokens) / this.fillRate * 1e3;
+          await new Promise((resolve) => _DefaultRateLimiter.setTimeoutFn(resolve, delay));
+          this.refillTokenBucket();
+        }
+        this.availableTokens = this.availableTokens - amount;
+      }
+      refillTokenBucket() {
+        const timestamp = this.getCurrentTimeInSeconds();
+        if (!this.lastTimestamp) {
+          this.lastTimestamp = timestamp;
+          return;
+        }
+        const fillAmount = (timestamp - this.lastTimestamp) * this.fillRate;
+        this.availableTokens = Math.min(this.maxCapacity, this.availableTokens + fillAmount);
+        this.lastTimestamp = timestamp;
+      }
+      calculateTimeWindow() {
+        this.timeWindow = this.getPrecise(Math.pow(this.lastMaxRate * (1 - this.beta) / this.scaleConstant, 1 / 3));
+      }
+      cubicThrottle(rateToUse) {
+        return this.getPrecise(rateToUse * this.beta);
+      }
+      cubicSuccess(timestamp) {
+        return this.getPrecise(this.scaleConstant * Math.pow(timestamp - this.lastThrottleTime - this.timeWindow, 3) + this.lastMaxRate);
+      }
+      enableTokenBucket() {
+        this.enabled = true;
+      }
+      updateTokenBucketRate(newRate) {
+        this.refillTokenBucket();
+        this.fillRate = Math.max(newRate, this.minFillRate);
+        this.maxCapacity = Math.max(newRate, this.minCapacity);
+        this.availableTokens = Math.min(this.availableTokens, this.maxCapacity);
+      }
+      updateMeasuredRate() {
+        const t = this.getCurrentTimeInSeconds();
+        const timeBucket = Math.floor(t * 2) / 2;
+        this.requestCount++;
+        if (timeBucket > this.lastTxRateBucket) {
+          const currentRate = this.requestCount / (timeBucket - this.lastTxRateBucket);
+          this.measuredTxRate = this.getPrecise(currentRate * this.smooth + this.measuredTxRate * (1 - this.smooth));
+          this.requestCount = 0;
+          this.lastTxRateBucket = timeBucket;
+        }
+      }
+      getPrecise(num) {
+        return parseFloat(num.toFixed(8));
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js
+var Retry;
+var init_retries_2026_config = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js"() {
+    Retry = class {
+      static v2026 = true;
+      static delay() {
+        return 50;
+      }
+      static throttlingDelay() {
+        return 1e3;
+      }
+      static cost() {
+        return 14;
+      }
+      static throttlingCost() {
+        return 5;
+      }
+      static modifiedCostType() {
+        return "THROTTLING";
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js
+var DefaultRetryBackoffStrategy;
+var init_DefaultRetryBackoffStrategy = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js"() {
+    init_constants5();
+    init_retries_2026_config();
+    DefaultRetryBackoffStrategy = class {
+      x = Retry.delay();
+      computeNextBackoffDelay(i5) {
+        const b6 = Math.random();
+        const r5 = 2;
+        const t_i = b6 * Math.min(this.x * r5 ** i5, MAXIMUM_RETRY_DELAY);
+        return Math.floor(t_i);
+      }
+      setDelayBase(delay) {
+        this.x = delay;
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js
+var DefaultRetryToken;
+var init_DefaultRetryToken = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js"() {
+    init_constants5();
+    DefaultRetryToken = class {
+      delay;
+      count;
+      cost;
+      longPoll;
+      $retryLog = {
+        acquisitionDelay: 0
+      };
+      constructor(delay, count, cost, longPoll) {
+        this.delay = delay;
+        this.count = count;
+        this.cost = cost;
+        this.longPoll = longPoll;
+      }
+      getRetryCount() {
+        return this.count;
+      }
+      getRetryDelay() {
+        return Math.min(MAXIMUM_RETRY_DELAY, this.delay);
+      }
+      getRetryCost() {
+        return this.cost;
+      }
+      isLongPoll() {
+        return this.longPoll;
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js
+var RETRY_MODES, DEFAULT_MAX_ATTEMPTS, DEFAULT_RETRY_MODE;
+var init_config3 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js"() {
+    (function(RETRY_MODES2) {
+      RETRY_MODES2["STANDARD"] = "standard";
+      RETRY_MODES2["ADAPTIVE"] = "adaptive";
+    })(RETRY_MODES || (RETRY_MODES = {}));
+    DEFAULT_MAX_ATTEMPTS = 3;
+    DEFAULT_RETRY_MODE = RETRY_MODES.STANDARD;
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js
+var refusal, StandardRetryStrategy;
+var init_StandardRetryStrategy = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js"() {
+    init_DefaultRetryBackoffStrategy();
+    init_DefaultRetryToken();
+    init_config3();
+    init_constants5();
+    init_retries_2026_config();
+    refusal = {
+      incompatible: 1,
+      attempts: 2,
+      capacity: 3
+    };
+    StandardRetryStrategy = class {
+      mode = RETRY_MODES.STANDARD;
+      retryBackoffStrategy;
+      capacity = INITIAL_RETRY_TOKENS;
+      maxAttemptsProvider;
+      baseDelay;
+      constructor(arg1) {
+        if (typeof arg1 === "number") {
+          this.maxAttemptsProvider = async () => arg1;
+        } else if (typeof arg1 === "function") {
+          this.maxAttemptsProvider = arg1;
+        } else if (arg1 && typeof arg1 === "object") {
+          this.maxAttemptsProvider = async () => arg1.maxAttempts;
+          this.baseDelay = arg1.baseDelay;
+          this.retryBackoffStrategy = arg1.backoff;
+        }
+        this.maxAttemptsProvider ??= async () => DEFAULT_MAX_ATTEMPTS;
+        this.baseDelay ??= Retry.delay();
+        this.retryBackoffStrategy ??= new DefaultRetryBackoffStrategy();
+      }
+      async acquireInitialRetryToken(retryTokenScope) {
+        return new DefaultRetryToken(Retry.delay(), 0, void 0, retryTokenScope.includes(":longpoll"));
+      }
+      async refreshRetryTokenForRetry(token, errorInfo) {
+        const maxAttempts = await this.getMaxAttempts();
+        const retryCode = this.retryCode(token, errorInfo, maxAttempts);
+        const shouldRetry = retryCode === 0;
+        const isLongPoll = token.isLongPoll?.();
+        if (shouldRetry || isLongPoll) {
+          const errorType = errorInfo.errorType;
+          this.retryBackoffStrategy.setDelayBase(errorType === "THROTTLING" ? Retry.throttlingDelay() : this.baseDelay);
+          const delayFromErrorType = this.retryBackoffStrategy.computeNextBackoffDelay(token.getRetryCount());
+          let retryDelay = delayFromErrorType;
+          if (errorInfo.retryAfterHint instanceof Date) {
+            retryDelay = Math.max(delayFromErrorType, Math.min(errorInfo.retryAfterHint.getTime() - Date.now(), delayFromErrorType + 5e3));
+          }
+          if (!shouldRetry) {
+            const longPollBackoff = retryCode === refusal.capacity && isLongPoll ? retryDelay : 0;
+            if (longPollBackoff > 0) {
+              await new Promise((r5) => setTimeout(r5, longPollBackoff));
+            }
+          } else {
+            const capacityCost = this.getCapacityCost(errorType);
+            this.capacity -= capacityCost;
+            const nextToken = new DefaultRetryToken(0, token.getRetryCount() + 1, capacityCost, token.isLongPoll?.() ?? false);
+            await new Promise((r5) => setTimeout(r5, retryDelay));
+            nextToken.$retryLog.acquisitionDelay = retryDelay;
+            return nextToken;
+          }
+        }
+        throw new Error("No retry token available");
+      }
+      recordSuccess(token) {
+        this.capacity = Math.min(INITIAL_RETRY_TOKENS, this.capacity + (token.getRetryCost() ?? NO_RETRY_INCREMENT));
+      }
+      getCapacity() {
+        return this.capacity;
+      }
+      async maxAttempts() {
+        return this.maxAttemptsProvider();
+      }
+      async getMaxAttempts() {
+        try {
+          return await this.maxAttemptsProvider();
+        } catch (ignored) {
+          console.warn(`Max attempts provider could not resolve. Using default of ${DEFAULT_MAX_ATTEMPTS}`);
+          return DEFAULT_MAX_ATTEMPTS;
+        }
+      }
+      retryCode(tokenToRenew, errorInfo, maxAttempts) {
+        const attempts = tokenToRenew.getRetryCount() + 1;
+        const retryableStatus = this.isRetryableError(errorInfo.errorType) ? 0 : refusal.incompatible;
+        const attemptStatus = attempts < maxAttempts ? 0 : refusal.attempts;
+        const capacityStatus = this.capacity >= this.getCapacityCost(errorInfo.errorType) ? 0 : refusal.capacity;
+        return retryableStatus || attemptStatus || capacityStatus;
+      }
+      getCapacityCost(errorType) {
+        return errorType === Retry.modifiedCostType() ? Retry.throttlingCost() : Retry.cost();
+      }
+      isRetryableError(errorType) {
+        return errorType === "THROTTLING" || errorType === "TRANSIENT";
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js
+var AdaptiveRetryStrategy;
+var init_AdaptiveRetryStrategy = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js"() {
+    init_DefaultRateLimiter();
+    init_StandardRetryStrategy();
+    init_config3();
+    AdaptiveRetryStrategy = class {
+      mode = RETRY_MODES.ADAPTIVE;
+      rateLimiter;
+      standardRetryStrategy;
+      constructor(maxAttemptsProvider, options) {
+        const { rateLimiter } = options ?? {};
+        this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
+        this.standardRetryStrategy = options ? new StandardRetryStrategy({
+          maxAttempts: typeof maxAttemptsProvider === "number" ? maxAttemptsProvider : 3,
+          ...options
+        }) : new StandardRetryStrategy(maxAttemptsProvider);
+      }
+      async acquireInitialRetryToken(retryTokenScope) {
+        const token = await this.standardRetryStrategy.acquireInitialRetryToken(retryTokenScope);
+        await this.rateLimiter.getSendToken();
+        return token;
+      }
+      async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
+        this.rateLimiter.updateClientSendingRate(errorInfo);
+        const token = await this.standardRetryStrategy.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
+        await this.rateLimiter.getSendToken();
+        return token;
+      }
+      recordSuccess(token) {
+        this.rateLimiter.updateClientSendingRate({});
+        this.standardRetryStrategy.recordSuccess(token);
+      }
+      async maxAttemptsProvider() {
+        return this.standardRetryStrategy.maxAttempts();
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js
+var ConfiguredRetryStrategy;
+var init_ConfiguredRetryStrategy = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js"() {
+    init_StandardRetryStrategy();
+    init_retries_2026_config();
+    ConfiguredRetryStrategy = class extends StandardRetryStrategy {
+      computeNextBackoffDelay;
+      constructor(maxAttempts, computeNextBackoffDelay = Retry.delay()) {
+        super(typeof maxAttempts === "function" ? maxAttempts : async () => maxAttempts);
+        if (typeof computeNextBackoffDelay === "number") {
+          this.computeNextBackoffDelay = () => computeNextBackoffDelay;
+        } else {
+          this.computeNextBackoffDelay = computeNextBackoffDelay;
+        }
+        this.retryBackoffStrategy.computeNextBackoffDelay = (completedAttempt) => {
+          const nextAttempt = completedAttempt + 1;
+          return this.computeNextBackoffDelay(nextAttempt);
+        };
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js
+var getDefaultRetryQuota;
+var init_defaultRetryQuota = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js"() {
+    init_constants5();
+    getDefaultRetryQuota = (initialRetryTokens, options) => {
+      const MAX_CAPACITY = initialRetryTokens;
+      const noRetryIncrement = options?.noRetryIncrement ?? NO_RETRY_INCREMENT;
+      const retryCost = options?.retryCost ?? RETRY_COST;
+      const timeoutRetryCost = options?.timeoutRetryCost ?? TIMEOUT_RETRY_COST;
+      let availableCapacity = initialRetryTokens;
+      const getCapacityAmount = (error3) => error3.name === "TimeoutError" ? timeoutRetryCost : retryCost;
+      const hasRetryTokens = (error3) => getCapacityAmount(error3) <= availableCapacity;
+      const retrieveRetryTokens = (error3) => {
+        if (!hasRetryTokens(error3)) {
+          throw new Error("No retry token available");
+        }
+        const capacityAmount = getCapacityAmount(error3);
+        availableCapacity -= capacityAmount;
+        return capacityAmount;
+      };
+      const releaseRetryTokens = (capacityReleaseAmount) => {
+        availableCapacity += capacityReleaseAmount ?? noRetryIncrement;
+        availableCapacity = Math.min(availableCapacity, MAX_CAPACITY);
+      };
+      return Object.freeze({
+        hasRetryTokens,
+        retrieveRetryTokens,
+        releaseRetryTokens
+      });
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js
+var defaultDelayDecider;
+var init_delayDecider = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js"() {
+    init_constants5();
+    defaultDelayDecider = (delayBase, attempts) => Math.floor(Math.min(MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase));
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js
+var defaultRetryDecider;
+var init_retryDecider = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js"() {
+    init_service_error_classification();
+    defaultRetryDecider = (error3) => {
+      if (!error3) {
+        return false;
+      }
+      return isRetryableByTrait(error3) || isClockSkewError(error3) || isThrottlingError(error3) || isTransientError(error3);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js
+var StandardRetryStrategy2, getDelayFromRetryAfterHeader;
+var init_StandardRetryStrategy2 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js"() {
+    init_protocols();
+    init_serde();
+    init_service_error_classification();
+    init_config3();
+    init_constants5();
+    init_util();
+    init_defaultRetryQuota();
+    init_delayDecider();
+    init_retryDecider();
+    StandardRetryStrategy2 = class {
+      maxAttemptsProvider;
+      retryDecider;
+      delayDecider;
+      retryQuota;
+      mode = RETRY_MODES.STANDARD;
+      constructor(maxAttemptsProvider, options) {
+        this.maxAttemptsProvider = maxAttemptsProvider;
+        this.retryDecider = options?.retryDecider ?? defaultRetryDecider;
+        this.delayDecider = options?.delayDecider ?? defaultDelayDecider;
+        this.retryQuota = options?.retryQuota ?? getDefaultRetryQuota(INITIAL_RETRY_TOKENS);
+      }
+      shouldRetry(error3, attempts, maxAttempts) {
+        return attempts < maxAttempts && this.retryDecider(error3) && this.retryQuota.hasRetryTokens(error3);
+      }
+      async getMaxAttempts() {
+        let maxAttempts;
+        try {
+          maxAttempts = await this.maxAttemptsProvider();
+        } catch (ignored) {
+          maxAttempts = DEFAULT_MAX_ATTEMPTS;
+        }
+        return maxAttempts;
+      }
+      async retry(next, args, options) {
+        let retryTokenAmount;
+        let attempts = 0;
+        let totalDelay = 0;
+        const maxAttempts = await this.getMaxAttempts();
+        const { request } = args;
+        if (HttpRequest.isInstance(request)) {
+          request.headers[INVOCATION_ID_HEADER] = v4();
+        }
+        while (true) {
+          try {
+            if (HttpRequest.isInstance(request)) {
+              request.headers[REQUEST_HEADER] = `attempt=${attempts + 1}; max=${maxAttempts}`;
+            }
+            if (options?.beforeRequest) {
+              await options.beforeRequest();
+            }
+            const { response, output } = await next(args);
+            if (options?.afterRequest) {
+              options.afterRequest(response);
+            }
+            this.retryQuota.releaseRetryTokens(retryTokenAmount);
+            output.$metadata.attempts = attempts + 1;
+            output.$metadata.totalRetryDelay = totalDelay;
+            return { response, output };
+          } catch (e5) {
+            const err = asSdkError(e5);
+            attempts++;
+            if (this.shouldRetry(err, attempts, maxAttempts)) {
+              retryTokenAmount = this.retryQuota.retrieveRetryTokens(err);
+              const delayFromDecider = this.delayDecider(isThrottlingError(err) ? THROTTLING_RETRY_DELAY_BASE : DEFAULT_RETRY_DELAY_BASE, attempts);
+              const delayFromResponse = getDelayFromRetryAfterHeader(err.$response);
+              const delay = Math.max(delayFromResponse || 0, delayFromDecider);
+              totalDelay += delay;
+              await new Promise((resolve) => setTimeout(resolve, delay));
+              continue;
+            }
+            if (!err.$metadata) {
+              err.$metadata = {};
+            }
+            err.$metadata.attempts = attempts;
+            err.$metadata.totalRetryDelay = totalDelay;
+            throw err;
+          }
+        }
+      }
+    };
+    getDelayFromRetryAfterHeader = (response) => {
+      if (!HttpResponse.isInstance(response)) {
+        return;
+      }
+      const retryAfterHeaderName = Object.keys(response.headers).find((key) => key.toLowerCase() === "retry-after");
+      if (!retryAfterHeaderName) {
+        return;
+      }
+      const retryAfter = response.headers[retryAfterHeaderName];
+      const retryAfterSeconds = Number(retryAfter);
+      if (!Number.isNaN(retryAfterSeconds)) {
+        return Math.min(retryAfterSeconds * 1e3, 2e4);
+      }
+      const retryAfterDate = new Date(retryAfter);
+      return Math.min(retryAfterDate.getTime() - Date.now(), 2e4);
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js
+var AdaptiveRetryStrategy2;
+var init_AdaptiveRetryStrategy2 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js"() {
+    init_DefaultRateLimiter();
+    init_config3();
+    init_StandardRetryStrategy2();
+    AdaptiveRetryStrategy2 = class extends StandardRetryStrategy2 {
+      rateLimiter;
+      constructor(maxAttemptsProvider, options) {
+        const { rateLimiter, ...superOptions } = options ?? {};
+        super(maxAttemptsProvider, superOptions);
+        this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
+        this.mode = RETRY_MODES.ADAPTIVE;
+      }
+      async retry(next, args) {
+        return super.retry(next, args, {
+          beforeRequest: async () => {
+            return this.rateLimiter.getSendToken();
+          },
+          afterRequest: (response) => {
+            this.rateLimiter.updateClientSendingRate(response);
+          }
+        });
+      }
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js
+var ENV_MAX_ATTEMPTS, CONFIG_MAX_ATTEMPTS, NODE_MAX_ATTEMPT_CONFIG_OPTIONS, resolveRetryConfig, ENV_RETRY_MODE, CONFIG_RETRY_MODE, NODE_RETRY_MODE_CONFIG_OPTIONS;
+var init_configurations2 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js"() {
+    init_client2();
+    init_AdaptiveRetryStrategy();
+    init_StandardRetryStrategy();
+    init_config3();
+    init_retries_2026_config();
+    ENV_MAX_ATTEMPTS = "AWS_MAX_ATTEMPTS";
+    CONFIG_MAX_ATTEMPTS = "max_attempts";
+    NODE_MAX_ATTEMPT_CONFIG_OPTIONS = {
+      environmentVariableSelector: (env2) => {
+        const value = env2[ENV_MAX_ATTEMPTS];
+        if (!value) {
+          return void 0;
+        }
+        const maxAttempt = parseInt(value);
+        if (Number.isNaN(maxAttempt)) {
+          throw new Error(`Environment variable ${ENV_MAX_ATTEMPTS} mast be a number, got "${value}"`);
+        }
+        return maxAttempt;
+      },
+      configFileSelector: (profile) => {
+        const value = profile[CONFIG_MAX_ATTEMPTS];
+        if (!value) {
+          return void 0;
+        }
+        const maxAttempt = parseInt(value);
+        if (Number.isNaN(maxAttempt)) {
+          throw new Error(`Shared config file entry ${CONFIG_MAX_ATTEMPTS} mast be a number, got "${value}"`);
+        }
+        return maxAttempt;
+      },
+      default: DEFAULT_MAX_ATTEMPTS
+    };
+    resolveRetryConfig = (input, defaults) => {
+      const { retryStrategy, retryMode } = input;
+      const { defaultMaxAttempts = DEFAULT_MAX_ATTEMPTS, defaultBaseDelay = Retry.delay() } = defaults ?? {};
+      const maxAttemptsProvider = normalizeProvider(input.maxAttempts ?? defaultMaxAttempts);
+      let controller = retryStrategy ? Promise.resolve(retryStrategy) : void 0;
+      const getDefault = async () => {
+        const maxAttempts = await maxAttemptsProvider();
+        const adaptive = await normalizeProvider(retryMode)() === RETRY_MODES.ADAPTIVE;
+        if (adaptive) {
+          return new AdaptiveRetryStrategy(maxAttemptsProvider, {
+            maxAttempts,
+            baseDelay: defaultBaseDelay
+          });
+        }
+        return new StandardRetryStrategy({
+          maxAttempts,
+          baseDelay: defaultBaseDelay
+        });
+      };
+      return Object.assign(input, {
+        maxAttempts: maxAttemptsProvider,
+        retryStrategy: () => controller ??= getDefault()
+      });
+    };
+    ENV_RETRY_MODE = "AWS_RETRY_MODE";
+    CONFIG_RETRY_MODE = "retry_mode";
+    NODE_RETRY_MODE_CONFIG_OPTIONS = {
+      environmentVariableSelector: (env2) => env2[ENV_RETRY_MODE],
+      configFileSelector: (profile) => profile[CONFIG_RETRY_MODE],
+      default: DEFAULT_RETRY_MODE
+    };
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js
+var omitRetryHeadersMiddleware, omitRetryHeadersMiddlewareOptions, getOmitRetryHeadersPlugin;
+var init_omitRetryHeadersMiddleware = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js"() {
+    init_protocols();
+    init_constants5();
+    omitRetryHeadersMiddleware = () => (next) => async (args) => {
+      const { request } = args;
+      if (HttpRequest.isInstance(request)) {
+        delete request.headers[INVOCATION_ID_HEADER];
+        delete request.headers[REQUEST_HEADER];
+      }
+      return next(args);
+    };
+    omitRetryHeadersMiddlewareOptions = {
+      name: "omitRetryHeadersMiddleware",
+      tags: ["RETRY", "HEADERS", "OMIT_RETRY_HEADERS"],
+      relation: "before",
+      toMiddleware: "awsAuthMiddleware",
+      override: true
+    };
+    getOmitRetryHeadersPlugin = (options) => ({
+      applyToStack: (clientStack) => {
+        clientStack.addRelativeTo(omitRetryHeadersMiddleware(), omitRetryHeadersMiddlewareOptions);
+      }
+    });
+  }
+});
+
+// node_modules/@smithy/core/dist-es/submodules/retry/index.js
+var retry_exports = {};
+__export(retry_exports, {
+  AdaptiveRetryStrategy: () => AdaptiveRetryStrategy,
+  CONFIG_MAX_ATTEMPTS: () => CONFIG_MAX_ATTEMPTS,
+  CONFIG_RETRY_MODE: () => CONFIG_RETRY_MODE,
+  ConfiguredRetryStrategy: () => ConfiguredRetryStrategy,
+  DEFAULT_MAX_ATTEMPTS: () => DEFAULT_MAX_ATTEMPTS,
+  DEFAULT_RETRY_DELAY_BASE: () => DEFAULT_RETRY_DELAY_BASE,
+  DEFAULT_RETRY_MODE: () => DEFAULT_RETRY_MODE,
+  DefaultRateLimiter: () => DefaultRateLimiter,
+  DeprecatedAdaptiveRetryStrategy: () => AdaptiveRetryStrategy2,
+  DeprecatedStandardRetryStrategy: () => StandardRetryStrategy2,
+  ENV_MAX_ATTEMPTS: () => ENV_MAX_ATTEMPTS,
+  ENV_RETRY_MODE: () => ENV_RETRY_MODE,
+  INITIAL_RETRY_TOKENS: () => INITIAL_RETRY_TOKENS,
+  INVOCATION_ID_HEADER: () => INVOCATION_ID_HEADER,
+  MAXIMUM_RETRY_DELAY: () => MAXIMUM_RETRY_DELAY,
+  NODE_MAX_ATTEMPT_CONFIG_OPTIONS: () => NODE_MAX_ATTEMPT_CONFIG_OPTIONS,
+  NODE_RETRY_MODE_CONFIG_OPTIONS: () => NODE_RETRY_MODE_CONFIG_OPTIONS,
+  NO_RETRY_INCREMENT: () => NO_RETRY_INCREMENT,
+  REQUEST_HEADER: () => REQUEST_HEADER,
+  RETRY_COST: () => RETRY_COST,
+  RETRY_MODES: () => RETRY_MODES,
+  Retry: () => Retry,
+  StandardRetryStrategy: () => StandardRetryStrategy,
+  THROTTLING_RETRY_DELAY_BASE: () => THROTTLING_RETRY_DELAY_BASE,
+  TIMEOUT_RETRY_COST: () => TIMEOUT_RETRY_COST,
+  defaultDelayDecider: () => defaultDelayDecider,
+  defaultRetryDecider: () => defaultRetryDecider,
+  getOmitRetryHeadersPlugin: () => getOmitRetryHeadersPlugin,
+  getRetryAfterHint: () => getRetryAfterHint,
+  getRetryPlugin: () => getRetryPlugin,
+  isBrowserNetworkError: () => isBrowserNetworkError,
+  isClockSkewCorrectedError: () => isClockSkewCorrectedError,
+  isClockSkewError: () => isClockSkewError,
+  isNodeJsHttp2TransientError: () => isNodeJsHttp2TransientError,
+  isRetryableByTrait: () => isRetryableByTrait,
+  isServerError: () => isServerError,
+  isThrottlingError: () => isThrottlingError,
+  isTransientError: () => isTransientError,
+  omitRetryHeadersMiddleware: () => omitRetryHeadersMiddleware,
+  omitRetryHeadersMiddlewareOptions: () => omitRetryHeadersMiddlewareOptions,
+  resolveRetryConfig: () => resolveRetryConfig,
+  retryMiddleware: () => retryMiddleware,
+  retryMiddlewareOptions: () => retryMiddlewareOptions
+});
+var retryMiddleware, getRetryPlugin;
+var init_retry2 = __esm({
+  "node_modules/@smithy/core/dist-es/submodules/retry/index.js"() {
+    init_isStreamingPayload();
+    init_retryMiddleware();
+    init_service_error_classification();
+    init_AdaptiveRetryStrategy();
+    init_ConfiguredRetryStrategy();
+    init_DefaultRateLimiter();
+    init_StandardRetryStrategy();
+    init_config3();
+    init_constants5();
+    init_retries_2026_config();
+    init_AdaptiveRetryStrategy2();
+    init_StandardRetryStrategy2();
+    init_delayDecider();
+    init_retryDecider();
+    init_configurations2();
+    init_omitRetryHeadersMiddleware();
+    init_retryMiddleware();
+    init_parseRetryAfterHeader();
+    retryMiddleware = bindRetryMiddleware(isStreamingPayload);
+    getRetryPlugin = bindGetRetryPlugin(isStreamingPayload);
+  }
+});
+
 // node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/check-features.js
 async function checkFeatures(context, config, args) {
   const request = args.request;
   if (request?.headers?.["smithy-protocol"] === "rpc-v2-cbor") {
-    setFeature2(context, "PROTOCOL_RPC_V2_CBOR", "M");
+    setFeature(context, "PROTOCOL_RPC_V2_CBOR", "M");
   }
   if (typeof config.retryStrategy === "function") {
     const retryStrategy = await config.retryStrategy();
     if (typeof retryStrategy.mode === "string") {
       switch (retryStrategy.mode) {
         case RETRY_MODES.ADAPTIVE:
-          setFeature2(context, "RETRY_MODE_ADAPTIVE", "F");
+          setFeature(context, "RETRY_MODE_ADAPTIVE", "F");
           break;
         case RETRY_MODES.STANDARD:
-          setFeature2(context, "RETRY_MODE_STANDARD", "E");
+          setFeature(context, "RETRY_MODE_STANDARD", "E");
           break;
       }
     }
@@ -33373,17 +33603,17 @@ async function checkFeatures(context, config, args) {
   if (typeof config.accountIdEndpointMode === "function") {
     const endpointV2 = context.endpointV2;
     if (String(endpointV2?.url?.hostname).match(ACCOUNT_ID_ENDPOINT_REGEX)) {
-      setFeature2(context, "ACCOUNT_ID_ENDPOINT", "O");
+      setFeature(context, "ACCOUNT_ID_ENDPOINT", "O");
     }
     switch (await config.accountIdEndpointMode?.()) {
       case "disabled":
-        setFeature2(context, "ACCOUNT_ID_MODE_DISABLED", "Q");
+        setFeature(context, "ACCOUNT_ID_MODE_DISABLED", "Q");
         break;
       case "preferred":
-        setFeature2(context, "ACCOUNT_ID_MODE_PREFERRED", "P");
+        setFeature(context, "ACCOUNT_ID_MODE_PREFERRED", "P");
         break;
       case "required":
-        setFeature2(context, "ACCOUNT_ID_MODE_REQUIRED", "R");
+        setFeature(context, "ACCOUNT_ID_MODE_REQUIRED", "R");
         break;
     }
   }
@@ -33391,10 +33621,10 @@ async function checkFeatures(context, config, args) {
   if (identity?.$source) {
     const credentials = identity;
     if (credentials.accountId) {
-      setFeature2(context, "RESOLVED_ACCOUNT_ID", "T");
+      setFeature(context, "RESOLVED_ACCOUNT_ID", "T");
     }
     for (const [key, value] of Object.entries(credentials.$source ?? {})) {
-      setFeature2(context, key, value);
+      setFeature(context, key, value);
     }
   }
 }
@@ -33607,7 +33837,7 @@ var init_defaultUserAgent = __esm({
 var UA_APP_ID_ENV_NAME, UA_APP_ID_INI_NAME, UA_APP_ID_INI_NAME_DEPRECATED, NODE_APP_ID_CONFIG_OPTIONS;
 var init_nodeAppIdConfigOptions = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/nodeAppIdConfigOptions.js"() {
-    init_configurations2();
+    init_configurations();
     UA_APP_ID_ENV_NAME = "AWS_SDK_UA_APP_ID";
     UA_APP_ID_INI_NAME = "sdk_ua_app_id";
     UA_APP_ID_INI_NAME_DEPRECATED = "sdk-ua-app-id";
@@ -34724,7 +34954,7 @@ __export(client_exports2, {
   resolveRegionConfig: () => resolveRegionConfig,
   resolveUserAgentConfig: () => resolveUserAgentConfig,
   setCredentialFeature: () => setCredentialFeature,
-  setFeature: () => setFeature2,
+  setFeature: () => setFeature,
   setPartitionInfo: () => setPartitionInfo,
   setTokenFeature: () => setTokenFeature,
   state: () => state,
@@ -34747,7 +34977,7 @@ var init_client3 = __esm({
     init_configuration();
     init_getRecursionDetectionPlugin();
     init_recursionDetectionMiddleware();
-    init_configurations2();
+    init_configurations();
     init_user_agent_middleware();
     init_defaultUserAgent();
     init_nodeAppIdConfigOptions();
@@ -34794,6 +35024,9 @@ var init_getUpdatedSystemClockOffset = __esm({
         return currentSystemClockOffset;
       }
       const serverTime = Date.parse(clockTime);
+      if (Number.isNaN(serverTime)) {
+        return currentSystemClockOffset;
+      }
       const timeResponseReceived = Date.now();
       if (timeRequestSent !== void 0 && timeResponseReceived - timeRequestSent > 9e5) {
         return currentSystemClockOffset;
@@ -37424,7 +37657,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.998.1",
+      version: "3.998.4",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -37524,13 +37757,13 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.980.1",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.51",
-        "@aws-sdk/types": "^3.975.0",
-        "@smithy/core": "^3.38.0",
-        "@smithy/fetch-http-handler": "^5.8.0",
-        "@smithy/node-http-handler": "^4.14.0",
-        "@smithy/types": "^4.19.0",
+        "@aws-sdk/core": "^3.981.1",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.52",
+        "@aws-sdk/types": "^3.975.1",
+        "@smithy/core": "^3.40.0",
+        "@smithy/fetch-http-handler": "^5.8.1",
+        "@smithy/node-http-handler": "^4.14.2",
+        "@smithy/types": "^4.20.0",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -45063,7 +45296,8 @@ var require_dist_cjs11 = __commonJS({
           return requestHandler2?.metadata?.handlerProtocol === "h2";
         };
         const requestHandler = isH22(this.callerClientConfig?.requestHandler) ? void 0 : this.callerClientConfig?.requestHandler;
-        const region = this.profileData.region ?? await this.callerClientConfig?.region?.() ?? process.env.AWS_REGION;
+        const signInRegion = typeof freshToken.signInRegion === "string" && freshToken.signInRegion.length > 0 ? freshToken.signInRegion : void 0;
+        const region = signInRegion ?? this.profileData.region ?? await this.callerClientConfig?.region?.() ?? process.env.AWS_REGION;
         const client = new SigninClient2({
           credentials: {
             accessKeyId: "",
@@ -45073,7 +45307,8 @@ var require_dist_cjs11 = __commonJS({
           requestHandler,
           logger: logger2,
           userAgentAppId,
-          ...this.init?.clientConfig
+          ...this.init?.clientConfig,
+          ...signInRegion && { region: signInRegion }
         });
         this.createDPoPInterceptor(client.middlewareStack);
         const commandInput = {
@@ -46108,7 +46343,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1163.0";
+    var version = "3.1174.0";
     var packageInfo = {
       version
     };
@@ -46130,6 +46365,19 @@ var require_dist_cjs16 = __commonJS({
           ...opts
         });
         Object.setPrototypeOf(this, _ExpiredTokenException.prototype);
+      }
+    };
+    var InvalidContextAssertionException = class _InvalidContextAssertionException extends STSServiceException2 {
+      static shapeId = "com.amazonaws.sts#InvalidContextAssertionException";
+      name = "InvalidContextAssertionException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidContextAssertionException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidContextAssertionException.prototype);
       }
     };
     var MalformedPolicyDocumentException2 = class _MalformedPolicyDocumentException extends STSServiceException2 {
@@ -46237,6 +46485,32 @@ var require_dist_cjs16 = __commonJS({
         Object.setPrototypeOf(this, _ExpiredTradeInTokenException.prototype);
       }
     };
+    var InsufficientSessionLifetimeException = class _InsufficientSessionLifetimeException extends STSServiceException2 {
+      static shapeId = "com.amazonaws.sts#InsufficientSessionLifetimeException";
+      name = "InsufficientSessionLifetimeException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InsufficientSessionLifetimeException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InsufficientSessionLifetimeException.prototype);
+      }
+    };
+    var InvalidSubjectCredentialsException = class _InvalidSubjectCredentialsException extends STSServiceException2 {
+      static shapeId = "com.amazonaws.sts#InvalidSubjectCredentialsException";
+      name = "InvalidSubjectCredentialsException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidSubjectCredentialsException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidSubjectCredentialsException.prototype);
+      }
+    };
     var JWTPayloadSizeExceededException = class _JWTPayloadSizeExceededException extends STSServiceException2 {
       static shapeId = "com.amazonaws.sts#JWTPayloadSizeExceededException";
       name = "JWTPayloadSizeExceededException";
@@ -46307,6 +46581,7 @@ var require_dist_cjs16 = __commonJS({
     var _EM = "EncodedMessage";
     var _ETE3 = "ExpiredTokenException";
     var _ETITE = "ExpiredTradeInTokenException";
+    var _FPA = "FederatedProviderArn";
     var _FU = "FederatedUser";
     var _FUI = "FederatedUserId";
     var _GAKI = "GetAccessKeyInfo";
@@ -46321,6 +46596,9 @@ var require_dist_cjs16 = __commonJS({
     var _GFT = "GetFederationToken";
     var _GFTR = "GetFederationTokenRequest";
     var _GFTRe = "GetFederationTokenResponse";
+    var _GSC = "GetScopedCredentials";
+    var _GSCR = "GetScopedCredentialsRequest";
+    var _GSCRe = "GetScopedCredentialsResponse";
     var _GST = "GetSessionToken";
     var _GSTR = "GetSessionTokenRequest";
     var _GSTRe = "GetSessionTokenResponse";
@@ -46329,15 +46607,20 @@ var require_dist_cjs16 = __commonJS({
     var _GWITRe = "GetWebIdentityTokenResponse";
     var _I = "Issuer";
     var _IAME = "InvalidAuthorizationMessageException";
+    var _ICAE = "InvalidContextAssertionException";
     var _IDPCEE2 = "IDPCommunicationErrorException";
     var _IDPRCE2 = "IDPRejectedClaimException";
     var _IITE2 = "InvalidIdentityTokenException";
+    var _IP = "IdentityProvider";
+    var _ISCE = "InvalidSubjectCredentialsException";
+    var _ISLE = "InsufficientSessionLifetimeException";
     var _JWTPSEE = "JWTPayloadSizeExceededException";
     var _K2 = "Key";
     var _MPDE2 = "MalformedPolicyDocumentException";
     var _MSTS2 = "MinimumSessionTokenSize";
     var _N = "Name";
     var _NQ = "NameQualifier";
+    var _OI = "OriginIdentity";
     var _OWIFDE = "OutboundWebIdentityFederationDisabledException";
     var _P2 = "Policy";
     var _PA2 = "PolicyArns";
@@ -46362,13 +46645,22 @@ var require_dist_cjs16 = __commonJS({
     var _SDEE = "SessionDurationEscalationException";
     var _SFWIT2 = "SubjectFromWebIdentityToken";
     var _SI2 = "SourceIdentity";
+    var _SIe = "SessionInfo";
+    var _SM = "SubjectMode";
     var _SN2 = "SerialNumber";
+    var _SPC = "ScopedPoliciesCount";
+    var _SS = "ScopedSession";
+    var _SSD = "ScopedSessionDescription";
+    var _SSI = "ScopedSessionId";
     var _ST2 = "SubjectType";
     var _STS2 = "SessionTokenSize";
     var _STU2 = "SessionTokenUtilization";
     var _STe = "SessionToken";
+    var _Sc = "Scope";
     var _T2 = "Tags";
     var _TC2 = "TokenCode";
+    var _TCr = "TransactionContext";
+    var _TIPC = "TrustedIdentityPropagationContext";
     var _TIT = "TradeInToken";
     var _TP = "TargetPrincipal";
     var _TPA = "TaskPolicyArn";
@@ -46385,8 +46677,13 @@ var require_dist_cjs16 = __commonJS({
     var _e5 = "error";
     var _hE5 = "httpError";
     var _m4 = "message";
+    var _oIIT = "originIdentityIssuerType";
+    var _oIST = "originIdentitySubjectType";
+    var _oISTT = "originIdentitySubjectTypeType";
     var _pDLT2 = "policyDescriptorListType";
     var _s5 = "smithy.ts.sdk.synthetic.com.amazonaws.sts";
+    var _tCIPMT = "transactionContextIdentityProviderMapType";
+    var _tCVT = "transactionContextValueType";
     var _tITT = "tradeInTokenType";
     var _tLT2 = "tagListType";
     var _wITT = "webIdentityTokenType";
@@ -46431,6 +46728,15 @@ var require_dist_cjs16 = __commonJS({
       [0]
     ];
     n0_registry5.registerError(IDPRejectedClaimException$2, IDPRejectedClaimException2);
+    var InsufficientSessionLifetimeException$ = [
+      -3,
+      n05,
+      _ISLE,
+      { [_aQE2]: [`InsufficientSessionLifetime`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(InsufficientSessionLifetimeException$, InsufficientSessionLifetimeException);
     var InvalidAuthorizationMessageException$ = [
       -3,
       n05,
@@ -46440,6 +46746,15 @@ var require_dist_cjs16 = __commonJS({
       [0]
     ];
     n0_registry5.registerError(InvalidAuthorizationMessageException$, InvalidAuthorizationMessageException);
+    var InvalidContextAssertionException$ = [
+      -3,
+      n05,
+      _ICAE,
+      { [_aQE2]: [`InvalidContextAssertion`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(InvalidContextAssertionException$, InvalidContextAssertionException);
     var InvalidIdentityTokenException$2 = [
       -3,
       n05,
@@ -46449,6 +46764,15 @@ var require_dist_cjs16 = __commonJS({
       [0]
     ];
     n0_registry5.registerError(InvalidIdentityTokenException$2, InvalidIdentityTokenException2);
+    var InvalidSubjectCredentialsException$ = [
+      -3,
+      n05,
+      _ISCE,
+      { [_aQE2]: [`InvalidSubjectCredentials`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(InvalidSubjectCredentialsException$, InvalidSubjectCredentialsException);
     var JWTPayloadSizeExceededException$ = [
       -3,
       n05,
@@ -46509,8 +46833,12 @@ var require_dist_cjs16 = __commonJS({
     ];
     var accessKeySecretType2 = [0, n05, _aKST2, 8, 0];
     var clientTokenType2 = [0, n05, _cTT2, 8, 0];
+    var originIdentityIssuerType = [0, n05, _oIIT, 8, 0];
+    var originIdentitySubjectType = [0, n05, _oIST, 8, 0];
+    var originIdentitySubjectTypeType = [0, n05, _oISTT, 8, 0];
     var SAMLAssertionType = [0, n05, _SAMLAT, 8, 0];
     var tradeInTokenType = [0, n05, _tITT, 8, 0];
+    var transactionContextValueType = [0, n05, _tCVT, 8, 0];
     var webIdentityTokenType = [0, n05, _wITT, 8, 0];
     var AssumedRoleUser$2 = [
       3,
@@ -46552,8 +46880,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWSAMLRs,
       0,
-      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2, _STU2, _STS2],
-      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0, 1, 1]
+      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2, _STU2, _STS2, _TIPC],
+      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0, 1, 1, [() => TrustedIdentityPropagationContext$, 0]]
     ];
     var AssumeRoleWithWebIdentityRequest$2 = [
       3,
@@ -46569,8 +46897,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWWIRs2,
       0,
-      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2, _STU2, _STS2],
-      [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0, 1, 1]
+      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2, _STU2, _STS2, _TIPC],
+      [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0, 1, 1, [() => TrustedIdentityPropagationContext$, 0]]
     ];
     var AssumeRootRequest$ = [
       3,
@@ -46691,6 +47019,22 @@ var require_dist_cjs16 = __commonJS({
       [_C2, _FU, _PPS2, _STU2, _STS2],
       [[() => Credentials$2, 0], () => FederatedUser$, 1, 1, 1]
     ];
+    var GetScopedCredentialsRequest$ = [
+      3,
+      n05,
+      _GSCR,
+      0,
+      [_P2, _DS2, _MSTS2, _SSD],
+      [0, 1, 1, 0]
+    ];
+    var GetScopedCredentialsResponse$ = [
+      3,
+      n05,
+      _GSCRe,
+      0,
+      [_C2, _SIe, _STU2, _STS2, _SPC, _SI2],
+      [[() => Credentials$2, 0], () => ScopedSession$, 1, 1, 1, 0]
+    ];
     var GetSessionTokenRequest$ = [
       3,
       n05,
@@ -46712,8 +47056,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GWITR,
       0,
-      [_Au2, _SA, _DS2, _T2],
-      [64 | 0, 0, 1, () => tagListType2],
+      [_Au2, _SA, _DS2, _Sc, _SM, _T2],
+      [64 | 0, 0, 1, 0, 0, () => tagListType2],
       2
     ];
     var GetWebIdentityTokenResponse$ = [
@@ -46723,6 +47067,14 @@ var require_dist_cjs16 = __commonJS({
       0,
       [_WIT2, _E2],
       [[() => webIdentityTokenType, 0], 4]
+    ];
+    var OriginIdentity$ = [
+      3,
+      n05,
+      _OI,
+      0,
+      [_S, _ST2, _I, _FPA],
+      [[() => originIdentitySubjectType, 0], [() => originIdentitySubjectTypeType, 0], [() => originIdentityIssuerType, 0], 0]
     ];
     var PolicyDescriptorType$2 = [
       3,
@@ -46740,6 +47092,15 @@ var require_dist_cjs16 = __commonJS({
       [_PAro, _CA2],
       [0, 0]
     ];
+    var ScopedSession$ = [
+      3,
+      n05,
+      _SS,
+      0,
+      [_SSI, _A2],
+      [0, 0],
+      2
+    ];
     var Tag$2 = [
       3,
       n05,
@@ -46748,6 +47109,22 @@ var require_dist_cjs16 = __commonJS({
       [_K2, _V2],
       [0, 0],
       2
+    ];
+    var TransactionContext$ = [
+      3,
+      n05,
+      _TCr,
+      0,
+      [_IP],
+      [[() => transactionContextIdentityProviderMapType, 0]]
+    ];
+    var TrustedIdentityPropagationContext$ = [
+      3,
+      n05,
+      _TIPC,
+      8,
+      [_OI, _TCr],
+      [[() => OriginIdentity$, 0], [() => TransactionContext$, 0]]
     ];
     var policyDescriptorListType2 = [
       1,
@@ -46769,6 +47146,20 @@ var require_dist_cjs16 = __commonJS({
       _tLT2,
       0,
       () => Tag$2
+    ];
+    var transactionContextIdentityProviderMapType = [
+      2,
+      n05,
+      _tCIPMT,
+      0,
+      [
+        0,
+        0
+      ],
+      [
+        () => transactionContextValueType,
+        0
+      ]
     ];
     var AssumeRole$2 = [
       9,
@@ -46841,6 +47232,14 @@ var require_dist_cjs16 = __commonJS({
       0,
       () => GetFederationTokenRequest$,
       () => GetFederationTokenResponse$
+    ];
+    var GetScopedCredentials$ = [
+      9,
+      n05,
+      _GSC,
+      0,
+      () => GetScopedCredentialsRequest$,
+      () => GetScopedCredentialsResponse$
     ];
     var GetSessionToken$ = [
       9,
@@ -47050,6 +47449,8 @@ var require_dist_cjs16 = __commonJS({
     };
     var GetFederationTokenCommand = class extends command5(_ep05, _mw05, "GetFederationToken", GetFederationToken$) {
     };
+    var GetScopedCredentialsCommand = class extends command5(_ep05, _mw05, "GetScopedCredentials", GetScopedCredentials$) {
+    };
     var GetSessionTokenCommand = class extends command5(_ep05, _mw05, "GetSessionToken", GetSessionToken$) {
     };
     var GetWebIdentityTokenCommand = class extends command5(_ep05, _mw05, "GetWebIdentityToken", GetWebIdentityToken$) {
@@ -47064,12 +47465,17 @@ var require_dist_cjs16 = __commonJS({
       GetCallerIdentityCommand: GetCallerIdentityCommand2,
       GetDelegatedAccessTokenCommand,
       GetFederationTokenCommand,
+      GetScopedCredentialsCommand,
       GetSessionTokenCommand,
       GetWebIdentityTokenCommand
     };
     var STS2 = class extends STSClient3 {
     };
     createAggregatedClient2(commands5, STS2);
+    var WebIdentityTokenSubjectModeType = {
+      AWS_IDENTITY: "AWSIdentity",
+      ORIGIN_IDENTITY: "OriginIdentity"
+    };
     var getAccountIdFromAssumedRoleUser2 = (assumedRoleUser) => {
       if (typeof assumedRoleUser?.Arn === "string") {
         const arnComponents = assumedRoleUser.Arn.split(":");
@@ -47231,6 +47637,10 @@ var require_dist_cjs16 = __commonJS({
     exports2.GetFederationTokenCommand = GetFederationTokenCommand;
     exports2.GetFederationTokenRequest$ = GetFederationTokenRequest$;
     exports2.GetFederationTokenResponse$ = GetFederationTokenResponse$;
+    exports2.GetScopedCredentials$ = GetScopedCredentials$;
+    exports2.GetScopedCredentialsCommand = GetScopedCredentialsCommand;
+    exports2.GetScopedCredentialsRequest$ = GetScopedCredentialsRequest$;
+    exports2.GetScopedCredentialsResponse$ = GetScopedCredentialsResponse$;
     exports2.GetSessionToken$ = GetSessionToken$;
     exports2.GetSessionTokenCommand = GetSessionTokenCommand;
     exports2.GetSessionTokenRequest$ = GetSessionTokenRequest$;
@@ -47243,14 +47653,21 @@ var require_dist_cjs16 = __commonJS({
     exports2.IDPCommunicationErrorException$ = IDPCommunicationErrorException$2;
     exports2.IDPRejectedClaimException = IDPRejectedClaimException2;
     exports2.IDPRejectedClaimException$ = IDPRejectedClaimException$2;
+    exports2.InsufficientSessionLifetimeException = InsufficientSessionLifetimeException;
+    exports2.InsufficientSessionLifetimeException$ = InsufficientSessionLifetimeException$;
     exports2.InvalidAuthorizationMessageException = InvalidAuthorizationMessageException;
     exports2.InvalidAuthorizationMessageException$ = InvalidAuthorizationMessageException$;
+    exports2.InvalidContextAssertionException = InvalidContextAssertionException;
+    exports2.InvalidContextAssertionException$ = InvalidContextAssertionException$;
     exports2.InvalidIdentityTokenException = InvalidIdentityTokenException2;
     exports2.InvalidIdentityTokenException$ = InvalidIdentityTokenException$2;
+    exports2.InvalidSubjectCredentialsException = InvalidSubjectCredentialsException;
+    exports2.InvalidSubjectCredentialsException$ = InvalidSubjectCredentialsException$;
     exports2.JWTPayloadSizeExceededException = JWTPayloadSizeExceededException;
     exports2.JWTPayloadSizeExceededException$ = JWTPayloadSizeExceededException$;
     exports2.MalformedPolicyDocumentException = MalformedPolicyDocumentException2;
     exports2.MalformedPolicyDocumentException$ = MalformedPolicyDocumentException$2;
+    exports2.OriginIdentity$ = OriginIdentity$;
     exports2.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException;
     exports2.OutboundWebIdentityFederationDisabledException$ = OutboundWebIdentityFederationDisabledException$;
     exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException2;
@@ -47263,9 +47680,13 @@ var require_dist_cjs16 = __commonJS({
     exports2.STSClient = STSClient3;
     exports2.STSServiceException = STSServiceException2;
     exports2.STSServiceException$ = STSServiceException$2;
+    exports2.ScopedSession$ = ScopedSession$;
     exports2.SessionDurationEscalationException = SessionDurationEscalationException;
     exports2.SessionDurationEscalationException$ = SessionDurationEscalationException$;
     exports2.Tag$ = Tag$2;
+    exports2.TransactionContext$ = TransactionContext$;
+    exports2.TrustedIdentityPropagationContext$ = TrustedIdentityPropagationContext$;
+    exports2.WebIdentityTokenSubjectModeType = WebIdentityTokenSubjectModeType;
     exports2.decorateDefaultCredentialProvider = decorateDefaultCredentialProvider2;
     exports2.errorTypeRegistries = errorTypeRegistries5;
     exports2.getDefaultRoleAssumer = getDefaultRoleAssumer3;
@@ -53562,6 +53983,7 @@ var require_FtpContext = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.FTPContext = exports2.FTPError = void 0;
     var net_1 = require("net");
+    var tls_1 = require("tls");
     var parseControlResponse_1 = require_parseControlResponse();
     var FTPError = class extends Error {
       constructor(res) {
@@ -53586,6 +54008,7 @@ var require_FtpContext = __commonJS({
         this.verbose = false;
         this.ipFamily = void 0;
         this.tlsOptions = {};
+        this.tlsSessionStore = void 0;
         this._partialResponse = "";
         this._encoding = encoding;
         this._socket = this.socket = this._newSocket();
@@ -53637,6 +54060,7 @@ var require_FtpContext = __commonJS({
       set socket(socket) {
         this.dataSocket = void 0;
         this.tlsOptions = {};
+        this.tlsSessionStore = void 0;
         this._partialResponse = "";
         if (this._socket) {
           const newSocketUpgradesExisting = socket.localPort === this._socket.localPort;
@@ -53658,6 +54082,11 @@ var require_FtpContext = __commonJS({
               this.closeWithError(new Error("Server closed connection unexpectedly."));
           });
           this._setupDefaultErrorHandlers(socket, "control socket");
+          if (socket instanceof tls_1.TLSSocket) {
+            socket.on("session", (session) => {
+              this.tlsSessionStore = session;
+            });
+          }
         }
         this._socket = socket;
       }
@@ -53700,12 +54129,12 @@ var require_FtpContext = __commonJS({
        * Send an FTP command without waiting for or handling the result.
        */
       send(command5) {
-        if (/[\r\n\0]/.test(command5)) {
-          throw new Error(`Invalid command: Contains control characters. (${command5})`);
-        }
         const containsPassword = command5.startsWith("PASS");
-        const message = containsPassword ? "> PASS ###" : `> ${command5}`;
-        this.log(message);
+        const description = containsPassword ? "PASS ###" : command5;
+        if (/[\r\n\0]/.test(command5)) {
+          throw new Error(`Invalid command: Contains control characters. (${description})`);
+        }
+        this.log(`> ${description}`);
         this._socket.write(command5 + "\r\n", this.encoding);
       }
       /**
@@ -53733,16 +54162,24 @@ Running task launched at: ${this._task.stack}`;
           this.closeWithError(err);
         }
         return new Promise((resolveTask, rejectTask) => {
+          let settled = false;
+          const stopTrackingOnce = () => {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            this._stopTrackingTask();
+          };
           this._task = {
             stack: new Error().stack || "Unknown call stack",
             responseHandler,
             resolver: {
               resolve: (arg) => {
-                this._stopTrackingTask();
+                stopTrackingOnce();
                 resolveTask(arg);
               },
               reject: (err) => {
-                this._stopTrackingTask();
+                stopTrackingOnce();
                 rejectTask(err);
               }
             }
@@ -53757,7 +54194,11 @@ Closing reason: ${this._closingError.stack}`;
           }
           this.socket.setTimeout(this.timeout);
           if (command5) {
-            this.send(command5);
+            try {
+              this.send(command5);
+            } catch (err) {
+              this._task.resolver.reject(err);
+            }
           }
         });
       }
@@ -53811,8 +54252,14 @@ Closing reason: ${this._closingError.stack}`;
        * @protected
        */
       _passToHandler(response) {
-        if (this._task) {
-          this._task.responseHandler(response, this._task.resolver);
+        const task = this._task;
+        if (task) {
+          try {
+            task.responseHandler(response, task.resolver);
+          } catch (err) {
+            task.resolver.reject(err);
+            this.closeWithError(err);
+          }
         }
       }
       /**
@@ -53888,6 +54335,7 @@ var require_netUtils = __commonJS({
     exports2.describeTLS = describeTLS;
     exports2.describeAddress = describeAddress;
     exports2.upgradeSocket = upgradeSocket;
+    exports2.isLoopback = isLoopback;
     exports2.ipIsPrivateV4Address = ipIsPrivateV4Address;
     var tls_1 = require("tls");
     function describeTLS(socket) {
@@ -53920,6 +54368,9 @@ var require_netUtils = __commonJS({
           reject(error3);
         });
       });
+    }
+    function isLoopback(ip2) {
+      return ip2 === "::1" || ip2.startsWith("127.");
     }
     function ipIsPrivateV4Address(ip2 = "") {
       if (ip2.startsWith("::ffff:")) {
@@ -53998,7 +54449,7 @@ var require_parseListDOS = __commonJS({
     exports2.transformList = transformList;
     var FileInfo_1 = require_FileInfo();
     var RE_LINE = new RegExp(
-      "(\\S+)\\s+(\\S+)\\s+(?:(<DIR>)|([0-9]+))\\s+(\\S.*)"
+      "^\\s*(\\S+)\\s+(\\S+)\\s+(?:(<DIR>)|([0-9]+))\\s+(\\S.*)"
       // First non-space followed by rest of line (name)
     );
     function testLine(line) {
@@ -54043,7 +54494,7 @@ var require_parseListUnix = __commonJS({
     var JA_MONTH = "\u6708";
     var JA_DAY = "\u65E5";
     var JA_YEAR = "\u5E74";
-    var RE_LINE = new RegExp("([bcdelfmpSs-])(((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]?)))\\+?\\s*(\\d+)\\s+(?:(\\S+(?:\\s\\S+)*?)\\s+)?(?:(\\S+(?:\\s\\S+)*)\\s+)?(\\d+(?:,\\s*\\d+)?)\\s+((?:\\d+[-/]\\d+[-/]\\d+)|(?:\\S{3}\\s+\\d{1,2})|(?:\\d{1,2}\\s+\\S{3})|(?:\\d{1,2}" + JA_MONTH + "\\s+\\d{1,2}" + JA_DAY + "))\\s+((?:\\d+(?::\\d+)?)|(?:\\d{4}" + JA_YEAR + "))\\s(.*)");
+    var RE_LINE = new RegExp("^[\\s\\d]*([bcdelfmpSs-])(((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]?)))\\+?\\s*(\\d+)\\s+(?:(\\S+(?:\\s\\S+){0,7}?)\\s+)?(?:(\\S+(?:\\s\\S+){0,7})\\s+)?(\\d+(?:,\\s*\\d+)?)\\s+((?:\\d+[-/]\\d+[-/]\\d+)|(?:\\S{3}\\s+\\d{1,2})|(?:\\d{1,2}\\s+\\S{3})|(?:\\d{1,2}" + JA_MONTH + "\\s+\\d{1,2}" + JA_DAY + "))\\s+((?:\\d+(?::\\d+)?)|(?:\\d{4}" + JA_YEAR + "))\\s(.*)");
     function testLine(line) {
       return RE_LINE.test(line);
     }
@@ -54214,7 +54665,7 @@ var require_parseListMLSD = __commonJS({
       return [a5, b6];
     }
     function testLine(line) {
-      return /^\S+=\S+;/.test(line) || line.startsWith(" ");
+      return /^[^\s=]+=\S+;/.test(line) || line.startsWith(" ");
     }
     function parseLine(line) {
       const [packedFacts, name] = splitStringOnce(line, " ");
@@ -54228,11 +54679,11 @@ var require_parseListMLSD = __commonJS({
         if (!factValue) {
           continue;
         }
-        const factHandler = factHandlersByName[factName.toLowerCase()];
-        if (!factHandler) {
+        const key = factName.toLowerCase();
+        if (!Object.prototype.hasOwnProperty.call(factHandlersByName, key)) {
           continue;
         }
-        const result = factHandler(factValue, info2);
+        const result = factHandlersByName[key](factValue, info2);
         if (result === 2) {
           return void 0;
         }
@@ -54431,6 +54882,62 @@ var require_ProgressTracker = __commonJS({
   }
 });
 
+// node_modules/basic-ftp/dist/safePathNames.js
+var require_safePathNames = __commonJS({
+  "node_modules/basic-ftp/dist/safePathNames.js"(exports2) {
+    "use strict";
+    var __createBinding2 = exports2 && exports2.__createBinding || (Object.create ? (function(o3, m3, k5, k22) {
+      if (k22 === void 0) k22 = k5;
+      var desc = Object.getOwnPropertyDescriptor(m3, k5);
+      if (!desc || ("get" in desc ? !m3.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() {
+          return m3[k5];
+        } };
+      }
+      Object.defineProperty(o3, k22, desc);
+    }) : (function(o3, m3, k5, k22) {
+      if (k22 === void 0) k22 = k5;
+      o3[k22] = m3[k5];
+    }));
+    var __setModuleDefault2 = exports2 && exports2.__setModuleDefault || (Object.create ? (function(o3, v) {
+      Object.defineProperty(o3, "default", { enumerable: true, value: v });
+    }) : function(o3, v) {
+      o3["default"] = v;
+    });
+    var __importStar2 = exports2 && exports2.__importStar || /* @__PURE__ */ (function() {
+      var ownKeys2 = function(o3) {
+        ownKeys2 = Object.getOwnPropertyNames || function(o4) {
+          var ar = [];
+          for (var k5 in o4) if (Object.prototype.hasOwnProperty.call(o4, k5)) ar[ar.length] = k5;
+          return ar;
+        };
+        return ownKeys2(o3);
+      };
+      return function(mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) {
+          for (var k5 = ownKeys2(mod), i5 = 0; i5 < k5.length; i5++) if (k5[i5] !== "default") __createBinding2(result, mod, k5[i5]);
+        }
+        __setModuleDefault2(result, mod);
+        return result;
+      };
+    })();
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.isSafePathName = isSafePathName;
+    var path4 = __importStar2(require("path"));
+    function isSafePathName(name, localPath = path4) {
+      if (!name || name === "." || name === ".." || name.includes("/")) {
+        return false;
+      }
+      if (localPath.sep === "\\") {
+        return !/[\\:]/.test(name) && !/^[. ]+$/.test(name);
+      }
+      return true;
+    }
+  }
+});
+
 // node_modules/basic-ftp/dist/StringWriter.js
 var require_StringWriter = __commonJS({
   "node_modules/basic-ftp/dist/StringWriter.js"(exports2) {
@@ -54466,6 +54973,74 @@ var require_StringWriter = __commonJS({
   }
 });
 
+// node_modules/basic-ftp/dist/TransferWatchdog.js
+var require_TransferWatchdog = __commonJS({
+  "node_modules/basic-ftp/dist/TransferWatchdog.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.TransferWatchdog = void 0;
+    var maxCheckIntervalMs = 500;
+    var minChecksPerTimeout = 4;
+    var TransferWatchdog = class {
+      constructor() {
+        this.timer = void 0;
+      }
+      /**
+       * Start watching a transfer. Calls `onStall` if the server hasn't made progress for
+       * `timeout` milliseconds, or for twice that if we made it wait ourselves before that.
+       * A timeout of 0 disables the watchdog.
+       */
+      start(socket, direction, timeout, onStall) {
+        this.stop();
+        if (timeout <= 0) {
+          return;
+        }
+        const intervalMs = Math.max(1, Math.min(Math.floor(timeout / minChecksPerTimeout), maxCheckIntervalMs));
+        let lastBytes = countBytes(socket);
+        let idleMs = 0;
+        let graceMs = 0;
+        this.timer = setInterval(() => {
+          const bytes = countBytes(socket);
+          const madeProgress = bytes !== lastBytes;
+          lastBytes = bytes;
+          if (!isWaitingForServer(socket, direction)) {
+            idleMs = 0;
+            graceMs = timeout;
+            return;
+          }
+          if (madeProgress) {
+            idleMs = 0;
+            graceMs = 0;
+            return;
+          }
+          idleMs += intervalMs;
+          if (idleMs >= timeout + graceMs) {
+            this.stop();
+            onStall();
+          }
+        }, intervalMs);
+        this.timer.unref();
+      }
+      /**
+       * Stop watching. Safe to call at any time, also if no transfer is being watched.
+       */
+      stop() {
+        if (this.timer) {
+          clearInterval(this.timer);
+          this.timer = void 0;
+        }
+      }
+    };
+    exports2.TransferWatchdog = TransferWatchdog;
+    function countBytes(socket) {
+      return socket.bytesRead + socket.bytesWritten;
+    }
+    function isWaitingForServer(socket, direction) {
+      return direction === "download" ? !socket.isPaused() : socket.writableLength > 0;
+    }
+  }
+});
+
 // node_modules/basic-ftp/dist/transfer.js
 var require_transfer = __commonJS({
   "node_modules/basic-ftp/dist/transfer.js"(exports2) {
@@ -54479,9 +55054,10 @@ var require_transfer = __commonJS({
     exports2.connectForPassiveTransfer = connectForPassiveTransfer;
     exports2.uploadFrom = uploadFrom;
     exports2.downloadTo = downloadTo;
-    var netUtils_1 = require_netUtils();
     var stream_1 = require("stream");
     var tls_1 = require("tls");
+    var TransferWatchdog_1 = require_TransferWatchdog();
+    var netUtils_1 = require_netUtils();
     var parseControlResponse_1 = require_parseControlResponse();
     async function enterPassiveModeIPv6(ftp2) {
       const res = await ftp2.request("EPSV");
@@ -54530,11 +55106,16 @@ var require_transfer = __commonJS({
       if (controlHost === void 0) {
         throw new Error("Control socket is disconnected, can't get remote address.");
       }
-      await connectForPassiveTransfer(controlHost, target.port, ftp2);
+      const normalizedControlHost = controlHost.replace(/^::ffff:/i, "");
+      const hostsAreCompatible = normalizedControlHost === target.host || (0, netUtils_1.isLoopback)(normalizedControlHost) && (0, netUtils_1.isLoopback)(target.host);
+      if (!hostsAreCompatible) {
+        throw new Error(`PASV returned another host (${target.host}) for data transfer that you have connected to (${controlHost}). Even though the FTP protocol allows this, basic-ftp disables this feature by default for security reasons. If you do need this feature, instantiate the Client with the optional paramter "allowSeparateTransferHost: true". See the README documentation for more information.`);
+      }
+      await connectForPassiveTransfer(normalizedControlHost, target.port, ftp2);
       return res;
     }
     function parsePasvResponse(message) {
-      const groups = message.match(/([-\d]+,[-\d]+,[-\d]+,[-\d]+),([-\d]+),([-\d]+)/);
+      const groups = message.match(/(?<![-\d])([-\d]+,[-\d]+,[-\d]+,[-\d]+),([-\d]+),([-\d]+)/);
       if (groups === null || groups.length !== 4) {
         throw new Error(`Can't parse response to 'PASV': ${message}`);
       }
@@ -54545,7 +55126,8 @@ var require_transfer = __commonJS({
     }
     function connectForPassiveTransfer(host, port, ftp2) {
       return new Promise((resolve, reject) => {
-        let socket = ftp2._newSocket();
+        const rawSocket = ftp2._newSocket();
+        let socket = rawSocket;
         const handleConnErr = function(err) {
           err.message = "Can't open data connection in passive mode: " + err.message;
           reject(err);
@@ -54558,17 +55140,23 @@ var require_transfer = __commonJS({
         socket.on("error", handleConnErr);
         socket.on("timeout", handleTimeout);
         socket.connect({ port, host, family: ftp2.ipFamily }, () => {
+          var _a2;
           if (ftp2.socket instanceof tls_1.TLSSocket) {
-            socket = (0, tls_1.connect)(Object.assign({}, ftp2.tlsOptions, {
-              socket,
+            const tlsSocket = (0, tls_1.connect)(Object.assign({}, ftp2.tlsOptions, {
+              socket: rawSocket,
               // Reuse the TLS session negotiated earlier when the control connection
               // was upgraded. Servers expect this because it provides additional
               // security: If a completely new session would be negotiated, a hacker
               // could guess the port and connect to the new data connection before we do
               // by just starting his/her own TLS session.
-              session: ftp2.socket.getSession()
+              session: (_a2 = ftp2.tlsSessionStore) !== null && _a2 !== void 0 ? _a2 : ftp2.socket.getSession()
             }));
+            tlsSocket.on("session", (session) => {
+              ftp2.tlsSessionStore = session;
+            });
+            socket = tlsSocket;
           }
+          rawSocket.setTimeout(0);
           socket.removeListener("error", handleConnErr);
           socket.removeListener("timeout", handleTimeout);
           ftp2.dataSocket = socket;
@@ -54585,6 +55173,8 @@ var require_transfer = __commonJS({
         this.progress = progress;
         this.response = void 0;
         this.dataTransferDone = false;
+        this.taskSettled = false;
+        this.watchdog = new TransferWatchdog_1.TransferWatchdog();
       }
       /**
        * Mark the beginning of a transfer.
@@ -54597,18 +55187,22 @@ var require_transfer = __commonJS({
           throw new Error("Data transfer should start but there is no data connection.");
         }
         this.ftp.socket.setTimeout(0);
-        this.ftp.dataSocket.setTimeout(this.ftp.timeout);
+        this.ftp.dataSocket.setTimeout(0);
+        this.watchdog.start(this.ftp.dataSocket, type === "upload" ? "upload" : "download", this.ftp.timeout, () => {
+          this.ftp.closeWithError(new Error("Timeout (data socket)"));
+        });
         this.progress.start(this.ftp.dataSocket, name, type);
       }
       /**
        * The data connection has finished the transfer.
        */
       onDataDone(task) {
+        if (this.taskSettled) {
+          return;
+        }
+        this.watchdog.stop();
         this.progress.updateAndStop();
         this.ftp.socket.setTimeout(this.ftp.timeout);
-        if (this.ftp.dataSocket) {
-          this.ftp.dataSocket.setTimeout(0);
-        }
         this.dataTransferDone = true;
         this.tryResolve(task);
       }
@@ -54623,6 +55217,11 @@ var require_transfer = __commonJS({
        * An error has been reported and the task should be rejected.
        */
       onError(task, err) {
+        if (this.taskSettled) {
+          return;
+        }
+        this.taskSettled = true;
+        this.watchdog.stop();
         this.progress.updateAndStop();
         this.ftp.socket.setTimeout(this.ftp.timeout);
         this.ftp.dataSocket = void 0;
@@ -54640,6 +55239,7 @@ var require_transfer = __commonJS({
       tryResolve(task) {
         const canResolve = this.dataTransferDone && this.response !== void 0;
         if (canResolve) {
+          this.taskSettled = true;
           this.ftp.dataSocket = void 0;
           task.resolve(this.response);
         }
@@ -54648,10 +55248,15 @@ var require_transfer = __commonJS({
     function uploadFrom(source, config) {
       const resolver = new TransferResolver(config.ftp, config.tracker);
       const fullCommand = `${config.command} ${config.remotePath}`;
+      let transferStarted = false;
       return config.ftp.handle(fullCommand, (res, task) => {
         if (res instanceof Error) {
           resolver.onError(task, res);
         } else if (res.code === 150 || res.code === 125) {
+          if (transferStarted) {
+            return;
+          }
+          transferStarted = true;
           const dataSocket = config.ftp.dataSocket;
           if (!dataSocket) {
             resolver.onError(task, new Error("Upload should begin but no data connection is available."));
@@ -54681,10 +55286,15 @@ var require_transfer = __commonJS({
         throw new Error("Download will be initiated but no data connection is available.");
       }
       const resolver = new TransferResolver(config.ftp, config.tracker);
+      let transferStarted = false;
       return config.ftp.handle(config.command, (res, task) => {
         if (res instanceof Error) {
           resolver.onError(task, res);
         } else if (res.code === 150 || res.code === 125) {
+          if (transferStarted) {
+            return;
+          }
+          transferStarted = true;
           const dataSocket = config.ftp.dataSocket;
           if (!dataSocket) {
             resolver.onError(task, new Error("Download should begin but no data connection is available."));
@@ -54734,16 +55344,19 @@ var require_Client = __commonJS({
     var parseList_1 = require_parseList();
     var parseListMLSD_1 = require_parseListMLSD();
     var ProgressTracker_1 = require_ProgressTracker();
+    var safePathNames_1 = require_safePathNames();
     var StringWriter_1 = require_StringWriter();
     var transfer_1 = require_transfer();
     var fsReadDir = (0, util_1.promisify)(fs_1.readdir);
     var fsMkDir = (0, util_1.promisify)(fs_1.mkdir);
     var fsStat = (0, util_1.promisify)(fs_1.stat);
+    var fsFStat = (0, util_1.promisify)(fs_1.fstat);
     var fsOpen = (0, util_1.promisify)(fs_1.open);
     var fsClose = (0, util_1.promisify)(fs_1.close);
     var fsUnlink = (0, util_1.promisify)(fs_1.unlink);
     var defaultClientOptions = {
-      allowSeparateTransferHost: true,
+      /** For security reasons this library should not allow separate transfer hosts by default. */
+      allowSeparateTransferHost: false,
       maxListingBytes: 40 * 1024 * 1024
     };
     var LIST_COMMANDS_DEFAULT = () => ["LIST -a", "LIST"];
@@ -54808,7 +55421,9 @@ var require_Client = __commonJS({
        * explicit TLS. There are still FTP servers that support only implicit TLS, though.
        */
       connectImplicitTLS(host = "localhost", port = 21, tlsOptions = {}) {
+        var _a2;
         this.ftp.reset();
+        tlsOptions.host = (_a2 = tlsOptions.host) !== null && _a2 !== void 0 ? _a2 : host;
         this.ftp.socket = (0, tls_1.connect)(port, host, tlsOptions, () => this.ftp.log(`Connected to ${(0, netUtils_1.describeAddress)(this.ftp.socket)} (${(0, netUtils_1.describeTLS)(this.ftp.socket)})`));
         this.ftp.tlsOptions = tlsOptions;
         return this._handleConnectResponse();
@@ -55079,7 +55694,12 @@ var require_Client = __commonJS({
           autoClose: false
         });
         try {
-          return await this._uploadFromStream(source, remotePath, command5);
+          const expectedBytes = await expectedBytesFromLocalFile(fd, options);
+          const response = await this._uploadFromStream(source, remotePath, command5);
+          if (expectedBytes !== void 0 && source.bytesRead !== expectedBytes) {
+            throw new Error(`Local file "${localPath}" changed while it was being uploaded to "${remotePath}": expected to send ${expectedBytes} bytes but sent ${source.bytesRead}. The remote file is incomplete.`);
+          }
+          return response;
         } finally {
           await ignoreError(() => fsClose(fd));
         }
@@ -55305,8 +55925,7 @@ var require_Client = __commonJS({
       async _downloadFromWorkingDir(localDirPath) {
         await ensureLocalDirectory(localDirPath);
         for (const file2 of await this.list()) {
-          const hasInvalidName = !file2.name || (0, path_1.basename)(file2.name) !== file2.name;
-          if (hasInvalidName) {
+          if (!(0, safePathNames_1.isSafePathName)(file2.name)) {
             const safeName = JSON.stringify(file2.name);
             this.ftp.log(`Invalid filename from server listing, will skip file. (${safeName})`);
             continue;
@@ -55443,6 +56062,16 @@ var require_Client = __commonJS({
       } catch (_a2) {
         await fsMkDir(path4, { recursive: true });
       }
+    }
+    async function expectedBytesFromLocalFile(fd, options) {
+      var _a2;
+      const stats = await fsFStat(fd);
+      if (!stats.isFile()) {
+        return void 0;
+      }
+      const start = (_a2 = options.localStart) !== null && _a2 !== void 0 ? _a2 : 0;
+      const endExclusive = options.localEndInclusive !== void 0 ? Math.min(options.localEndInclusive + 1, stats.size) : stats.size;
+      return Math.max(0, endExclusive - start);
     }
     async function ignoreError(func) {
       try {
@@ -71924,18 +72553,76 @@ var init_extensions2 = __esm({
 var VERSION;
 var init_version = __esm({
   "node_modules/quickjs-wasi/dist/version.js"() {
-    VERSION = "2.2.0";
+    VERSION = "3.7.0";
   }
 });
 
 // node_modules/quickjs-wasi/dist/index.js
-var import_meta, __addDisposableResource2, __disposeResources2, EvalFlags, CompileFlags, Intrinsics, SNAPSHOT_MAGIC, SNAPSHOT_VERSION, SNAPSHOT_HEADER_SIZE, QuickJS, JSException, JSValueHandle;
+function stringKeyNeedsValuePath(key) {
+  return key.includes("\0") || LONE_SURROGATE_RE.test(key);
+}
+function encodeWtf8(str) {
+  if (!LONE_SURROGATE_RE.test(str))
+    return wtf8Encoder.encode(str);
+  const bytes = [];
+  for (let i5 = 0; i5 < str.length; i5++) {
+    const code = str.charCodeAt(i5);
+    if (code < 128) {
+      bytes.push(code);
+    } else if (code < 2048) {
+      bytes.push(192 | code >> 6, 128 | code & 63);
+    } else if (code >= 55296 && code <= 56319 && i5 + 1 < str.length) {
+      const next = str.charCodeAt(i5 + 1);
+      if (next >= 56320 && next <= 57343) {
+        const cp = 65536 + (code - 55296 << 10) + (next - 56320);
+        bytes.push(240 | cp >> 18, 128 | cp >> 12 & 63, 128 | cp >> 6 & 63, 128 | cp & 63);
+        i5++;
+        continue;
+      }
+      bytes.push(224 | code >> 12, 128 | code >> 6 & 63, 128 | code & 63);
+    } else {
+      bytes.push(224 | code >> 12, 128 | code >> 6 & 63, 128 | code & 63);
+    }
+  }
+  return new Uint8Array(bytes);
+}
+function decodeWtf8(bytes) {
+  let hasSurrogateSequence = false;
+  for (let i6 = 0; i6 < bytes.length - 1; i6++) {
+    if (bytes[i6] === 237 && bytes[i6 + 1] >= 160 && bytes[i6 + 1] <= 191) {
+      hasSurrogateSequence = true;
+      break;
+    }
+  }
+  if (!hasSurrogateSequence)
+    return wtf8Decoder.decode(bytes);
+  let out = "";
+  let i5 = 0;
+  while (i5 < bytes.length) {
+    const b0 = bytes[i5];
+    if (b0 < 128) {
+      out += String.fromCharCode(b0);
+      i5 += 1;
+    } else if (b0 < 224) {
+      out += String.fromCharCode((b0 & 31) << 6 | bytes[i5 + 1] & 63);
+      i5 += 2;
+    } else if (b0 < 240) {
+      out += String.fromCharCode((b0 & 15) << 12 | (bytes[i5 + 1] & 63) << 6 | bytes[i5 + 2] & 63);
+      i5 += 3;
+    } else {
+      const cp = (b0 & 7) << 18 | (bytes[i5 + 1] & 63) << 12 | (bytes[i5 + 2] & 63) << 6 | bytes[i5 + 3] & 63;
+      out += String.fromCodePoint(cp);
+      i5 += 4;
+    }
+  }
+  return out;
+}
+var __addDisposableResource2, __disposeResources2, MAX_STACK_SIZE, EvalFlags, CompileFlags, Intrinsics, SNAPSHOT_MAGIC, SNAPSHOT_VERSION, SNAPSHOT_HEADER_SIZE, QuickJS, wtf8Decoder, wtf8Encoder, LONE_SURROGATE_RE, JSException, JSValueHandle;
 var init_dist9 = __esm({
   "node_modules/quickjs-wasi/dist/index.js"() {
     init_wasi_shim();
     init_extensions2();
     init_version();
-    import_meta = {};
     __addDisposableResource2 = function(env2, value, async) {
       if (value !== null && value !== void 0) {
         if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
@@ -71994,14 +72681,20 @@ var init_dist9 = __esm({
       var e5 = new Error(message);
       return e5.name = "SuppressedError", e5.error = error3, e5.suppressed = suppressed, e5;
     });
+    MAX_STACK_SIZE = 512 * 1024;
     EvalFlags = {
       /** Global script mode (default). */
       TYPE_GLOBAL: 0,
-      /** Module mode. */
+      /**
+       * Module mode. `evalCode()` returns a handle to a Promise that resolves
+       * to the module's namespace object (its exports), or rejects if module
+       * evaluation throws. Use together with `executePendingJobs()` and
+       * `resolvePromise()`.
+       */
       TYPE_MODULE: 1 << 0,
       /** Force strict mode. */
       STRICT: 1 << 3,
-      /** Compile only — do not execute. */
+      /** Compile only; do not execute. */
       COMPILE_ONLY: 1 << 5,
       /** Omit stack frames before this eval from Error backtraces. */
       BACKTRACE_BARRIER: 1 << 6,
@@ -72043,6 +72736,11 @@ var init_dist9 = __esm({
       PERFORMANCE: 1 << 10,
       /** `DOMException` class. */
       DOM_EXCEPTION: 1 << 11,
+      /**
+       * `atob()` and `btoa()` global functions. Also pulls in `DOMException` as
+       * a dependency (errors thrown by these functions are `DOMException`s).
+       */
+      ATOB_BTOA: 1 << 12,
       /** All intrinsics enabled (default). */
       ALL: 4294967295
     };
@@ -72056,6 +72754,9 @@ var init_dist9 = __esm({
       encoder = new TextEncoder();
       decoder = new TextDecoder();
       disposed = false;
+      asyncFailure;
+      hostSettlementDepth = 0;
+      promiseWaiters = /* @__PURE__ */ new Set();
       /** Registry of host callbacks, keyed by function name */
       hostCallbacks = /* @__PURE__ */ new Map();
       /** Counter for internal-only callbacks (e.g. promise settle handlers) */
@@ -72074,6 +72775,12 @@ var init_dist9 = __esm({
       _false = null;
       // Handles that must be freed on dispose (e.g. unresolved promise resolve/reject functions)
       _ownedHandles = /* @__PURE__ */ new Set();
+      /**
+       * The innermost active `withScope()` batch, if any. New non-singleton
+       * handles register themselves here so they can be freed together.
+       * @internal
+       */
+      _activeScope = null;
       /** Loaded extensions in deterministic order */
       loadedExtensions = [];
       constructor(module2) {
@@ -72108,38 +72815,38 @@ var init_dist9 = __esm({
         }
         return this._versions;
       }
-      /** The global object. Cached — do not dispose. */
+      /** The global object. Cached; do not dispose. */
       get global() {
         if (!this._global) {
-          this._global = new JSValueHandle(this, this.exports.qjs_get_global());
+          this._global = new JSValueHandle(this, this.exports.qjs_get_global(), true);
         }
         return this._global;
       }
-      /** The undefined value. Cached — do not dispose. */
+      /** The undefined value. Cached; do not dispose. */
       get undefined() {
         if (!this._undefined) {
-          this._undefined = new JSValueHandle(this, this.exports.qjs_get_undefined());
+          this._undefined = new JSValueHandle(this, this.exports.qjs_get_undefined(), true);
         }
         return this._undefined;
       }
-      /** The null value. Cached — do not dispose. */
+      /** The null value. Cached; do not dispose. */
       get null() {
         if (!this._null) {
-          this._null = new JSValueHandle(this, this.exports.qjs_get_null());
+          this._null = new JSValueHandle(this, this.exports.qjs_get_null(), true);
         }
         return this._null;
       }
-      /** The true value. Cached — do not dispose. */
+      /** The true value. Cached; do not dispose. */
       get true() {
         if (!this._true) {
-          this._true = new JSValueHandle(this, this.exports.qjs_get_true());
+          this._true = new JSValueHandle(this, this.exports.qjs_get_true(), true);
         }
         return this._true;
       }
-      /** The false value. Cached — do not dispose. */
+      /** The false value. Cached; do not dispose. */
       get false() {
         if (!this._false) {
-          this._false = new JSValueHandle(this, this.exports.qjs_get_false());
+          this._false = new JSValueHandle(this, this.exports.qjs_get_false(), true);
         }
         return this._false;
       }
@@ -72208,7 +72915,7 @@ var init_dist9 = __esm({
        *
        * The format includes a versioned header followed by the raw memory.
        * Apply your own compression (gzip, zstd, etc.) on top for smaller
-       * storage — the memory compresses very well due to large zero regions.
+       * storage. The memory compresses well due to its large zero regions.
        *
        * Format (version 1):
        * ```
@@ -72320,17 +73027,26 @@ var init_dist9 = __esm({
       }
       // ---- Internal instantiation helpers ----
       static normalizeOptions(options) {
-        if (!options)
-          return {};
+        if (!options) {
+          return { wasm: void 0 };
+        }
         if (options instanceof WebAssembly.Module)
           return { wasm: options };
-        if (typeof options === "object" && ("wasm" in options || "wasi" in options || "memoryLimit" in options || "interruptHandler" in options || "onUnhandledRejection" in options || "moduleLoader" in options || "intrinsics" in options || "extensions" in options || "timezoneOffset" in options))
-          return options;
+        if (typeof options === "object" && ("wasm" in options || "wasi" in options || "memoryLimit" in options || "maxStackSize" in options || "interruptHandler" in options || "onUnhandledRejection" in options || "moduleLoader" in options || "intrinsics" in options || "extensions" in options || "timezoneOffset" in options)) {
+          const opts = options;
+          if (opts.maxStackSize !== void 0 && (!Number.isInteger(opts.maxStackSize) || opts.maxStackSize < 0 || opts.maxStackSize > MAX_STACK_SIZE)) {
+            throw new RangeError(`maxStackSize must be an integer between 0 and ${MAX_STACK_SIZE}`);
+          }
+          return opts;
+        }
         return { wasm: options };
       }
       static applyLimits(vm, opts) {
         if (opts.memoryLimit !== void 0) {
           vm.exports.qjs_set_memory_limit(opts.memoryLimit);
+        }
+        if (opts.maxStackSize !== void 0) {
+          vm.exports.qjs_set_max_stack_size(opts.maxStackSize);
         }
         if (opts.interruptHandler) {
           vm.interruptHandler = opts.interruptHandler;
@@ -72360,13 +73076,11 @@ var init_dist9 = __esm({
       static async resolveModule(wasmInput) {
         if (wasmInput instanceof WebAssembly.Module) {
           return wasmInput;
-        } else if (wasmInput) {
-          return WebAssembly.compile(wasmInput);
-        } else {
-          const { readFile: readFile3 } = await import("node:fs/promises");
-          const buf2 = await readFile3(new URL("../quickjs.wasm", import_meta.url));
-          return WebAssembly.compile(buf2);
         }
+        if (wasmInput) {
+          return WebAssembly.compile(wasmInput);
+        }
+        throw new TypeError("QuickJS: `wasm` option is required. Provide WASM bytes or a compiled `WebAssembly.Module`. The binary is shipped at `quickjs-wasi/quickjs.wasm` and can be loaded via your environment's preferred mechanism (e.g. `fetch()`, `node:fs/promises`, or a bundler import like Vite's `?url`).");
       }
       static async instantiate(module2, vm, wasiOptions) {
         let memory = null;
@@ -72399,6 +73113,12 @@ var init_dist9 = __esm({
             reason.dispose();
           }
         };
+        const assertSyncString = (value, callbackName) => {
+          if (typeof value === "string")
+            return value;
+          const got = value !== null && typeof value === "object" && typeof value.then === "function" ? "a Promise" : `type ${typeof value}`;
+          throw new TypeError(`moduleLoader.${callbackName} must synchronously return a string (got ${got}). Async module loading is not supported. Pre-fetch module sources instead (see the "ES Modules" section of the quickjs-wasi README).`);
+        };
         const hostModuleNormalize = (baseNamePtr, namePtr) => {
           if (!vm.moduleNormalizeHandler) {
             const name = vm.readCString(namePtr);
@@ -72407,10 +73127,10 @@ var init_dist9 = __esm({
           const baseName = vm.readCString(baseNamePtr);
           const specifier = vm.readCString(namePtr);
           try {
-            const normalized = vm.moduleNormalizeHandler(baseName, specifier);
+            const normalized = assertSyncString(vm.moduleNormalizeHandler(baseName, specifier), "normalize");
             return vm.writeString(normalized).ptr;
-          } catch {
-            return 0;
+          } catch (err) {
+            return vm.throwHostException(err);
           }
         };
         const hostModuleLoad = (namePtr, outLenPtr) => {
@@ -72418,12 +73138,12 @@ var init_dist9 = __esm({
             return 0;
           const name = vm.readCString(namePtr);
           try {
-            const source = vm.moduleLoadHandler(name);
+            const source = assertSyncString(vm.moduleLoadHandler(name), "load");
             const { ptr, len } = vm.writeString(source);
             new Uint32Array(vm.exports.memory.buffer, outLenPtr, 1)[0] = len;
             return ptr;
-          } catch {
-            return 0;
+          } catch (err) {
+            return vm.throwHostException(err);
           }
         };
         const hostGetTimezoneOffset = (hi, lo) => {
@@ -72451,31 +73171,56 @@ var init_dist9 = __esm({
         const name = this.decoder.decode(new Uint8Array(this.exports.memory.buffer, namePtr, nameLen));
         const callback = this.hostCallbacks.get(name);
         if (!callback) {
-          return this.exports.qjs_get_undefined();
+          return this.throwHostException(`Host callback "${name}" is not registered: it was unregistered, its ephemeral function handle was disposed, or it was never re-registered after a snapshot restore.`);
         }
-        const thisHandle = new JSValueHandle(this, thisPtr);
+        const thisHandle = new JSValueHandle(this, thisPtr, false, true);
         const args = [];
         if (argc > 0 && argvPtr !== 0) {
           const view2 = new DataView(this.exports.memory.buffer);
           for (let i5 = 0; i5 < argc; i5++) {
             const argPtr = view2.getUint32(argvPtr + i5 * 4, true);
-            args.push(new JSValueHandle(this, argPtr));
+            args.push(new JSValueHandle(this, argPtr, false, true));
           }
         }
         try {
           const result = callback.call(thisHandle, ...args);
           return this.exports.qjs_dup_value(result.ptr);
         } catch (err) {
-          const errHandle = this.newError(err instanceof Error ? err : String(err));
-          this.exports.qjs_throw(errHandle.ptr);
-          errHandle.dispose();
+          return this.throwHostException(err);
+        }
+      }
+      exceptionToHandle(err) {
+        if (err instanceof JSException && err.handle.vm === this && !err.handle.disposed) {
+          return err.handle.dup();
+        }
+        try {
+          return this.newError(err instanceof Error ? err : String(err));
+        } catch (conversionError) {
+          if (!(conversionError instanceof JSException) || conversionError.handle.vm !== this)
+            throw conversionError;
+          return conversionError.handle;
+        }
+      }
+      isInterrupt(err) {
+        return err instanceof JSException && err.handle.vm === this && !err.handle.disposed && this.exports.qjs_is_uncatchable_error(err.handle.ptr) !== 0;
+      }
+      throwHostException(err) {
+        const env_1 = { stack: [], error: void 0, hasError: false };
+        try {
+          const handle = __addDisposableResource2(env_1, this.exceptionToHandle(err), false);
+          const result = __addDisposableResource2(env_1, new JSValueHandle(this, this.exports.qjs_throw(handle.ptr)), false);
           return 0;
+        } catch (e_1) {
+          env_1.error = e_1;
+          env_1.hasError = true;
+        } finally {
+          __disposeResources2(env_1);
         }
       }
       // ---- String helpers ----
       /** Write a JS string into WASM memory, returning the pointer. Caller must free. */
       writeString(str) {
-        const encoded = this.encoder.encode(str);
+        const encoded = encodeWtf8(str);
         const ptr = this.exports.wasm_malloc(encoded.length + 1);
         if (ptr === 0)
           throw new Error("wasm_malloc failed");
@@ -72495,27 +73240,34 @@ var init_dist9 = __esm({
       // ---- Public API ----
       /**
        * Check if a result handle is an exception and throw a JSException if so.
-       * Used internally by evalCode and callFunction.
+       * Used for evaluation, calls, and host value construction.
        */
       throwIfException(result) {
         if (this.exports.qjs_is_exception(result.ptr) !== 0) {
-          const exc = this.getException();
           result.dispose();
-          this._ownedHandles.add(exc);
-          throw new JSException(exc);
+          this.throwPendingException();
         }
         return result;
+      }
+      throwPendingException() {
+        const exc = this.getException();
+        this._activeScope?.delete(exc);
+        this._ownedHandles.add(exc);
+        exc._onDispose = () => this._ownedHandles.delete(exc);
+        throw new JSException(exc);
       }
       /**
        * Evaluate JavaScript code and return the result as a handle.
        * If the code throws, a `JSException` (which extends `Error`) is thrown
-       * on the host side — matching standard JavaScript semantics.
+       * on the host side, matching standard JavaScript semantics.
        *
        * @param code - The JavaScript source code to evaluate.
        * @param filename - Optional filename for error stack traces (default `'<eval>'`).
        * @param flags - Optional bitwise OR of `EvalFlags.*` constants.
-       *   For example, pass `EvalFlags.ASYNC` to allow top-level `await` — the
+       *   For example, pass `EvalFlags.ASYNC` to allow top-level `await`; the
        *   returned handle will be a Promise that resolves to the completion value.
+       *   With `EvalFlags.TYPE_MODULE` the returned handle is a Promise that
+       *   resolves to the module's namespace object (its exports).
        */
       evalCode(code, filename = "<eval>", flags = 0) {
         this.assertNotDisposed();
@@ -72562,6 +73314,10 @@ var init_dist9 = __esm({
        * Execute previously compiled bytecode (from `compile()`).
        * Returns the evaluation result as a handle.
        *
+       * For module bytecode (compiled with `EvalFlags.TYPE_MODULE`), the
+       * returned handle is a Promise that resolves to the module's namespace
+       * object (its exports).
+       *
        * @param bytecode - The bytecode `Uint8Array` from `compile()`.
        */
       evalBytecode(bytecode) {
@@ -72581,10 +73337,8 @@ var init_dist9 = __esm({
         let count = 0;
         while (this.exports.qjs_is_job_pending()) {
           const result = this.exports.qjs_execute_pending_job();
-          if (result < 0) {
-            const exc = this.getException();
-            throw new Error(`Job execution error: ${exc.toString()}`);
-          }
+          if (result < 0)
+            this.throwPendingException();
           count++;
         }
         return count;
@@ -72617,9 +73371,9 @@ var init_dist9 = __esm({
        */
       getMemoryUsage() {
         this.assertNotDisposed();
-        const bufPtr = this.exports.wasm_malloc(26 * 8);
+        const bufPtr = this.exports.wasm_malloc(27 * 8);
         this.exports.qjs_compute_memory_usage(bufPtr);
-        const view2 = new BigInt64Array(this.exports.memory.buffer, bufPtr, 26);
+        const view2 = new BigInt64Array(this.exports.memory.buffer, bufPtr, 27);
         const result = {
           mallocSize: Number(view2[0]),
           mallocLimit: Number(view2[1]),
@@ -72646,10 +73400,29 @@ var init_dist9 = __esm({
           fastArrayCount: Number(view2[22]),
           fastArrayElements: Number(view2[23]),
           binaryObjectCount: Number(view2[24]),
-          binaryObjectSize: Number(view2[25])
+          binaryObjectSize: Number(view2[25]),
+          allocatedSize: Number(view2[26])
         };
         this.exports.wasm_free(bufPtr);
         return result;
+      }
+      /**
+       * Bytes currently allocated from WASM linear memory by the QuickJS
+       * runtime: the value `memoryLimit` is enforced against.
+       *
+       * Constant-time: it reads a counter updated on every allocation and
+       * free. Use it for frequent sampling (for example, on every host call).
+       * `getMemoryUsage()` walks the whole heap to build its breakdown, so its
+       * cost grows with heap size.
+       *
+       * This is not the same number as `getMemoryUsage().mallocSize`, which
+       * counts the bytes QuickJS hands out. This value also counts allocator
+       * rounding and partially filled small-object arenas, so the two differ
+       * slightly (typically by a few percent on a large heap).
+       */
+      getAllocatedSize() {
+        this.assertNotDisposed();
+        return this.exports.qjs_get_allocated_size() >>> 0;
       }
       /**
        * Get the global object. Prefer the cached `vm.global` property.
@@ -72664,9 +73437,11 @@ var init_dist9 = __esm({
       newString(str) {
         this.assertNotDisposed();
         const { ptr, len } = this.writeString(str);
-        const resultPtr = this.exports.qjs_new_string(ptr, len);
-        this.exports.wasm_free(ptr);
-        return new JSValueHandle(this, resultPtr);
+        try {
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_string(ptr, len)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Create a new QuickJS number value.
@@ -72682,21 +73457,21 @@ var init_dist9 = __esm({
         this.assertNotDisposed();
         const lo = Number(val & 0xffffffffn);
         const hi = Number(val >> 32n & 0xffffffffn);
-        return new JSValueHandle(this, this.exports.qjs_new_big_int64(lo, hi));
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_big_int64(lo, hi)));
       }
       /**
        * Create a new QuickJS object value.
        */
       newObject() {
         this.assertNotDisposed();
-        return new JSValueHandle(this, this.exports.qjs_new_object());
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_object()));
       }
       /**
        * Create a new QuickJS array value.
        */
       newArray() {
         this.assertNotDisposed();
-        return new JSValueHandle(this, this.exports.qjs_new_array());
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_array()));
       }
       /**
        * Create a global symbol (`Symbol.for(description)`).
@@ -72706,9 +73481,11 @@ var init_dist9 = __esm({
       newSymbolFor(description) {
         this.assertNotDisposed();
         const { ptr, len } = this.writeString(description);
-        const result = new JSValueHandle(this, this.exports.qjs_new_symbol(ptr, len, 1));
-        this.exports.wasm_free(ptr);
-        return result;
+        try {
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_symbol(ptr, len, 1)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Create a new QuickJS ArrayBuffer by copying data from a host buffer.
@@ -72719,10 +73496,12 @@ var init_dist9 = __esm({
         const ptr = this.exports.wasm_malloc(bytes.length);
         if (ptr === 0)
           throw new Error("wasm_malloc failed");
-        new Uint8Array(this.exports.memory.buffer).set(bytes, ptr);
-        const result = new JSValueHandle(this, this.exports.qjs_new_array_buffer(ptr, bytes.length));
-        this.exports.wasm_free(ptr);
-        return result;
+        try {
+          new Uint8Array(this.exports.memory.buffer).set(bytes, ptr);
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_array_buffer(ptr, bytes.length)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Create a new QuickJS Uint8Array by copying data from a host buffer.
@@ -72732,10 +73511,12 @@ var init_dist9 = __esm({
         const ptr = this.exports.wasm_malloc(data2.length);
         if (ptr === 0)
           throw new Error("wasm_malloc failed");
-        new Uint8Array(this.exports.memory.buffer).set(data2, ptr);
-        const result = new JSValueHandle(this, this.exports.qjs_new_uint8_array(ptr, data2.length));
-        this.exports.wasm_free(ptr);
-        return result;
+        try {
+          new Uint8Array(this.exports.memory.buffer).set(data2, ptr);
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_uint8_array(ptr, data2.length)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Get undefined. Prefer the cached `vm.undefined` property.
@@ -72776,23 +73557,159 @@ var init_dist9 = __esm({
         if (this.hostCallbacks.has(name)) {
           throw new Error(`Host callback with name "${name}" is already registered`);
         }
-        this.hostCallbacks.set(name, fn);
-        const { ptr: namePtr, len: nameLen } = this.writeString(name);
-        const resultPtr = this.exports.qjs_new_host_function(namePtr, nameLen, 0);
-        this.exports.wasm_free(namePtr);
-        return new JSValueHandle(this, resultPtr);
+        return this.newInternalFunction(name, fn);
       }
       /**
-       * Create an internal host function that bypasses the duplicate-name check.
-       * Used for ephemeral callbacks (promise settle handlers, resolvePromise, etc.)
-       * that are not intended to survive snapshot/restore.
+       * Run `fn` with a handle scope: every handle created during the call is
+       * disposed when it returns, except those passed to `scope.escape()`.
+       *
+       * This is the bulk alternative to disposing handles individually, for code
+       * that creates many intermediates, such as walking a large value:
+       *
+       * ```ts
+       * const name = vm.withScope((scope) => {
+       *   const user = root.getProp('user');       // freed automatically
+       *   const profile = user.getProp('profile'); // freed automatically
+       *   return scope.escape(profile.getProp('name'));
+       * });
+       * ```
+       *
+       * Scopes nest: `escape()` transfers the handle to the enclosing scope when
+       * there is one, so it is still cleaned up at the outer boundary.
+       *
+       * `fn` must be synchronous. Handles created after an `await` are outside
+       * the scope, because it closes as soon as `fn` returns.
+       *
+       * Host callbacks are safe to trigger inside a scope: the `this`/argument
+       * handles the trampoline passes to a callback wrap C-owned pointers and
+       * are exempt from scope tracking (see `handleHostCall`), so the scope
+       * frees only handles the host actually owns. Handles a callback CREATES
+       * (including `dup()`s of its arguments) are tracked normally.
+       */
+      withScope(fn) {
+        this.assertNotDisposed();
+        const enclosing = this._activeScope;
+        const tracked = /* @__PURE__ */ new Set();
+        this._activeScope = tracked;
+        const scope = {
+          escape: (handle) => {
+            tracked.delete(handle);
+            enclosing?.add(handle);
+            return handle;
+          }
+        };
+        try {
+          return fn(scope);
+        } finally {
+          this._activeScope = enclosing;
+          for (const handle of tracked)
+            handle.dispose();
+        }
+      }
+      /**
+       * Export a handle as a snapshot-portable token.
+       *
+       * A handle's heap box lives in the VM's linear memory, so a
+       * `snapshot()` taken while the handle is alive carries it, and a VM
+       * restored from that snapshot has the identical box at the identical
+       * offset. `importHandle(token)` on the restored VM (or on this VM)
+       * re-materializes an owned handle for the same guest value without
+       * evaluating any guest code.
+       *
+       * Contract:
+       * - the handle must stay undisposed until after `snapshot()`; its
+       *   box (and the reference it holds) must be part of the memory image;
+       * - the token is only meaningful to THIS VM and VMs restored from a
+       *   snapshot of it taken while the handle was alive;
+       * - `importHandle` duplicates the underlying value (fresh reference,
+       *   fresh box), so it can be called any number of times and each
+       *   returned handle is independently owned and disposable. The
+       *   exported box's own reference is intentionally never released on
+       *   restored VMs (one retained reference per VM image, reclaimed
+       *   with the VM).
+       *
+       * The intended use is boot-time capture: snapshot a VM after capturing
+       * references to pristine intrinsics but BEFORE evaluating untrusted or
+       * user code, then restore per task and import the captured handles,
+       * guaranteeing the references predate anything user code patched,
+       * without re-running capture code in the restored VM (where user-
+       * patched globals could observe it). See vercel/workflow's host-side
+       * serde for a worked example.
+       */
+      exportHandle(handle) {
+        this.assertNotDisposed();
+        if (handle.vm !== this) {
+          throw new Error("exportHandle: handle belongs to a different VM");
+        }
+        if (handle.disposed) {
+          throw new Error("exportHandle: handle is disposed");
+        }
+        if (handle._isBorrowed) {
+          throw new Error("exportHandle: cannot export a borrowed handle (host-callback this/argument); its box is freed when the callback returns. dup() it and export the duplicate.");
+        }
+        return handle.ptr;
+      }
+      /**
+       * Re-materialize a handle from a token produced by `exportHandle`,
+       * on this VM, or on a VM restored from a snapshot taken while the
+       * exported handle was alive. Returns a NEW owned handle (the
+       * underlying value's refcount is incremented); dispose it like any
+       * other handle. See `exportHandle` for the full contract.
+       */
+      importHandle(token) {
+        this.assertNotDisposed();
+        if (!Number.isInteger(token) || token <= 0 || token >= this.exports.memory.buffer.byteLength) {
+          throw new Error(`importHandle: invalid token ${token}`);
+        }
+        return new JSValueHandle(this, this.exports.qjs_dup_value(token));
+      }
+      /**
+       * Create a QuickJS function backed by a host callback whose registration is
+       * tied to the returned handle: disposing the handle unregisters the
+       * callback.
+       *
+       * Use this for short-lived callbacks (e.g. a visitor passed to
+       * `Map.prototype.forEach`) where the name is an implementation detail.
+       * `newFunction()` keeps its callback registered for the lifetime of the VM
+       * (by design, so that names can be re-registered after a snapshot is
+       * restored), which makes it unsuitable for callbacks created in a loop.
+       *
+       * The guest must not retain the function past disposal: calling it after
+       * the handle is disposed throws, because the callback is gone. Ephemeral
+       * functions do not survive snapshot/restore.
+       */
+      newEphemeralFunction(fn) {
+        this.assertNotDisposed();
+        const name = `__ephemeral:${this.nextInternalId++}`;
+        const handle = this.newInternalFunction(name, fn);
+        handle._onDispose = () => {
+          this.hostCallbacks.delete(name);
+        };
+        return handle;
+      }
+      /**
+       * Remove a host callback registered with `newFunction()` or
+       * `registerHostCallback()`. Returns true if a callback was removed.
+       *
+       * Any QuickJS function still referencing the name will throw when called,
+       * so only unregister once the guest can no longer reach it.
+       */
+      unregisterHostCallback(name) {
+        return this.hostCallbacks.delete(name);
+      }
+      /**
+       * Construct and register a host function only after native success.
+       * Callers own duplicate-name checks and callback registration lifetimes.
        */
       newInternalFunction(name, fn) {
-        this.hostCallbacks.set(name, fn);
         const { ptr: namePtr, len: nameLen } = this.writeString(name);
-        const resultPtr = this.exports.qjs_new_host_function(namePtr, nameLen, 0);
-        this.exports.wasm_free(namePtr);
-        return new JSValueHandle(this, resultPtr);
+        try {
+          const handle = this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_host_function(namePtr, nameLen, 0)));
+          this.hostCallbacks.set(name, fn);
+          return handle;
+        } finally {
+          this.exports.wasm_free(namePtr);
+        }
       }
       /**
        * Create a new promise.
@@ -72805,53 +73722,72 @@ var init_dist9 = __esm({
        */
       newPromise() {
         this.assertNotDisposed();
-        const resolveOutPtr = this.exports.wasm_malloc(4);
-        const rejectOutPtr = this.exports.wasm_malloc(4);
-        const promisePtr = this.exports.qjs_new_promise(resolveOutPtr, rejectOutPtr);
-        const view2 = new DataView(this.exports.memory.buffer);
-        const resolvePtr = view2.getUint32(resolveOutPtr, true);
-        const rejectPtr = view2.getUint32(rejectOutPtr, true);
-        this.exports.wasm_free(resolveOutPtr);
-        this.exports.wasm_free(rejectOutPtr);
-        const promiseHandle = new JSValueHandle(this, promisePtr);
+        const outPtr = this.exports.wasm_malloc(8);
+        if (!outPtr)
+          throw new Error("Failed to allocate promise output buffer");
+        let promiseHandle;
+        let resolvePtr;
+        let rejectPtr;
+        try {
+          promiseHandle = this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_promise(outPtr, outPtr + 4)));
+          const view2 = new DataView(this.exports.memory.buffer);
+          resolvePtr = view2.getUint32(outPtr, true);
+          rejectPtr = view2.getUint32(outPtr + 4, true);
+        } finally {
+          this.exports.wasm_free(outPtr);
+        }
         const resolveHandle = new JSValueHandle(this, resolvePtr);
         const rejectHandle = new JSValueHandle(this, rejectPtr);
         const vm = this;
+        vm._activeScope?.delete(resolveHandle);
+        vm._activeScope?.delete(rejectHandle);
         vm._ownedHandles.add(resolveHandle);
         vm._ownedHandles.add(rejectHandle);
+        let resolved = false;
+        const settle = (resolver, value) => {
+          if (resolved)
+            return;
+          resolved = true;
+          try {
+            vm.callFunction(resolver, vm.undefined, value).dispose();
+          } finally {
+            vm._ownedHandles.delete(resolveHandle);
+            vm._ownedHandles.delete(rejectHandle);
+            resolveHandle.dispose();
+            rejectHandle.dispose();
+          }
+        };
         let _settled = null;
         return {
           handle: promiseHandle,
           get settled() {
             if (!_settled) {
-              let settledResolve;
-              _settled = new Promise((res) => {
-                settledResolve = res;
-              });
+              vm.assertNotDisposed();
               const settleName = `__settle:${vm.nextInternalId++}`;
-              const onSettleFn = vm.newInternalFunction(settleName, () => {
-                settledResolve();
-                vm.hostCallbacks.delete(settleName);
-                return vm.undefined;
-              });
-              const thenFn = promiseHandle.getProp("then");
-              const onSettleDup = onSettleFn.dup();
-              vm.callFunctionRaw(thenFn, promiseHandle, onSettleFn, onSettleDup).dispose();
-              thenFn.dispose();
-              onSettleFn.dispose();
-              onSettleDup.dispose();
+              const settled = vm.observePromise((resolve) => {
+                const env_2 = { stack: [], error: void 0, hasError: false };
+                try {
+                  const onSettleFn = __addDisposableResource2(env_2, vm.newInternalFunction(settleName, () => {
+                    resolve();
+                    return vm.undefined;
+                  }), false);
+                  vm.promiseThenRaw(promiseHandle, onSettleFn, onSettleFn).dispose();
+                } catch (e_2) {
+                  env_2.error = e_2;
+                  env_2.hasError = true;
+                } finally {
+                  __disposeResources2(env_2);
+                }
+              }, () => vm.hostCallbacks.delete(settleName));
+              _settled = settled;
             }
             return _settled;
           },
           resolve(value) {
-            vm.callFunctionRaw(resolveHandle, vm.undefined, value).dispose();
-            vm._ownedHandles.delete(resolveHandle);
-            resolveHandle.dispose();
+            settle(resolveHandle, value);
           },
           reject(value) {
-            vm.callFunctionRaw(rejectHandle, vm.undefined, value).dispose();
-            vm._ownedHandles.delete(rejectHandle);
-            rejectHandle.dispose();
+            settle(rejectHandle, value);
           }
         };
       }
@@ -72862,43 +73798,120 @@ var init_dist9 = __esm({
        * If the handle is not a promise, it is treated as an already-fulfilled value.
        *
        * The returned host Promise resolves to `{ value: JSValueHandle }` on
-       * fulfillment or `{ error: JSValueHandle }` on rejection.
+       * fulfillment or `{ error: JSValueHandle }` on guest rejection. It rejects
+       * if the VM is disposed or its automatic host-Promise bridge fails.
        */
       resolvePromise(promiseHandle) {
         this.assertNotDisposed();
-        if (!this.exports.qjs_is_promise(promiseHandle.ptr)) {
-          return Promise.resolve({ value: promiseHandle.dup() });
+        const isPromise = this.exports.qjs_is_promise(promiseHandle.ptr);
+        const state2 = isPromise ? this.exports.qjs_promise_state(promiseHandle.ptr) : 1;
+        if (state2 !== 0) {
+          const value = isPromise ? new JSValueHandle(this, this.exports.qjs_promise_result(promiseHandle.ptr)) : promiseHandle.dup();
+          this._activeScope?.delete(value);
+          const result = state2 === 2 ? { error: value } : { value };
+          return this.hostSettlementDepth ? this.observePromise((resolve) => resolve(result), void 0, (result2) => ("value" in result2 ? result2.value : result2.error).dispose()) : Promise.resolve(result);
         }
-        const state2 = this.exports.qjs_promise_state(promiseHandle.ptr);
-        if (state2 === 1) {
-          return Promise.resolve({ value: new JSValueHandle(this, this.exports.qjs_promise_result(promiseHandle.ptr)) });
-        } else if (state2 === 2) {
-          return Promise.resolve({ error: new JSValueHandle(this, this.exports.qjs_promise_result(promiseHandle.ptr)) });
+        const id = this.nextInternalId++;
+        const fulfilledName = `__onFulfilled:${id}`;
+        const rejectedName = `__onRejected:${id}`;
+        const cleanup = () => {
+          this.hostCallbacks.delete(fulfilledName);
+          this.hostCallbacks.delete(rejectedName);
+        };
+        try {
+          return this.observePromise((resolve) => {
+            let onFulfilled;
+            let onRejected;
+            try {
+              onFulfilled = this.newInternalFunction(fulfilledName, (...args) => {
+                const value = args[0]?.dup() ?? this.undefined;
+                this._activeScope?.delete(value);
+                resolve({ value });
+                return this.undefined;
+              });
+              onRejected = this.newInternalFunction(rejectedName, (...args) => {
+                const error3 = args[0]?.dup() ?? this.undefined;
+                this._activeScope?.delete(error3);
+                resolve({ error: error3 });
+                return this.undefined;
+              });
+              this.promiseThenRaw(promiseHandle, onFulfilled, onRejected).dispose();
+            } finally {
+              onFulfilled?.dispose();
+              onRejected?.dispose();
+            }
+          }, cleanup, (result) => ("value" in result ? result.value : result.error).dispose());
+        } catch (error3) {
+          return Promise.reject(error3);
         }
-        return new Promise((hostResolve) => {
-          const id = this.nextInternalId++;
-          const fulfilledName = `__onFulfilled:${id}`;
-          const rejectedName = `__onRejected:${id}`;
-          const onFulfilled = this.newInternalFunction(fulfilledName, (...args) => {
-            const val = args[0]?.dup() ?? this.undefined;
-            this.hostCallbacks.delete(fulfilledName);
-            this.hostCallbacks.delete(rejectedName);
-            hostResolve({ value: val });
-            return this.undefined;
-          });
-          const onRejected = this.newInternalFunction(rejectedName, (...args) => {
-            const val = args[0]?.dup() ?? this.undefined;
-            this.hostCallbacks.delete(fulfilledName);
-            this.hostCallbacks.delete(rejectedName);
-            hostResolve({ error: val });
-            return this.undefined;
-          });
-          const thenFn = promiseHandle.getProp("then");
-          this.callFunctionRaw(thenFn, promiseHandle, onFulfilled, onRejected).dispose();
-          thenFn.dispose();
-          onFulfilled.dispose();
-          onRejected.dispose();
+      }
+      /** Stage host observations until the synchronous drain has finished. */
+      observePromise(subscribe, cleanup = () => {
+      }, release2) {
+        let resolve;
+        let reject;
+        let staged;
+        const promise = new Promise((ok, fail) => {
+          resolve = ok;
+          reject = fail;
         });
+        const cancel = (error3) => {
+          this.promiseWaiters.delete(cancel);
+          cleanup();
+          if (staged)
+            release2?.(staged.value);
+          staged = void 0;
+          void promise.catch(() => {
+          });
+          reject(error3);
+        };
+        this.promiseWaiters.add(cancel);
+        try {
+          subscribe((value) => {
+            staged = { value };
+            const commit = () => {
+              if (!this.promiseWaiters.delete(cancel))
+                return;
+              cleanup();
+              staged = void 0;
+              resolve(value);
+            };
+            if (this.hostSettlementDepth)
+              queueMicrotask(commit);
+            else
+              commit();
+          });
+        } catch (error3) {
+          this.promiseWaiters.delete(cancel);
+          cleanup();
+          const pending = staged;
+          if (pending)
+            release2?.(pending.value);
+          throw error3;
+        }
+        return promise;
+      }
+      /**
+       * Subscribe to a promise without executing guest code, via quickjs-ng's
+       * JS_PromiseThen: no Promise.prototype.then lookup, no Symbol.species.
+       * Returns the chained promise. Handler handles are borrowed (caller
+       * still owns and disposes them).
+       * @internal
+       */
+      promiseThenRaw(promise, onFulfilled, onRejected) {
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_promise_then(promise.ptr, onFulfilled.ptr, onRejected.ptr)));
+      }
+      /**
+       * Mark a promise as handled: an eventual (or already-recorded) rejection
+       * will not be reported to `onUnhandledRejection`. Useful when the host
+       * observes a rejection through other means (e.g. `resolvePromise()`) and
+       * wants to suppress the unhandled-rejection callback for it.
+       *
+       * No-op if the handle is not a promise.
+       */
+      markPromiseHandled(promise) {
+        this.assertNotDisposed();
+        this.exports.qjs_promise_mark_as_handled(promise.ptr);
       }
       /**
        * Call a QuickJS function. If the function throws, a `JSException`
@@ -72906,6 +73919,31 @@ var init_dist9 = __esm({
        */
       callFunction(func, thisVal, ...args) {
         return this.throwIfException(this.callFunctionRaw(func, thisVal, ...args));
+      }
+      /**
+       * Invoke a QuickJS constructor with `new`, i.e. `new ctor(...args)`.
+       * If the constructor throws (including when `ctor` is not a constructor),
+       * a `JSException` is thrown on the host side.
+       *
+       * This is the counterpart to `callFunction` for building values inside
+       * the VM from the host, e.g. `new Date(iso)` on a constructor captured
+       * before any user code ran.
+       */
+      construct(ctor, ...args) {
+        this.assertNotDisposed();
+        const argc = args.length;
+        let argvPtr = 0;
+        if (argc > 0) {
+          argvPtr = this.exports.wasm_malloc(argc * 4);
+          const view2 = new DataView(this.exports.memory.buffer);
+          for (let i5 = 0; i5 < argc; i5++) {
+            view2.setUint32(argvPtr + i5 * 4, args[i5].ptr, true);
+          }
+        }
+        const resultPtr = this.exports.qjs_call_constructor(ctor.ptr, argc, argvPtr);
+        if (argvPtr)
+          this.exports.wasm_free(argvPtr);
+        return this.throwIfException(new JSValueHandle(this, resultPtr));
       }
       /**
        * Internal: call a QuickJS function without throwing on exception.
@@ -72933,13 +73971,32 @@ var init_dist9 = __esm({
        */
       setProp(obj, key, value) {
         this.assertNotDisposed();
+        let status;
         if (typeof key === "string") {
+          if (stringKeyNeedsValuePath(key)) {
+            const env_3 = { stack: [], error: void 0, hasError: false };
+            try {
+              const keyHandle = __addDisposableResource2(env_3, this.newString(key), false);
+              this.setProp(obj, keyHandle, value);
+              return;
+            } catch (e_3) {
+              env_3.error = e_3;
+              env_3.hasError = true;
+            } finally {
+              __disposeResources2(env_3);
+            }
+          }
           const { ptr: namePtr } = this.writeString(key);
-          this.exports.qjs_set_prop_string(obj.ptr, namePtr, value.ptr);
-          this.exports.wasm_free(namePtr);
+          try {
+            status = this.exports.qjs_set_prop_string(obj.ptr, namePtr, value.ptr);
+          } finally {
+            this.exports.wasm_free(namePtr);
+          }
         } else {
-          this.exports.qjs_set_prop_value(obj.ptr, key.ptr, value.ptr);
+          status = this.exports.qjs_set_prop_value(obj.ptr, key.ptr, value.ptr);
         }
+        if (status < 0)
+          this.throwPendingException();
       }
       /**
        * Define a property on an object with explicit property descriptor flags.
@@ -72958,13 +74015,32 @@ var init_dist9 = __esm({
           flags |= 2;
         if (descriptor?.enumerable)
           flags |= 4;
+        let status;
         if (typeof key === "string") {
+          if (stringKeyNeedsValuePath(key)) {
+            const env_4 = { stack: [], error: void 0, hasError: false };
+            try {
+              const keyHandle = __addDisposableResource2(env_4, this.newString(key), false);
+              this.defineProp(obj, keyHandle, value, descriptor);
+              return;
+            } catch (e_4) {
+              env_4.error = e_4;
+              env_4.hasError = true;
+            } finally {
+              __disposeResources2(env_4);
+            }
+          }
           const { ptr: namePtr } = this.writeString(key);
-          this.exports.qjs_define_prop_string(obj.ptr, namePtr, value.ptr, flags);
-          this.exports.wasm_free(namePtr);
+          try {
+            status = this.exports.qjs_define_prop_string(obj.ptr, namePtr, value.ptr, flags);
+          } finally {
+            this.exports.wasm_free(namePtr);
+          }
         } else {
-          this.exports.qjs_define_prop_value(obj.ptr, key.ptr, value.ptr, flags);
+          status = this.exports.qjs_define_prop_value(obj.ptr, key.ptr, value.ptr, flags);
         }
+        if (status < 0)
+          this.throwPendingException();
       }
       /**
        * Get a property from an object using a JSValueHandle key.
@@ -72988,27 +74064,47 @@ var init_dist9 = __esm({
       newError(messageOrError) {
         this.assertNotDisposed();
         const errPtr = this.exports.qjs_new_error();
-        const errHandle = new JSValueHandle(this, errPtr);
-        if (typeof messageOrError === "string") {
-          const msgHandle = this.newString(messageOrError);
-          errHandle.setProp("message", msgHandle);
-          msgHandle.dispose();
-        } else {
-          const msgHandle = this.newString(messageOrError.message);
-          errHandle.setProp("message", msgHandle);
-          msgHandle.dispose();
-          if (messageOrError.name) {
-            const nameHandle = this.newString(messageOrError.name);
-            errHandle.setProp("name", nameHandle);
-            nameHandle.dispose();
+        const errHandle = this.throwIfException(new JSValueHandle(this, errPtr));
+        try {
+          const env_5 = { stack: [], error: void 0, hasError: false };
+          try {
+            const msgHandle = __addDisposableResource2(env_5, this.newString(typeof messageOrError === "string" ? messageOrError : messageOrError.message), false);
+            errHandle.setProp("message", msgHandle);
+            if (typeof messageOrError !== "string" && messageOrError.name) {
+              const env_6 = { stack: [], error: void 0, hasError: false };
+              try {
+                const nameHandle = __addDisposableResource2(env_6, this.newString(messageOrError.name), false);
+                errHandle.setProp("name", nameHandle);
+              } catch (e_5) {
+                env_6.error = e_5;
+                env_6.hasError = true;
+              } finally {
+                __disposeResources2(env_6);
+              }
+            }
+            if (typeof messageOrError !== "string" && messageOrError.stack) {
+              const env_7 = { stack: [], error: void 0, hasError: false };
+              try {
+                const stackHandle = __addDisposableResource2(env_7, this.newString(messageOrError.stack), false);
+                errHandle.setProp("stack", stackHandle);
+              } catch (e_6) {
+                env_7.error = e_6;
+                env_7.hasError = true;
+              } finally {
+                __disposeResources2(env_7);
+              }
+            }
+            return errHandle;
+          } catch (e_7) {
+            env_5.error = e_7;
+            env_5.hasError = true;
+          } finally {
+            __disposeResources2(env_5);
           }
-          if (messageOrError.stack) {
-            const stackHandle = this.newString(messageOrError.stack);
-            errHandle.setProp("stack", stackHandle);
-            stackHandle.dispose();
-          }
+        } catch (err) {
+          errHandle.dispose();
+          throw err;
         }
-        return errHandle;
       }
       /**
        * Get the typeof a handle as a string.
@@ -73199,6 +74295,8 @@ var init_dist9 = __esm({
       }
       /**
        * Convert a host JavaScript value to a QuickJS handle.
+       * A failure escaping asynchronous Promise settlement terminates this VM
+       * and rejects its host observers. Create a fresh VM after that failure.
        */
       hostToHandle(value) {
         this.assertNotDisposed();
@@ -73225,13 +74323,58 @@ var init_dist9 = __esm({
         }
         if (value instanceof Promise) {
           const deferred = this.newPromise();
-          value.then((r5) => {
-            deferred.resolve(this.hostToHandle(r5));
-            this.executePendingJobs();
-          }, (err) => {
-            deferred.reject(this.hostToHandle(err));
-            this.executePendingJobs();
-          });
+          const settle = (result, reject) => {
+            if (this.disposed)
+              return;
+            this.hostSettlementDepth++;
+            try {
+              const env_8 = { stack: [], error: void 0, hasError: false };
+              try {
+                let handle;
+                try {
+                  handle = this.hostToHandle(result);
+                } catch (err) {
+                  const env_9 = { stack: [], error: void 0, hasError: false };
+                  try {
+                    if (this.disposed)
+                      return;
+                    const error3 = __addDisposableResource2(env_9, this.exceptionToHandle(err), false);
+                    deferred.reject(error3);
+                    this.executePendingJobs();
+                    return;
+                  } catch (e_8) {
+                    env_9.error = e_8;
+                    env_9.hasError = true;
+                  } finally {
+                    __disposeResources2(env_9);
+                  }
+                }
+                const converted = __addDisposableResource2(env_8, handle, false);
+                if (reject)
+                  deferred.reject(converted);
+                else
+                  deferred.resolve(converted);
+                this.executePendingJobs();
+              } catch (e_9) {
+                env_8.error = e_9;
+                env_8.hasError = true;
+              } finally {
+                __disposeResources2(env_8);
+              }
+            } catch (error3) {
+              if (this.disposed)
+                return;
+              if (this.isInterrupt(error3)) {
+                error3.dispose();
+                return;
+              }
+              this.asyncFailure = { error: error3 };
+              this.dispose();
+            } finally {
+              this.hostSettlementDepth--;
+            }
+          };
+          value.then((r5) => settle(r5, false), (err) => settle(err, true));
           return deferred.handle;
         }
         if (value instanceof Error) {
@@ -73248,21 +74391,38 @@ var init_dist9 = __esm({
         }
         if (Array.isArray(value)) {
           const arr = this.newArray();
-          for (let i5 = 0; i5 < value.length; i5++) {
-            const elemHandle = this.hostToHandle(value[i5]);
-            this.exports.qjs_set_prop_uint32(arr.ptr, i5, elemHandle.ptr);
-            elemHandle.dispose();
+          try {
+            for (let i5 = 0; i5 < value.length; i5++) {
+              const elemHandle = this.hostToHandle(value[i5]);
+              try {
+                if (this.exports.qjs_set_prop_uint32(arr.ptr, i5, elemHandle.ptr) < 0)
+                  this.throwPendingException();
+              } finally {
+                elemHandle.dispose();
+              }
+            }
+            return arr;
+          } catch (err) {
+            arr.dispose();
+            throw err;
           }
-          return arr;
         }
         if (typeof value === "object" && value !== null) {
           const obj = this.newObject();
-          for (const [key, val] of Object.entries(value)) {
-            const valHandle = this.hostToHandle(val);
-            obj.setProp(key, valHandle);
-            valHandle.dispose();
+          try {
+            for (const [key, val] of Object.entries(value)) {
+              const valHandle = this.hostToHandle(val);
+              try {
+                obj.setProp(key, valHandle);
+              } finally {
+                valHandle.dispose();
+              }
+            }
+            return obj;
+          } catch (err) {
+            obj.dispose();
+            throw err;
           }
-          return obj;
         }
         return this.undefined;
       }
@@ -73303,6 +74463,12 @@ var init_dist9 = __esm({
       dispose() {
         if (!this.disposed) {
           this.disposed = true;
+          if (this.promiseWaiters.size) {
+            const error3 = this.asyncFailure ? this.asyncFailure.error : new Error("QuickJS instance has been disposed");
+            for (const cancel of this.promiseWaiters)
+              cancel(error3);
+            this.promiseWaiters.clear();
+          }
           this._global = null;
           this._undefined = null;
           this._null = null;
@@ -73310,6 +74476,7 @@ var init_dist9 = __esm({
           this._false = null;
           this._ownedHandles.clear();
           this.hostCallbacks.clear();
+          this._activeScope = null;
           this.exports = null;
           this.instance = null;
           this.module = null;
@@ -73330,6 +74497,8 @@ var init_dist9 = __esm({
       }
       assertNotDisposed() {
         if (this.disposed) {
+          if (this.asyncFailure)
+            throw this.asyncFailure.error;
           throw new Error("QuickJS instance has been disposed");
         }
       }
@@ -73351,6 +74520,9 @@ var init_dist9 = __esm({
         return this.readCString(ptr);
       }
     };
+    wtf8Decoder = new TextDecoder();
+    wtf8Encoder = new TextEncoder();
+    LONE_SURROGATE_RE = /(?:[\uD800-\uDBFF](?![\uDC00-\uDFFF]))|(?:(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/;
     JSException = class extends Error {
       /**
        * A live handle to the QuickJS exception value. You can read custom
@@ -73364,20 +74536,20 @@ var init_dist9 = __esm({
       #stack;
       /** @internal */
       constructor(handle) {
-        const env_1 = { stack: [], error: void 0, hasError: false };
+        const env_10 = { stack: [], error: void 0, hasError: false };
         try {
           super();
           this.handle = handle;
           delete this.stack;
-          const msgHandle = __addDisposableResource2(env_1, handle.getProp("message"), false);
+          const msgHandle = __addDisposableResource2(env_10, handle.getProp("message"), false);
           this.#name = handle.getProp("name").consume((h5) => h5.isUndefined ? "Error" : h5.toString());
           this.#message = msgHandle.isUndefined ? handle.toString() : msgHandle.toString();
           this.#stack = handle.getProp("stack").consume((h5) => h5.isUndefined ? void 0 : h5.toString());
-        } catch (e_1) {
-          env_1.error = e_1;
-          env_1.hasError = true;
+        } catch (e_10) {
+          env_10.error = e_10;
+          env_10.hasError = true;
         } finally {
-          __disposeResources2(env_1);
+          __disposeResources2(env_10);
         }
       }
       get name() {
@@ -73410,10 +74582,60 @@ var init_dist9 = __esm({
       vm;
       /** @internal */
       ptr;
-      disposed = false;
-      constructor(vm, ptr) {
+      disposed_ = false;
+      /**
+       * When true, this handle is a cached singleton (e.g. `undefined`, `null`,
+       * `true`, `false`, the global object) and `dispose()` is a no-op. This
+       * prevents code that routinely disposes handles (such as the object/array
+       * branches of `hostToHandle`) from freeing the shared heap `JSValue*` that
+       * the cached singleton still references, which would corrupt later reads.
+       * @internal
+       */
+      singleton;
+      /**
+       * When true, this handle wraps a `JSValue*` OWNED BY THE C CALLER: the
+       * `this`/argument handles the host-call trampoline passes to a host
+       * callback (`handleHostCall`). The C side frees those values after the
+       * call returns, so `dispose()` is a no-op and the handle is never
+       * registered with an active `withScope()` (either would double-free
+       * the guest value and corrupt the heap). A callback that needs to
+       * retain an argument past its own invocation must `dup()` it; the
+       * duplicate takes a fresh reference and behaves like any owned handle.
+       * @internal
+       */
+      borrowed;
+      /**
+       * Extra cleanup to run when this handle is disposed. Used by
+       * `newEphemeralFunction()` to unregister its host callback.
+       * @internal
+       */
+      _onDispose;
+      constructor(vm, ptr, singleton = false, borrowed = false) {
         this.vm = vm;
         this.ptr = ptr;
+        this.singleton = singleton;
+        this.borrowed = borrowed;
+        if (!singleton && !borrowed)
+          vm._activeScope?.add(this);
+      }
+      /**
+       * Whether this handle wraps a C-owned pointer (host-callback
+       * `this`/arguments). Borrowed handles must never be exported as
+       * snapshot tokens: the trampoline frees their boxes after the
+       * callback returns. @internal
+       */
+      get _isBorrowed() {
+        return this.borrowed;
+      }
+      /**
+       * Whether `dispose()` has been called on this handle.
+       *
+       * Note that handle methods do not currently guard against use after
+       * disposal: reading from a disposed handle reads freed memory. Check this
+       * when a handle's lifetime is managed elsewhere (e.g. by `withScope()`).
+       */
+      get disposed() {
+        return this.disposed_;
       }
       get isUndefined() {
         return this.vm._getExports().qjs_is_undefined(this.ptr) !== 0;
@@ -73456,6 +74678,125 @@ var init_dist9 = __esm({
       }
       get isArrayBuffer() {
         return this.vm._getExports().qjs_is_array_buffer(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Proxy exotic object.
+       *
+       * This is an engine-level check: it never fires proxy traps and cannot
+       * be determined (or spoofed) from within guest JavaScript. Use
+       * {@link getProxyTarget} / {@link getProxyHandler} to introspect a
+       * detected proxy without executing guest code.
+       */
+      get isProxy() {
+        return this.vm._getExports().qjs_is_proxy(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Map (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a Map returns false.
+       */
+      get isMap() {
+        return this.vm._getExports().qjs_is_map(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Set (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a Set returns false.
+       */
+      get isSet() {
+        return this.vm._getExports().qjs_is_set(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Date (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a Date returns false.
+       */
+      get isDate() {
+        return this.vm._getExports().qjs_is_date(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a RegExp (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a RegExp returns false.
+       */
+      get isRegExp() {
+        return this.vm._getExports().qjs_is_regexp(this.ptr) !== 0;
+      }
+      /** Whether this value is a WeakRef (engine brand check). */
+      get isWeakRef() {
+        return this.vm._getExports().qjs_is_weak_ref(this.ptr) !== 0;
+      }
+      /** Whether this value is a WeakMap (engine brand check). */
+      get isWeakMap() {
+        return this.vm._getExports().qjs_is_weak_map(this.ptr) !== 0;
+      }
+      /** Whether this value is a WeakSet (engine brand check). */
+      get isWeakSet() {
+        return this.vm._getExports().qjs_is_weak_set(this.ptr) !== 0;
+      }
+      /** Whether this value is a DataView (engine brand check). */
+      get isDataView() {
+        return this.vm._getExports().qjs_is_data_view(this.ptr) !== 0;
+      }
+      /**
+       * A numeric identity for the underlying heap value, or 0 for values that
+       * are not heap-allocated (numbers, booleans, `null`, `undefined`).
+       *
+       * Two handles to the same underlying object always report the same
+       * identity, and two live handles to different objects always report
+       * different identities, so this is the value to key a `Map` on when
+       * deduplicating or detecting cycles across handles (`dump()` uses it for
+       * exactly that).
+       *
+       * The identity is only meaningful while the value is alive; it is an
+       * address, so it may be reused after every handle to the value has been
+       * disposed. Do not persist it, and do not treat it as unforgeable: a
+       * number read out of the guest can trivially collide with one.
+       */
+      get identity() {
+        return this.vm._getExports().qjs_get_value_ptr(this.ptr);
+      }
+      /**
+       * Extract the value as a boolean, applying JavaScript truthiness
+       * (equivalent to `!!value` inside the VM).
+       */
+      toBoolean() {
+        return this.vm._getExports().qjs_get_bool(this.ptr) !== 0;
+      }
+      /**
+       * The internal QuickJS class ID of this value, or 0 for non-objects.
+       * Useful as a generic engine-level brand when no dedicated `is*`
+       * getter exists. Class IDs are stable within a VM instance but are an
+       * engine implementation detail, so prefer the dedicated getters.
+       */
+      get classId() {
+        return this.vm._getExports().qjs_get_class_id(this.ptr);
+      }
+      /**
+       * The engine-level class name of this value, e.g. `"Object"`, `"Map"`,
+       * `"Date"`, `"RegExp"`, or the registered name of an extension-defined
+       * class like `"URL"`, or `undefined` for non-objects and unnamed
+       * internal classes.
+       *
+       * Unlike `constructorName` (which reads the `constructor` and `name`
+       * properties and can therefore fire getters/proxy traps and be spoofed),
+       * this is trap-free: it reads the engine's class table directly, never
+       * executes guest code, and cannot be forged by reassigning prototypes or
+       * constructors. Note that the engine registers the Proxy class under the
+       * name `"Object"` (mirroring `Object.prototype.toString`), so use `isProxy`
+       * to detect proxies and `getProxyTarget()` to read the target's brand.
+       */
+      get className() {
+        const h5 = new _JSValueHandle(this.vm, this.vm._getExports().qjs_get_class_name(this.ptr));
+        if (this.vm._getExports().qjs_is_exception(h5.ptr) !== 0) {
+          h5.dispose();
+          throw new JSException(this.vm.getException());
+        }
+        try {
+          return h5.isUndefined ? void 0 : h5.toString();
+        } finally {
+          h5.dispose();
+        }
       }
       get promiseState() {
         return this.vm._getExports().qjs_promise_state(this.ptr);
@@ -73545,9 +74886,115 @@ var init_dist9 = __esm({
         return result;
       }
       /**
+       * Get ALL own property keys (strings and symbols), including
+       * non-enumerable (equivalent to Reflect.ownKeys()).
+       *
+       * String keys are returned as strings; symbol keys are returned as
+       * JSValueHandles which the caller must dispose.
+       *
+       * Trap-free for ordinary objects; fires the `ownKeys` trap for a
+       * Proxy (check {@link isProxy} first if that matters).
+       */
+      getOwnPropertyKeys() {
+        const e5 = this.vm._getExports();
+        const keysPtr = e5.qjs_get_own_property_keys(this.ptr);
+        const keysHandle = new _JSValueHandle(this.vm, keysPtr);
+        if (e5.qjs_is_exception(keysHandle.ptr) !== 0) {
+          keysHandle.dispose();
+          return [];
+        }
+        const lenHandle = keysHandle.getProp("length");
+        const len = e5.qjs_get_float64(lenHandle.ptr);
+        lenHandle.dispose();
+        const result = [];
+        for (let i5 = 0; i5 < len; i5++) {
+          const keyPtr = e5.qjs_get_prop_uint32(keysHandle.ptr, i5);
+          const keyHandle = new _JSValueHandle(this.vm, keyPtr);
+          if (keyHandle.isSymbol) {
+            result.push(keyHandle);
+          } else {
+            result.push(keyHandle.toString());
+            keyHandle.dispose();
+          }
+        }
+        keysHandle.dispose();
+        return result;
+      }
+      /**
+       * Get the own property descriptor for a key WITHOUT invoking getters
+       * (equivalent to Object.getOwnPropertyDescriptor()).
+       *
+       * This is the safe way to inspect a property that may be an accessor:
+       * a data property yields `{ value, writable, enumerable, configurable }`,
+       * an accessor property yields `{ get, set, enumerable, configurable }`
+       * where `get`/`set` are handles to the accessor functions themselves
+       * (never invoked). Returns undefined if there is no such own property.
+       *
+       * The `value`/`get`/`set` handles are owned by the caller and must be
+       * disposed.
+       *
+       * Trap-free for ordinary objects; fires the `getOwnPropertyDescriptor`
+       * trap for a Proxy (check {@link isProxy} first if that matters).
+       */
+      getOwnPropertyDescriptor(key) {
+        const env_11 = { stack: [], error: void 0, hasError: false };
+        try {
+          const e5 = this.vm._getExports();
+          let keyHandle;
+          let keyPtr;
+          if (typeof key === "string") {
+            keyHandle = this.vm.newString(key);
+            keyPtr = keyHandle.ptr;
+          } else {
+            keyPtr = key.ptr;
+          }
+          const descPtr = e5.qjs_get_own_property_descriptor(this.ptr, keyPtr);
+          keyHandle?.dispose();
+          if (descPtr === 0)
+            return void 0;
+          const descHandle = __addDisposableResource2(env_11, new _JSValueHandle(this.vm, descPtr), false);
+          if (e5.qjs_is_exception(descHandle.ptr) !== 0) {
+            throw new JSException(this.vm.getException());
+          }
+          const enumerable = descHandle.getProp("enumerable").consume((h5) => e5.qjs_get_bool(h5.ptr) !== 0);
+          const configurable = descHandle.getProp("configurable").consume((h5) => e5.qjs_get_bool(h5.ptr) !== 0);
+          if (descHandle.hasOwnProperty("value")) {
+            return {
+              value: descHandle.getProp("value"),
+              writable: descHandle.getProp("writable").consume((h5) => e5.qjs_get_bool(h5.ptr) !== 0),
+              enumerable,
+              configurable
+            };
+          }
+          return {
+            get: descHandle.getProp("get"),
+            set: descHandle.getProp("set"),
+            enumerable,
+            configurable
+          };
+        } catch (e_11) {
+          env_11.error = e_11;
+          env_11.hasError = true;
+        } finally {
+          __disposeResources2(env_11);
+        }
+      }
+      /**
        * Check if a property is an own property (equivalent to Object.prototype.hasOwnProperty).
        */
       hasOwnProperty(name) {
+        if (stringKeyNeedsValuePath(name)) {
+          const env_12 = { stack: [], error: void 0, hasError: false };
+          try {
+            const keyHandle = __addDisposableResource2(env_12, this.vm.newString(name), false);
+            return this.vm._getExports().qjs_has_own_property_value(this.ptr, keyHandle.ptr) === 1;
+          } catch (e_12) {
+            env_12.error = e_12;
+            env_12.hasError = true;
+          } finally {
+            __disposeResources2(env_12);
+          }
+        }
         const { ptr: namePtr } = this.vm._writeString(name);
         const result = this.vm._getExports().qjs_has_own_property(this.ptr, namePtr);
         this.vm._getExports().wasm_free(namePtr);
@@ -73557,6 +75004,18 @@ var init_dist9 = __esm({
        * Check if a property is enumerable (equivalent to Object.prototype.propertyIsEnumerable).
        */
       propertyIsEnumerable(name) {
+        if (stringKeyNeedsValuePath(name)) {
+          const env_13 = { stack: [], error: void 0, hasError: false };
+          try {
+            const keyHandle = __addDisposableResource2(env_13, this.vm.newString(name), false);
+            return this.vm._getExports().qjs_property_is_enumerable_value(this.ptr, keyHandle.ptr) === 1;
+          } catch (e_13) {
+            env_13.error = e_13;
+            env_13.hasError = true;
+          } finally {
+            __disposeResources2(env_13);
+          }
+        }
         const { ptr: namePtr } = this.vm._writeString(name);
         const result = this.vm._getExports().qjs_property_is_enumerable(this.ptr, namePtr);
         this.vm._getExports().wasm_free(namePtr);
@@ -73570,9 +75029,49 @@ var init_dist9 = __esm({
         return new _JSValueHandle(this.vm, protoPtr);
       }
       /**
+       * Get the `[[ProxyTarget]]` of this Proxy without firing any traps.
+       * Throws {@link JSException} if this value is not a Proxy; check
+       * {@link isProxy} first. Note the target may itself be a Proxy.
+       */
+      getProxyTarget() {
+        const ptr = this.vm._getExports().qjs_get_proxy_target(this.ptr);
+        const handle = new _JSValueHandle(this.vm, ptr);
+        if (this.vm._getExports().qjs_is_exception(handle.ptr) !== 0) {
+          handle.dispose();
+          throw new JSException(this.vm.getException());
+        }
+        return handle;
+      }
+      /**
+       * Get the `[[ProxyHandler]]` of this Proxy without firing any traps.
+       * Throws {@link JSException} if this value is not a Proxy; check
+       * {@link isProxy} first.
+       */
+      getProxyHandler() {
+        const ptr = this.vm._getExports().qjs_get_proxy_handler(this.ptr);
+        const handle = new _JSValueHandle(this.vm, ptr);
+        if (this.vm._getExports().qjs_is_exception(handle.ptr) !== 0) {
+          handle.dispose();
+          throw new JSException(this.vm.getException());
+        }
+        return handle;
+      }
+      /**
        * Get a property by name.
        */
       getProp(name) {
+        if (stringKeyNeedsValuePath(name)) {
+          const env_14 = { stack: [], error: void 0, hasError: false };
+          try {
+            const keyHandle = __addDisposableResource2(env_14, this.vm.newString(name), false);
+            return this.vm.getProp(this, keyHandle);
+          } catch (e_14) {
+            env_14.error = e_14;
+            env_14.hasError = true;
+          } finally {
+            __disposeResources2(env_14);
+          }
+        }
         const { ptr: namePtr } = this.vm._writeString(name);
         const resultPtr = this.vm._getExports().qjs_get_prop_string(this.ptr, namePtr);
         this.vm._getExports().wasm_free(namePtr);
@@ -73582,9 +75081,7 @@ var init_dist9 = __esm({
        * Set a property by name.
        */
       setProp(name, value) {
-        const { ptr: namePtr } = this.vm._writeString(name);
-        this.vm._getExports().qjs_set_prop_string(this.ptr, namePtr, value.ptr);
-        this.vm._getExports().wasm_free(namePtr);
+        this.vm.setProp(this, name, value);
       }
       /**
        * Define a property with explicit property descriptor flags.
@@ -73595,20 +75092,7 @@ var init_dist9 = __esm({
        * All flags default to `false` when not specified.
        */
       defineProp(key, value, descriptor) {
-        let flags = 0;
-        if (descriptor?.configurable)
-          flags |= 1;
-        if (descriptor?.writable)
-          flags |= 2;
-        if (descriptor?.enumerable)
-          flags |= 4;
-        if (typeof key === "string") {
-          const { ptr: namePtr } = this.vm._writeString(key);
-          this.vm._getExports().qjs_define_prop_string(this.ptr, namePtr, value.ptr, flags);
-          this.vm._getExports().wasm_free(namePtr);
-        } else {
-          this.vm._getExports().qjs_define_prop_value(this.ptr, key.ptr, value.ptr, flags);
-        }
+        this.vm.defineProp(this, key, value, descriptor);
       }
       /**
        * Extract the value as a number.
@@ -73690,15 +75174,32 @@ var init_dist9 = __esm({
         return new Uint8Array(this.toArrayBuffer());
       }
       /**
-       * Extract the value as a string (calls JS_ToCString - works on any value).
+       * Extract the value as a string. Works on any value.
+       *
+       * For values that are not already strings this performs a JavaScript
+       * string conversion, which **executes guest code**: `toString()` /
+       * `valueOf()` / `Symbol.toPrimitive` on the value or its prototype chain,
+       * and proxy traps. Guard with `isString` when the caller must not run guest
+       * code, and call a captured intrinsic (e.g. `URL.prototype.toString` via
+       * `vm.callFunction`) when a specific conversion is wanted.
        */
       toString() {
-        const cstrPtr = this.vm._getExports().qjs_get_string(this.ptr);
-        if (cstrPtr === 0)
-          return "<null>";
-        const str = this.vm._readCString(cstrPtr);
-        this.vm._getExports().qjs_free_cstring(cstrPtr);
-        return str;
+        const e5 = this.vm._getExports();
+        const lenPtr = e5.wasm_malloc(4);
+        if (lenPtr === 0)
+          throw new Error("wasm_malloc failed");
+        try {
+          const cstrPtr = e5.qjs_get_string_len(this.ptr, lenPtr);
+          if (cstrPtr === 0)
+            return "<null>";
+          const len = new DataView(e5.memory.buffer).getUint32(lenPtr, true);
+          const bytes = new Uint8Array(e5.memory.buffer, cstrPtr, len);
+          const str = decodeWtf8(bytes);
+          e5.qjs_free_cstring(cstrPtr);
+          return str;
+        } finally {
+          e5.wasm_free(lenPtr);
+        }
       }
       /**
        * Use this handle, then dispose it. Returns the callback's return value.
@@ -73721,8 +75222,12 @@ var init_dist9 = __esm({
        * Safe to call after the VM has been disposed (becomes a no-op).
        */
       dispose() {
-        if (!this.disposed) {
-          this.disposed = true;
+        if (this.singleton || this.borrowed)
+          return;
+        if (!this.disposed_) {
+          this.disposed_ = true;
+          this._onDispose?.();
+          this._onDispose = void 0;
           const exports2 = this.vm._getExports();
           if (exports2) {
             exports2.qjs_free_value(this.ptr);
@@ -73758,7 +75263,7 @@ function sanitizeProxyResultCredentials(result) {
   }
   return String(result).replace(/(\b(?:PROXY|HTTPS?|SOCKS[45]?)\s+)[^\s@]+@/gi, "$1<credentials>@");
 }
-var net6, tls4, crypto3, import_events3, import_debug14, import_url5, debug11, setServernameFromNonIpHost3, PacProxyAgent;
+var net6, tls4, crypto3, import_events3, import_debug14, import_url5, import_promises3, import_meta, quickjsWasm, debug11, setServernameFromNonIpHost3, PacProxyAgent;
 var init_dist10 = __esm({
   "node_modules/pac-proxy-agent/dist/index.js"() {
     net6 = __toESM(require("net"), 1);
@@ -73770,7 +75275,10 @@ var init_dist10 = __esm({
     init_dist();
     init_dist6();
     init_dist8();
+    import_promises3 = require("fs/promises");
     init_dist9();
+    import_meta = {};
+    quickjsWasm = (0, import_promises3.readFile)(new import_url5.URL(import_meta.resolve("quickjs-wasi/quickjs.wasm")));
     debug11 = (0, import_debug14.default)("pac-proxy-agent");
     setServernameFromNonIpHost3 = (options) => {
       if (options.servername === void 0 && options.host && !net6.isIP(options.host)) {
@@ -73813,7 +75321,7 @@ var init_dist10 = __esm({
       async loadResolver() {
         try {
           const [qjs, code] = await Promise.all([
-            QuickJS.create(),
+            QuickJS.create({ wasm: await quickjsWasm }),
             this.loadPacFile()
           ]);
           const hash = crypto3.createHash("sha1").update(code).digest("hex");

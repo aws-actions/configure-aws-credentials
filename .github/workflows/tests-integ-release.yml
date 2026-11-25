@@ -176,6 +176,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install tinyproxy
+          sudo apparmor_parser -R /etc/apparmor.d/tinyproxy || true
       - name: start tinyproxy
         run: tinyproxy -c .github/integ_tests/tinyproxy.conf
       - name: Configure AWS credentials
