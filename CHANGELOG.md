@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.3.1](https://github.com/aws-actions/configure-aws-credentials/compare/v6.3.0...v6.3.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* abort proxied requests when CONNECT does not return HTTP 200 ([#2037](https://github.com/aws-actions/configure-aws-credentials/issues/2037)) ([f9f13dc](https://github.com/aws-actions/configure-aws-credentials/commit/f9f13dcf7f3201e964ea61246bdc67dbd587c335))
+
 ## [6.3.0](https://github.com/aws-actions/configure-aws-credentials/compare/v6.2.4...v6.3.0) (2026-09-11)
 
 
