@@ -645,10 +645,10 @@ Apache License
 The following npm packages may be included in this product:
 
  - agent-base@9.0.0
- - degenerator@7.0.1
+ - degenerator@7.0.2
  - https-proxy-agent@9.1.0
- - pac-resolver@9.0.1
- - proxy-agent@8.0.2
+ - pac-resolver@9.0.2
+ - proxy-agent@8.0.3
  - socks-proxy-agent@10.1.0
 
 These packages each contain the following license:
@@ -712,7 +712,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 The following npm packages may be included in this product:
 
  - data-uri-to-buffer@8.0.0
- - get-uri@8.0.1
+ - get-uri@8.0.2
 
 These packages each contain the following license:
 
@@ -743,7 +743,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - pac-proxy-agent@9.1.0
+ - pac-proxy-agent@9.1.1
 
 This package contains the following license:
 
@@ -1572,7 +1572,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - basic-ftp@5.3.1
+ - basic-ftp@6.2.6
 
 This package contains the following license:
 
@@ -1697,12 +1697,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -----------
 
-The following npm packages may be included in this product:
+The following npm package may be included in this product:
 
  - proxy-agent-negotiate@1.1.0
- - quickjs-wasi@2.2.0
 
-These packages each contain the following license:
+This package contains the following license:
 
 MIT
 
@@ -1710,7 +1709,7 @@ MIT
 
 The following npm package may be included in this product:
 
- - netmask@2.1.1
+ - netmask@2.1.2
 
 This package contains the following license:
 
@@ -1735,6 +1734,36 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-----------
+
+The following npm package may be included in this product:
+
+ - quickjs-wasi@3.7.0
+
+This package contains the following license:
+
+MIT License
+
+Copyright (c) 2026 Vercel, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 -----------
 

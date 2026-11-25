@@ -53562,6 +53562,7 @@ var require_FtpContext = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.FTPContext = exports2.FTPError = void 0;
     var net_1 = require("net");
+    var tls_1 = require("tls");
     var parseControlResponse_1 = require_parseControlResponse();
     var FTPError = class extends Error {
       constructor(res) {
@@ -53586,6 +53587,7 @@ var require_FtpContext = __commonJS({
         this.verbose = false;
         this.ipFamily = void 0;
         this.tlsOptions = {};
+        this.tlsSessionStore = void 0;
         this._partialResponse = "";
         this._encoding = encoding;
         this._socket = this.socket = this._newSocket();
@@ -53637,6 +53639,7 @@ var require_FtpContext = __commonJS({
       set socket(socket) {
         this.dataSocket = void 0;
         this.tlsOptions = {};
+        this.tlsSessionStore = void 0;
         this._partialResponse = "";
         if (this._socket) {
           const newSocketUpgradesExisting = socket.localPort === this._socket.localPort;
@@ -53658,6 +53661,11 @@ var require_FtpContext = __commonJS({
               this.closeWithError(new Error("Server closed connection unexpectedly."));
           });
           this._setupDefaultErrorHandlers(socket, "control socket");
+          if (socket instanceof tls_1.TLSSocket) {
+            socket.on("session", (session) => {
+              this.tlsSessionStore = session;
+            });
+          }
         }
         this._socket = socket;
       }
@@ -53700,12 +53708,12 @@ var require_FtpContext = __commonJS({
        * Send an FTP command without waiting for or handling the result.
        */
       send(command5) {
-        if (/[\r\n\0]/.test(command5)) {
-          throw new Error(`Invalid command: Contains control characters. (${command5})`);
-        }
         const containsPassword = command5.startsWith("PASS");
-        const message = containsPassword ? "> PASS ###" : `> ${command5}`;
-        this.log(message);
+        const description = containsPassword ? "PASS ###" : command5;
+        if (/[\r\n\0]/.test(command5)) {
+          throw new Error(`Invalid command: Contains control characters. (${description})`);
+        }
+        this.log(`> ${description}`);
         this._socket.write(command5 + "\r\n", this.encoding);
       }
       /**
@@ -53733,16 +53741,24 @@ Running task launched at: ${this._task.stack}`;
           this.closeWithError(err);
         }
         return new Promise((resolveTask, rejectTask) => {
+          let settled = false;
+          const stopTrackingOnce = () => {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            this._stopTrackingTask();
+          };
           this._task = {
             stack: new Error().stack || "Unknown call stack",
             responseHandler,
             resolver: {
               resolve: (arg) => {
-                this._stopTrackingTask();
+                stopTrackingOnce();
                 resolveTask(arg);
               },
               reject: (err) => {
-                this._stopTrackingTask();
+                stopTrackingOnce();
                 rejectTask(err);
               }
             }
@@ -53757,7 +53773,11 @@ Closing reason: ${this._closingError.stack}`;
           }
           this.socket.setTimeout(this.timeout);
           if (command5) {
-            this.send(command5);
+            try {
+              this.send(command5);
+            } catch (err) {
+              this._task.resolver.reject(err);
+            }
           }
         });
       }
@@ -53811,8 +53831,14 @@ Closing reason: ${this._closingError.stack}`;
        * @protected
        */
       _passToHandler(response) {
-        if (this._task) {
-          this._task.responseHandler(response, this._task.resolver);
+        const task = this._task;
+        if (task) {
+          try {
+            task.responseHandler(response, task.resolver);
+          } catch (err) {
+            task.resolver.reject(err);
+            this.closeWithError(err);
+          }
         }
       }
       /**
@@ -53888,6 +53914,7 @@ var require_netUtils = __commonJS({
     exports2.describeTLS = describeTLS;
     exports2.describeAddress = describeAddress;
     exports2.upgradeSocket = upgradeSocket;
+    exports2.isLoopback = isLoopback;
     exports2.ipIsPrivateV4Address = ipIsPrivateV4Address;
     var tls_1 = require("tls");
     function describeTLS(socket) {
@@ -53920,6 +53947,9 @@ var require_netUtils = __commonJS({
           reject(error3);
         });
       });
+    }
+    function isLoopback(ip2) {
+      return ip2 === "::1" || ip2.startsWith("127.");
     }
     function ipIsPrivateV4Address(ip2 = "") {
       if (ip2.startsWith("::ffff:")) {
@@ -53998,7 +54028,7 @@ var require_parseListDOS = __commonJS({
     exports2.transformList = transformList;
     var FileInfo_1 = require_FileInfo();
     var RE_LINE = new RegExp(
-      "(\\S+)\\s+(\\S+)\\s+(?:(<DIR>)|([0-9]+))\\s+(\\S.*)"
+      "^\\s*(\\S+)\\s+(\\S+)\\s+(?:(<DIR>)|([0-9]+))\\s+(\\S.*)"
       // First non-space followed by rest of line (name)
     );
     function testLine(line) {
@@ -54043,7 +54073,7 @@ var require_parseListUnix = __commonJS({
     var JA_MONTH = "\u6708";
     var JA_DAY = "\u65E5";
     var JA_YEAR = "\u5E74";
-    var RE_LINE = new RegExp("([bcdelfmpSs-])(((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]?)))\\+?\\s*(\\d+)\\s+(?:(\\S+(?:\\s\\S+)*?)\\s+)?(?:(\\S+(?:\\s\\S+)*)\\s+)?(\\d+(?:,\\s*\\d+)?)\\s+((?:\\d+[-/]\\d+[-/]\\d+)|(?:\\S{3}\\s+\\d{1,2})|(?:\\d{1,2}\\s+\\S{3})|(?:\\d{1,2}" + JA_MONTH + "\\s+\\d{1,2}" + JA_DAY + "))\\s+((?:\\d+(?::\\d+)?)|(?:\\d{4}" + JA_YEAR + "))\\s(.*)");
+    var RE_LINE = new RegExp("^[\\s\\d]*([bcdelfmpSs-])(((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]?)))\\+?\\s*(\\d+)\\s+(?:(\\S+(?:\\s\\S+){0,7}?)\\s+)?(?:(\\S+(?:\\s\\S+){0,7})\\s+)?(\\d+(?:,\\s*\\d+)?)\\s+((?:\\d+[-/]\\d+[-/]\\d+)|(?:\\S{3}\\s+\\d{1,2})|(?:\\d{1,2}\\s+\\S{3})|(?:\\d{1,2}" + JA_MONTH + "\\s+\\d{1,2}" + JA_DAY + "))\\s+((?:\\d+(?::\\d+)?)|(?:\\d{4}" + JA_YEAR + "))\\s(.*)");
     function testLine(line) {
       return RE_LINE.test(line);
     }
@@ -54214,7 +54244,7 @@ var require_parseListMLSD = __commonJS({
       return [a5, b6];
     }
     function testLine(line) {
-      return /^\S+=\S+;/.test(line) || line.startsWith(" ");
+      return /^[^\s=]+=\S+;/.test(line) || line.startsWith(" ");
     }
     function parseLine(line) {
       const [packedFacts, name] = splitStringOnce(line, " ");
@@ -54228,11 +54258,11 @@ var require_parseListMLSD = __commonJS({
         if (!factValue) {
           continue;
         }
-        const factHandler = factHandlersByName[factName.toLowerCase()];
-        if (!factHandler) {
+        const key = factName.toLowerCase();
+        if (!Object.prototype.hasOwnProperty.call(factHandlersByName, key)) {
           continue;
         }
-        const result = factHandler(factValue, info2);
+        const result = factHandlersByName[key](factValue, info2);
         if (result === 2) {
           return void 0;
         }
@@ -54431,6 +54461,62 @@ var require_ProgressTracker = __commonJS({
   }
 });
 
+// node_modules/basic-ftp/dist/safePathNames.js
+var require_safePathNames = __commonJS({
+  "node_modules/basic-ftp/dist/safePathNames.js"(exports2) {
+    "use strict";
+    var __createBinding2 = exports2 && exports2.__createBinding || (Object.create ? (function(o3, m3, k5, k22) {
+      if (k22 === void 0) k22 = k5;
+      var desc = Object.getOwnPropertyDescriptor(m3, k5);
+      if (!desc || ("get" in desc ? !m3.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() {
+          return m3[k5];
+        } };
+      }
+      Object.defineProperty(o3, k22, desc);
+    }) : (function(o3, m3, k5, k22) {
+      if (k22 === void 0) k22 = k5;
+      o3[k22] = m3[k5];
+    }));
+    var __setModuleDefault2 = exports2 && exports2.__setModuleDefault || (Object.create ? (function(o3, v) {
+      Object.defineProperty(o3, "default", { enumerable: true, value: v });
+    }) : function(o3, v) {
+      o3["default"] = v;
+    });
+    var __importStar2 = exports2 && exports2.__importStar || /* @__PURE__ */ (function() {
+      var ownKeys2 = function(o3) {
+        ownKeys2 = Object.getOwnPropertyNames || function(o4) {
+          var ar = [];
+          for (var k5 in o4) if (Object.prototype.hasOwnProperty.call(o4, k5)) ar[ar.length] = k5;
+          return ar;
+        };
+        return ownKeys2(o3);
+      };
+      return function(mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) {
+          for (var k5 = ownKeys2(mod), i5 = 0; i5 < k5.length; i5++) if (k5[i5] !== "default") __createBinding2(result, mod, k5[i5]);
+        }
+        __setModuleDefault2(result, mod);
+        return result;
+      };
+    })();
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.isSafePathName = isSafePathName;
+    var path4 = __importStar2(require("path"));
+    function isSafePathName(name, localPath = path4) {
+      if (!name || name === "." || name === ".." || name.includes("/")) {
+        return false;
+      }
+      if (localPath.sep === "\\") {
+        return !/[\\:]/.test(name) && !/^[. ]+$/.test(name);
+      }
+      return true;
+    }
+  }
+});
+
 // node_modules/basic-ftp/dist/StringWriter.js
 var require_StringWriter = __commonJS({
   "node_modules/basic-ftp/dist/StringWriter.js"(exports2) {
@@ -54466,6 +54552,74 @@ var require_StringWriter = __commonJS({
   }
 });
 
+// node_modules/basic-ftp/dist/TransferWatchdog.js
+var require_TransferWatchdog = __commonJS({
+  "node_modules/basic-ftp/dist/TransferWatchdog.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.TransferWatchdog = void 0;
+    var maxCheckIntervalMs = 500;
+    var minChecksPerTimeout = 4;
+    var TransferWatchdog = class {
+      constructor() {
+        this.timer = void 0;
+      }
+      /**
+       * Start watching a transfer. Calls `onStall` if the server hasn't made progress for
+       * `timeout` milliseconds, or for twice that if we made it wait ourselves before that.
+       * A timeout of 0 disables the watchdog.
+       */
+      start(socket, direction, timeout, onStall) {
+        this.stop();
+        if (timeout <= 0) {
+          return;
+        }
+        const intervalMs = Math.max(1, Math.min(Math.floor(timeout / minChecksPerTimeout), maxCheckIntervalMs));
+        let lastBytes = countBytes(socket);
+        let idleMs = 0;
+        let graceMs = 0;
+        this.timer = setInterval(() => {
+          const bytes = countBytes(socket);
+          const madeProgress = bytes !== lastBytes;
+          lastBytes = bytes;
+          if (!isWaitingForServer(socket, direction)) {
+            idleMs = 0;
+            graceMs = timeout;
+            return;
+          }
+          if (madeProgress) {
+            idleMs = 0;
+            graceMs = 0;
+            return;
+          }
+          idleMs += intervalMs;
+          if (idleMs >= timeout + graceMs) {
+            this.stop();
+            onStall();
+          }
+        }, intervalMs);
+        this.timer.unref();
+      }
+      /**
+       * Stop watching. Safe to call at any time, also if no transfer is being watched.
+       */
+      stop() {
+        if (this.timer) {
+          clearInterval(this.timer);
+          this.timer = void 0;
+        }
+      }
+    };
+    exports2.TransferWatchdog = TransferWatchdog;
+    function countBytes(socket) {
+      return socket.bytesRead + socket.bytesWritten;
+    }
+    function isWaitingForServer(socket, direction) {
+      return direction === "download" ? !socket.isPaused() : socket.writableLength > 0;
+    }
+  }
+});
+
 // node_modules/basic-ftp/dist/transfer.js
 var require_transfer = __commonJS({
   "node_modules/basic-ftp/dist/transfer.js"(exports2) {
@@ -54479,9 +54633,10 @@ var require_transfer = __commonJS({
     exports2.connectForPassiveTransfer = connectForPassiveTransfer;
     exports2.uploadFrom = uploadFrom;
     exports2.downloadTo = downloadTo;
-    var netUtils_1 = require_netUtils();
     var stream_1 = require("stream");
     var tls_1 = require("tls");
+    var TransferWatchdog_1 = require_TransferWatchdog();
+    var netUtils_1 = require_netUtils();
     var parseControlResponse_1 = require_parseControlResponse();
     async function enterPassiveModeIPv6(ftp2) {
       const res = await ftp2.request("EPSV");
@@ -54530,11 +54685,16 @@ var require_transfer = __commonJS({
       if (controlHost === void 0) {
         throw new Error("Control socket is disconnected, can't get remote address.");
       }
-      await connectForPassiveTransfer(controlHost, target.port, ftp2);
+      const normalizedControlHost = controlHost.replace(/^::ffff:/i, "");
+      const hostsAreCompatible = normalizedControlHost === target.host || (0, netUtils_1.isLoopback)(normalizedControlHost) && (0, netUtils_1.isLoopback)(target.host);
+      if (!hostsAreCompatible) {
+        throw new Error(`PASV returned another host (${target.host}) for data transfer that you have connected to (${controlHost}). Even though the FTP protocol allows this, basic-ftp disables this feature by default for security reasons. If you do need this feature, instantiate the Client with the optional paramter "allowSeparateTransferHost: true". See the README documentation for more information.`);
+      }
+      await connectForPassiveTransfer(normalizedControlHost, target.port, ftp2);
       return res;
     }
     function parsePasvResponse(message) {
-      const groups = message.match(/([-\d]+,[-\d]+,[-\d]+,[-\d]+),([-\d]+),([-\d]+)/);
+      const groups = message.match(/(?<![-\d])([-\d]+,[-\d]+,[-\d]+,[-\d]+),([-\d]+),([-\d]+)/);
       if (groups === null || groups.length !== 4) {
         throw new Error(`Can't parse response to 'PASV': ${message}`);
       }
@@ -54545,7 +54705,8 @@ var require_transfer = __commonJS({
     }
     function connectForPassiveTransfer(host, port, ftp2) {
       return new Promise((resolve, reject) => {
-        let socket = ftp2._newSocket();
+        const rawSocket = ftp2._newSocket();
+        let socket = rawSocket;
         const handleConnErr = function(err) {
           err.message = "Can't open data connection in passive mode: " + err.message;
           reject(err);
@@ -54558,17 +54719,23 @@ var require_transfer = __commonJS({
         socket.on("error", handleConnErr);
         socket.on("timeout", handleTimeout);
         socket.connect({ port, host, family: ftp2.ipFamily }, () => {
+          var _a2;
           if (ftp2.socket instanceof tls_1.TLSSocket) {
-            socket = (0, tls_1.connect)(Object.assign({}, ftp2.tlsOptions, {
-              socket,
+            const tlsSocket = (0, tls_1.connect)(Object.assign({}, ftp2.tlsOptions, {
+              socket: rawSocket,
               // Reuse the TLS session negotiated earlier when the control connection
               // was upgraded. Servers expect this because it provides additional
               // security: If a completely new session would be negotiated, a hacker
               // could guess the port and connect to the new data connection before we do
               // by just starting his/her own TLS session.
-              session: ftp2.socket.getSession()
+              session: (_a2 = ftp2.tlsSessionStore) !== null && _a2 !== void 0 ? _a2 : ftp2.socket.getSession()
             }));
+            tlsSocket.on("session", (session) => {
+              ftp2.tlsSessionStore = session;
+            });
+            socket = tlsSocket;
           }
+          rawSocket.setTimeout(0);
           socket.removeListener("error", handleConnErr);
           socket.removeListener("timeout", handleTimeout);
           ftp2.dataSocket = socket;
@@ -54585,6 +54752,8 @@ var require_transfer = __commonJS({
         this.progress = progress;
         this.response = void 0;
         this.dataTransferDone = false;
+        this.taskSettled = false;
+        this.watchdog = new TransferWatchdog_1.TransferWatchdog();
       }
       /**
        * Mark the beginning of a transfer.
@@ -54597,18 +54766,22 @@ var require_transfer = __commonJS({
           throw new Error("Data transfer should start but there is no data connection.");
         }
         this.ftp.socket.setTimeout(0);
-        this.ftp.dataSocket.setTimeout(this.ftp.timeout);
+        this.ftp.dataSocket.setTimeout(0);
+        this.watchdog.start(this.ftp.dataSocket, type === "upload" ? "upload" : "download", this.ftp.timeout, () => {
+          this.ftp.closeWithError(new Error("Timeout (data socket)"));
+        });
         this.progress.start(this.ftp.dataSocket, name, type);
       }
       /**
        * The data connection has finished the transfer.
        */
       onDataDone(task) {
+        if (this.taskSettled) {
+          return;
+        }
+        this.watchdog.stop();
         this.progress.updateAndStop();
         this.ftp.socket.setTimeout(this.ftp.timeout);
-        if (this.ftp.dataSocket) {
-          this.ftp.dataSocket.setTimeout(0);
-        }
         this.dataTransferDone = true;
         this.tryResolve(task);
       }
@@ -54623,6 +54796,11 @@ var require_transfer = __commonJS({
        * An error has been reported and the task should be rejected.
        */
       onError(task, err) {
+        if (this.taskSettled) {
+          return;
+        }
+        this.taskSettled = true;
+        this.watchdog.stop();
         this.progress.updateAndStop();
         this.ftp.socket.setTimeout(this.ftp.timeout);
         this.ftp.dataSocket = void 0;
@@ -54640,6 +54818,7 @@ var require_transfer = __commonJS({
       tryResolve(task) {
         const canResolve = this.dataTransferDone && this.response !== void 0;
         if (canResolve) {
+          this.taskSettled = true;
           this.ftp.dataSocket = void 0;
           task.resolve(this.response);
         }
@@ -54648,10 +54827,15 @@ var require_transfer = __commonJS({
     function uploadFrom(source, config) {
       const resolver = new TransferResolver(config.ftp, config.tracker);
       const fullCommand = `${config.command} ${config.remotePath}`;
+      let transferStarted = false;
       return config.ftp.handle(fullCommand, (res, task) => {
         if (res instanceof Error) {
           resolver.onError(task, res);
         } else if (res.code === 150 || res.code === 125) {
+          if (transferStarted) {
+            return;
+          }
+          transferStarted = true;
           const dataSocket = config.ftp.dataSocket;
           if (!dataSocket) {
             resolver.onError(task, new Error("Upload should begin but no data connection is available."));
@@ -54681,10 +54865,15 @@ var require_transfer = __commonJS({
         throw new Error("Download will be initiated but no data connection is available.");
       }
       const resolver = new TransferResolver(config.ftp, config.tracker);
+      let transferStarted = false;
       return config.ftp.handle(config.command, (res, task) => {
         if (res instanceof Error) {
           resolver.onError(task, res);
         } else if (res.code === 150 || res.code === 125) {
+          if (transferStarted) {
+            return;
+          }
+          transferStarted = true;
           const dataSocket = config.ftp.dataSocket;
           if (!dataSocket) {
             resolver.onError(task, new Error("Download should begin but no data connection is available."));
@@ -54734,16 +54923,19 @@ var require_Client = __commonJS({
     var parseList_1 = require_parseList();
     var parseListMLSD_1 = require_parseListMLSD();
     var ProgressTracker_1 = require_ProgressTracker();
+    var safePathNames_1 = require_safePathNames();
     var StringWriter_1 = require_StringWriter();
     var transfer_1 = require_transfer();
     var fsReadDir = (0, util_1.promisify)(fs_1.readdir);
     var fsMkDir = (0, util_1.promisify)(fs_1.mkdir);
     var fsStat = (0, util_1.promisify)(fs_1.stat);
+    var fsFStat = (0, util_1.promisify)(fs_1.fstat);
     var fsOpen = (0, util_1.promisify)(fs_1.open);
     var fsClose = (0, util_1.promisify)(fs_1.close);
     var fsUnlink = (0, util_1.promisify)(fs_1.unlink);
     var defaultClientOptions = {
-      allowSeparateTransferHost: true,
+      /** For security reasons this library should not allow separate transfer hosts by default. */
+      allowSeparateTransferHost: false,
       maxListingBytes: 40 * 1024 * 1024
     };
     var LIST_COMMANDS_DEFAULT = () => ["LIST -a", "LIST"];
@@ -54808,7 +55000,9 @@ var require_Client = __commonJS({
        * explicit TLS. There are still FTP servers that support only implicit TLS, though.
        */
       connectImplicitTLS(host = "localhost", port = 21, tlsOptions = {}) {
+        var _a2;
         this.ftp.reset();
+        tlsOptions.host = (_a2 = tlsOptions.host) !== null && _a2 !== void 0 ? _a2 : host;
         this.ftp.socket = (0, tls_1.connect)(port, host, tlsOptions, () => this.ftp.log(`Connected to ${(0, netUtils_1.describeAddress)(this.ftp.socket)} (${(0, netUtils_1.describeTLS)(this.ftp.socket)})`));
         this.ftp.tlsOptions = tlsOptions;
         return this._handleConnectResponse();
@@ -55079,7 +55273,12 @@ var require_Client = __commonJS({
           autoClose: false
         });
         try {
-          return await this._uploadFromStream(source, remotePath, command5);
+          const expectedBytes = await expectedBytesFromLocalFile(fd, options);
+          const response = await this._uploadFromStream(source, remotePath, command5);
+          if (expectedBytes !== void 0 && source.bytesRead !== expectedBytes) {
+            throw new Error(`Local file "${localPath}" changed while it was being uploaded to "${remotePath}": expected to send ${expectedBytes} bytes but sent ${source.bytesRead}. The remote file is incomplete.`);
+          }
+          return response;
         } finally {
           await ignoreError(() => fsClose(fd));
         }
@@ -55305,8 +55504,7 @@ var require_Client = __commonJS({
       async _downloadFromWorkingDir(localDirPath) {
         await ensureLocalDirectory(localDirPath);
         for (const file2 of await this.list()) {
-          const hasInvalidName = !file2.name || (0, path_1.basename)(file2.name) !== file2.name;
-          if (hasInvalidName) {
+          if (!(0, safePathNames_1.isSafePathName)(file2.name)) {
             const safeName = JSON.stringify(file2.name);
             this.ftp.log(`Invalid filename from server listing, will skip file. (${safeName})`);
             continue;
@@ -55443,6 +55641,16 @@ var require_Client = __commonJS({
       } catch (_a2) {
         await fsMkDir(path4, { recursive: true });
       }
+    }
+    async function expectedBytesFromLocalFile(fd, options) {
+      var _a2;
+      const stats = await fsFStat(fd);
+      if (!stats.isFile()) {
+        return void 0;
+      }
+      const start = (_a2 = options.localStart) !== null && _a2 !== void 0 ? _a2 : 0;
+      const endExclusive = options.localEndInclusive !== void 0 ? Math.min(options.localEndInclusive + 1, stats.size) : stats.size;
+      return Math.max(0, endExclusive - start);
     }
     async function ignoreError(func) {
       try {
@@ -71924,18 +72132,76 @@ var init_extensions2 = __esm({
 var VERSION;
 var init_version = __esm({
   "node_modules/quickjs-wasi/dist/version.js"() {
-    VERSION = "2.2.0";
+    VERSION = "3.7.0";
   }
 });
 
 // node_modules/quickjs-wasi/dist/index.js
-var import_meta, __addDisposableResource2, __disposeResources2, EvalFlags, CompileFlags, Intrinsics, SNAPSHOT_MAGIC, SNAPSHOT_VERSION, SNAPSHOT_HEADER_SIZE, QuickJS, JSException, JSValueHandle;
+function stringKeyNeedsValuePath(key) {
+  return key.includes("\0") || LONE_SURROGATE_RE.test(key);
+}
+function encodeWtf8(str) {
+  if (!LONE_SURROGATE_RE.test(str))
+    return wtf8Encoder.encode(str);
+  const bytes = [];
+  for (let i5 = 0; i5 < str.length; i5++) {
+    const code = str.charCodeAt(i5);
+    if (code < 128) {
+      bytes.push(code);
+    } else if (code < 2048) {
+      bytes.push(192 | code >> 6, 128 | code & 63);
+    } else if (code >= 55296 && code <= 56319 && i5 + 1 < str.length) {
+      const next = str.charCodeAt(i5 + 1);
+      if (next >= 56320 && next <= 57343) {
+        const cp = 65536 + (code - 55296 << 10) + (next - 56320);
+        bytes.push(240 | cp >> 18, 128 | cp >> 12 & 63, 128 | cp >> 6 & 63, 128 | cp & 63);
+        i5++;
+        continue;
+      }
+      bytes.push(224 | code >> 12, 128 | code >> 6 & 63, 128 | code & 63);
+    } else {
+      bytes.push(224 | code >> 12, 128 | code >> 6 & 63, 128 | code & 63);
+    }
+  }
+  return new Uint8Array(bytes);
+}
+function decodeWtf8(bytes) {
+  let hasSurrogateSequence = false;
+  for (let i6 = 0; i6 < bytes.length - 1; i6++) {
+    if (bytes[i6] === 237 && bytes[i6 + 1] >= 160 && bytes[i6 + 1] <= 191) {
+      hasSurrogateSequence = true;
+      break;
+    }
+  }
+  if (!hasSurrogateSequence)
+    return wtf8Decoder.decode(bytes);
+  let out = "";
+  let i5 = 0;
+  while (i5 < bytes.length) {
+    const b0 = bytes[i5];
+    if (b0 < 128) {
+      out += String.fromCharCode(b0);
+      i5 += 1;
+    } else if (b0 < 224) {
+      out += String.fromCharCode((b0 & 31) << 6 | bytes[i5 + 1] & 63);
+      i5 += 2;
+    } else if (b0 < 240) {
+      out += String.fromCharCode((b0 & 15) << 12 | (bytes[i5 + 1] & 63) << 6 | bytes[i5 + 2] & 63);
+      i5 += 3;
+    } else {
+      const cp = (b0 & 7) << 18 | (bytes[i5 + 1] & 63) << 12 | (bytes[i5 + 2] & 63) << 6 | bytes[i5 + 3] & 63;
+      out += String.fromCodePoint(cp);
+      i5 += 4;
+    }
+  }
+  return out;
+}
+var __addDisposableResource2, __disposeResources2, MAX_STACK_SIZE, EvalFlags, CompileFlags, Intrinsics, SNAPSHOT_MAGIC, SNAPSHOT_VERSION, SNAPSHOT_HEADER_SIZE, QuickJS, wtf8Decoder, wtf8Encoder, LONE_SURROGATE_RE, JSException, JSValueHandle;
 var init_dist9 = __esm({
   "node_modules/quickjs-wasi/dist/index.js"() {
     init_wasi_shim();
     init_extensions2();
     init_version();
-    import_meta = {};
     __addDisposableResource2 = function(env2, value, async) {
       if (value !== null && value !== void 0) {
         if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
@@ -71994,14 +72260,20 @@ var init_dist9 = __esm({
       var e5 = new Error(message);
       return e5.name = "SuppressedError", e5.error = error3, e5.suppressed = suppressed, e5;
     });
+    MAX_STACK_SIZE = 512 * 1024;
     EvalFlags = {
       /** Global script mode (default). */
       TYPE_GLOBAL: 0,
-      /** Module mode. */
+      /**
+       * Module mode. `evalCode()` returns a handle to a Promise that resolves
+       * to the module's namespace object (its exports), or rejects if module
+       * evaluation throws. Use together with `executePendingJobs()` and
+       * `resolvePromise()`.
+       */
       TYPE_MODULE: 1 << 0,
       /** Force strict mode. */
       STRICT: 1 << 3,
-      /** Compile only — do not execute. */
+      /** Compile only; do not execute. */
       COMPILE_ONLY: 1 << 5,
       /** Omit stack frames before this eval from Error backtraces. */
       BACKTRACE_BARRIER: 1 << 6,
@@ -72043,6 +72315,11 @@ var init_dist9 = __esm({
       PERFORMANCE: 1 << 10,
       /** `DOMException` class. */
       DOM_EXCEPTION: 1 << 11,
+      /**
+       * `atob()` and `btoa()` global functions. Also pulls in `DOMException` as
+       * a dependency (errors thrown by these functions are `DOMException`s).
+       */
+      ATOB_BTOA: 1 << 12,
       /** All intrinsics enabled (default). */
       ALL: 4294967295
     };
@@ -72056,6 +72333,9 @@ var init_dist9 = __esm({
       encoder = new TextEncoder();
       decoder = new TextDecoder();
       disposed = false;
+      asyncFailure;
+      hostSettlementDepth = 0;
+      promiseWaiters = /* @__PURE__ */ new Set();
       /** Registry of host callbacks, keyed by function name */
       hostCallbacks = /* @__PURE__ */ new Map();
       /** Counter for internal-only callbacks (e.g. promise settle handlers) */
@@ -72074,6 +72354,12 @@ var init_dist9 = __esm({
       _false = null;
       // Handles that must be freed on dispose (e.g. unresolved promise resolve/reject functions)
       _ownedHandles = /* @__PURE__ */ new Set();
+      /**
+       * The innermost active `withScope()` batch, if any. New non-singleton
+       * handles register themselves here so they can be freed together.
+       * @internal
+       */
+      _activeScope = null;
       /** Loaded extensions in deterministic order */
       loadedExtensions = [];
       constructor(module2) {
@@ -72108,38 +72394,38 @@ var init_dist9 = __esm({
         }
         return this._versions;
       }
-      /** The global object. Cached — do not dispose. */
+      /** The global object. Cached; do not dispose. */
       get global() {
         if (!this._global) {
-          this._global = new JSValueHandle(this, this.exports.qjs_get_global());
+          this._global = new JSValueHandle(this, this.exports.qjs_get_global(), true);
         }
         return this._global;
       }
-      /** The undefined value. Cached — do not dispose. */
+      /** The undefined value. Cached; do not dispose. */
       get undefined() {
         if (!this._undefined) {
-          this._undefined = new JSValueHandle(this, this.exports.qjs_get_undefined());
+          this._undefined = new JSValueHandle(this, this.exports.qjs_get_undefined(), true);
         }
         return this._undefined;
       }
-      /** The null value. Cached — do not dispose. */
+      /** The null value. Cached; do not dispose. */
       get null() {
         if (!this._null) {
-          this._null = new JSValueHandle(this, this.exports.qjs_get_null());
+          this._null = new JSValueHandle(this, this.exports.qjs_get_null(), true);
         }
         return this._null;
       }
-      /** The true value. Cached — do not dispose. */
+      /** The true value. Cached; do not dispose. */
       get true() {
         if (!this._true) {
-          this._true = new JSValueHandle(this, this.exports.qjs_get_true());
+          this._true = new JSValueHandle(this, this.exports.qjs_get_true(), true);
         }
         return this._true;
       }
-      /** The false value. Cached — do not dispose. */
+      /** The false value. Cached; do not dispose. */
       get false() {
         if (!this._false) {
-          this._false = new JSValueHandle(this, this.exports.qjs_get_false());
+          this._false = new JSValueHandle(this, this.exports.qjs_get_false(), true);
         }
         return this._false;
       }
@@ -72208,7 +72494,7 @@ var init_dist9 = __esm({
        *
        * The format includes a versioned header followed by the raw memory.
        * Apply your own compression (gzip, zstd, etc.) on top for smaller
-       * storage — the memory compresses very well due to large zero regions.
+       * storage. The memory compresses well due to its large zero regions.
        *
        * Format (version 1):
        * ```
@@ -72320,17 +72606,26 @@ var init_dist9 = __esm({
       }
       // ---- Internal instantiation helpers ----
       static normalizeOptions(options) {
-        if (!options)
-          return {};
+        if (!options) {
+          return { wasm: void 0 };
+        }
         if (options instanceof WebAssembly.Module)
           return { wasm: options };
-        if (typeof options === "object" && ("wasm" in options || "wasi" in options || "memoryLimit" in options || "interruptHandler" in options || "onUnhandledRejection" in options || "moduleLoader" in options || "intrinsics" in options || "extensions" in options || "timezoneOffset" in options))
-          return options;
+        if (typeof options === "object" && ("wasm" in options || "wasi" in options || "memoryLimit" in options || "maxStackSize" in options || "interruptHandler" in options || "onUnhandledRejection" in options || "moduleLoader" in options || "intrinsics" in options || "extensions" in options || "timezoneOffset" in options)) {
+          const opts = options;
+          if (opts.maxStackSize !== void 0 && (!Number.isInteger(opts.maxStackSize) || opts.maxStackSize < 0 || opts.maxStackSize > MAX_STACK_SIZE)) {
+            throw new RangeError(`maxStackSize must be an integer between 0 and ${MAX_STACK_SIZE}`);
+          }
+          return opts;
+        }
         return { wasm: options };
       }
       static applyLimits(vm, opts) {
         if (opts.memoryLimit !== void 0) {
           vm.exports.qjs_set_memory_limit(opts.memoryLimit);
+        }
+        if (opts.maxStackSize !== void 0) {
+          vm.exports.qjs_set_max_stack_size(opts.maxStackSize);
         }
         if (opts.interruptHandler) {
           vm.interruptHandler = opts.interruptHandler;
@@ -72360,13 +72655,11 @@ var init_dist9 = __esm({
       static async resolveModule(wasmInput) {
         if (wasmInput instanceof WebAssembly.Module) {
           return wasmInput;
-        } else if (wasmInput) {
-          return WebAssembly.compile(wasmInput);
-        } else {
-          const { readFile: readFile3 } = await import("node:fs/promises");
-          const buf2 = await readFile3(new URL("../quickjs.wasm", import_meta.url));
-          return WebAssembly.compile(buf2);
         }
+        if (wasmInput) {
+          return WebAssembly.compile(wasmInput);
+        }
+        throw new TypeError("QuickJS: `wasm` option is required. Provide WASM bytes or a compiled `WebAssembly.Module`. The binary is shipped at `quickjs-wasi/quickjs.wasm` and can be loaded via your environment's preferred mechanism (e.g. `fetch()`, `node:fs/promises`, or a bundler import like Vite's `?url`).");
       }
       static async instantiate(module2, vm, wasiOptions) {
         let memory = null;
@@ -72399,6 +72692,12 @@ var init_dist9 = __esm({
             reason.dispose();
           }
         };
+        const assertSyncString = (value, callbackName) => {
+          if (typeof value === "string")
+            return value;
+          const got = value !== null && typeof value === "object" && typeof value.then === "function" ? "a Promise" : `type ${typeof value}`;
+          throw new TypeError(`moduleLoader.${callbackName} must synchronously return a string (got ${got}). Async module loading is not supported. Pre-fetch module sources instead (see the "ES Modules" section of the quickjs-wasi README).`);
+        };
         const hostModuleNormalize = (baseNamePtr, namePtr) => {
           if (!vm.moduleNormalizeHandler) {
             const name = vm.readCString(namePtr);
@@ -72407,10 +72706,10 @@ var init_dist9 = __esm({
           const baseName = vm.readCString(baseNamePtr);
           const specifier = vm.readCString(namePtr);
           try {
-            const normalized = vm.moduleNormalizeHandler(baseName, specifier);
+            const normalized = assertSyncString(vm.moduleNormalizeHandler(baseName, specifier), "normalize");
             return vm.writeString(normalized).ptr;
-          } catch {
-            return 0;
+          } catch (err) {
+            return vm.throwHostException(err);
           }
         };
         const hostModuleLoad = (namePtr, outLenPtr) => {
@@ -72418,12 +72717,12 @@ var init_dist9 = __esm({
             return 0;
           const name = vm.readCString(namePtr);
           try {
-            const source = vm.moduleLoadHandler(name);
+            const source = assertSyncString(vm.moduleLoadHandler(name), "load");
             const { ptr, len } = vm.writeString(source);
             new Uint32Array(vm.exports.memory.buffer, outLenPtr, 1)[0] = len;
             return ptr;
-          } catch {
-            return 0;
+          } catch (err) {
+            return vm.throwHostException(err);
           }
         };
         const hostGetTimezoneOffset = (hi, lo) => {
@@ -72451,31 +72750,56 @@ var init_dist9 = __esm({
         const name = this.decoder.decode(new Uint8Array(this.exports.memory.buffer, namePtr, nameLen));
         const callback = this.hostCallbacks.get(name);
         if (!callback) {
-          return this.exports.qjs_get_undefined();
+          return this.throwHostException(`Host callback "${name}" is not registered: it was unregistered, its ephemeral function handle was disposed, or it was never re-registered after a snapshot restore.`);
         }
-        const thisHandle = new JSValueHandle(this, thisPtr);
+        const thisHandle = new JSValueHandle(this, thisPtr, false, true);
         const args = [];
         if (argc > 0 && argvPtr !== 0) {
           const view2 = new DataView(this.exports.memory.buffer);
           for (let i5 = 0; i5 < argc; i5++) {
             const argPtr = view2.getUint32(argvPtr + i5 * 4, true);
-            args.push(new JSValueHandle(this, argPtr));
+            args.push(new JSValueHandle(this, argPtr, false, true));
           }
         }
         try {
           const result = callback.call(thisHandle, ...args);
           return this.exports.qjs_dup_value(result.ptr);
         } catch (err) {
-          const errHandle = this.newError(err instanceof Error ? err : String(err));
-          this.exports.qjs_throw(errHandle.ptr);
-          errHandle.dispose();
+          return this.throwHostException(err);
+        }
+      }
+      exceptionToHandle(err) {
+        if (err instanceof JSException && err.handle.vm === this && !err.handle.disposed) {
+          return err.handle.dup();
+        }
+        try {
+          return this.newError(err instanceof Error ? err : String(err));
+        } catch (conversionError) {
+          if (!(conversionError instanceof JSException) || conversionError.handle.vm !== this)
+            throw conversionError;
+          return conversionError.handle;
+        }
+      }
+      isInterrupt(err) {
+        return err instanceof JSException && err.handle.vm === this && !err.handle.disposed && this.exports.qjs_is_uncatchable_error(err.handle.ptr) !== 0;
+      }
+      throwHostException(err) {
+        const env_1 = { stack: [], error: void 0, hasError: false };
+        try {
+          const handle = __addDisposableResource2(env_1, this.exceptionToHandle(err), false);
+          const result = __addDisposableResource2(env_1, new JSValueHandle(this, this.exports.qjs_throw(handle.ptr)), false);
           return 0;
+        } catch (e_1) {
+          env_1.error = e_1;
+          env_1.hasError = true;
+        } finally {
+          __disposeResources2(env_1);
         }
       }
       // ---- String helpers ----
       /** Write a JS string into WASM memory, returning the pointer. Caller must free. */
       writeString(str) {
-        const encoded = this.encoder.encode(str);
+        const encoded = encodeWtf8(str);
         const ptr = this.exports.wasm_malloc(encoded.length + 1);
         if (ptr === 0)
           throw new Error("wasm_malloc failed");
@@ -72495,27 +72819,34 @@ var init_dist9 = __esm({
       // ---- Public API ----
       /**
        * Check if a result handle is an exception and throw a JSException if so.
-       * Used internally by evalCode and callFunction.
+       * Used for evaluation, calls, and host value construction.
        */
       throwIfException(result) {
         if (this.exports.qjs_is_exception(result.ptr) !== 0) {
-          const exc = this.getException();
           result.dispose();
-          this._ownedHandles.add(exc);
-          throw new JSException(exc);
+          this.throwPendingException();
         }
         return result;
+      }
+      throwPendingException() {
+        const exc = this.getException();
+        this._activeScope?.delete(exc);
+        this._ownedHandles.add(exc);
+        exc._onDispose = () => this._ownedHandles.delete(exc);
+        throw new JSException(exc);
       }
       /**
        * Evaluate JavaScript code and return the result as a handle.
        * If the code throws, a `JSException` (which extends `Error`) is thrown
-       * on the host side — matching standard JavaScript semantics.
+       * on the host side, matching standard JavaScript semantics.
        *
        * @param code - The JavaScript source code to evaluate.
        * @param filename - Optional filename for error stack traces (default `'<eval>'`).
        * @param flags - Optional bitwise OR of `EvalFlags.*` constants.
-       *   For example, pass `EvalFlags.ASYNC` to allow top-level `await` — the
+       *   For example, pass `EvalFlags.ASYNC` to allow top-level `await`; the
        *   returned handle will be a Promise that resolves to the completion value.
+       *   With `EvalFlags.TYPE_MODULE` the returned handle is a Promise that
+       *   resolves to the module's namespace object (its exports).
        */
       evalCode(code, filename = "<eval>", flags = 0) {
         this.assertNotDisposed();
@@ -72562,6 +72893,10 @@ var init_dist9 = __esm({
        * Execute previously compiled bytecode (from `compile()`).
        * Returns the evaluation result as a handle.
        *
+       * For module bytecode (compiled with `EvalFlags.TYPE_MODULE`), the
+       * returned handle is a Promise that resolves to the module's namespace
+       * object (its exports).
+       *
        * @param bytecode - The bytecode `Uint8Array` from `compile()`.
        */
       evalBytecode(bytecode) {
@@ -72581,10 +72916,8 @@ var init_dist9 = __esm({
         let count = 0;
         while (this.exports.qjs_is_job_pending()) {
           const result = this.exports.qjs_execute_pending_job();
-          if (result < 0) {
-            const exc = this.getException();
-            throw new Error(`Job execution error: ${exc.toString()}`);
-          }
+          if (result < 0)
+            this.throwPendingException();
           count++;
         }
         return count;
@@ -72617,9 +72950,9 @@ var init_dist9 = __esm({
        */
       getMemoryUsage() {
         this.assertNotDisposed();
-        const bufPtr = this.exports.wasm_malloc(26 * 8);
+        const bufPtr = this.exports.wasm_malloc(27 * 8);
         this.exports.qjs_compute_memory_usage(bufPtr);
-        const view2 = new BigInt64Array(this.exports.memory.buffer, bufPtr, 26);
+        const view2 = new BigInt64Array(this.exports.memory.buffer, bufPtr, 27);
         const result = {
           mallocSize: Number(view2[0]),
           mallocLimit: Number(view2[1]),
@@ -72646,10 +72979,29 @@ var init_dist9 = __esm({
           fastArrayCount: Number(view2[22]),
           fastArrayElements: Number(view2[23]),
           binaryObjectCount: Number(view2[24]),
-          binaryObjectSize: Number(view2[25])
+          binaryObjectSize: Number(view2[25]),
+          allocatedSize: Number(view2[26])
         };
         this.exports.wasm_free(bufPtr);
         return result;
+      }
+      /**
+       * Bytes currently allocated from WASM linear memory by the QuickJS
+       * runtime: the value `memoryLimit` is enforced against.
+       *
+       * Constant-time: it reads a counter updated on every allocation and
+       * free. Use it for frequent sampling (for example, on every host call).
+       * `getMemoryUsage()` walks the whole heap to build its breakdown, so its
+       * cost grows with heap size.
+       *
+       * This is not the same number as `getMemoryUsage().mallocSize`, which
+       * counts the bytes QuickJS hands out. This value also counts allocator
+       * rounding and partially filled small-object arenas, so the two differ
+       * slightly (typically by a few percent on a large heap).
+       */
+      getAllocatedSize() {
+        this.assertNotDisposed();
+        return this.exports.qjs_get_allocated_size() >>> 0;
       }
       /**
        * Get the global object. Prefer the cached `vm.global` property.
@@ -72664,9 +73016,11 @@ var init_dist9 = __esm({
       newString(str) {
         this.assertNotDisposed();
         const { ptr, len } = this.writeString(str);
-        const resultPtr = this.exports.qjs_new_string(ptr, len);
-        this.exports.wasm_free(ptr);
-        return new JSValueHandle(this, resultPtr);
+        try {
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_string(ptr, len)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Create a new QuickJS number value.
@@ -72682,21 +73036,21 @@ var init_dist9 = __esm({
         this.assertNotDisposed();
         const lo = Number(val & 0xffffffffn);
         const hi = Number(val >> 32n & 0xffffffffn);
-        return new JSValueHandle(this, this.exports.qjs_new_big_int64(lo, hi));
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_big_int64(lo, hi)));
       }
       /**
        * Create a new QuickJS object value.
        */
       newObject() {
         this.assertNotDisposed();
-        return new JSValueHandle(this, this.exports.qjs_new_object());
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_object()));
       }
       /**
        * Create a new QuickJS array value.
        */
       newArray() {
         this.assertNotDisposed();
-        return new JSValueHandle(this, this.exports.qjs_new_array());
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_array()));
       }
       /**
        * Create a global symbol (`Symbol.for(description)`).
@@ -72706,9 +73060,11 @@ var init_dist9 = __esm({
       newSymbolFor(description) {
         this.assertNotDisposed();
         const { ptr, len } = this.writeString(description);
-        const result = new JSValueHandle(this, this.exports.qjs_new_symbol(ptr, len, 1));
-        this.exports.wasm_free(ptr);
-        return result;
+        try {
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_symbol(ptr, len, 1)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Create a new QuickJS ArrayBuffer by copying data from a host buffer.
@@ -72719,10 +73075,12 @@ var init_dist9 = __esm({
         const ptr = this.exports.wasm_malloc(bytes.length);
         if (ptr === 0)
           throw new Error("wasm_malloc failed");
-        new Uint8Array(this.exports.memory.buffer).set(bytes, ptr);
-        const result = new JSValueHandle(this, this.exports.qjs_new_array_buffer(ptr, bytes.length));
-        this.exports.wasm_free(ptr);
-        return result;
+        try {
+          new Uint8Array(this.exports.memory.buffer).set(bytes, ptr);
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_array_buffer(ptr, bytes.length)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Create a new QuickJS Uint8Array by copying data from a host buffer.
@@ -72732,10 +73090,12 @@ var init_dist9 = __esm({
         const ptr = this.exports.wasm_malloc(data2.length);
         if (ptr === 0)
           throw new Error("wasm_malloc failed");
-        new Uint8Array(this.exports.memory.buffer).set(data2, ptr);
-        const result = new JSValueHandle(this, this.exports.qjs_new_uint8_array(ptr, data2.length));
-        this.exports.wasm_free(ptr);
-        return result;
+        try {
+          new Uint8Array(this.exports.memory.buffer).set(data2, ptr);
+          return this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_uint8_array(ptr, data2.length)));
+        } finally {
+          this.exports.wasm_free(ptr);
+        }
       }
       /**
        * Get undefined. Prefer the cached `vm.undefined` property.
@@ -72776,23 +73136,159 @@ var init_dist9 = __esm({
         if (this.hostCallbacks.has(name)) {
           throw new Error(`Host callback with name "${name}" is already registered`);
         }
-        this.hostCallbacks.set(name, fn);
-        const { ptr: namePtr, len: nameLen } = this.writeString(name);
-        const resultPtr = this.exports.qjs_new_host_function(namePtr, nameLen, 0);
-        this.exports.wasm_free(namePtr);
-        return new JSValueHandle(this, resultPtr);
+        return this.newInternalFunction(name, fn);
       }
       /**
-       * Create an internal host function that bypasses the duplicate-name check.
-       * Used for ephemeral callbacks (promise settle handlers, resolvePromise, etc.)
-       * that are not intended to survive snapshot/restore.
+       * Run `fn` with a handle scope: every handle created during the call is
+       * disposed when it returns, except those passed to `scope.escape()`.
+       *
+       * This is the bulk alternative to disposing handles individually, for code
+       * that creates many intermediates, such as walking a large value:
+       *
+       * ```ts
+       * const name = vm.withScope((scope) => {
+       *   const user = root.getProp('user');       // freed automatically
+       *   const profile = user.getProp('profile'); // freed automatically
+       *   return scope.escape(profile.getProp('name'));
+       * });
+       * ```
+       *
+       * Scopes nest: `escape()` transfers the handle to the enclosing scope when
+       * there is one, so it is still cleaned up at the outer boundary.
+       *
+       * `fn` must be synchronous. Handles created after an `await` are outside
+       * the scope, because it closes as soon as `fn` returns.
+       *
+       * Host callbacks are safe to trigger inside a scope: the `this`/argument
+       * handles the trampoline passes to a callback wrap C-owned pointers and
+       * are exempt from scope tracking (see `handleHostCall`), so the scope
+       * frees only handles the host actually owns. Handles a callback CREATES
+       * (including `dup()`s of its arguments) are tracked normally.
+       */
+      withScope(fn) {
+        this.assertNotDisposed();
+        const enclosing = this._activeScope;
+        const tracked = /* @__PURE__ */ new Set();
+        this._activeScope = tracked;
+        const scope = {
+          escape: (handle) => {
+            tracked.delete(handle);
+            enclosing?.add(handle);
+            return handle;
+          }
+        };
+        try {
+          return fn(scope);
+        } finally {
+          this._activeScope = enclosing;
+          for (const handle of tracked)
+            handle.dispose();
+        }
+      }
+      /**
+       * Export a handle as a snapshot-portable token.
+       *
+       * A handle's heap box lives in the VM's linear memory, so a
+       * `snapshot()` taken while the handle is alive carries it, and a VM
+       * restored from that snapshot has the identical box at the identical
+       * offset. `importHandle(token)` on the restored VM (or on this VM)
+       * re-materializes an owned handle for the same guest value without
+       * evaluating any guest code.
+       *
+       * Contract:
+       * - the handle must stay undisposed until after `snapshot()`; its
+       *   box (and the reference it holds) must be part of the memory image;
+       * - the token is only meaningful to THIS VM and VMs restored from a
+       *   snapshot of it taken while the handle was alive;
+       * - `importHandle` duplicates the underlying value (fresh reference,
+       *   fresh box), so it can be called any number of times and each
+       *   returned handle is independently owned and disposable. The
+       *   exported box's own reference is intentionally never released on
+       *   restored VMs (one retained reference per VM image, reclaimed
+       *   with the VM).
+       *
+       * The intended use is boot-time capture: snapshot a VM after capturing
+       * references to pristine intrinsics but BEFORE evaluating untrusted or
+       * user code, then restore per task and import the captured handles,
+       * guaranteeing the references predate anything user code patched,
+       * without re-running capture code in the restored VM (where user-
+       * patched globals could observe it). See vercel/workflow's host-side
+       * serde for a worked example.
+       */
+      exportHandle(handle) {
+        this.assertNotDisposed();
+        if (handle.vm !== this) {
+          throw new Error("exportHandle: handle belongs to a different VM");
+        }
+        if (handle.disposed) {
+          throw new Error("exportHandle: handle is disposed");
+        }
+        if (handle._isBorrowed) {
+          throw new Error("exportHandle: cannot export a borrowed handle (host-callback this/argument); its box is freed when the callback returns. dup() it and export the duplicate.");
+        }
+        return handle.ptr;
+      }
+      /**
+       * Re-materialize a handle from a token produced by `exportHandle`,
+       * on this VM, or on a VM restored from a snapshot taken while the
+       * exported handle was alive. Returns a NEW owned handle (the
+       * underlying value's refcount is incremented); dispose it like any
+       * other handle. See `exportHandle` for the full contract.
+       */
+      importHandle(token) {
+        this.assertNotDisposed();
+        if (!Number.isInteger(token) || token <= 0 || token >= this.exports.memory.buffer.byteLength) {
+          throw new Error(`importHandle: invalid token ${token}`);
+        }
+        return new JSValueHandle(this, this.exports.qjs_dup_value(token));
+      }
+      /**
+       * Create a QuickJS function backed by a host callback whose registration is
+       * tied to the returned handle: disposing the handle unregisters the
+       * callback.
+       *
+       * Use this for short-lived callbacks (e.g. a visitor passed to
+       * `Map.prototype.forEach`) where the name is an implementation detail.
+       * `newFunction()` keeps its callback registered for the lifetime of the VM
+       * (by design, so that names can be re-registered after a snapshot is
+       * restored), which makes it unsuitable for callbacks created in a loop.
+       *
+       * The guest must not retain the function past disposal: calling it after
+       * the handle is disposed throws, because the callback is gone. Ephemeral
+       * functions do not survive snapshot/restore.
+       */
+      newEphemeralFunction(fn) {
+        this.assertNotDisposed();
+        const name = `__ephemeral:${this.nextInternalId++}`;
+        const handle = this.newInternalFunction(name, fn);
+        handle._onDispose = () => {
+          this.hostCallbacks.delete(name);
+        };
+        return handle;
+      }
+      /**
+       * Remove a host callback registered with `newFunction()` or
+       * `registerHostCallback()`. Returns true if a callback was removed.
+       *
+       * Any QuickJS function still referencing the name will throw when called,
+       * so only unregister once the guest can no longer reach it.
+       */
+      unregisterHostCallback(name) {
+        return this.hostCallbacks.delete(name);
+      }
+      /**
+       * Construct and register a host function only after native success.
+       * Callers own duplicate-name checks and callback registration lifetimes.
        */
       newInternalFunction(name, fn) {
-        this.hostCallbacks.set(name, fn);
         const { ptr: namePtr, len: nameLen } = this.writeString(name);
-        const resultPtr = this.exports.qjs_new_host_function(namePtr, nameLen, 0);
-        this.exports.wasm_free(namePtr);
-        return new JSValueHandle(this, resultPtr);
+        try {
+          const handle = this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_host_function(namePtr, nameLen, 0)));
+          this.hostCallbacks.set(name, fn);
+          return handle;
+        } finally {
+          this.exports.wasm_free(namePtr);
+        }
       }
       /**
        * Create a new promise.
@@ -72805,53 +73301,72 @@ var init_dist9 = __esm({
        */
       newPromise() {
         this.assertNotDisposed();
-        const resolveOutPtr = this.exports.wasm_malloc(4);
-        const rejectOutPtr = this.exports.wasm_malloc(4);
-        const promisePtr = this.exports.qjs_new_promise(resolveOutPtr, rejectOutPtr);
-        const view2 = new DataView(this.exports.memory.buffer);
-        const resolvePtr = view2.getUint32(resolveOutPtr, true);
-        const rejectPtr = view2.getUint32(rejectOutPtr, true);
-        this.exports.wasm_free(resolveOutPtr);
-        this.exports.wasm_free(rejectOutPtr);
-        const promiseHandle = new JSValueHandle(this, promisePtr);
+        const outPtr = this.exports.wasm_malloc(8);
+        if (!outPtr)
+          throw new Error("Failed to allocate promise output buffer");
+        let promiseHandle;
+        let resolvePtr;
+        let rejectPtr;
+        try {
+          promiseHandle = this.throwIfException(new JSValueHandle(this, this.exports.qjs_new_promise(outPtr, outPtr + 4)));
+          const view2 = new DataView(this.exports.memory.buffer);
+          resolvePtr = view2.getUint32(outPtr, true);
+          rejectPtr = view2.getUint32(outPtr + 4, true);
+        } finally {
+          this.exports.wasm_free(outPtr);
+        }
         const resolveHandle = new JSValueHandle(this, resolvePtr);
         const rejectHandle = new JSValueHandle(this, rejectPtr);
         const vm = this;
+        vm._activeScope?.delete(resolveHandle);
+        vm._activeScope?.delete(rejectHandle);
         vm._ownedHandles.add(resolveHandle);
         vm._ownedHandles.add(rejectHandle);
+        let resolved = false;
+        const settle = (resolver, value) => {
+          if (resolved)
+            return;
+          resolved = true;
+          try {
+            vm.callFunction(resolver, vm.undefined, value).dispose();
+          } finally {
+            vm._ownedHandles.delete(resolveHandle);
+            vm._ownedHandles.delete(rejectHandle);
+            resolveHandle.dispose();
+            rejectHandle.dispose();
+          }
+        };
         let _settled = null;
         return {
           handle: promiseHandle,
           get settled() {
             if (!_settled) {
-              let settledResolve;
-              _settled = new Promise((res) => {
-                settledResolve = res;
-              });
+              vm.assertNotDisposed();
               const settleName = `__settle:${vm.nextInternalId++}`;
-              const onSettleFn = vm.newInternalFunction(settleName, () => {
-                settledResolve();
-                vm.hostCallbacks.delete(settleName);
-                return vm.undefined;
-              });
-              const thenFn = promiseHandle.getProp("then");
-              const onSettleDup = onSettleFn.dup();
-              vm.callFunctionRaw(thenFn, promiseHandle, onSettleFn, onSettleDup).dispose();
-              thenFn.dispose();
-              onSettleFn.dispose();
-              onSettleDup.dispose();
+              const settled = vm.observePromise((resolve) => {
+                const env_2 = { stack: [], error: void 0, hasError: false };
+                try {
+                  const onSettleFn = __addDisposableResource2(env_2, vm.newInternalFunction(settleName, () => {
+                    resolve();
+                    return vm.undefined;
+                  }), false);
+                  vm.promiseThenRaw(promiseHandle, onSettleFn, onSettleFn).dispose();
+                } catch (e_2) {
+                  env_2.error = e_2;
+                  env_2.hasError = true;
+                } finally {
+                  __disposeResources2(env_2);
+                }
+              }, () => vm.hostCallbacks.delete(settleName));
+              _settled = settled;
             }
             return _settled;
           },
           resolve(value) {
-            vm.callFunctionRaw(resolveHandle, vm.undefined, value).dispose();
-            vm._ownedHandles.delete(resolveHandle);
-            resolveHandle.dispose();
+            settle(resolveHandle, value);
           },
           reject(value) {
-            vm.callFunctionRaw(rejectHandle, vm.undefined, value).dispose();
-            vm._ownedHandles.delete(rejectHandle);
-            rejectHandle.dispose();
+            settle(rejectHandle, value);
           }
         };
       }
@@ -72862,43 +73377,120 @@ var init_dist9 = __esm({
        * If the handle is not a promise, it is treated as an already-fulfilled value.
        *
        * The returned host Promise resolves to `{ value: JSValueHandle }` on
-       * fulfillment or `{ error: JSValueHandle }` on rejection.
+       * fulfillment or `{ error: JSValueHandle }` on guest rejection. It rejects
+       * if the VM is disposed or its automatic host-Promise bridge fails.
        */
       resolvePromise(promiseHandle) {
         this.assertNotDisposed();
-        if (!this.exports.qjs_is_promise(promiseHandle.ptr)) {
-          return Promise.resolve({ value: promiseHandle.dup() });
+        const isPromise = this.exports.qjs_is_promise(promiseHandle.ptr);
+        const state2 = isPromise ? this.exports.qjs_promise_state(promiseHandle.ptr) : 1;
+        if (state2 !== 0) {
+          const value = isPromise ? new JSValueHandle(this, this.exports.qjs_promise_result(promiseHandle.ptr)) : promiseHandle.dup();
+          this._activeScope?.delete(value);
+          const result = state2 === 2 ? { error: value } : { value };
+          return this.hostSettlementDepth ? this.observePromise((resolve) => resolve(result), void 0, (result2) => ("value" in result2 ? result2.value : result2.error).dispose()) : Promise.resolve(result);
         }
-        const state2 = this.exports.qjs_promise_state(promiseHandle.ptr);
-        if (state2 === 1) {
-          return Promise.resolve({ value: new JSValueHandle(this, this.exports.qjs_promise_result(promiseHandle.ptr)) });
-        } else if (state2 === 2) {
-          return Promise.resolve({ error: new JSValueHandle(this, this.exports.qjs_promise_result(promiseHandle.ptr)) });
+        const id = this.nextInternalId++;
+        const fulfilledName = `__onFulfilled:${id}`;
+        const rejectedName = `__onRejected:${id}`;
+        const cleanup = () => {
+          this.hostCallbacks.delete(fulfilledName);
+          this.hostCallbacks.delete(rejectedName);
+        };
+        try {
+          return this.observePromise((resolve) => {
+            let onFulfilled;
+            let onRejected;
+            try {
+              onFulfilled = this.newInternalFunction(fulfilledName, (...args) => {
+                const value = args[0]?.dup() ?? this.undefined;
+                this._activeScope?.delete(value);
+                resolve({ value });
+                return this.undefined;
+              });
+              onRejected = this.newInternalFunction(rejectedName, (...args) => {
+                const error3 = args[0]?.dup() ?? this.undefined;
+                this._activeScope?.delete(error3);
+                resolve({ error: error3 });
+                return this.undefined;
+              });
+              this.promiseThenRaw(promiseHandle, onFulfilled, onRejected).dispose();
+            } finally {
+              onFulfilled?.dispose();
+              onRejected?.dispose();
+            }
+          }, cleanup, (result) => ("value" in result ? result.value : result.error).dispose());
+        } catch (error3) {
+          return Promise.reject(error3);
         }
-        return new Promise((hostResolve) => {
-          const id = this.nextInternalId++;
-          const fulfilledName = `__onFulfilled:${id}`;
-          const rejectedName = `__onRejected:${id}`;
-          const onFulfilled = this.newInternalFunction(fulfilledName, (...args) => {
-            const val = args[0]?.dup() ?? this.undefined;
-            this.hostCallbacks.delete(fulfilledName);
-            this.hostCallbacks.delete(rejectedName);
-            hostResolve({ value: val });
-            return this.undefined;
-          });
-          const onRejected = this.newInternalFunction(rejectedName, (...args) => {
-            const val = args[0]?.dup() ?? this.undefined;
-            this.hostCallbacks.delete(fulfilledName);
-            this.hostCallbacks.delete(rejectedName);
-            hostResolve({ error: val });
-            return this.undefined;
-          });
-          const thenFn = promiseHandle.getProp("then");
-          this.callFunctionRaw(thenFn, promiseHandle, onFulfilled, onRejected).dispose();
-          thenFn.dispose();
-          onFulfilled.dispose();
-          onRejected.dispose();
+      }
+      /** Stage host observations until the synchronous drain has finished. */
+      observePromise(subscribe, cleanup = () => {
+      }, release2) {
+        let resolve;
+        let reject;
+        let staged;
+        const promise = new Promise((ok, fail) => {
+          resolve = ok;
+          reject = fail;
         });
+        const cancel = (error3) => {
+          this.promiseWaiters.delete(cancel);
+          cleanup();
+          if (staged)
+            release2?.(staged.value);
+          staged = void 0;
+          void promise.catch(() => {
+          });
+          reject(error3);
+        };
+        this.promiseWaiters.add(cancel);
+        try {
+          subscribe((value) => {
+            staged = { value };
+            const commit = () => {
+              if (!this.promiseWaiters.delete(cancel))
+                return;
+              cleanup();
+              staged = void 0;
+              resolve(value);
+            };
+            if (this.hostSettlementDepth)
+              queueMicrotask(commit);
+            else
+              commit();
+          });
+        } catch (error3) {
+          this.promiseWaiters.delete(cancel);
+          cleanup();
+          const pending = staged;
+          if (pending)
+            release2?.(pending.value);
+          throw error3;
+        }
+        return promise;
+      }
+      /**
+       * Subscribe to a promise without executing guest code, via quickjs-ng's
+       * JS_PromiseThen: no Promise.prototype.then lookup, no Symbol.species.
+       * Returns the chained promise. Handler handles are borrowed (caller
+       * still owns and disposes them).
+       * @internal
+       */
+      promiseThenRaw(promise, onFulfilled, onRejected) {
+        return this.throwIfException(new JSValueHandle(this, this.exports.qjs_promise_then(promise.ptr, onFulfilled.ptr, onRejected.ptr)));
+      }
+      /**
+       * Mark a promise as handled: an eventual (or already-recorded) rejection
+       * will not be reported to `onUnhandledRejection`. Useful when the host
+       * observes a rejection through other means (e.g. `resolvePromise()`) and
+       * wants to suppress the unhandled-rejection callback for it.
+       *
+       * No-op if the handle is not a promise.
+       */
+      markPromiseHandled(promise) {
+        this.assertNotDisposed();
+        this.exports.qjs_promise_mark_as_handled(promise.ptr);
       }
       /**
        * Call a QuickJS function. If the function throws, a `JSException`
@@ -72906,6 +73498,31 @@ var init_dist9 = __esm({
        */
       callFunction(func, thisVal, ...args) {
         return this.throwIfException(this.callFunctionRaw(func, thisVal, ...args));
+      }
+      /**
+       * Invoke a QuickJS constructor with `new`, i.e. `new ctor(...args)`.
+       * If the constructor throws (including when `ctor` is not a constructor),
+       * a `JSException` is thrown on the host side.
+       *
+       * This is the counterpart to `callFunction` for building values inside
+       * the VM from the host, e.g. `new Date(iso)` on a constructor captured
+       * before any user code ran.
+       */
+      construct(ctor, ...args) {
+        this.assertNotDisposed();
+        const argc = args.length;
+        let argvPtr = 0;
+        if (argc > 0) {
+          argvPtr = this.exports.wasm_malloc(argc * 4);
+          const view2 = new DataView(this.exports.memory.buffer);
+          for (let i5 = 0; i5 < argc; i5++) {
+            view2.setUint32(argvPtr + i5 * 4, args[i5].ptr, true);
+          }
+        }
+        const resultPtr = this.exports.qjs_call_constructor(ctor.ptr, argc, argvPtr);
+        if (argvPtr)
+          this.exports.wasm_free(argvPtr);
+        return this.throwIfException(new JSValueHandle(this, resultPtr));
       }
       /**
        * Internal: call a QuickJS function without throwing on exception.
@@ -72933,13 +73550,32 @@ var init_dist9 = __esm({
        */
       setProp(obj, key, value) {
         this.assertNotDisposed();
+        let status;
         if (typeof key === "string") {
+          if (stringKeyNeedsValuePath(key)) {
+            const env_3 = { stack: [], error: void 0, hasError: false };
+            try {
+              const keyHandle = __addDisposableResource2(env_3, this.newString(key), false);
+              this.setProp(obj, keyHandle, value);
+              return;
+            } catch (e_3) {
+              env_3.error = e_3;
+              env_3.hasError = true;
+            } finally {
+              __disposeResources2(env_3);
+            }
+          }
           const { ptr: namePtr } = this.writeString(key);
-          this.exports.qjs_set_prop_string(obj.ptr, namePtr, value.ptr);
-          this.exports.wasm_free(namePtr);
+          try {
+            status = this.exports.qjs_set_prop_string(obj.ptr, namePtr, value.ptr);
+          } finally {
+            this.exports.wasm_free(namePtr);
+          }
         } else {
-          this.exports.qjs_set_prop_value(obj.ptr, key.ptr, value.ptr);
+          status = this.exports.qjs_set_prop_value(obj.ptr, key.ptr, value.ptr);
         }
+        if (status < 0)
+          this.throwPendingException();
       }
       /**
        * Define a property on an object with explicit property descriptor flags.
@@ -72958,13 +73594,32 @@ var init_dist9 = __esm({
           flags |= 2;
         if (descriptor?.enumerable)
           flags |= 4;
+        let status;
         if (typeof key === "string") {
+          if (stringKeyNeedsValuePath(key)) {
+            const env_4 = { stack: [], error: void 0, hasError: false };
+            try {
+              const keyHandle = __addDisposableResource2(env_4, this.newString(key), false);
+              this.defineProp(obj, keyHandle, value, descriptor);
+              return;
+            } catch (e_4) {
+              env_4.error = e_4;
+              env_4.hasError = true;
+            } finally {
+              __disposeResources2(env_4);
+            }
+          }
           const { ptr: namePtr } = this.writeString(key);
-          this.exports.qjs_define_prop_string(obj.ptr, namePtr, value.ptr, flags);
-          this.exports.wasm_free(namePtr);
+          try {
+            status = this.exports.qjs_define_prop_string(obj.ptr, namePtr, value.ptr, flags);
+          } finally {
+            this.exports.wasm_free(namePtr);
+          }
         } else {
-          this.exports.qjs_define_prop_value(obj.ptr, key.ptr, value.ptr, flags);
+          status = this.exports.qjs_define_prop_value(obj.ptr, key.ptr, value.ptr, flags);
         }
+        if (status < 0)
+          this.throwPendingException();
       }
       /**
        * Get a property from an object using a JSValueHandle key.
@@ -72988,27 +73643,47 @@ var init_dist9 = __esm({
       newError(messageOrError) {
         this.assertNotDisposed();
         const errPtr = this.exports.qjs_new_error();
-        const errHandle = new JSValueHandle(this, errPtr);
-        if (typeof messageOrError === "string") {
-          const msgHandle = this.newString(messageOrError);
-          errHandle.setProp("message", msgHandle);
-          msgHandle.dispose();
-        } else {
-          const msgHandle = this.newString(messageOrError.message);
-          errHandle.setProp("message", msgHandle);
-          msgHandle.dispose();
-          if (messageOrError.name) {
-            const nameHandle = this.newString(messageOrError.name);
-            errHandle.setProp("name", nameHandle);
-            nameHandle.dispose();
+        const errHandle = this.throwIfException(new JSValueHandle(this, errPtr));
+        try {
+          const env_5 = { stack: [], error: void 0, hasError: false };
+          try {
+            const msgHandle = __addDisposableResource2(env_5, this.newString(typeof messageOrError === "string" ? messageOrError : messageOrError.message), false);
+            errHandle.setProp("message", msgHandle);
+            if (typeof messageOrError !== "string" && messageOrError.name) {
+              const env_6 = { stack: [], error: void 0, hasError: false };
+              try {
+                const nameHandle = __addDisposableResource2(env_6, this.newString(messageOrError.name), false);
+                errHandle.setProp("name", nameHandle);
+              } catch (e_5) {
+                env_6.error = e_5;
+                env_6.hasError = true;
+              } finally {
+                __disposeResources2(env_6);
+              }
+            }
+            if (typeof messageOrError !== "string" && messageOrError.stack) {
+              const env_7 = { stack: [], error: void 0, hasError: false };
+              try {
+                const stackHandle = __addDisposableResource2(env_7, this.newString(messageOrError.stack), false);
+                errHandle.setProp("stack", stackHandle);
+              } catch (e_6) {
+                env_7.error = e_6;
+                env_7.hasError = true;
+              } finally {
+                __disposeResources2(env_7);
+              }
+            }
+            return errHandle;
+          } catch (e_7) {
+            env_5.error = e_7;
+            env_5.hasError = true;
+          } finally {
+            __disposeResources2(env_5);
           }
-          if (messageOrError.stack) {
-            const stackHandle = this.newString(messageOrError.stack);
-            errHandle.setProp("stack", stackHandle);
-            stackHandle.dispose();
-          }
+        } catch (err) {
+          errHandle.dispose();
+          throw err;
         }
-        return errHandle;
       }
       /**
        * Get the typeof a handle as a string.
@@ -73199,6 +73874,8 @@ var init_dist9 = __esm({
       }
       /**
        * Convert a host JavaScript value to a QuickJS handle.
+       * A failure escaping asynchronous Promise settlement terminates this VM
+       * and rejects its host observers. Create a fresh VM after that failure.
        */
       hostToHandle(value) {
         this.assertNotDisposed();
@@ -73225,13 +73902,58 @@ var init_dist9 = __esm({
         }
         if (value instanceof Promise) {
           const deferred = this.newPromise();
-          value.then((r5) => {
-            deferred.resolve(this.hostToHandle(r5));
-            this.executePendingJobs();
-          }, (err) => {
-            deferred.reject(this.hostToHandle(err));
-            this.executePendingJobs();
-          });
+          const settle = (result, reject) => {
+            if (this.disposed)
+              return;
+            this.hostSettlementDepth++;
+            try {
+              const env_8 = { stack: [], error: void 0, hasError: false };
+              try {
+                let handle;
+                try {
+                  handle = this.hostToHandle(result);
+                } catch (err) {
+                  const env_9 = { stack: [], error: void 0, hasError: false };
+                  try {
+                    if (this.disposed)
+                      return;
+                    const error3 = __addDisposableResource2(env_9, this.exceptionToHandle(err), false);
+                    deferred.reject(error3);
+                    this.executePendingJobs();
+                    return;
+                  } catch (e_8) {
+                    env_9.error = e_8;
+                    env_9.hasError = true;
+                  } finally {
+                    __disposeResources2(env_9);
+                  }
+                }
+                const converted = __addDisposableResource2(env_8, handle, false);
+                if (reject)
+                  deferred.reject(converted);
+                else
+                  deferred.resolve(converted);
+                this.executePendingJobs();
+              } catch (e_9) {
+                env_8.error = e_9;
+                env_8.hasError = true;
+              } finally {
+                __disposeResources2(env_8);
+              }
+            } catch (error3) {
+              if (this.disposed)
+                return;
+              if (this.isInterrupt(error3)) {
+                error3.dispose();
+                return;
+              }
+              this.asyncFailure = { error: error3 };
+              this.dispose();
+            } finally {
+              this.hostSettlementDepth--;
+            }
+          };
+          value.then((r5) => settle(r5, false), (err) => settle(err, true));
           return deferred.handle;
         }
         if (value instanceof Error) {
@@ -73248,21 +73970,38 @@ var init_dist9 = __esm({
         }
         if (Array.isArray(value)) {
           const arr = this.newArray();
-          for (let i5 = 0; i5 < value.length; i5++) {
-            const elemHandle = this.hostToHandle(value[i5]);
-            this.exports.qjs_set_prop_uint32(arr.ptr, i5, elemHandle.ptr);
-            elemHandle.dispose();
+          try {
+            for (let i5 = 0; i5 < value.length; i5++) {
+              const elemHandle = this.hostToHandle(value[i5]);
+              try {
+                if (this.exports.qjs_set_prop_uint32(arr.ptr, i5, elemHandle.ptr) < 0)
+                  this.throwPendingException();
+              } finally {
+                elemHandle.dispose();
+              }
+            }
+            return arr;
+          } catch (err) {
+            arr.dispose();
+            throw err;
           }
-          return arr;
         }
         if (typeof value === "object" && value !== null) {
           const obj = this.newObject();
-          for (const [key, val] of Object.entries(value)) {
-            const valHandle = this.hostToHandle(val);
-            obj.setProp(key, valHandle);
-            valHandle.dispose();
+          try {
+            for (const [key, val] of Object.entries(value)) {
+              const valHandle = this.hostToHandle(val);
+              try {
+                obj.setProp(key, valHandle);
+              } finally {
+                valHandle.dispose();
+              }
+            }
+            return obj;
+          } catch (err) {
+            obj.dispose();
+            throw err;
           }
-          return obj;
         }
         return this.undefined;
       }
@@ -73303,6 +74042,12 @@ var init_dist9 = __esm({
       dispose() {
         if (!this.disposed) {
           this.disposed = true;
+          if (this.promiseWaiters.size) {
+            const error3 = this.asyncFailure ? this.asyncFailure.error : new Error("QuickJS instance has been disposed");
+            for (const cancel of this.promiseWaiters)
+              cancel(error3);
+            this.promiseWaiters.clear();
+          }
           this._global = null;
           this._undefined = null;
           this._null = null;
@@ -73310,6 +74055,7 @@ var init_dist9 = __esm({
           this._false = null;
           this._ownedHandles.clear();
           this.hostCallbacks.clear();
+          this._activeScope = null;
           this.exports = null;
           this.instance = null;
           this.module = null;
@@ -73330,6 +74076,8 @@ var init_dist9 = __esm({
       }
       assertNotDisposed() {
         if (this.disposed) {
+          if (this.asyncFailure)
+            throw this.asyncFailure.error;
           throw new Error("QuickJS instance has been disposed");
         }
       }
@@ -73351,6 +74099,9 @@ var init_dist9 = __esm({
         return this.readCString(ptr);
       }
     };
+    wtf8Decoder = new TextDecoder();
+    wtf8Encoder = new TextEncoder();
+    LONE_SURROGATE_RE = /(?:[\uD800-\uDBFF](?![\uDC00-\uDFFF]))|(?:(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/;
     JSException = class extends Error {
       /**
        * A live handle to the QuickJS exception value. You can read custom
@@ -73364,20 +74115,20 @@ var init_dist9 = __esm({
       #stack;
       /** @internal */
       constructor(handle) {
-        const env_1 = { stack: [], error: void 0, hasError: false };
+        const env_10 = { stack: [], error: void 0, hasError: false };
         try {
           super();
           this.handle = handle;
           delete this.stack;
-          const msgHandle = __addDisposableResource2(env_1, handle.getProp("message"), false);
+          const msgHandle = __addDisposableResource2(env_10, handle.getProp("message"), false);
           this.#name = handle.getProp("name").consume((h5) => h5.isUndefined ? "Error" : h5.toString());
           this.#message = msgHandle.isUndefined ? handle.toString() : msgHandle.toString();
           this.#stack = handle.getProp("stack").consume((h5) => h5.isUndefined ? void 0 : h5.toString());
-        } catch (e_1) {
-          env_1.error = e_1;
-          env_1.hasError = true;
+        } catch (e_10) {
+          env_10.error = e_10;
+          env_10.hasError = true;
         } finally {
-          __disposeResources2(env_1);
+          __disposeResources2(env_10);
         }
       }
       get name() {
@@ -73410,10 +74161,60 @@ var init_dist9 = __esm({
       vm;
       /** @internal */
       ptr;
-      disposed = false;
-      constructor(vm, ptr) {
+      disposed_ = false;
+      /**
+       * When true, this handle is a cached singleton (e.g. `undefined`, `null`,
+       * `true`, `false`, the global object) and `dispose()` is a no-op. This
+       * prevents code that routinely disposes handles (such as the object/array
+       * branches of `hostToHandle`) from freeing the shared heap `JSValue*` that
+       * the cached singleton still references, which would corrupt later reads.
+       * @internal
+       */
+      singleton;
+      /**
+       * When true, this handle wraps a `JSValue*` OWNED BY THE C CALLER: the
+       * `this`/argument handles the host-call trampoline passes to a host
+       * callback (`handleHostCall`). The C side frees those values after the
+       * call returns, so `dispose()` is a no-op and the handle is never
+       * registered with an active `withScope()` (either would double-free
+       * the guest value and corrupt the heap). A callback that needs to
+       * retain an argument past its own invocation must `dup()` it; the
+       * duplicate takes a fresh reference and behaves like any owned handle.
+       * @internal
+       */
+      borrowed;
+      /**
+       * Extra cleanup to run when this handle is disposed. Used by
+       * `newEphemeralFunction()` to unregister its host callback.
+       * @internal
+       */
+      _onDispose;
+      constructor(vm, ptr, singleton = false, borrowed = false) {
         this.vm = vm;
         this.ptr = ptr;
+        this.singleton = singleton;
+        this.borrowed = borrowed;
+        if (!singleton && !borrowed)
+          vm._activeScope?.add(this);
+      }
+      /**
+       * Whether this handle wraps a C-owned pointer (host-callback
+       * `this`/arguments). Borrowed handles must never be exported as
+       * snapshot tokens: the trampoline frees their boxes after the
+       * callback returns. @internal
+       */
+      get _isBorrowed() {
+        return this.borrowed;
+      }
+      /**
+       * Whether `dispose()` has been called on this handle.
+       *
+       * Note that handle methods do not currently guard against use after
+       * disposal: reading from a disposed handle reads freed memory. Check this
+       * when a handle's lifetime is managed elsewhere (e.g. by `withScope()`).
+       */
+      get disposed() {
+        return this.disposed_;
       }
       get isUndefined() {
         return this.vm._getExports().qjs_is_undefined(this.ptr) !== 0;
@@ -73456,6 +74257,125 @@ var init_dist9 = __esm({
       }
       get isArrayBuffer() {
         return this.vm._getExports().qjs_is_array_buffer(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Proxy exotic object.
+       *
+       * This is an engine-level check: it never fires proxy traps and cannot
+       * be determined (or spoofed) from within guest JavaScript. Use
+       * {@link getProxyTarget} / {@link getProxyHandler} to introspect a
+       * detected proxy without executing guest code.
+       */
+      get isProxy() {
+        return this.vm._getExports().qjs_is_proxy(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Map (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a Map returns false.
+       */
+      get isMap() {
+        return this.vm._getExports().qjs_is_map(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Set (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a Set returns false.
+       */
+      get isSet() {
+        return this.vm._getExports().qjs_is_set(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a Date (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a Date returns false.
+       */
+      get isDate() {
+        return this.vm._getExports().qjs_is_date(this.ptr) !== 0;
+      }
+      /**
+       * Whether this value is a RegExp (engine brand check: trap-free,
+       * spoof-proof, and unaffected by prototype/constructor mutation).
+       * A Proxy wrapping a RegExp returns false.
+       */
+      get isRegExp() {
+        return this.vm._getExports().qjs_is_regexp(this.ptr) !== 0;
+      }
+      /** Whether this value is a WeakRef (engine brand check). */
+      get isWeakRef() {
+        return this.vm._getExports().qjs_is_weak_ref(this.ptr) !== 0;
+      }
+      /** Whether this value is a WeakMap (engine brand check). */
+      get isWeakMap() {
+        return this.vm._getExports().qjs_is_weak_map(this.ptr) !== 0;
+      }
+      /** Whether this value is a WeakSet (engine brand check). */
+      get isWeakSet() {
+        return this.vm._getExports().qjs_is_weak_set(this.ptr) !== 0;
+      }
+      /** Whether this value is a DataView (engine brand check). */
+      get isDataView() {
+        return this.vm._getExports().qjs_is_data_view(this.ptr) !== 0;
+      }
+      /**
+       * A numeric identity for the underlying heap value, or 0 for values that
+       * are not heap-allocated (numbers, booleans, `null`, `undefined`).
+       *
+       * Two handles to the same underlying object always report the same
+       * identity, and two live handles to different objects always report
+       * different identities, so this is the value to key a `Map` on when
+       * deduplicating or detecting cycles across handles (`dump()` uses it for
+       * exactly that).
+       *
+       * The identity is only meaningful while the value is alive; it is an
+       * address, so it may be reused after every handle to the value has been
+       * disposed. Do not persist it, and do not treat it as unforgeable: a
+       * number read out of the guest can trivially collide with one.
+       */
+      get identity() {
+        return this.vm._getExports().qjs_get_value_ptr(this.ptr);
+      }
+      /**
+       * Extract the value as a boolean, applying JavaScript truthiness
+       * (equivalent to `!!value` inside the VM).
+       */
+      toBoolean() {
+        return this.vm._getExports().qjs_get_bool(this.ptr) !== 0;
+      }
+      /**
+       * The internal QuickJS class ID of this value, or 0 for non-objects.
+       * Useful as a generic engine-level brand when no dedicated `is*`
+       * getter exists. Class IDs are stable within a VM instance but are an
+       * engine implementation detail, so prefer the dedicated getters.
+       */
+      get classId() {
+        return this.vm._getExports().qjs_get_class_id(this.ptr);
+      }
+      /**
+       * The engine-level class name of this value, e.g. `"Object"`, `"Map"`,
+       * `"Date"`, `"RegExp"`, or the registered name of an extension-defined
+       * class like `"URL"`, or `undefined` for non-objects and unnamed
+       * internal classes.
+       *
+       * Unlike `constructorName` (which reads the `constructor` and `name`
+       * properties and can therefore fire getters/proxy traps and be spoofed),
+       * this is trap-free: it reads the engine's class table directly, never
+       * executes guest code, and cannot be forged by reassigning prototypes or
+       * constructors. Note that the engine registers the Proxy class under the
+       * name `"Object"` (mirroring `Object.prototype.toString`), so use `isProxy`
+       * to detect proxies and `getProxyTarget()` to read the target's brand.
+       */
+      get className() {
+        const h5 = new _JSValueHandle(this.vm, this.vm._getExports().qjs_get_class_name(this.ptr));
+        if (this.vm._getExports().qjs_is_exception(h5.ptr) !== 0) {
+          h5.dispose();
+          throw new JSException(this.vm.getException());
+        }
+        try {
+          return h5.isUndefined ? void 0 : h5.toString();
+        } finally {
+          h5.dispose();
+        }
       }
       get promiseState() {
         return this.vm._getExports().qjs_promise_state(this.ptr);
@@ -73545,9 +74465,115 @@ var init_dist9 = __esm({
         return result;
       }
       /**
+       * Get ALL own property keys (strings and symbols), including
+       * non-enumerable (equivalent to Reflect.ownKeys()).
+       *
+       * String keys are returned as strings; symbol keys are returned as
+       * JSValueHandles which the caller must dispose.
+       *
+       * Trap-free for ordinary objects; fires the `ownKeys` trap for a
+       * Proxy (check {@link isProxy} first if that matters).
+       */
+      getOwnPropertyKeys() {
+        const e5 = this.vm._getExports();
+        const keysPtr = e5.qjs_get_own_property_keys(this.ptr);
+        const keysHandle = new _JSValueHandle(this.vm, keysPtr);
+        if (e5.qjs_is_exception(keysHandle.ptr) !== 0) {
+          keysHandle.dispose();
+          return [];
+        }
+        const lenHandle = keysHandle.getProp("length");
+        const len = e5.qjs_get_float64(lenHandle.ptr);
+        lenHandle.dispose();
+        const result = [];
+        for (let i5 = 0; i5 < len; i5++) {
+          const keyPtr = e5.qjs_get_prop_uint32(keysHandle.ptr, i5);
+          const keyHandle = new _JSValueHandle(this.vm, keyPtr);
+          if (keyHandle.isSymbol) {
+            result.push(keyHandle);
+          } else {
+            result.push(keyHandle.toString());
+            keyHandle.dispose();
+          }
+        }
+        keysHandle.dispose();
+        return result;
+      }
+      /**
+       * Get the own property descriptor for a key WITHOUT invoking getters
+       * (equivalent to Object.getOwnPropertyDescriptor()).
+       *
+       * This is the safe way to inspect a property that may be an accessor:
+       * a data property yields `{ value, writable, enumerable, configurable }`,
+       * an accessor property yields `{ get, set, enumerable, configurable }`
+       * where `get`/`set` are handles to the accessor functions themselves
+       * (never invoked). Returns undefined if there is no such own property.
+       *
+       * The `value`/`get`/`set` handles are owned by the caller and must be
+       * disposed.
+       *
+       * Trap-free for ordinary objects; fires the `getOwnPropertyDescriptor`
+       * trap for a Proxy (check {@link isProxy} first if that matters).
+       */
+      getOwnPropertyDescriptor(key) {
+        const env_11 = { stack: [], error: void 0, hasError: false };
+        try {
+          const e5 = this.vm._getExports();
+          let keyHandle;
+          let keyPtr;
+          if (typeof key === "string") {
+            keyHandle = this.vm.newString(key);
+            keyPtr = keyHandle.ptr;
+          } else {
+            keyPtr = key.ptr;
+          }
+          const descPtr = e5.qjs_get_own_property_descriptor(this.ptr, keyPtr);
+          keyHandle?.dispose();
+          if (descPtr === 0)
+            return void 0;
+          const descHandle = __addDisposableResource2(env_11, new _JSValueHandle(this.vm, descPtr), false);
+          if (e5.qjs_is_exception(descHandle.ptr) !== 0) {
+            throw new JSException(this.vm.getException());
+          }
+          const enumerable = descHandle.getProp("enumerable").consume((h5) => e5.qjs_get_bool(h5.ptr) !== 0);
+          const configurable = descHandle.getProp("configurable").consume((h5) => e5.qjs_get_bool(h5.ptr) !== 0);
+          if (descHandle.hasOwnProperty("value")) {
+            return {
+              value: descHandle.getProp("value"),
+              writable: descHandle.getProp("writable").consume((h5) => e5.qjs_get_bool(h5.ptr) !== 0),
+              enumerable,
+              configurable
+            };
+          }
+          return {
+            get: descHandle.getProp("get"),
+            set: descHandle.getProp("set"),
+            enumerable,
+            configurable
+          };
+        } catch (e_11) {
+          env_11.error = e_11;
+          env_11.hasError = true;
+        } finally {
+          __disposeResources2(env_11);
+        }
+      }
+      /**
        * Check if a property is an own property (equivalent to Object.prototype.hasOwnProperty).
        */
       hasOwnProperty(name) {
+        if (stringKeyNeedsValuePath(name)) {
+          const env_12 = { stack: [], error: void 0, hasError: false };
+          try {
+            const keyHandle = __addDisposableResource2(env_12, this.vm.newString(name), false);
+            return this.vm._getExports().qjs_has_own_property_value(this.ptr, keyHandle.ptr) === 1;
+          } catch (e_12) {
+            env_12.error = e_12;
+            env_12.hasError = true;
+          } finally {
+            __disposeResources2(env_12);
+          }
+        }
         const { ptr: namePtr } = this.vm._writeString(name);
         const result = this.vm._getExports().qjs_has_own_property(this.ptr, namePtr);
         this.vm._getExports().wasm_free(namePtr);
@@ -73557,6 +74583,18 @@ var init_dist9 = __esm({
        * Check if a property is enumerable (equivalent to Object.prototype.propertyIsEnumerable).
        */
       propertyIsEnumerable(name) {
+        if (stringKeyNeedsValuePath(name)) {
+          const env_13 = { stack: [], error: void 0, hasError: false };
+          try {
+            const keyHandle = __addDisposableResource2(env_13, this.vm.newString(name), false);
+            return this.vm._getExports().qjs_property_is_enumerable_value(this.ptr, keyHandle.ptr) === 1;
+          } catch (e_13) {
+            env_13.error = e_13;
+            env_13.hasError = true;
+          } finally {
+            __disposeResources2(env_13);
+          }
+        }
         const { ptr: namePtr } = this.vm._writeString(name);
         const result = this.vm._getExports().qjs_property_is_enumerable(this.ptr, namePtr);
         this.vm._getExports().wasm_free(namePtr);
@@ -73570,9 +74608,49 @@ var init_dist9 = __esm({
         return new _JSValueHandle(this.vm, protoPtr);
       }
       /**
+       * Get the `[[ProxyTarget]]` of this Proxy without firing any traps.
+       * Throws {@link JSException} if this value is not a Proxy; check
+       * {@link isProxy} first. Note the target may itself be a Proxy.
+       */
+      getProxyTarget() {
+        const ptr = this.vm._getExports().qjs_get_proxy_target(this.ptr);
+        const handle = new _JSValueHandle(this.vm, ptr);
+        if (this.vm._getExports().qjs_is_exception(handle.ptr) !== 0) {
+          handle.dispose();
+          throw new JSException(this.vm.getException());
+        }
+        return handle;
+      }
+      /**
+       * Get the `[[ProxyHandler]]` of this Proxy without firing any traps.
+       * Throws {@link JSException} if this value is not a Proxy; check
+       * {@link isProxy} first.
+       */
+      getProxyHandler() {
+        const ptr = this.vm._getExports().qjs_get_proxy_handler(this.ptr);
+        const handle = new _JSValueHandle(this.vm, ptr);
+        if (this.vm._getExports().qjs_is_exception(handle.ptr) !== 0) {
+          handle.dispose();
+          throw new JSException(this.vm.getException());
+        }
+        return handle;
+      }
+      /**
        * Get a property by name.
        */
       getProp(name) {
+        if (stringKeyNeedsValuePath(name)) {
+          const env_14 = { stack: [], error: void 0, hasError: false };
+          try {
+            const keyHandle = __addDisposableResource2(env_14, this.vm.newString(name), false);
+            return this.vm.getProp(this, keyHandle);
+          } catch (e_14) {
+            env_14.error = e_14;
+            env_14.hasError = true;
+          } finally {
+            __disposeResources2(env_14);
+          }
+        }
         const { ptr: namePtr } = this.vm._writeString(name);
         const resultPtr = this.vm._getExports().qjs_get_prop_string(this.ptr, namePtr);
         this.vm._getExports().wasm_free(namePtr);
@@ -73582,9 +74660,7 @@ var init_dist9 = __esm({
        * Set a property by name.
        */
       setProp(name, value) {
-        const { ptr: namePtr } = this.vm._writeString(name);
-        this.vm._getExports().qjs_set_prop_string(this.ptr, namePtr, value.ptr);
-        this.vm._getExports().wasm_free(namePtr);
+        this.vm.setProp(this, name, value);
       }
       /**
        * Define a property with explicit property descriptor flags.
@@ -73595,20 +74671,7 @@ var init_dist9 = __esm({
        * All flags default to `false` when not specified.
        */
       defineProp(key, value, descriptor) {
-        let flags = 0;
-        if (descriptor?.configurable)
-          flags |= 1;
-        if (descriptor?.writable)
-          flags |= 2;
-        if (descriptor?.enumerable)
-          flags |= 4;
-        if (typeof key === "string") {
-          const { ptr: namePtr } = this.vm._writeString(key);
-          this.vm._getExports().qjs_define_prop_string(this.ptr, namePtr, value.ptr, flags);
-          this.vm._getExports().wasm_free(namePtr);
-        } else {
-          this.vm._getExports().qjs_define_prop_value(this.ptr, key.ptr, value.ptr, flags);
-        }
+        this.vm.defineProp(this, key, value, descriptor);
       }
       /**
        * Extract the value as a number.
@@ -73690,15 +74753,32 @@ var init_dist9 = __esm({
         return new Uint8Array(this.toArrayBuffer());
       }
       /**
-       * Extract the value as a string (calls JS_ToCString - works on any value).
+       * Extract the value as a string. Works on any value.
+       *
+       * For values that are not already strings this performs a JavaScript
+       * string conversion, which **executes guest code**: `toString()` /
+       * `valueOf()` / `Symbol.toPrimitive` on the value or its prototype chain,
+       * and proxy traps. Guard with `isString` when the caller must not run guest
+       * code, and call a captured intrinsic (e.g. `URL.prototype.toString` via
+       * `vm.callFunction`) when a specific conversion is wanted.
        */
       toString() {
-        const cstrPtr = this.vm._getExports().qjs_get_string(this.ptr);
-        if (cstrPtr === 0)
-          return "<null>";
-        const str = this.vm._readCString(cstrPtr);
-        this.vm._getExports().qjs_free_cstring(cstrPtr);
-        return str;
+        const e5 = this.vm._getExports();
+        const lenPtr = e5.wasm_malloc(4);
+        if (lenPtr === 0)
+          throw new Error("wasm_malloc failed");
+        try {
+          const cstrPtr = e5.qjs_get_string_len(this.ptr, lenPtr);
+          if (cstrPtr === 0)
+            return "<null>";
+          const len = new DataView(e5.memory.buffer).getUint32(lenPtr, true);
+          const bytes = new Uint8Array(e5.memory.buffer, cstrPtr, len);
+          const str = decodeWtf8(bytes);
+          e5.qjs_free_cstring(cstrPtr);
+          return str;
+        } finally {
+          e5.wasm_free(lenPtr);
+        }
       }
       /**
        * Use this handle, then dispose it. Returns the callback's return value.
@@ -73721,8 +74801,12 @@ var init_dist9 = __esm({
        * Safe to call after the VM has been disposed (becomes a no-op).
        */
       dispose() {
-        if (!this.disposed) {
-          this.disposed = true;
+        if (this.singleton || this.borrowed)
+          return;
+        if (!this.disposed_) {
+          this.disposed_ = true;
+          this._onDispose?.();
+          this._onDispose = void 0;
           const exports2 = this.vm._getExports();
           if (exports2) {
             exports2.qjs_free_value(this.ptr);
@@ -73758,7 +74842,7 @@ function sanitizeProxyResultCredentials(result) {
   }
   return String(result).replace(/(\b(?:PROXY|HTTPS?|SOCKS[45]?)\s+)[^\s@]+@/gi, "$1<credentials>@");
 }
-var net6, tls4, crypto3, import_events3, import_debug14, import_url5, debug11, setServernameFromNonIpHost3, PacProxyAgent;
+var net6, tls4, crypto3, import_events3, import_debug14, import_url5, import_promises3, import_meta, quickjsWasm, debug11, setServernameFromNonIpHost3, PacProxyAgent;
 var init_dist10 = __esm({
   "node_modules/pac-proxy-agent/dist/index.js"() {
     net6 = __toESM(require("net"), 1);
@@ -73770,7 +74854,10 @@ var init_dist10 = __esm({
     init_dist();
     init_dist6();
     init_dist8();
+    import_promises3 = require("fs/promises");
     init_dist9();
+    import_meta = {};
+    quickjsWasm = (0, import_promises3.readFile)(new import_url5.URL(import_meta.resolve("quickjs-wasi/quickjs.wasm")));
     debug11 = (0, import_debug14.default)("pac-proxy-agent");
     setServernameFromNonIpHost3 = (options) => {
       if (options.servername === void 0 && options.host && !net6.isIP(options.host)) {
@@ -73813,7 +74900,7 @@ var init_dist10 = __esm({
       async loadResolver() {
         try {
           const [qjs, code] = await Promise.all([
-            QuickJS.create(),
+            QuickJS.create({ wasm: await quickjsWasm }),
             this.loadPacFile()
           ]);
           const hash = crypto3.createHash("sha1").update(code).digest("hex");
