@@ -37657,7 +37657,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.998.1",
+      version: "3.998.4",
       description: "Nested clients for AWS SDK packages.",
       homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       license: "Apache-2.0",
@@ -37757,13 +37757,13 @@ var init_package = __esm({
         "test:watch": "yarn g:vitest watch"
       },
       dependencies: {
-        "@aws-sdk/core": "^3.980.1",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.51",
-        "@aws-sdk/types": "^3.975.0",
-        "@smithy/core": "^3.38.0",
-        "@smithy/fetch-http-handler": "^5.8.0",
-        "@smithy/node-http-handler": "^4.14.0",
-        "@smithy/types": "^4.19.0",
+        "@aws-sdk/core": "^3.981.1",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.52",
+        "@aws-sdk/types": "^3.975.1",
+        "@smithy/core": "^3.40.0",
+        "@smithy/fetch-http-handler": "^5.8.1",
+        "@smithy/node-http-handler": "^4.14.2",
+        "@smithy/types": "^4.20.0",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -45296,7 +45296,8 @@ var require_dist_cjs11 = __commonJS({
           return requestHandler2?.metadata?.handlerProtocol === "h2";
         };
         const requestHandler = isH22(this.callerClientConfig?.requestHandler) ? void 0 : this.callerClientConfig?.requestHandler;
-        const region = this.profileData.region ?? await this.callerClientConfig?.region?.() ?? process.env.AWS_REGION;
+        const signInRegion = typeof freshToken.signInRegion === "string" && freshToken.signInRegion.length > 0 ? freshToken.signInRegion : void 0;
+        const region = signInRegion ?? this.profileData.region ?? await this.callerClientConfig?.region?.() ?? process.env.AWS_REGION;
         const client = new SigninClient2({
           credentials: {
             accessKeyId: "",
@@ -45306,7 +45307,8 @@ var require_dist_cjs11 = __commonJS({
           requestHandler,
           logger: logger2,
           userAgentAppId,
-          ...this.init?.clientConfig
+          ...this.init?.clientConfig,
+          ...signInRegion && { region: signInRegion }
         });
         this.createDPoPInterceptor(client.middlewareStack);
         const commandInput = {
@@ -46341,7 +46343,7 @@ var require_dist_cjs16 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1163.0";
+    var version = "3.1174.0";
     var packageInfo = {
       version
     };
@@ -46363,6 +46365,19 @@ var require_dist_cjs16 = __commonJS({
           ...opts
         });
         Object.setPrototypeOf(this, _ExpiredTokenException.prototype);
+      }
+    };
+    var InvalidContextAssertionException = class _InvalidContextAssertionException extends STSServiceException2 {
+      static shapeId = "com.amazonaws.sts#InvalidContextAssertionException";
+      name = "InvalidContextAssertionException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidContextAssertionException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidContextAssertionException.prototype);
       }
     };
     var MalformedPolicyDocumentException2 = class _MalformedPolicyDocumentException extends STSServiceException2 {
@@ -46470,6 +46485,32 @@ var require_dist_cjs16 = __commonJS({
         Object.setPrototypeOf(this, _ExpiredTradeInTokenException.prototype);
       }
     };
+    var InsufficientSessionLifetimeException = class _InsufficientSessionLifetimeException extends STSServiceException2 {
+      static shapeId = "com.amazonaws.sts#InsufficientSessionLifetimeException";
+      name = "InsufficientSessionLifetimeException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InsufficientSessionLifetimeException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InsufficientSessionLifetimeException.prototype);
+      }
+    };
+    var InvalidSubjectCredentialsException = class _InvalidSubjectCredentialsException extends STSServiceException2 {
+      static shapeId = "com.amazonaws.sts#InvalidSubjectCredentialsException";
+      name = "InvalidSubjectCredentialsException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidSubjectCredentialsException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidSubjectCredentialsException.prototype);
+      }
+    };
     var JWTPayloadSizeExceededException = class _JWTPayloadSizeExceededException extends STSServiceException2 {
       static shapeId = "com.amazonaws.sts#JWTPayloadSizeExceededException";
       name = "JWTPayloadSizeExceededException";
@@ -46540,6 +46581,7 @@ var require_dist_cjs16 = __commonJS({
     var _EM = "EncodedMessage";
     var _ETE3 = "ExpiredTokenException";
     var _ETITE = "ExpiredTradeInTokenException";
+    var _FPA = "FederatedProviderArn";
     var _FU = "FederatedUser";
     var _FUI = "FederatedUserId";
     var _GAKI = "GetAccessKeyInfo";
@@ -46554,6 +46596,9 @@ var require_dist_cjs16 = __commonJS({
     var _GFT = "GetFederationToken";
     var _GFTR = "GetFederationTokenRequest";
     var _GFTRe = "GetFederationTokenResponse";
+    var _GSC = "GetScopedCredentials";
+    var _GSCR = "GetScopedCredentialsRequest";
+    var _GSCRe = "GetScopedCredentialsResponse";
     var _GST = "GetSessionToken";
     var _GSTR = "GetSessionTokenRequest";
     var _GSTRe = "GetSessionTokenResponse";
@@ -46562,15 +46607,20 @@ var require_dist_cjs16 = __commonJS({
     var _GWITRe = "GetWebIdentityTokenResponse";
     var _I = "Issuer";
     var _IAME = "InvalidAuthorizationMessageException";
+    var _ICAE = "InvalidContextAssertionException";
     var _IDPCEE2 = "IDPCommunicationErrorException";
     var _IDPRCE2 = "IDPRejectedClaimException";
     var _IITE2 = "InvalidIdentityTokenException";
+    var _IP = "IdentityProvider";
+    var _ISCE = "InvalidSubjectCredentialsException";
+    var _ISLE = "InsufficientSessionLifetimeException";
     var _JWTPSEE = "JWTPayloadSizeExceededException";
     var _K2 = "Key";
     var _MPDE2 = "MalformedPolicyDocumentException";
     var _MSTS2 = "MinimumSessionTokenSize";
     var _N = "Name";
     var _NQ = "NameQualifier";
+    var _OI = "OriginIdentity";
     var _OWIFDE = "OutboundWebIdentityFederationDisabledException";
     var _P2 = "Policy";
     var _PA2 = "PolicyArns";
@@ -46595,13 +46645,22 @@ var require_dist_cjs16 = __commonJS({
     var _SDEE = "SessionDurationEscalationException";
     var _SFWIT2 = "SubjectFromWebIdentityToken";
     var _SI2 = "SourceIdentity";
+    var _SIe = "SessionInfo";
+    var _SM = "SubjectMode";
     var _SN2 = "SerialNumber";
+    var _SPC = "ScopedPoliciesCount";
+    var _SS = "ScopedSession";
+    var _SSD = "ScopedSessionDescription";
+    var _SSI = "ScopedSessionId";
     var _ST2 = "SubjectType";
     var _STS2 = "SessionTokenSize";
     var _STU2 = "SessionTokenUtilization";
     var _STe = "SessionToken";
+    var _Sc = "Scope";
     var _T2 = "Tags";
     var _TC2 = "TokenCode";
+    var _TCr = "TransactionContext";
+    var _TIPC = "TrustedIdentityPropagationContext";
     var _TIT = "TradeInToken";
     var _TP = "TargetPrincipal";
     var _TPA = "TaskPolicyArn";
@@ -46618,8 +46677,13 @@ var require_dist_cjs16 = __commonJS({
     var _e5 = "error";
     var _hE5 = "httpError";
     var _m4 = "message";
+    var _oIIT = "originIdentityIssuerType";
+    var _oIST = "originIdentitySubjectType";
+    var _oISTT = "originIdentitySubjectTypeType";
     var _pDLT2 = "policyDescriptorListType";
     var _s5 = "smithy.ts.sdk.synthetic.com.amazonaws.sts";
+    var _tCIPMT = "transactionContextIdentityProviderMapType";
+    var _tCVT = "transactionContextValueType";
     var _tITT = "tradeInTokenType";
     var _tLT2 = "tagListType";
     var _wITT = "webIdentityTokenType";
@@ -46664,6 +46728,15 @@ var require_dist_cjs16 = __commonJS({
       [0]
     ];
     n0_registry5.registerError(IDPRejectedClaimException$2, IDPRejectedClaimException2);
+    var InsufficientSessionLifetimeException$ = [
+      -3,
+      n05,
+      _ISLE,
+      { [_aQE2]: [`InsufficientSessionLifetime`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(InsufficientSessionLifetimeException$, InsufficientSessionLifetimeException);
     var InvalidAuthorizationMessageException$ = [
       -3,
       n05,
@@ -46673,6 +46746,15 @@ var require_dist_cjs16 = __commonJS({
       [0]
     ];
     n0_registry5.registerError(InvalidAuthorizationMessageException$, InvalidAuthorizationMessageException);
+    var InvalidContextAssertionException$ = [
+      -3,
+      n05,
+      _ICAE,
+      { [_aQE2]: [`InvalidContextAssertion`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(InvalidContextAssertionException$, InvalidContextAssertionException);
     var InvalidIdentityTokenException$2 = [
       -3,
       n05,
@@ -46682,6 +46764,15 @@ var require_dist_cjs16 = __commonJS({
       [0]
     ];
     n0_registry5.registerError(InvalidIdentityTokenException$2, InvalidIdentityTokenException2);
+    var InvalidSubjectCredentialsException$ = [
+      -3,
+      n05,
+      _ISCE,
+      { [_aQE2]: [`InvalidSubjectCredentials`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(InvalidSubjectCredentialsException$, InvalidSubjectCredentialsException);
     var JWTPayloadSizeExceededException$ = [
       -3,
       n05,
@@ -46742,8 +46833,12 @@ var require_dist_cjs16 = __commonJS({
     ];
     var accessKeySecretType2 = [0, n05, _aKST2, 8, 0];
     var clientTokenType2 = [0, n05, _cTT2, 8, 0];
+    var originIdentityIssuerType = [0, n05, _oIIT, 8, 0];
+    var originIdentitySubjectType = [0, n05, _oIST, 8, 0];
+    var originIdentitySubjectTypeType = [0, n05, _oISTT, 8, 0];
     var SAMLAssertionType = [0, n05, _SAMLAT, 8, 0];
     var tradeInTokenType = [0, n05, _tITT, 8, 0];
+    var transactionContextValueType = [0, n05, _tCVT, 8, 0];
     var webIdentityTokenType = [0, n05, _wITT, 8, 0];
     var AssumedRoleUser$2 = [
       3,
@@ -46785,8 +46880,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWSAMLRs,
       0,
-      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2, _STU2, _STS2],
-      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0, 1, 1]
+      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2, _STU2, _STS2, _TIPC],
+      [[() => Credentials$2, 0], () => AssumedRoleUser$2, 1, 0, 0, 0, 0, 0, 0, 1, 1, [() => TrustedIdentityPropagationContext$, 0]]
     ];
     var AssumeRoleWithWebIdentityRequest$2 = [
       3,
@@ -46802,8 +46897,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _ARWWIRs2,
       0,
-      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2, _STU2, _STS2],
-      [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0, 1, 1]
+      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2, _STU2, _STS2, _TIPC],
+      [[() => Credentials$2, 0], 0, () => AssumedRoleUser$2, 1, 0, 0, 0, 1, 1, [() => TrustedIdentityPropagationContext$, 0]]
     ];
     var AssumeRootRequest$ = [
       3,
@@ -46924,6 +47019,22 @@ var require_dist_cjs16 = __commonJS({
       [_C2, _FU, _PPS2, _STU2, _STS2],
       [[() => Credentials$2, 0], () => FederatedUser$, 1, 1, 1]
     ];
+    var GetScopedCredentialsRequest$ = [
+      3,
+      n05,
+      _GSCR,
+      0,
+      [_P2, _DS2, _MSTS2, _SSD],
+      [0, 1, 1, 0]
+    ];
+    var GetScopedCredentialsResponse$ = [
+      3,
+      n05,
+      _GSCRe,
+      0,
+      [_C2, _SIe, _STU2, _STS2, _SPC, _SI2],
+      [[() => Credentials$2, 0], () => ScopedSession$, 1, 1, 1, 0]
+    ];
     var GetSessionTokenRequest$ = [
       3,
       n05,
@@ -46945,8 +47056,8 @@ var require_dist_cjs16 = __commonJS({
       n05,
       _GWITR,
       0,
-      [_Au2, _SA, _DS2, _T2],
-      [64 | 0, 0, 1, () => tagListType2],
+      [_Au2, _SA, _DS2, _Sc, _SM, _T2],
+      [64 | 0, 0, 1, 0, 0, () => tagListType2],
       2
     ];
     var GetWebIdentityTokenResponse$ = [
@@ -46956,6 +47067,14 @@ var require_dist_cjs16 = __commonJS({
       0,
       [_WIT2, _E2],
       [[() => webIdentityTokenType, 0], 4]
+    ];
+    var OriginIdentity$ = [
+      3,
+      n05,
+      _OI,
+      0,
+      [_S, _ST2, _I, _FPA],
+      [[() => originIdentitySubjectType, 0], [() => originIdentitySubjectTypeType, 0], [() => originIdentityIssuerType, 0], 0]
     ];
     var PolicyDescriptorType$2 = [
       3,
@@ -46973,6 +47092,15 @@ var require_dist_cjs16 = __commonJS({
       [_PAro, _CA2],
       [0, 0]
     ];
+    var ScopedSession$ = [
+      3,
+      n05,
+      _SS,
+      0,
+      [_SSI, _A2],
+      [0, 0],
+      2
+    ];
     var Tag$2 = [
       3,
       n05,
@@ -46981,6 +47109,22 @@ var require_dist_cjs16 = __commonJS({
       [_K2, _V2],
       [0, 0],
       2
+    ];
+    var TransactionContext$ = [
+      3,
+      n05,
+      _TCr,
+      0,
+      [_IP],
+      [[() => transactionContextIdentityProviderMapType, 0]]
+    ];
+    var TrustedIdentityPropagationContext$ = [
+      3,
+      n05,
+      _TIPC,
+      8,
+      [_OI, _TCr],
+      [[() => OriginIdentity$, 0], [() => TransactionContext$, 0]]
     ];
     var policyDescriptorListType2 = [
       1,
@@ -47002,6 +47146,20 @@ var require_dist_cjs16 = __commonJS({
       _tLT2,
       0,
       () => Tag$2
+    ];
+    var transactionContextIdentityProviderMapType = [
+      2,
+      n05,
+      _tCIPMT,
+      0,
+      [
+        0,
+        0
+      ],
+      [
+        () => transactionContextValueType,
+        0
+      ]
     ];
     var AssumeRole$2 = [
       9,
@@ -47074,6 +47232,14 @@ var require_dist_cjs16 = __commonJS({
       0,
       () => GetFederationTokenRequest$,
       () => GetFederationTokenResponse$
+    ];
+    var GetScopedCredentials$ = [
+      9,
+      n05,
+      _GSC,
+      0,
+      () => GetScopedCredentialsRequest$,
+      () => GetScopedCredentialsResponse$
     ];
     var GetSessionToken$ = [
       9,
@@ -47283,6 +47449,8 @@ var require_dist_cjs16 = __commonJS({
     };
     var GetFederationTokenCommand = class extends command5(_ep05, _mw05, "GetFederationToken", GetFederationToken$) {
     };
+    var GetScopedCredentialsCommand = class extends command5(_ep05, _mw05, "GetScopedCredentials", GetScopedCredentials$) {
+    };
     var GetSessionTokenCommand = class extends command5(_ep05, _mw05, "GetSessionToken", GetSessionToken$) {
     };
     var GetWebIdentityTokenCommand = class extends command5(_ep05, _mw05, "GetWebIdentityToken", GetWebIdentityToken$) {
@@ -47297,12 +47465,17 @@ var require_dist_cjs16 = __commonJS({
       GetCallerIdentityCommand: GetCallerIdentityCommand2,
       GetDelegatedAccessTokenCommand,
       GetFederationTokenCommand,
+      GetScopedCredentialsCommand,
       GetSessionTokenCommand,
       GetWebIdentityTokenCommand
     };
     var STS2 = class extends STSClient3 {
     };
     createAggregatedClient2(commands5, STS2);
+    var WebIdentityTokenSubjectModeType = {
+      AWS_IDENTITY: "AWSIdentity",
+      ORIGIN_IDENTITY: "OriginIdentity"
+    };
     var getAccountIdFromAssumedRoleUser2 = (assumedRoleUser) => {
       if (typeof assumedRoleUser?.Arn === "string") {
         const arnComponents = assumedRoleUser.Arn.split(":");
@@ -47464,6 +47637,10 @@ var require_dist_cjs16 = __commonJS({
     exports2.GetFederationTokenCommand = GetFederationTokenCommand;
     exports2.GetFederationTokenRequest$ = GetFederationTokenRequest$;
     exports2.GetFederationTokenResponse$ = GetFederationTokenResponse$;
+    exports2.GetScopedCredentials$ = GetScopedCredentials$;
+    exports2.GetScopedCredentialsCommand = GetScopedCredentialsCommand;
+    exports2.GetScopedCredentialsRequest$ = GetScopedCredentialsRequest$;
+    exports2.GetScopedCredentialsResponse$ = GetScopedCredentialsResponse$;
     exports2.GetSessionToken$ = GetSessionToken$;
     exports2.GetSessionTokenCommand = GetSessionTokenCommand;
     exports2.GetSessionTokenRequest$ = GetSessionTokenRequest$;
@@ -47476,14 +47653,21 @@ var require_dist_cjs16 = __commonJS({
     exports2.IDPCommunicationErrorException$ = IDPCommunicationErrorException$2;
     exports2.IDPRejectedClaimException = IDPRejectedClaimException2;
     exports2.IDPRejectedClaimException$ = IDPRejectedClaimException$2;
+    exports2.InsufficientSessionLifetimeException = InsufficientSessionLifetimeException;
+    exports2.InsufficientSessionLifetimeException$ = InsufficientSessionLifetimeException$;
     exports2.InvalidAuthorizationMessageException = InvalidAuthorizationMessageException;
     exports2.InvalidAuthorizationMessageException$ = InvalidAuthorizationMessageException$;
+    exports2.InvalidContextAssertionException = InvalidContextAssertionException;
+    exports2.InvalidContextAssertionException$ = InvalidContextAssertionException$;
     exports2.InvalidIdentityTokenException = InvalidIdentityTokenException2;
     exports2.InvalidIdentityTokenException$ = InvalidIdentityTokenException$2;
+    exports2.InvalidSubjectCredentialsException = InvalidSubjectCredentialsException;
+    exports2.InvalidSubjectCredentialsException$ = InvalidSubjectCredentialsException$;
     exports2.JWTPayloadSizeExceededException = JWTPayloadSizeExceededException;
     exports2.JWTPayloadSizeExceededException$ = JWTPayloadSizeExceededException$;
     exports2.MalformedPolicyDocumentException = MalformedPolicyDocumentException2;
     exports2.MalformedPolicyDocumentException$ = MalformedPolicyDocumentException$2;
+    exports2.OriginIdentity$ = OriginIdentity$;
     exports2.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException;
     exports2.OutboundWebIdentityFederationDisabledException$ = OutboundWebIdentityFederationDisabledException$;
     exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException2;
@@ -47496,9 +47680,13 @@ var require_dist_cjs16 = __commonJS({
     exports2.STSClient = STSClient3;
     exports2.STSServiceException = STSServiceException2;
     exports2.STSServiceException$ = STSServiceException$2;
+    exports2.ScopedSession$ = ScopedSession$;
     exports2.SessionDurationEscalationException = SessionDurationEscalationException;
     exports2.SessionDurationEscalationException$ = SessionDurationEscalationException$;
     exports2.Tag$ = Tag$2;
+    exports2.TransactionContext$ = TransactionContext$;
+    exports2.TrustedIdentityPropagationContext$ = TrustedIdentityPropagationContext$;
+    exports2.WebIdentityTokenSubjectModeType = WebIdentityTokenSubjectModeType;
     exports2.decorateDefaultCredentialProvider = decorateDefaultCredentialProvider2;
     exports2.errorTypeRegistries = errorTypeRegistries5;
     exports2.getDefaultRoleAssumer = getDefaultRoleAssumer3;
